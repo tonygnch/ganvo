@@ -1,0 +1,23 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ganvo-app
+    container_name: ganvo
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://ganvo.lvh.me:8000
+      CENTRAL_DOMAIN: ganvo.lvh.me
+      DB_CONNECTION: sqlite
+    volumes:
+      - ganvo-db:/var/www/html/database
+      - ganvo-storage:/var/www/html/storage/app
+    restart: unless-stopped
+
+volumes:
+  ganvo-db:
+  ganvo-storage:
