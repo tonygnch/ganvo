@@ -5,26 +5,32 @@ namespace App\Http\Controllers\Storefront;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\SetDisplayCurrency;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 
 class CurrencyController extends Controller
 {
     /**
      * Sets the customer's preferred display currency for this storefront.
-     * Mirrors the language switcher's pattern (GET, persistent cookie, redirect back).
+     *
+     * IMPORTANT: don't add `string $code` as a method parameter. The storefront
+     * routes live under Route::domain('{tenantSlug}.ganvo.lvh.me'), so
+     * positional string injection picks up the *domain* parameter first
+     * ("acme") and the path parameter `{code}` never reaches the method. Pull
+     * it off the route by name instead, matching LanguageController.
      */
-    public function switch(string $code): RedirectResponse
+    public function switch(Request $request): RedirectResponse
     {
-        $code = strtoupper($code);
+        $code = strtoupper((string) $request->route('code'));
         $store = app('current_tenant')->store;
 
         if (! in_array($code, $store->supportedDisplayCurrencies(), true)) {
-            // Unknown / unsupported code — silently bounce.
-            return back();
+            return redirect($request->headers->get('referer') ?: '/');
         }
 
-        return back()->withCookie(
-            Cookie::make(SetDisplayCurrency::COOKIE, $code, 60 * 24 * 365)
-        );
+        Cookie::queue(SetDisplayCurrency::COOKIE, $code, 60 * 24 * 365);
+
+        $referer = $request->headers->get('referer');
+        return redirect($referer ?: '/');
     }
 }
