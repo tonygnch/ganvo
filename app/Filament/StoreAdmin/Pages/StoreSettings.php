@@ -99,7 +99,7 @@ class StoreSettings extends Page implements HasForms
                             ->helperText('Lowercase, no scheme, no path. After saving, follow the instructions below to verify ownership.')
                             ->rule('regex:/^[a-z0-9][a-z0-9.\-]+[a-z0-9]$/')
                             ->maxLength(255)
-                            ->unique(table: 'stores', column: 'custom_domain', ignoreRecord: true)
+                            ->unique(table: 'stores', column: 'custom_domain', ignorable: fn () => $this->getStore())
                             ->nullable(),
                     ]),
                 Section::make('Customer accounts')

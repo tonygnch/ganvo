@@ -14,10 +14,10 @@ services:
       CENTRAL_DOMAIN: ganvo.lvh.me
       DB_CONNECTION: sqlite
     volumes:
-      - ganvo-db:/var/www/html/database
-      - ganvo-storage:/var/www/html/storage/app
+      # Live-mount source so PHP/Blade edits are picked up without rebuilding.
+      - .:/var/www/html
+      # Anonymous volumes preserve image-baked dirs that aren't on the host
+      # (or that we don't want overwritten by the host's empty/dev state).
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
     restart: unless-stopped
-
-volumes:
-  ganvo-db:
-  ganvo-storage:
