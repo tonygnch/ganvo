@@ -50,10 +50,23 @@ Route::domain($centralDomain)->group(function () {
         Route::get('/onboarding/theme', [WizardController::class, 'showTheme'])->name('onboarding.theme');
         Route::post('/onboarding/theme', [WizardController::class, 'saveTheme']);
 
-        // Live preview iframe target for the theme picker.
+        // Live preview iframe target for the theme + customize steps. Accepts
+        // ?primary, ?secondary, ?font query overrides for the customize live
+        // preview that updates as the merchant tweaks form values.
         Route::get('/onboarding/theme/preview/{theme}', [WizardController::class, 'themePreview'])
             ->whereAlpha('theme')
             ->name('onboarding.theme.preview');
+
+        Route::get('/onboarding/customize', [WizardController::class, 'showCustomize'])->name('onboarding.customize');
+        Route::post('/onboarding/customize', [WizardController::class, 'saveCustomize']);
+
+        Route::get('/onboarding/products', [WizardController::class, 'showProducts'])->name('onboarding.products');
+        Route::post('/onboarding/products', [WizardController::class, 'saveProducts']);
+
+        Route::get('/onboarding/launch', [WizardController::class, 'showLaunch'])->name('onboarding.launch');
+        Route::post('/onboarding/launch', [WizardController::class, 'doLaunch']);
+
+        Route::get('/onboarding/launched', [WizardController::class, 'showLaunched'])->name('onboarding.launched');
     });
 
     // Backwards-compat: legacy /store/register links should land on the wizard.

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Str;
 use Illuminate\View\View as ViewContract;
 
 /**
@@ -177,6 +178,21 @@ class WizardController extends Controller
         $store = clone $tenant->store; // unsaved override of theme
         $store->theme = $theme;
 
+        // Query overrides — used by the customize step's live preview so the
+        // iframe reflects the form state without a save round-trip.
+        $primary   = $request->query('primary');
+        $secondary = $request->query('secondary');
+        $font      = $request->query('font');
+        if (is_string($primary) && preg_match('/^#?[0-9a-fA-F]{6}$/', $primary)) {
+            $store->primary_color = str_starts_with($primary, '#') ? $primary : '#' . $primary;
+        }
+        if (is_string($secondary) && preg_match('/^#?[0-9a-fA-F]{6}$/', $secondary)) {
+            $store->secondary_color = str_starts_with($secondary, '#') ? $secondary : '#' . $secondary;
+        }
+        if (is_string($font) && $font !== '') {
+            $store->font_family = $font;
+        }
+
         $products = $tenant->products()->where('is_active', true)->take(6)->get();
         if ($products->isEmpty()) {
             $products = $this->sampleProducts();
@@ -193,6 +209,179 @@ class WizardController extends Controller
         View::share('baseCurrency', $base);
 
         return view("themes.{$theme}.index", compact('tenant', 'store', 'products'));
+    }
+
+    // ---------------- Step 4: Customize ----------------
+
+    public function showCustomize(): ViewContract
+    {
+        $tenant = $this->tenant();
+        return view('onboarding.customize', [
+            'tenant'         => $tenant,
+            'store'          => $tenant->store,
+            'progressSteps' => $this->progressFor('customize'),
+            'fonts'          => $this->fonts(),
+        ]);
+    }
+
+    public function saveCustomize(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'primary_color'   => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'secondary_color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'font_family'     => ['required', 'string', 'max:60'],
+            'logo'            => ['nullable', 'image', 'max:2048'],
+        ]);
+
+        $store = $this->tenant()->store;
+        $updates = [
+            'primary_color'   => $data['primary_color'],
+            'secondary_color' => $data['secondary_color'],
+            'font_family'     => $data['font_family'],
+        ];
+        if ($request->hasFile('logo')) {
+            $updates['logo_path'] = $request->file('logo')->store('logos', 'public');
+        }
+        $store->update($updates);
+        $this->advanceIfOnOrBefore('customize');
+
+        return redirect('/onboarding/products');
+    }
+
+    // ---------------- Step 5: Products ----------------
+
+    public function showProducts(): ViewContract
+    {
+        $tenant = $this->tenant();
+        return view('onboarding.products', [
+            'tenant'         => $tenant,
+            'store'          => $tenant->store,
+            'products'       => $tenant->products()->latest()->get(),
+            'progressSteps' => $this->progressFor('products'),
+        ]);
+    }
+
+    public function saveProducts(Request $request): RedirectResponse
+    {
+        $action = $request->input('action', 'continue'); // continue | another | skip
+
+        if ($action !== 'skip') {
+            $data = $request->validate([
+                'name'        => ['required', 'string', 'max:120'],
+                'price'       => ['required', 'numeric', 'min:0'],
+                'description' => ['nullable', 'string', 'max:2000'],
+                'image'       => ['nullable', 'image', 'max:2048'],
+            ]);
+
+            $tenant = $this->tenant();
+            $imagePath = $request->hasFile('image')
+                ? $request->file('image')->store('products', 'public')
+                : null;
+
+            Product::create([
+                'tenant_id'      => $tenant->id,
+                'name'           => $data['name'],
+                'slug'           => $this->uniqueProductSlug($tenant, $data['name']),
+                'description'    => $data['description'] ?? null,
+                'price_cents'    => (int) round(((float) $data['price']) * 100),
+                'currency'       => $tenant->store->currency ?? 'USD',
+                'stock_quantity' => 100,
+                'is_active'      => true,
+                'image_path'     => $imagePath,
+            ]);
+
+            if ($action === 'another') {
+                // Stay on the products step, accumulating items.
+                return redirect('/onboarding/products')
+                    ->with('flash', __('site.onboarding.products.added'));
+            }
+        }
+
+        $this->advanceIfOnOrBefore('products');
+        return redirect('/onboarding/launch');
+    }
+
+    // ---------------- Step 6: Launch ----------------
+
+    public function showLaunch(): ViewContract
+    {
+        $tenant = $this->tenant();
+        return view('onboarding.launch', [
+            'tenant'         => $tenant,
+            'store'          => $tenant->store,
+            'progressSteps' => $this->progressFor('launch'),
+            'productCount'   => $tenant->products()->count(),
+            'storefrontUrl'  => $this->storefrontUrlFor($tenant),
+        ]);
+    }
+
+    public function doLaunch(): RedirectResponse
+    {
+        $tenant = $this->tenant();
+        $tenant->update([
+            'status'          => Tenant::STATUS_ACTIVE,
+            'onboarding_step' => 'done',
+            'onboarded_at'    => now(),
+        ]);
+        $tenant->store->update(['is_live' => true]);
+
+        return redirect('/onboarding/launched');
+    }
+
+    // Celebration / "you're live" page. Stays accessible even after step=done
+    // so the merchant can revisit it from the URL — but the wizard entry
+    // point at /onboarding sends them to /store from then on.
+    public function showLaunched(): ViewContract|RedirectResponse
+    {
+        $tenant = $this->tenant();
+        if (! $tenant->isOnboarded()) {
+            return redirect('/onboarding');
+        }
+        return view('onboarding.launched', [
+            'tenant'        => $tenant,
+            'storefrontUrl' => $this->storefrontUrlFor($tenant),
+        ]);
+    }
+
+    private function uniqueProductSlug(Tenant $tenant, string $name): string
+    {
+        $base = Str::slug($name) ?: 'product';
+        $slug = $base;
+        $attempts = 0;
+        while (Product::where('tenant_id', $tenant->id)->where('slug', $slug)->exists()) {
+            $slug = $base . '-' . Str::lower(Str::random(4));
+            if (++$attempts > 10) {
+                $slug = 'product-' . Str::lower(Str::random(8));
+                break;
+            }
+        }
+        return $slug;
+    }
+
+    /**
+     * Build the public-facing storefront URL for the tenant subdomain.
+     * Derived from APP_URL so it works in both local dev (with the :8000
+     * port) and production.
+     */
+    private function storefrontUrlFor(Tenant $tenant): string
+    {
+        $parsed = parse_url((string) config('app.url')) ?: [];
+        $scheme = $parsed['scheme'] ?? 'http';
+        $host = $parsed['host'] ?? config('ganvo.central_domain', 'ganvo.io');
+        $port = isset($parsed['port']) ? ':' . $parsed['port'] : '';
+        return "{$scheme}://{$tenant->slug}.{$host}{$port}";
+    }
+
+    private function fonts(): array
+    {
+        return [
+            'Inter'              => 'Inter — modern sans',
+            'Roboto'             => 'Roboto — clean sans',
+            'Lato'               => 'Lato — humanist sans',
+            'Merriweather'       => 'Merriweather — serif',
+            'Playfair Display'   => 'Playfair Display — display serif',
+            'Cormorant Garamond' => 'Cormorant Garamond — editorial serif',
+        ];
     }
 
     // ---------------- helpers ----------------
