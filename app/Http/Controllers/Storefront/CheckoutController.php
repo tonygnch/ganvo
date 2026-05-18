@@ -38,7 +38,9 @@ class CheckoutController extends Controller
         $theme = ThemeRegistry::exists($store->theme) ? $store->theme : 'default';
         $customer = Auth::guard('customer')->user();
 
-        return view('storefront.checkout', [
+        $view = view()->exists("themes.{$theme}.checkout") ? "themes.{$theme}.checkout" : 'storefront.checkout';
+
+        return view($view, [
             'tenant' => $tenant,
             'store' => $store,
             'theme' => $theme,

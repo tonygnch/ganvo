@@ -19,7 +19,9 @@ class CartController extends Controller
         $theme = ThemeRegistry::exists($store->theme) ? $store->theme : 'default';
         $cart = Cart::forCurrent();
 
-        return view('storefront.cart', [
+        $view = view()->exists("themes.{$theme}.cart") ? "themes.{$theme}.cart" : 'storefront.cart';
+
+        return view($view, [
             'tenant' => $tenant,
             'store' => $store,
             'theme' => $theme,
