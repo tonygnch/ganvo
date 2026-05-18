@@ -4,6 +4,24 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ ($title ?? null) ? $title . ' — ' . $tenant->name : $tenant->name }}</title>
+    @php
+        // Map of merchant-pickable fonts → Google Fonts spec (without family= prefix).
+        // Keep in sync with the curated list in App\Http\Controllers\Onboarding\WizardController::fonts().
+        $googleFonts = [
+            'Inter'              => 'Inter:wght@400;500;600;700;800',
+            'Roboto'             => 'Roboto:wght@400;500;700',
+            'Lato'               => 'Lato:wght@400;700',
+            'Merriweather'       => 'Merriweather:wght@400;700',
+            'Playfair Display'   => 'Playfair+Display:wght@400;500;700',
+            'Cormorant Garamond' => 'Cormorant+Garamond:wght@400;500;600',
+        ];
+        $fontSpec = $googleFonts[$store->font_family] ?? null;
+    @endphp
+    @if ($fontSpec)
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family={{ $fontSpec }}&display=swap" rel="stylesheet">
+    @endif
     <style>
         :root {
             --primary: {{ $store->primary_color }};
@@ -22,7 +40,7 @@
         html { scroll-behavior: smooth; }
         body {
             margin: 0;
-            font-family: {{ $store->font_family }}, system-ui, -apple-system, sans-serif;
+            font-family: "{{ $store->font_family }}", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
             color: var(--text);
             background: var(--bg);
             line-height: 1.6;

@@ -146,13 +146,21 @@
             </form>
 
             <div style="text-align: center; margin-top: 1.5rem;">
-                @if ($products->isEmpty())
-                    <form method="post" action="/onboarding/products" style="display:inline;">
-                        @csrf
-                        <input type="hidden" name="action" value="skip">
-                        <button type="submit" class="btn btn-ghost" style="padding: .375rem 1rem; font-size: 0.8125rem;">{{ __('site.onboarding.products.cta_skip') }}</button>
-                    </form>
-                @endif
+                {{-- Skip is always available — the merchant should be able to
+                     stop adding products at any point and continue to launch.
+                     Posted as a separate form so it doesn't drag along the
+                     potentially-incomplete product fields above. --}}
+                <form method="post" action="/onboarding/products" style="display:inline;">
+                    @csrf
+                    <input type="hidden" name="action" value="skip">
+                    <button type="submit" class="btn btn-ghost" style="padding: .375rem 1rem; font-size: 0.8125rem;">
+                        @if ($products->isEmpty())
+                            {{ __('site.onboarding.products.cta_skip') }}
+                        @else
+                            {{ __('site.onboarding.products.cta_skip_more') }}
+                        @endif
+                    </button>
+                </form>
             </div>
         </div>
 

@@ -59,6 +59,8 @@ Route::domain($centralDomain)->group(function () {
 
         Route::get('/onboarding/customize', [WizardController::class, 'showCustomize'])->name('onboarding.customize');
         Route::post('/onboarding/customize', [WizardController::class, 'saveCustomize']);
+        // AJAX upload target for the customize step's live-preview logo.
+        Route::post('/onboarding/customize/logo', [WizardController::class, 'uploadTempLogo'])->name('onboarding.customize.logo');
 
         Route::get('/onboarding/products', [WizardController::class, 'showProducts'])->name('onboarding.products');
         Route::post('/onboarding/products', [WizardController::class, 'saveProducts']);

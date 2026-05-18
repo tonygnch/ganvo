@@ -22,7 +22,9 @@
         }
         .plan-card:hover { border-color: var(--text-muted); transform: translateY(-2px); }
         .plan-card input[type="radio"] { position: absolute; opacity: 0; pointer-events: none; }
-        .plan-card.selected,
+        /* Selection styling driven purely by :has(:checked) so it actually
+           tracks clicks. The earlier .selected class was applied server-side
+           and never removed on the client. */
         .plan-card:has(input[type="radio"]:checked) {
             border-color: var(--primary);
             box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent);
@@ -110,7 +112,7 @@
                         $isFeatured = $key === 'pro';
                         $isSelected = old('subscription_plan', $tenant->subscription_plan ?? 'starter') === $key;
                     @endphp
-                    <label class="plan-card {{ $isSelected ? 'selected' : '' }}">
+                    <label class="plan-card">
                         @if ($isFeatured)
                             <span class="featured-badge">{{ __('site.onboarding.plan.popular') }}</span>
                         @endif

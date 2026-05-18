@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Onboarding;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Tenant;
+use App\Services\Money;
 use App\Themes\ThemeRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -95,8 +96,10 @@ class WizardController extends Controller
         $tenant = $this->tenant();
         return view('onboarding.business', [
             'tenant'         => $tenant,
+            'store'          => $tenant->store,
             'progressSteps' => $this->progressFor('business'),
             'businessTypes' => self::BUSINESS_TYPES,
+            'currencies'    => Money::options(),
         ]);
     }
 
@@ -107,13 +110,23 @@ class WizardController extends Controller
             'business_type' => ['required', 'in:' . implode(',', array_keys(self::BUSINESS_TYPES))],
             'contact_email' => ['required', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string', 'max:32'],
+            'currency'      => ['required', 'in:' . implode(',', array_keys(Money::SUPPORTED))],
         ]);
 
         $tenant = $this->tenant();
-        $tenant->update($data);
+        $tenant->update([
+            'name'          => $data['name'],
+            'business_type' => $data['business_type'],
+            'contact_email' => $data['contact_email'],
+            'contact_phone' => $data['contact_phone'] ?? null,
+        ]);
+        // Currency is on the store, not the tenant — make sure the merchant's
+        // first product later gets priced in the right base.
+        $tenant->store->update(['currency' => strtoupper($data['currency'])]);
+
         $this->advanceIfOnOrBefore('business');
 
-        return redirect('/onboarding/plan');
+        return redirect($this->nextStepUrl('business'));
     }
 
     // ---------------- Step 2: Plan ----------------
@@ -135,7 +148,7 @@ class WizardController extends Controller
         ]);
         $this->tenant()->update($data);
         $this->advanceIfOnOrBefore('plan');
-        return redirect('/onboarding/theme');
+        return redirect($this->nextStepUrl('plan'));
     }
 
     // ---------------- Step 3: Theme ----------------
@@ -157,7 +170,7 @@ class WizardController extends Controller
         ]);
         $this->tenant()->store->update($data);
         $this->advanceIfOnOrBefore('theme');
-        return redirect('/onboarding/customize');
+        return redirect($this->nextStepUrl('theme'));
     }
 
     /**
@@ -183,6 +196,7 @@ class WizardController extends Controller
         $primary   = $request->query('primary');
         $secondary = $request->query('secondary');
         $font      = $request->query('font');
+        $logo      = $request->query('logo');
         if (is_string($primary) && preg_match('/^#?[0-9a-fA-F]{6}$/', $primary)) {
             $store->primary_color = str_starts_with($primary, '#') ? $primary : '#' . $primary;
         }
@@ -191,6 +205,12 @@ class WizardController extends Controller
         }
         if (is_string($font) && $font !== '') {
             $store->font_family = $font;
+        }
+        if (is_string($logo) && str_starts_with($logo, 'logos/onboarding-temp/')) {
+            // Path-only — the iframe view will run it through Storage::url().
+            // Restrict to the temp dir to prevent arbitrary cross-tenant
+            // logo previewing.
+            $store->logo_path = $logo;
         }
 
         $products = $tenant->products()->where('is_active', true)->take(6)->get();
@@ -245,7 +265,29 @@ class WizardController extends Controller
         $store->update($updates);
         $this->advanceIfOnOrBefore('customize');
 
-        return redirect('/onboarding/products');
+        return redirect($this->nextStepUrl('customize'));
+    }
+
+    /**
+     * AJAX endpoint used by the customize step's live preview to reflect a
+     * newly-chosen logo *before* the merchant saves the form.
+     *
+     * Saves the upload to a temp directory keyed by tenant. The final form
+     * submit re-uploads the file from the form's `<input type="file">` to the
+     * canonical `logos/` directory; this temp file is just for previewing.
+     */
+    public function uploadTempLogo(Request $request)
+    {
+        $request->validate([
+            'logo' => ['required', 'image', 'max:2048'],
+        ]);
+        $tenant = $this->tenant();
+        $dir = 'logos/onboarding-temp/' . $tenant->id;
+        $path = $request->file('logo')->store($dir, 'public');
+        return response()->json([
+            'path' => $path,
+            'url'  => $path, // The themePreview endpoint expects the raw path.
+        ]);
     }
 
     // ---------------- Step 5: Products ----------------
@@ -298,7 +340,7 @@ class WizardController extends Controller
         }
 
         $this->advanceIfOnOrBefore('products');
-        return redirect('/onboarding/launch');
+        return redirect($this->nextStepUrl('products'));
     }
 
     // ---------------- Step 6: Launch ----------------
@@ -315,15 +357,34 @@ class WizardController extends Controller
         ]);
     }
 
-    public function doLaunch(): RedirectResponse
+    public function doLaunch(Request $request): RedirectResponse
     {
+        $data = $request->validate([
+            // Optional — the merchant can launch on the *.ganvo subdomain
+            // and add a custom domain later from Store Settings. Same regex
+            // as the StoreSettings form so the rules stay consistent.
+            'custom_domain' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9][a-z0-9.\-]+[a-z0-9]$/'],
+        ]);
+
         $tenant = $this->tenant();
         $tenant->update([
             'status'          => Tenant::STATUS_ACTIVE,
             'onboarding_step' => 'done',
             'onboarded_at'    => now(),
         ]);
-        $tenant->store->update(['is_live' => true]);
+        $storeUpdates = ['is_live' => true];
+        $newDomain = $data['custom_domain'] ?? null;
+        if ($newDomain) {
+            $storeUpdates['custom_domain'] = $newDomain;
+            // Ensure verification starts from scratch — the merchant will
+            // verify DNS from Store Settings after launch.
+            $storeUpdates['custom_domain_verified_at'] = null;
+            $storeUpdates['custom_domain_verification_token'] = null;
+        }
+        $tenant->store->update($storeUpdates);
+        if ($newDomain) {
+            $tenant->store->ensureVerificationToken();
+        }
 
         return redirect('/onboarding/launched');
     }
@@ -407,6 +468,36 @@ class WizardController extends Controller
             $tenant->onboarding_step = Tenant::ONBOARDING_STEPS[$target + 1];
             $tenant->save();
         }
+    }
+
+    /**
+     * Where to send the merchant after saving step $thisStep.
+     *
+     * Two modes:
+     *   - Linear progression (current step ≤ this step) → next step in
+     *     ONBOARDING_STEPS.
+     *   - Editing from review (current step ≥ launch, but this step is
+     *     earlier) → straight back to /onboarding/launch. Without this,
+     *     "Edit" from launch would dump the merchant into the next sequential
+     *     step instead of returning to the review screen they came from.
+     */
+    private function nextStepUrl(string $thisStep): string
+    {
+        $tenant = $this->tenant();
+        $launchIdx  = array_search('launch', Tenant::ONBOARDING_STEPS, true);
+        $thisIdx    = array_search($thisStep, Tenant::ONBOARDING_STEPS, true);
+        $currentIdx = array_search($tenant->onboarding_step, Tenant::ONBOARDING_STEPS, true);
+
+        if ($currentIdx !== false && $thisIdx !== false && $launchIdx !== false
+            && $currentIdx >= $launchIdx && $thisIdx < $launchIdx) {
+            return '/onboarding/launch';
+        }
+
+        $nextIdx = ($thisIdx !== false) ? $thisIdx + 1 : 0;
+        if ($nextIdx >= count(Tenant::ONBOARDING_STEPS) - 1) {
+            return '/onboarding';
+        }
+        return '/onboarding/' . Tenant::ONBOARDING_STEPS[$nextIdx];
     }
 
     /**

@@ -5,9 +5,11 @@
     <style>
         .cz-layout {
             display: grid;
-            grid-template-columns: 1.05fr 1fr;
+            /* Preview side gets meaningfully more room so the iframe can be
+               bigger and easier to evaluate. */
+            grid-template-columns: 380px 1fr;
             gap: 1.75rem;
-            max-width: 1100px;
+            max-width: 1320px;
             width: 100%;
         }
         .cz-card {
@@ -87,17 +89,23 @@
         }
         .cz-iframe-wrap {
             width: 100%;
-            aspect-ratio: 4 / 3;
+            /* Taller aspect → more vertical content visible; the storefront's
+               hero + product grid both fit comfortably. */
+            aspect-ratio: 16 / 11;
             background: var(--muted);
             border-radius: .75rem;
             overflow: hidden;
             position: relative;
         }
         .cz-iframe-wrap iframe {
-            width: 1200px;
-            height: 900px;
+            /* Render the iframe at 165% of the wrapper width, scaled to ~61% —
+               net: ~1 wrapper px per visible iframe px, but using a wider
+               internal viewport (so the storefront uses its desktop layout,
+               not its mobile one) than the panel itself. */
+            width: 165%;
+            height: 165%;
             border: 0;
-            transform: scale(0.42);
+            transform: scale(0.606);
             transform-origin: 0 0;
             pointer-events: none;
         }
@@ -166,13 +174,12 @@
 
                 <div class="field">
                     <label class="lbl" for="logo">{{ __('site.onboarding.customize.logo') }}</label>
-                    @if ($store->logo_path)
-                        <div class="cz-logo-current">
-                            <img src="{{ \Illuminate\Support\Facades\Storage::url($store->logo_path) }}" alt="">
-                            <p class="help">{{ __('site.onboarding.customize.logo_current') }}</p>
-                        </div>
-                    @endif
-                    <input class="input" type="file" name="logo" id="logo" accept="image/*">
+                    <div class="cz-logo-current" id="cz-logo-preview" @if(! $store->logo_path) style="display: none;" @endif>
+                        <img id="cz-logo-img" src="{{ $store->logo_path ? \Illuminate\Support\Facades\Storage::url($store->logo_path) : '' }}" alt="">
+                        <p class="help" id="cz-logo-caption">{{ __('site.onboarding.customize.logo_current') }}</p>
+                    </div>
+                    <input class="input" type="file" name="logo" id="logo" accept="image/*"
+                           onchange="cz.previewLogo(this)">
                     <p class="help">{{ __('site.onboarding.customize.logo_help') }}</p>
                 </div>
 
@@ -200,6 +207,10 @@
     <script>
         const cz = {
             theme: @json($store->theme),
+            csrf: @json(csrf_token()),
+            // Set after a successful AJAX logo upload — appended to the
+            // iframe URL so the preview reflects the new logo without a save.
+            uploadedLogoUrl: null,
             timer: null,
             debounce(fn, ms) {
                 clearTimeout(this.timer);
@@ -211,7 +222,10 @@
                     const p = document.getElementById('primary_color').value.replace('#', '');
                     const s = document.getElementById('secondary_color').value.replace('#', '');
                     const f = document.getElementById('font_family').value;
-                    const url = `/onboarding/theme/preview/${this.theme}?primary=${p}&secondary=${s}&font=${encodeURIComponent(f)}`;
+                    let url = `/onboarding/theme/preview/${this.theme}?primary=${p}&secondary=${s}&font=${encodeURIComponent(f)}`;
+                    if (this.uploadedLogoUrl) {
+                        url += `&logo=${encodeURIComponent(this.uploadedLogoUrl)}`;
+                    }
                     document.getElementById('cz-preview-frame').src = url;
                 }, 250);
             },
@@ -222,6 +236,40 @@
                     document.getElementById(targetId).value = hex;
                     this.update();
                 }
+            },
+            previewLogo(input) {
+                const file = input.files && input.files[0];
+                if (!file) return;
+                // 1. Immediate local preview via FileReader so the form
+                //    block confirms which file the merchant picked.
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('cz-logo-img').src = e.target.result;
+                    document.getElementById('cz-logo-caption').textContent =
+                        @json(__('site.onboarding.customize.logo_pending'));
+                    document.getElementById('cz-logo-preview').style.display = 'flex';
+                };
+                reader.readAsDataURL(file);
+
+                // 2. Background-upload to a temp slot so the iframe preview
+                //    can also reflect the new logo before the merchant saves.
+                const fd = new FormData();
+                fd.append('logo', file);
+                fd.append('_token', this.csrf);
+                fetch('/onboarding/customize/logo', {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                })
+                .then(r => r.ok ? r.json() : Promise.reject(r))
+                .then(data => {
+                    this.uploadedLogoUrl = data.url;
+                    this.update();
+                })
+                .catch(() => {
+                    // Local preview already shown; ignore upload failure here
+                    // and let the final form-submit handle the real upload.
+                });
             },
         };
     </script>

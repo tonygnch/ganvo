@@ -22,7 +22,8 @@
         }
         .theme-card:hover { border-color: var(--text-muted); transform: translateY(-2px); }
         .theme-card input[type="radio"] { position: absolute; opacity: 0; pointer-events: none; }
-        .theme-card.selected,
+        /* Selection styling driven purely by :has(:checked) — see plan.blade
+           for the same rationale. */
         .theme-card:has(input[type="radio"]:checked) {
             border-color: var(--primary);
             box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent);
@@ -79,7 +80,6 @@
             font-weight: 600;
             color: var(--primary-strong);
         }
-        .theme-card.selected .selected-flag,
         .theme-card:has(input[type="radio"]:checked) .selected-flag { display: block; }
 
         @media (max-width: 760px) {
@@ -108,7 +108,7 @@
             <div class="theme-grid">
                 @foreach ($themes as $key => $meta)
                     @php $isSelected = old('theme', $tenant->store->theme ?? 'default') === $key; @endphp
-                    <label class="theme-card {{ $isSelected ? 'selected' : '' }}">
+                    <label class="theme-card">
                         <input type="radio" name="theme" value="{{ $key }}" @if($isSelected) checked @endif required>
                         <div class="theme-preview">
                             <iframe src="/onboarding/theme/preview/{{ $key }}" loading="lazy" title="{{ $meta['name'] }} preview"></iframe>

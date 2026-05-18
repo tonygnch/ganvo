@@ -26,14 +26,25 @@
                 <p class="help">{{ __('site.onboarding.business.store_name_help', ['slug' => $tenant->slug]) }}</p>
             </div>
 
-            <div class="field">
-                <label class="lbl" for="business_type">{{ __('site.onboarding.business.business_type') }}</label>
-                <select class="input" name="business_type" id="business_type" required>
-                    <option value="" disabled @if(! old('business_type', $tenant->business_type) || $tenant->business_type === 'other') selected @endif>{{ __('site.onboarding.business.business_type_ph') }}</option>
-                    @foreach ($businessTypes as $key => $label)
-                        <option value="{{ $key }}" @if(old('business_type', $tenant->business_type) === $key) selected @endif>{{ $label }}</option>
-                    @endforeach
-                </select>
+            <div class="field-row">
+                <div class="field">
+                    <label class="lbl" for="business_type">{{ __('site.onboarding.business.business_type') }}</label>
+                    <select class="input" name="business_type" id="business_type" required>
+                        <option value="" disabled @if(! old('business_type', $tenant->business_type) || $tenant->business_type === 'other') selected @endif>{{ __('site.onboarding.business.business_type_ph') }}</option>
+                        @foreach ($businessTypes as $key => $label)
+                            <option value="{{ $key }}" @if(old('business_type', $tenant->business_type) === $key) selected @endif>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="lbl" for="currency">{{ __('site.onboarding.business.currency') }}</label>
+                    <select class="input" name="currency" id="currency" required>
+                        @foreach ($currencies as $key => $label)
+                            <option value="{{ $key }}" @if(old('currency', $store->currency ?? 'USD') === $key) selected @endif>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    <p class="help">{{ __('site.onboarding.business.currency_help') }}</p>
+                </div>
             </div>
 
             <div class="field-row">

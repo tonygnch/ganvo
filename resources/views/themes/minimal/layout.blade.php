@@ -4,9 +4,27 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ ($title ?? null) ? $title . ' — ' . $tenant->name : $tenant->name }}</title>
+    @php
+        // Always load Cormorant Garamond — the minimal theme uses it for
+        // serif headings throughout, independent of the merchant's body
+        // font choice. If the body font is different, load it too.
+        $googleFonts = [
+            'Inter'              => 'Inter:wght@400;500;600;700;800',
+            'Roboto'             => 'Roboto:wght@400;500;700',
+            'Lato'               => 'Lato:wght@400;700',
+            'Merriweather'       => 'Merriweather:wght@400;700',
+            'Playfair Display'   => 'Playfair+Display:wght@400;500;700',
+            'Cormorant Garamond' => 'Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400',
+        ];
+        $bodyFont = $googleFonts[$store->font_family] ?? null;
+        $cormorant = $googleFonts['Cormorant Garamond'];
+        $families = $bodyFont && $store->font_family !== 'Cormorant Garamond'
+            ? $cormorant . '&family=' . $bodyFont
+            : $cormorant;
+    @endphp
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family={{ $families }}&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: {{ $store->primary_color }};
@@ -23,7 +41,7 @@
         html { scroll-behavior: smooth; }
         body {
             margin: 0;
-            font-family: {{ $store->font_family }}, system-ui, -apple-system, sans-serif;
+            font-family: "{{ $store->font_family }}", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
             color: var(--text);
             background: var(--bg);
             line-height: 1.6;
