@@ -14,6 +14,20 @@ class SetLocale
     public const SUPPORTED = ['en', 'bg'];
     public const DEFAULT = 'en';
 
+    /**
+     * @return array<string, string> [code => native display name]
+     */
+    public static function available(): array
+    {
+        $list = [];
+        foreach (self::SUPPORTED as $code) {
+            $key = 'site.lang.' . $code;
+            $name = __($key);
+            $list[$code] = $name === $key ? strtoupper($code) : $name;
+        }
+        return $list;
+    }
+
     public function handle(Request $request, Closure $next): Response
     {
         $locale = $this->resolve($request);

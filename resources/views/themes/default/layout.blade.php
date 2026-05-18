@@ -88,28 +88,80 @@
             stroke-linecap: round;
             stroke-linejoin: round;
         }
-        .lang-switch {
+        /* -------- Language dropdown -------- */
+        .lang-menu { position: relative; }
+        .lang-menu summary {
+            list-style: none;
+            cursor: pointer;
             display: inline-flex;
+            align-items: center;
+            gap: .375rem;
+            padding: .4rem .75rem;
             background: var(--muted);
             border-radius: 9999px;
-            padding: 2px;
+            color: var(--text);
+            font-size: 0.8125rem;
+            font-weight: 600;
+            transition: background-color .15s ease;
+            user-select: none;
         }
-        .lang-link {
-            padding: .3rem .7rem;
-            font-size: 0.75rem;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-            border-radius: 9999px;
+        .lang-menu summary::-webkit-details-marker,
+        .lang-menu summary::marker { display: none; content: none; }
+        .lang-menu summary:hover { background: var(--border); }
+        .lang-menu[open] summary { background: var(--border); }
+        .lang-menu .globe {
+            width: 16px; height: 16px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.6;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .lang-menu .chevron {
+            width: 12px; height: 12px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            transition: transform .15s ease;
+        }
+        .lang-menu[open] .chevron { transform: rotate(180deg); }
+        .lang-menu-items {
+            position: absolute;
+            top: calc(100% + .375rem);
+            right: 0;
+            min-width: 160px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: .625rem;
+            box-shadow: 0 12px 28px -8px rgba(0,0,0,0.15), 0 2px 6px rgba(0,0,0,0.05);
+            padding: .375rem;
+            z-index: 60;
+        }
+        .lang-menu-items a {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .75rem;
+            padding: .5rem .75rem;
+            border-radius: .375rem;
+            color: var(--text);
+            font-size: 0.875rem;
+            font-weight: 500;
             text-decoration: none;
-            transition: color .15s ease, background-color .15s ease;
+            transition: background-color .12s ease;
         }
-        .lang-link:hover { color: var(--text); }
-        .lang-link.active {
-            background: var(--secondary);
-            color: #ffffff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        .lang-menu-items a:hover { background: var(--muted); }
+        .lang-menu-items a.active { color: var(--primary); font-weight: 600; }
+        .lang-menu-items .check {
+            width: 14px; height: 14px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
         }
+        .lang-menu-items a:not(.active) .check { visibility: hidden; }
         .cart-btn {
             display: inline-flex;
             align-items: center;
@@ -287,11 +339,31 @@
                 @php
                     $customer = auth('customer')->user();
                     $currentLocale = app()->getLocale();
+                    $languages = \App\Http\Middleware\SetLocale::available();
                 @endphp
-                <div class="lang-switch" role="group" aria-label="{{ __('site.lang.switch') }}">
-                    <a href="/lang/en" class="lang-link @if($currentLocale==='en') active @endif">EN</a>
-                    <a href="/lang/bg" class="lang-link @if($currentLocale==='bg') active @endif">BG</a>
-                </div>
+                <details class="lang-menu">
+                    <summary aria-label="{{ __('site.lang.switch') }}">
+                        <svg class="globe" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="9"/>
+                            <path d="M3 12h18"/>
+                            <path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>
+                        </svg>
+                        <span>{{ strtoupper($currentLocale) }}</span>
+                        <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true">
+                            <path d="M3 4.5L6 7.5L9 4.5"/>
+                        </svg>
+                    </summary>
+                    <div class="lang-menu-items" role="menu">
+                        @foreach ($languages as $code => $name)
+                            <a role="menuitem" href="/lang/{{ $code }}" class="@if($currentLocale===$code) active @endif">
+                                <span>{{ $name }}</span>
+                                <svg class="check" viewBox="0 0 20 20" aria-hidden="true">
+                                    <path d="M4 10l4 4 8-8"/>
+                                </svg>
+                            </a>
+                        @endforeach
+                    </div>
+                </details>
                 @if ($store->showsAccountUi())
                     @if ($customer)
                         <a href="/account" class="nav-link account-link" title="{{ __('site.common.my_account') }}">
