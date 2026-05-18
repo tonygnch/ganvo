@@ -42,6 +42,7 @@ class Tenant extends Model
         'stripe_customer_id',
         'status',
         'onboarding_progress',
+        'onboarding_step',
         'onboarded_at',
     ];
 
@@ -49,6 +50,33 @@ class Tenant extends Model
         'onboarding_progress' => 'array',
         'onboarded_at' => 'datetime',
     ];
+
+    // The wizard step sequence — order matters; advance() walks this list.
+    public const ONBOARDING_STEPS = [
+        'business',
+        'plan',
+        'theme',
+        'customize',
+        'products',
+        'launch',
+        'done',
+    ];
+
+    public function isOnboarded(): bool
+    {
+        return $this->onboarding_step === 'done';
+    }
+
+    /** Move the tenant to the next step in the wizard. No-op when already done. */
+    public function advanceOnboarding(): void
+    {
+        $idx = array_search($this->onboarding_step, self::ONBOARDING_STEPS, true);
+        if ($idx === false || $idx >= count(self::ONBOARDING_STEPS) - 1) {
+            return;
+        }
+        $this->onboarding_step = self::ONBOARDING_STEPS[$idx + 1];
+        $this->save();
+    }
 
     public function store(): HasOne
     {

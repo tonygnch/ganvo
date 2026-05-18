@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ImpersonateController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\Onboarding\AuthController as OnboardingAuthController;
+use App\Http\Controllers\Onboarding\WizardController;
 use App\Http\Controllers\Storefront\AccountController;
 use App\Http\Controllers\Storefront\Auth\CustomerAuthController;
 use App\Http\Controllers\Storefront\CartController;
@@ -23,6 +25,26 @@ Route::domain($centralDomain)->group(function () {
     Route::post('/stop-impersonating', [ImpersonateController::class, 'stop'])
         ->middleware('auth')
         ->name('impersonate.stop');
+
+    // ---- Merchant onboarding ----
+    // Signup + login live here (not on tenant subdomains). The wizard owns
+    // merchant signup end-to-end — Filament's ->registration() is disabled.
+    Route::get('/onboarding/signup', [OnboardingAuthController::class, 'showSignup'])->name('onboarding.signup');
+    Route::post('/onboarding/signup', [OnboardingAuthController::class, 'signup']);
+    Route::get('/onboarding/login', [OnboardingAuthController::class, 'showLogin'])->name('onboarding.login');
+    Route::post('/onboarding/login', [OnboardingAuthController::class, 'login']);
+    Route::post('/onboarding/logout', [OnboardingAuthController::class, 'logout'])
+        ->middleware('auth')
+        ->name('onboarding.logout');
+
+    // The wizard entry point — routes the user to whatever step they're on.
+    // Individual step routes will be added in subsequent slices.
+    Route::middleware('auth')->group(function () {
+        Route::get('/onboarding', [WizardController::class, 'entry'])->name('onboarding.entry');
+    });
+
+    // Backwards-compat: legacy /store/register links should land on the wizard.
+    Route::redirect('/store/register', '/onboarding/signup');
 });
 
 // Shared storefront route definitions, reused for both subdomain and custom-domain matching.

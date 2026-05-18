@@ -798,8 +798,8 @@
                     <span class="sun" aria-hidden="true">☀</span>
                     <span class="moon" aria-hidden="true">☾</span>
                 </button>
-                <a href="/store/login" class="btn btn-ghost">{{ __('site.common.sign_in') }}</a>
-                <a href="/store/register" class="btn btn-primary">{{ __('site.common.start_free') }}</a>
+                <a href="/onboarding/login" class="btn btn-ghost">{{ __('site.common.sign_in') }}</a>
+                <a href="/onboarding/signup" class="btn btn-primary">{{ __('site.common.start_free') }}</a>
             </div>
         </div>
     </nav>
@@ -840,7 +840,7 @@
             <h1>{{ __('site.marketing.hero.headline_1') }}<br><span class="accent">{{ __('site.marketing.hero.headline_2') }}</span></h1>
             <p class="sub">{{ __('site.marketing.hero.sub') }}</p>
             <div class="cta-row">
-                <a href="/store/register" class="btn btn-primary btn-lg">{{ __('site.marketing.hero.cta_primary') }}</a>
+                <a href="/onboarding/signup" class="btn btn-primary btn-lg">{{ __('site.marketing.hero.cta_primary') }}</a>
                 <a href="#features" class="btn btn-outline btn-lg">{{ __('site.marketing.hero.cta_secondary') }}</a>
             </div>
         </div>
@@ -907,7 +907,7 @@
                             <li>{{ $feat }}</li>
                         @endforeach
                     </ul>
-                    <a href="/store/register" class="btn @if($key==='pro') btn-primary @else btn-outline @endif btn-lg" style="display:block; text-align:center;">{{ $plan['cta'] }}</a>
+                    <a href="/onboarding/signup" class="btn @if($key==='pro') btn-primary @else btn-outline @endif btn-lg" style="display:block; text-align:center;">{{ $plan['cta'] }}</a>
                 </div>
             @endforeach
         </div>
@@ -916,7 +916,7 @@
     <section class="cta-strip">
         <h2>{{ __('site.marketing.cta_strip.h2') }}</h2>
         <p>{{ __('site.marketing.cta_strip.p') }}</p>
-        <a href="/store/register" class="btn btn-on-dark btn-lg">{{ __('site.marketing.cta_strip.btn') }}</a>
+        <a href="/onboarding/signup" class="btn btn-on-dark btn-lg">{{ __('site.marketing.cta_strip.btn') }}</a>
     </section>
 
     <footer>
@@ -924,8 +924,8 @@
             <a href="#features">{{ __('site.marketing.nav.features') }}</a>
             <a href="#themes">{{ __('site.marketing.nav.themes') }}</a>
             <a href="#pricing">{{ __('site.marketing.nav.pricing') }}</a>
-            <a href="/store/login">{{ __('site.common.sign_in') }}</a>
-            <a href="/store/register">{{ __('site.common.create_account') }}</a>
+            <a href="/onboarding/login">{{ __('site.common.sign_in') }}</a>
+            <a href="/onboarding/signup">{{ __('site.common.create_account') }}</a>
         </div>
         <div>© {{ date('Y') }} Ganvo. {{ __('site.common.all_rights') }}</div>
     </footer>

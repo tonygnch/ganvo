@@ -33,7 +33,10 @@ class StoreAdminPanelProvider extends PanelProvider
             ->path('store')
             ->domain(config('ganvo.central_domain'))
             ->login()
-            ->registration()
+            // Registration is intentionally NOT enabled here — the onboarding
+            // wizard (App\Http\Controllers\Onboarding\AuthController) owns
+            // merchant signup so it can create the Tenant + Store and start
+            // the wizard in one transaction.
             ->brandName('Ganvo Store')
             ->colors([
                 'primary' => Color::Emerald,
@@ -63,6 +66,7 @@ class StoreAdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                \App\Http\Middleware\EnsureOnboardingComplete::class,
             ])
             ->renderHook(
                 PanelsRenderHook::BODY_START,
