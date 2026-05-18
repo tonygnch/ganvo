@@ -37,10 +37,23 @@ Route::domain($centralDomain)->group(function () {
         ->middleware('auth')
         ->name('onboarding.logout');
 
-    // The wizard entry point — routes the user to whatever step they're on.
-    // Individual step routes will be added in subsequent slices.
+    // The wizard step routes — auth-only. Each step has a show + save handler.
     Route::middleware('auth')->group(function () {
         Route::get('/onboarding', [WizardController::class, 'entry'])->name('onboarding.entry');
+
+        Route::get('/onboarding/business', [WizardController::class, 'showBusiness'])->name('onboarding.business');
+        Route::post('/onboarding/business', [WizardController::class, 'saveBusiness']);
+
+        Route::get('/onboarding/plan', [WizardController::class, 'showPlan'])->name('onboarding.plan');
+        Route::post('/onboarding/plan', [WizardController::class, 'savePlan']);
+
+        Route::get('/onboarding/theme', [WizardController::class, 'showTheme'])->name('onboarding.theme');
+        Route::post('/onboarding/theme', [WizardController::class, 'saveTheme']);
+
+        // Live preview iframe target for the theme picker.
+        Route::get('/onboarding/theme/preview/{theme}', [WizardController::class, 'themePreview'])
+            ->whereAlpha('theme')
+            ->name('onboarding.theme.preview');
     });
 
     // Backwards-compat: legacy /store/register links should land on the wizard.
