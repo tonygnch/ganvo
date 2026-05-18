@@ -359,29 +359,32 @@
                                     <span class="qty-pill">{{ $row['quantity'] }}</span>
                                 </div>
                                 <div class="line-name">{{ $row['product']->name }}</div>
-                                <div class="line-price">{{ number_format($row['subtotal_cents'] / 100, 2) }}</div>
+                                <div class="line-price">@money($row['subtotal_cents'])</div>
                             </div>
                         @endforeach
                     </div>
 
                     <div class="summary-row">
                         <span>{{ __('site.cart.subtotal') }}</span>
-                        <span class="num">{{ number_format($subtotal / 100, 2) }} USD</span>
+                        <span class="num">@money($subtotal)</span>
                     </div>
                     <div class="summary-row {{ $shipping === 0 ? 'free' : '' }}">
                         <span>{{ __('site.cart.shipping') }}</span>
-                        <span class="num">{{ $shipping === 0 ? __('site.common.free') : number_format($shipping / 100, 2) . ' USD' }}</span>
+                        <span class="num">@if($shipping === 0){{ __('site.common.free') }}@else @money($shipping) @endif</span>
                     </div>
                     <div class="summary-row total">
                         <span class="label">{{ __('site.cart.total') }}</span>
-                        <span class="num">{{ number_format($grand / 100, 2) }} USD</span>
+                        <span class="num">@money($grand)</span>
                     </div>
 
                     <button type="submit" class="pay-btn">
                         {{ __('site.checkout.pay_now') }}
                         <span aria-hidden="true">·</span>
-                        <span>{{ number_format($grand / 100, 2) }} USD</span>
+                        <span>@money($grand)</span>
                     </button>
+                    @if ($displayCurrency !== $baseCurrency)
+                        <div class="secure-line">{{ __('site.checkout.charged_in', ['amount' => \App\Services\Money::format($grand, $baseCurrency)]) }}</div>
+                    @endif
                     <div class="secure-line">{{ __('site.checkout.secure') }}</div>
                 </aside>
             </div>

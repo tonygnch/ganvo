@@ -303,15 +303,21 @@
                 <div class="item-line">
                     <div>
                         <div class="name">{{ $item->product_name }}</div>
-                        <div class="meta">{{ __('site.order.qty_unit', ['qty' => $item->quantity, 'price' => number_format($item->unit_price_cents / 100, 2) . ' ' . $order->currency]) }}</div>
+                        <div class="meta">{{ __('site.order.qty_unit', ['qty' => $item->quantity, 'price' => \App\Services\Money::format($item->unit_price_cents, $order->currency)]) }}</div>
                     </div>
-                    <div class="price">{{ number_format($item->subtotal_cents / 100, 2) }} {{ $order->currency }}</div>
+                    <div class="price">{{ \App\Services\Money::format($item->subtotal_cents, $order->currency) }}</div>
                 </div>
             @endforeach
             <div class="totals">
-                <div class="row"><span>{{ __('site.order.subtotal') }}</span><span class="num">{{ number_format($itemsTotal / 100, 2) }} {{ $order->currency }}</span></div>
-                <div class="row"><span>{{ __('site.order.shipping_label') }}</span><span class="num">{{ $shipping === 0 ? __('site.common.free') : number_format($shipping / 100, 2) . ' ' . $order->currency }}</span></div>
-                <div class="row grand"><span class="label">{{ __('site.order.total') }}</span><span class="num">{{ number_format($order->total_cents / 100, 2) }} {{ $order->currency }}</span></div>
+                <div class="row"><span>{{ __('site.order.subtotal') }}</span><span class="num">{{ \App\Services\Money::format($itemsTotal, $order->currency) }}</span></div>
+                <div class="row"><span>{{ __('site.order.shipping_label') }}</span><span class="num">{{ $shipping === 0 ? __('site.common.free') : \App\Services\Money::format($shipping, $order->currency) }}</span></div>
+                <div class="row grand"><span class="label">{{ __('site.order.total') }}</span><span class="num">{{ \App\Services\Money::format($order->total_cents, $order->currency) }}</span></div>
+                @if ($order->display_currency && $order->display_currency !== $order->currency && $order->display_total_cents)
+                    <div class="row" style="margin-top: .5rem; font-size: 0.8125rem; opacity: .8;">
+                        <span>{{ __('site.order.you_saw') }}</span>
+                        <span class="num">{{ \App\Services\Money::format($order->display_total_cents, $order->display_currency) }}</span>
+                    </div>
+                @endif
             </div>
         </div>
 

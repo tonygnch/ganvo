@@ -349,7 +349,7 @@
                         </div>
                         <span class="badge">{{ __('site.storefront.featured.badge') }}</span>
                         <h3>{{ $fp->name }}</h3>
-                        <div class="price">{{ number_format($fp->price_cents / 100, 2) }} {{ $fp->currency }}</div>
+                        <div class="price">@money($fp->price_cents)</div>
                     </div>
                 @endif
             </div>
@@ -399,7 +399,7 @@
                                 <p class="desc">{{ $product->description }}</p>
                             @endif
                             <div class="price-row">
-                                <span class="price">{{ number_format($product->price_cents / 100, 2) }} {{ $product->currency }}</span>
+                                <span class="price">@money($product->price_cents)</span>
                                 <span class="arrow">→</span>
                             </div>
                         </div>
@@ -434,7 +434,7 @@
                         <div class="card-body">
                             <h3>{{ $product->name }}</h3>
                             <div class="price-row">
-                                <span class="price">{{ number_format($product->price_cents / 100, 2) }} {{ $product->currency }}</span>
+                                <span class="price">@money($product->price_cents)</span>
                                 <span class="arrow">→</span>
                             </div>
                         </div>

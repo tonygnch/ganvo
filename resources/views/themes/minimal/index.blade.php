@@ -196,7 +196,7 @@
                         </div>
                         <div class="card-body">
                             <h3>{{ $product->name }}</h3>
-                            <div class="price">{{ number_format($product->price_cents / 100, 2) }} {{ $product->currency }}</div>
+                            <div class="price">@money($product->price_cents)</div>
                         </div>
                     </a>
                 @endforeach

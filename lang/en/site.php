@@ -7,6 +7,10 @@ return [
         'bg' => 'Български',
     ],
 
+    'currency' => [
+        'switch' => 'Currency',
+    ],
+
     'common' => [
         'sign_in' => 'Sign in',
         'sign_out' => 'Sign out',
@@ -193,6 +197,7 @@ return [
         'summary' => 'Order summary',
         'pay_now' => 'Place order',
         'secure' => '🔒 Stub payment · no real charge',
+        'charged_in' => "You'll be charged :amount.",
     ],
 
     'order' => [
@@ -219,6 +224,7 @@ return [
         'subtotal' => 'Subtotal',
         'shipping_label' => 'Shipping',
         'total' => 'Total',
+        'you_saw' => 'You saw',
         'need_help' => 'Need help?',
     ],
 

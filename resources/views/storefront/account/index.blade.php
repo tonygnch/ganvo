@@ -126,7 +126,7 @@
                     <div class="order-row">
                         <div>
                             <div class="num">{{ $order->order_number }}</div>
-                            <div class="date">{{ $order->created_at->isoFormat('LL') }} · {{ number_format($order->total_cents / 100, 2) }} {{ $order->currency }}</div>
+                            <div class="date">{{ $order->created_at->isoFormat('LL') }} · {{ \App\Services\Money::format($order->total_cents, $order->currency) }}</div>
                         </div>
                         <span class="badge-status {{ $order->status }}">{{ __('site.statuses.' . $order->status) }}</span>
                         <a href="/orders/{{ $order->order_number }}" class="view">{{ __('site.account.view') }}</a>

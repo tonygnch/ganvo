@@ -193,7 +193,7 @@
             <div class="info">
                 <p class="eyebrow">{{ $tenant->name }}</p>
                 <h2>{{ $product->name }}</h2>
-                <div class="price">{{ number_format($product->price_cents / 100, 2) }} {{ $product->currency }}</div>
+                <div class="price">@money($product->price_cents)</div>
                 <p class="tax">{{ __('site.storefront.product.tax_included') }}</p>
 
                 @if ($product->stock_quantity > 0)

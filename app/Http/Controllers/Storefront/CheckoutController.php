@@ -73,12 +73,19 @@ class CheckoutController extends Controller
 
         $tenant = app('current_tenant');
         $customer = Auth::guard('customer')->user();
+        $store = $tenant->store;
         $items = $cart->items();
         $subtotal = $cart->totalCents();
         $shipping = $subtotal >= 5000 ? 0 : 500;
         $grandTotal = $subtotal + $shipping;
 
-        $order = DB::transaction(function () use ($tenant, $customer, $items, $data, $grandTotal) {
+        // Capture what the customer was viewing prices in at this moment, so the
+        // order receipt forever shows the same number — even if FX rates move.
+        $displayCurrency = $cart->displayCurrency();
+        $displayRate = $cart->displayRate();
+        $displayTotal = \App\Services\Money::convert($grandTotal, $displayRate);
+
+        $order = DB::transaction(function () use ($tenant, $store, $customer, $items, $data, $grandTotal, $displayCurrency, $displayTotal) {
             $order = Order::create([
                 'tenant_id' => $tenant->id,
                 'customer_id' => $customer?->id,
@@ -86,7 +93,9 @@ class CheckoutController extends Controller
                 'customer_email' => $data['customer_email'],
                 'customer_name' => $data['customer_name'],
                 'total_cents' => $grandTotal,
-                'currency' => 'USD',
+                'currency' => strtoupper($store->currency ?? 'USD'),
+                'display_currency' => $displayCurrency,
+                'display_total_cents' => $displayTotal,
                 'status' => 'paid', // stub payment — always succeeds
                 'shipping_address' => [
                     'line' => $data['address_line'],

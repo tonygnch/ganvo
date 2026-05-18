@@ -85,6 +85,30 @@ class Cart
         return $this->itemCount() === 0;
     }
 
+    /**
+     * Currency code the customer is currently viewing prices in. Defaults to
+     * the store's base currency when no display preference is set.
+     */
+    public function displayCurrency(): string
+    {
+        if (app()->bound('display_currency')) {
+            return app('display_currency');
+        }
+        return strtoupper($this->tenant->store->currency ?? 'USD');
+    }
+
+    /** FX rate from base currency to the customer's display currency. */
+    public function displayRate(): float
+    {
+        return $this->tenant->store->fxRateFor($this->displayCurrency());
+    }
+
+    /** Base-currency total converted into the customer's display currency. */
+    public function displayTotalCents(): int
+    {
+        return \App\Services\Money::convert($this->totalCents(), $this->displayRate());
+    }
+
     /** @return array<int,int> [productId => quantity] */
     private function rawItems(): array
     {

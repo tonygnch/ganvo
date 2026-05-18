@@ -25,6 +25,9 @@ class Store extends Model
         'primary_color',
         'secondary_color',
         'font_family',
+        'currency',
+        'display_currencies',
+        'fx_rates',
         'custom_domain',
         'custom_domain_verification_token',
         'custom_domain_verified_at',
@@ -36,10 +39,49 @@ class Store extends Model
 
     protected $casts = [
         'theme_settings' => 'array',
+        'display_currencies' => 'array',
+        'fx_rates' => 'array',
         'is_live' => 'boolean',
         'custom_domain_verified_at' => 'datetime',
         'allow_registration' => 'boolean',
     ];
+
+    protected $attributes = [
+        'currency' => 'USD',
+    ];
+
+    /**
+     * All currencies a customer can switch the storefront display to.
+     * Base currency is always included, even if not in the JSON column.
+     *
+     * @return array<int, string>
+     */
+    public function supportedDisplayCurrencies(): array
+    {
+        $base = strtoupper($this->currency ?? 'USD');
+        $extra = array_map('strtoupper', (array) ($this->display_currencies ?? []));
+        return array_values(array_unique(array_merge([$base], $extra)));
+    }
+
+    /**
+     * Conversion rate from base currency to the given target.
+     * Returns 1.0 for the base currency or when the target isn't configured.
+     */
+    public function fxRateFor(string $code): float
+    {
+        $code = strtoupper($code);
+        if ($code === strtoupper($this->currency ?? 'USD')) {
+            return 1.0;
+        }
+        $rate = ($this->fx_rates ?? [])[$code] ?? null;
+        return $rate ? (float) $rate : 1.0;
+    }
+
+    /** Whether the storefront should show the currency switcher. */
+    public function hasMultipleDisplayCurrencies(): bool
+    {
+        return count($this->supportedDisplayCurrencies()) > 1;
+    }
 
     public function allowsGuestCheckout(): bool
     {

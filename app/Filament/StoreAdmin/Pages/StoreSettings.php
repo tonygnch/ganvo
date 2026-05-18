@@ -3,11 +3,14 @@
 namespace App\Filament\StoreAdmin\Pages;
 
 use App\Models\Store;
+use App\Services\Money;
 use App\Themes\ThemeRegistry;
 use BackedEnum;
 use Filament\Actions\Action;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -37,17 +40,25 @@ class StoreSettings extends Page implements HasForms
     public function mount(): void
     {
         $store = $this->getStore();
-        $this->form->fill($store->only([
+        $data = $store->only([
             'theme',
             'primary_color',
             'secondary_color',
             'font_family',
             'logo_path',
+            'currency',
             'custom_domain',
             'is_live',
             'checkout_mode',
             'allow_registration',
-        ]));
+        ]);
+        // CheckboxList wants a flat array of codes.
+        $data['display_currencies'] = $store->display_currencies ?: [];
+        // KeyValue stores as strings; cast rates to numeric strings for editing.
+        $data['fx_rates'] = collect($store->fx_rates ?? [])
+            ->mapWithKeys(fn ($rate, $code) => [$code => (string) $rate])
+            ->all();
+        $this->form->fill($data);
     }
 
     public function form(Schema $schema): Schema
@@ -90,6 +101,32 @@ class StoreSettings extends Page implements HasForms
                             ->maxSize(2048)
                             ->columnSpanFull(),
                     ]),
+                Section::make('Currency')
+                    ->description('Customers can switch the displayed currency in the storefront header; you\'re still paid in your base currency.')
+                    ->schema([
+                        Select::make('currency')
+                            ->label('Base currency')
+                            ->helperText('The currency you price products in and get paid in.')
+                            ->options(Money::options())
+                            ->required()
+                            ->default('USD')
+                            ->live(),
+                        CheckboxList::make('display_currencies')
+                            ->label('Customer display currencies')
+                            ->helperText('Currencies customers can switch their view to. Your base currency is always available.')
+                            ->options(Money::options())
+                            ->columns(2)
+                            ->bulkToggleable(),
+                        KeyValue::make('fx_rates')
+                            ->label('Exchange rates from base currency')
+                            ->helperText('Units of target per 1 unit of base. E.g. if base is USD and 1 USD = 0.92 EUR, enter EUR → 0.92. You do not need a row for your base currency.')
+                            ->keyLabel('Currency code')
+                            ->valueLabel('Rate from base')
+                            ->keyPlaceholder('EUR')
+                            ->valuePlaceholder('0.92')
+                            ->reorderable(false),
+                    ]),
+
                 Section::make('Custom domain')
                     ->description('Optional. Use your own domain instead of the *.ganvo.lvh.me subdomain.')
                     ->schema([
@@ -131,7 +168,37 @@ class StoreSettings extends Page implements HasForms
         $newDomain = $this->data['custom_domain'] ?? null;
         $domainChanged = $store->custom_domain !== $newDomain;
 
-        $store->update($this->form->getState());
+        $state = $this->form->getState();
+
+        // Sanitize currency state.
+        $state['currency'] = strtoupper($state['currency'] ?? 'USD');
+
+        // CheckboxList may return null; coerce + uppercase + drop the base
+        // (it's always implicit) + de-dupe.
+        $display = collect($state['display_currencies'] ?? [])
+            ->map(fn ($c) => strtoupper((string) $c))
+            ->reject(fn ($c) => $c === $state['currency'] || $c === '')
+            ->unique()
+            ->values()
+            ->all();
+        $state['display_currencies'] = $display;
+
+        // FX rates: trim, uppercase keys, cast values to float, drop invalid
+        // and drop the base currency entry.
+        $rates = [];
+        foreach (($state['fx_rates'] ?? []) as $code => $rate) {
+            $code = strtoupper(trim((string) $code));
+            if ($code === '' || $code === $state['currency']) {
+                continue;
+            }
+            $rate = (float) $rate;
+            if ($rate > 0) {
+                $rates[$code] = $rate;
+            }
+        }
+        $state['fx_rates'] = $rates;
+
+        $store->update($state);
 
         // If the domain changed (added or modified), reset verification and rotate the token.
         if ($domainChanged) {

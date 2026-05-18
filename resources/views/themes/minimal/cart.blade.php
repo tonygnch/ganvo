@@ -340,10 +340,10 @@
                             </div>
                             <div class="item-details">
                                 <h3><a href="/products/{{ $product->slug }}">{{ $product->name }}</a></h3>
-                                <div class="unit">{{ __('site.cart.unit_each', ['price' => number_format($product->price_cents / 100, 2) . ' ' . $product->currency]) }}</div>
+                                <div class="unit">{{ __('site.cart.unit_each', ['price' => \App\Services\Money::display($product->price_cents, $displayRate, $displayCurrency)]) }}</div>
                             </div>
                             <div class="item-actions">
-                                <div class="item-subtotal">{{ number_format($row['subtotal_cents'] / 100, 2) }} {{ $product->currency }}</div>
+                                <div class="item-subtotal">@money($row['subtotal_cents'])</div>
                                 <div class="item-controls">
                                     <div class="qty">
                                         <form method="post" action="/cart/{{ $product->id }}">
@@ -377,18 +377,18 @@
                     <h2>{{ __('site.cart.summary') }}</h2>
                     <div class="summary-row">
                         <span class="label">{{ __('site.cart.subtotal') }}</span>
-                        <span class="num">{{ number_format($subtotal / 100, 2) }} USD</span>
+                        <span class="num">@money($subtotal)</span>
                     </div>
                     <div class="summary-row {{ $shipping === 0 ? 'free' : '' }}">
                         <span class="label">{{ __('site.cart.shipping') }}</span>
-                        <span class="num">{{ $shipping === 0 ? __('site.common.free') : number_format($shipping / 100, 2) . ' USD' }}</span>
+                        <span class="num">@if($shipping === 0){{ __('site.common.free') }}@else @money($shipping) @endif</span>
                     </div>
                     @if ($shipping > 0)
                         <div class="summary-hint">{{ __('site.cart.free_shipping_at') }}</div>
                     @endif
                     <div class="summary-row total">
                         <span class="label">{{ __('site.cart.total') }}</span>
-                        <span class="num">{{ number_format($grand / 100, 2) }} USD</span>
+                        <span class="num">@money($grand)</span>
                     </div>
                     <div class="summary-hint">{{ __('site.cart.tax_at_checkout') }}</div>
 

@@ -50,6 +50,9 @@ class DatabaseSeeder extends Seeder
                 'theme' => 'default',
                 'primary_color' => '#10B981',
                 'is_live' => true,
+                'currency' => 'USD',
+                'display_currencies' => ['USD', 'EUR', 'GBP'],
+                'fx_rates' => ['EUR' => 0.92, 'GBP' => 0.79],
             ]
         );
 
@@ -171,6 +174,10 @@ class DatabaseSeeder extends Seeder
                 'secondary_color' => '#1F2937',
                 'font_family' => 'Playfair Display',
                 'is_live' => true,
+                // Aurora is a boutique brand — prices in EUR, offers USD/GBP for shoppers.
+                'currency' => 'EUR',
+                'display_currencies' => ['EUR', 'USD', 'GBP'],
+                'fx_rates' => ['USD' => 1.09, 'GBP' => 0.86],
             ]
         );
 

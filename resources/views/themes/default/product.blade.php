@@ -196,7 +196,7 @@
                 <p class="eyebrow">{{ $tenant->name }}</p>
                 <h2>{{ $product->name }}</h2>
                 <div class="price-large">
-                    {{ number_format($product->price_cents / 100, 2) }} {{ $product->currency }}
+                    @money($product->price_cents)
                     <small>{{ __('site.storefront.product.tax_included') }}</small>
                 </div>
 
@@ -220,7 +220,7 @@
                     <button type="submit" class="add-btn">
                         <span>{{ __('site.storefront.product.add_to_cart') }}</span>
                         <span>·</span>
-                        <span>{{ number_format($product->price_cents / 100, 2) }}</span>
+                        <span>@money($product->price_cents)</span>
                     </button>
                     <button type="button" class="wishlist-btn" aria-label="{{ __('site.storefront.product.wishlist') }}" title="{{ __('site.storefront.product.wishlist') }}">♡</button>
                 </form>

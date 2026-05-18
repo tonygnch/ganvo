@@ -340,6 +340,7 @@
                     $customer = auth('customer')->user();
                     $currentLocale = app()->getLocale();
                     $languages = \App\Http\Middleware\SetLocale::available();
+                    $supportedCurrencies = $store->supportedDisplayCurrencies();
                 @endphp
                 <details class="lang-menu">
                     <summary aria-label="{{ __('site.lang.switch') }}">
@@ -364,6 +365,31 @@
                         @endforeach
                     </div>
                 </details>
+                @if (count($supportedCurrencies) > 1)
+                    <details class="lang-menu">
+                        <summary aria-label="{{ __('site.currency.switch') }}">
+                            <svg class="globe" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="12" r="9"/>
+                                <path d="M14.5 8.5a3 3 0 0 0-2.5-1.5h-.5a2.5 2.5 0 0 0 0 5h1a2.5 2.5 0 0 1 0 5h-.5a3 3 0 0 1-2.5-1.5"/>
+                                <path d="M12 5v2M12 17v2"/>
+                            </svg>
+                            <span>{{ $displayCurrency }}</span>
+                            <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true">
+                                <path d="M3 4.5L6 7.5L9 4.5"/>
+                            </svg>
+                        </summary>
+                        <div class="lang-menu-items" role="menu">
+                            @foreach ($supportedCurrencies as $code)
+                                <a role="menuitem" href="/currency/{{ $code }}" class="@if($displayCurrency===$code) active @endif">
+                                    <span>{{ \App\Services\Money::symbol($code) }} · {{ $code }}</span>
+                                    <svg class="check" viewBox="0 0 20 20" aria-hidden="true">
+                                        <path d="M4 10l4 4 8-8"/>
+                                    </svg>
+                                </a>
+                            @endforeach
+                        </div>
+                    </details>
+                @endif
                 @if ($store->showsAccountUi())
                     @if ($customer)
                         <a href="/account" class="nav-link account-link" title="{{ __('site.common.my_account') }}">

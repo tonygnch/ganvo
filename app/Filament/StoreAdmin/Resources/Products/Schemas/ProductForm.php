@@ -37,26 +37,19 @@ class ProductForm
                     ]),
 
                 Section::make('Pricing & inventory')
-                    ->columns(3)
+                    ->description('Prices are in your store\'s base currency, set in Store Settings.')
+                    ->columns(2)
                     ->schema([
                         TextInput::make('price_cents')
                             ->label('Price')
                             ->required()
                             ->numeric()
                             ->step('0.01')
-                            ->prefix('$')
+                            ->prefix(fn () => \App\Services\Money::symbol(
+                                auth()->user()?->tenant?->store?->currency ?? 'USD'
+                            ))
                             ->formatStateUsing(fn ($state) => $state !== null ? number_format($state / 100, 2, '.', '') : null)
                             ->dehydrateStateUsing(fn ($state) => (int) round(((float) $state) * 100)),
-                        Select::make('currency')
-                            ->options([
-                                'USD' => 'USD',
-                                'EUR' => 'EUR',
-                                'GBP' => 'GBP',
-                                'CAD' => 'CAD',
-                                'AUD' => 'AUD',
-                            ])
-                            ->required()
-                            ->default('USD'),
                         TextInput::make('stock_quantity')
                             ->required()
                             ->numeric()

@@ -6,9 +6,11 @@ use App\Http\Controllers\Storefront\AccountController;
 use App\Http\Controllers\Storefront\Auth\CustomerAuthController;
 use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CheckoutController;
+use App\Http\Controllers\Storefront\CurrencyController;
 use App\Http\Controllers\Storefront\OrderController;
 use App\Http\Controllers\Storefront\StorefrontController;
 use App\Http\Middleware\ResolveStorefrontTenant;
+use App\Http\Middleware\SetDisplayCurrency;
 use Illuminate\Support\Facades\Route;
 
 $centralDomain = config('ganvo.central_domain');
@@ -47,14 +49,17 @@ $storefrontRoutes = function () {
     Route::get('/account', [AccountController::class, 'show']);
 
     Route::get('/lang/{locale}', [LanguageController::class, 'switch']);
+    Route::get('/currency/{code}', [CurrencyController::class, 'switch'])
+        ->whereAlpha('code')
+        ->name('currency.switch');
 };
 
 // Subdomain routing: acme.ganvo.lvh.me
 Route::domain('{tenantSlug}.' . $centralDomain)
-    ->middleware(ResolveStorefrontTenant::class)
+    ->middleware([ResolveStorefrontTenant::class, SetDisplayCurrency::class])
     ->group($storefrontRoutes);
 
 // Custom-domain (catch-all): any host that didn't match above falls through here.
 // ResolveStorefrontTenant 404s if the host doesn't match a verified custom_domain.
-Route::middleware(ResolveStorefrontTenant::class)
+Route::middleware([ResolveStorefrontTenant::class, SetDisplayCurrency::class])
     ->group($storefrontRoutes);

@@ -30,6 +30,8 @@ class Order extends Model
         'customer_name',
         'total_cents',
         'currency',
+        'display_currency',
+        'display_total_cents',
         'status',
         'carrier',
         'tracking_number',
