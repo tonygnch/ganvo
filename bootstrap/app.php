@@ -14,6 +14,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
         ]);
+
+        // Unauthenticated requests inside the merchant area (e.g. /onboarding/*)
+        // get bounced here. Filament panels handle their own login redirects.
+        $middleware->redirectGuestsTo(fn () => url('/onboarding/login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
