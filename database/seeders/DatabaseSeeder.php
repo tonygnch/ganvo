@@ -51,7 +51,9 @@ class DatabaseSeeder extends Seeder
                 'primary_color' => '#10B981',
                 'is_live' => true,
                 'currency' => 'USD',
-                'display_currencies' => ['USD', 'EUR', 'GBP'],
+                // BGN auto-derives from EUR via the fixed peg, so we don't need
+                // an explicit BGN rate here.
+                'display_currencies' => ['USD', 'EUR', 'GBP', 'BGN'],
                 'fx_rates' => ['EUR' => 0.92, 'GBP' => 0.79],
             ]
         );
@@ -174,9 +176,12 @@ class DatabaseSeeder extends Seeder
                 'secondary_color' => '#1F2937',
                 'font_family' => 'Playfair Display',
                 'is_live' => true,
-                // Aurora is a boutique brand — prices in EUR, offers USD/GBP for shoppers.
+                // Aurora is a boutique brand based in Sofia — prices in EUR
+                // (post Bulgaria-to-Euro switch), offers USD/GBP and BGN.
+                // BGN selection triggers the EUR-primary + BGN-secondary dual
+                // display required during the transition.
                 'currency' => 'EUR',
-                'display_currencies' => ['EUR', 'USD', 'GBP'],
+                'display_currencies' => ['EUR', 'USD', 'GBP', 'BGN'],
                 'fx_rates' => ['USD' => 1.09, 'GBP' => 0.86],
             ]
         );

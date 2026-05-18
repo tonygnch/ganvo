@@ -315,7 +315,7 @@
                 @if ($order->display_currency && $order->display_currency !== $order->currency && $order->display_total_cents)
                     <div class="row" style="margin-top: .5rem; font-size: 0.8125rem; opacity: .8;">
                         <span>{{ __('site.order.you_saw') }}</span>
-                        <span class="num">{{ \App\Services\Money::format($order->display_total_cents, $order->display_currency) }}</span>
+                        <span class="num">{{ \App\Services\Money::formatAsDisplay($order->display_total_cents, $order->display_currency, $order->total_cents, $order->currency) }}</span>
                     </div>
                 @endif
             </div>

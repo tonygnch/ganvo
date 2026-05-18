@@ -65,16 +65,44 @@ class Store extends Model
 
     /**
      * Conversion rate from base currency to the given target.
-     * Returns 1.0 for the base currency or when the target isn't configured.
+     *
+     * Special case: BGN can always be derived from EUR via the fixed peg
+     * (1 EUR = 1.95583 BGN), and likewise EUR can be derived from BGN. So if
+     * the admin only configured one of the two, we synthesize the other rather
+     * than falling back to 1.0 (which would silently misprice).
+     *
+     * Returns 1.0 only when the target IS the base, or when no derivation
+     * path exists.
      */
     public function fxRateFor(string $code): float
     {
         $code = strtoupper($code);
-        if ($code === strtoupper($this->currency ?? 'USD')) {
+        $base = strtoupper($this->currency ?? 'USD');
+        if ($code === $base) {
             return 1.0;
         }
-        $rate = ($this->fx_rates ?? [])[$code] ?? null;
-        return $rate ? (float) $rate : 1.0;
+        $rates = $this->fx_rates ?? [];
+
+        if (isset($rates[$code])) {
+            return (float) $rates[$code];
+        }
+
+        // BGN from EUR via the fixed peg.
+        if ($code === 'BGN') {
+            $eurRate = $base === 'EUR' ? 1.0 : (float) ($rates['EUR'] ?? 0);
+            if ($eurRate > 0) {
+                return $eurRate * \App\Services\Money::EUR_BGN_RATE;
+            }
+        }
+        // EUR from BGN via the fixed peg (inverse).
+        if ($code === 'EUR') {
+            $bgnRate = $base === 'BGN' ? 1.0 : (float) ($rates['BGN'] ?? 0);
+            if ($bgnRate > 0) {
+                return $bgnRate / \App\Services\Money::EUR_BGN_RATE;
+            }
+        }
+
+        return 1.0;
     }
 
     /** Whether the storefront should show the currency switcher. */
