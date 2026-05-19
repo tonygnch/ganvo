@@ -1,39 +1,45 @@
 @props([
-    'size'      => 'md',   // sm | md | lg | xl
-    'wordmark'  => true,   // false to render mark only
-    'markColor' => null,   // CSS color for the mark; defaults to var(--brand)
-    'wordColor' => null,   // CSS color for "Ganvo"; defaults to var(--text)
+    'size' => 'md',           // sm | md | lg | xl — drives the rendered height in px
+    'src'  => null,           // override the asset path; defaults below
+    'alt'  => 'Ganvo',
 ])
 @php
-    // Sizing presets. The mark is now drawn with a tight viewBox so its
-    // numeric `height` equals its visible height — no padding to compensate
-    // for. Proportions: text font-size ≈ 1.4× mark height puts the wordmark
-    // cap-height at roughly the same visual size as the mark, so the lockup
-    // reads as a single unit (matching the Ganvo lockup artwork the user
-    // provided).
-    $presets = [
-        'sm' => ['mark' => 22, 'text' => 28,  'gap' => 8,  'tracking' => '-0.02em' ],
-        'md' => ['mark' => 32, 'text' => 42,  'gap' => 10, 'tracking' => '-0.025em'],
-        'lg' => ['mark' => 48, 'text' => 64,  'gap' => 14, 'tracking' => '-0.03em' ],
-        'xl' => ['mark' => 72, 'text' => 96,  'gap' => 18, 'tracking' => '-0.035em'],
-    ];
-    $s = $presets[$size] ?? $presets['md'];
-    $markStyle = 'color: ' . ($markColor ?? 'var(--brand)') . '; display: inline-flex; line-height: 0;';
-    $wordStyle = sprintf(
-        'color: %s; font-weight: 800; font-size: %dpx; letter-spacing: %s; line-height: 1; font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;',
-        $wordColor ?? 'var(--text)',
-        $s['text'],
-        $s['tracking']
-    );
+    /*
+     | Brand lockup — uses the actual logo artwork file shipped in
+     | public/images/brand/ rather than a recreated SVG. Default path
+     | is logo-lockup.png; the merchant can override via the `src` prop
+     | (e.g. for a light-on-dark version).
+     |
+     | Falls back to a text-only "Ganvo" wordmark when the file isn't
+     | present on disk, so the layout doesn't break on a fresh clone
+     | that hasn't shipped the binary asset yet.
+     */
+    $heights = ['sm' => 28, 'md' => 40, 'lg' => 64, 'xl' => 96];
+    $h = $heights[$size] ?? $heights['md'];
+
+    $src ??= '/images/brand/logo-lockup.png';
+
+    // Resolve to a filesystem path for the existence check. Only run for
+    // /-rooted paths (i.e. local public files) — leave remote URLs alone.
+    $exists = true;
+    if (is_string($src) && str_starts_with($src, '/') && ! str_starts_with($src, '//')) {
+        $exists = file_exists(public_path(ltrim($src, '/')));
+    }
 @endphp
 
-{{-- inline-flex with baseline-ish alignment so the mark's flat bottom sits
-     on the same line as the wordmark's baseline. --}}
-<span {{ $attributes->merge(['style' => 'display: inline-flex; align-items: flex-end; gap: ' . $s['gap'] . 'px;']) }}>
-    <span style="{{ $markStyle }}">
-        <x-brand-mark :size="$s['mark']" />
-    </span>
-    @if ($wordmark)
-        <span style="{{ $wordStyle }}">Ganvo</span>
-    @endif
-</span>
+@if ($exists)
+    <img
+        src="{{ $src }}"
+        alt="{{ $alt }}"
+        style="height: {{ $h }}px; width: auto; display: inline-block;"
+        {{ $attributes }}
+    >
+@else
+    {{-- File hasn't been shipped yet. Render a sensible text-only
+         fallback so the page still reads as Ganvo. The merchant should
+         drop the artwork at public{{ $src }} to replace this. --}}
+    <span
+        style="display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: {{ (int) round($h * 0.75) }}px; letter-spacing: -0.025em; line-height: 1; color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;"
+        {{ $attributes }}
+    >Ganvo</span>
+@endif

@@ -158,10 +158,14 @@
             z-index: 2;
         }
 
-        /* -------- COMING SOON loading bar (replaces the old eyebrow pill).
-                    Sits at the bottom of the hero content under the form. -------- */
+        /* -------- COMING SOON loading bar, full-width filled --------
+                    Sits directly under the brand lockup. The bar is 100%
+                    filled with the brand gradient (no indeterminate
+                    shimmer animation) — reads as "almost done!" rather
+                    than "still loading". The only animation here is the
+                    pulsing dot in the label. */
         .cs-progress {
-            margin: 1.75rem auto 0;
+            margin: 1.25rem auto 0;
             max-width: 460px;
             width: 100%;
         }
@@ -190,49 +194,21 @@
             100% { box-shadow: 0 0 0 0 transparent; }
         }
         .cs-progress-track {
-            position: relative;
-            height: 6px;
+            height: 8px;
             border-radius: 999px;
-            background: color-mix(in srgb, var(--brand) 14%, transparent);
+            background: var(--brand-soft);
             overflow: hidden;
+            box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand) 18%, transparent);
         }
-        /* Indeterminate progress shimmer — a blue gradient highlight that
-           slides across the full width every 2s. Plus a faint base fill
-           underneath so the track always reads as "in progress". */
-        .cs-progress-track::before,
-        .cs-progress-track::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            bottom: 0;
+        .cs-progress-fill {
+            height: 100%;
+            width: 100%;
+            background: var(--gradient-cta);
             border-radius: 999px;
-        }
-        .cs-progress-track::before {
-            left: 0;
-            width: 65%;
-            background: linear-gradient(90deg,
-                color-mix(in srgb, var(--brand) 60%, transparent) 0%,
-                var(--brand) 100%);
-            opacity: .55;
-        }
-        .cs-progress-track::after {
-            left: -40%;
-            width: 40%;
-            background: linear-gradient(90deg,
-                transparent 0%,
-                rgba(255, 255, 255, .85) 50%,
-                transparent 100%);
-            animation: csProgressShimmer 2.2s ease-in-out infinite;
-        }
-        [data-theme="dark"] .cs-progress-track::after {
-            background: linear-gradient(90deg,
-                transparent 0%,
-                color-mix(in srgb, var(--brand) 75%, white) 50%,
-                transparent 100%);
-        }
-        @keyframes csProgressShimmer {
-            0%   { left: -40%; }
-            100% { left: 140%; }
+            /* Subtle inner highlight so the solid fill doesn't look flat. */
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, .35),
+                0 1px 6px -2px color-mix(in srgb, var(--brand) 50%, transparent);
         }
 
         .cs-hero h1 {
@@ -543,11 +519,26 @@
         </div>
 
         <div class="cs-hero-inner">
-            {{-- Brand lockup at the top — mark uses var(--brand), wordmark
-                 follows var(--text) so it inverts cleanly between themes. --}}
+            {{-- Brand lockup at the top — uses the user-supplied image
+                 at public/images/brand/logo-lockup.png. The Blade
+                 component falls back to a text-only wordmark when the
+                 file isn't on disk. --}}
             <a href="/" class="cs-lockup" aria-label="Ganvo">
                 <x-brand-lockup size="lg" />
             </a>
+
+            {{-- COMING SOON loading bar — sits directly under the lockup
+                 with the bar 100% filled (brand gradient), so it reads as
+                 "almost there" rather than mid-loading. --}}
+            <div class="cs-progress" role="status" aria-live="polite">
+                <div class="cs-progress-label">
+                    <span class="pulse" aria-hidden="true"></span>
+                    {{ __('site.marketing.coming_soon.eyebrow') }}
+                </div>
+                <div class="cs-progress-track" aria-hidden="true">
+                    <div class="cs-progress-fill"></div>
+                </div>
+            </div>
 
             <h1>
                 {{ __('site.marketing.coming_soon.headline_1') }}
@@ -564,17 +555,6 @@
             <p class="cs-form-thanks">✓ {{ __('site.marketing.coming_soon.thanks') }}</p>
 
             <p class="cs-helper">{{ __('site.marketing.coming_soon.helper') }}</p>
-
-            {{-- COMING SOON progress bar — replaces the old eyebrow pill.
-                 Indeterminate progress shimmer suggests "in progress" without
-                 implying a specific percentage. --}}
-            <div class="cs-progress" role="status" aria-live="polite">
-                <div class="cs-progress-label">
-                    <span class="pulse" aria-hidden="true"></span>
-                    {{ __('site.marketing.coming_soon.eyebrow') }}
-                </div>
-                <div class="cs-progress-track" aria-hidden="true"></div>
-            </div>
         </div>
     </section>
 
