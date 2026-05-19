@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Combined Ganvo lockup: mark + wordmark side-by-side. Mark uses brand
+     blue; the wordmark uses dark navy that pairs well with light backgrounds.
+     Swap fill on the wordmark for dark-mode usage. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100">
+  <title>Ganvo</title>
+  <!-- Logomark, scaled to fit the 100-unit height -->
+  <g fill="#2563eb">
+    <path d="M 21 25 a 11 11 0 0 1 22 0 v 55 h -22 z"/>
+    <path d="M 58 50 a 11 11 0 0 1 22 0 v 30 h -22 z"/>
+  </g>
+  <!-- Wordmark "Ganvo" in dark navy. Inter-like weights baked in via the
+       built-in PostScript fallbacks so this file is self-contained. -->
+  <text x="105" y="74"
+        font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, system-ui, sans-serif"
+        font-weight="800" font-size="60" letter-spacing="-1.2"
+        fill="#0f172a">Ganvo</text>
+</svg>

@@ -85,101 +85,40 @@
         a { color: var(--brand); text-decoration: none; }
         a:hover { text-decoration: none; }
 
-        /* -------- Nav -------- */
-        nav.cs-nav {
-            /* Not sticky — page doesn't scroll. flex-shrink keeps it at its
-               natural height so the hero gets all the remaining room. */
-            flex-shrink: 0;
-            background: color-mix(in srgb, var(--bg) 80%, transparent);
-            backdrop-filter: saturate(180%) blur(10px);
-            border-bottom: 1px solid var(--border);
-            z-index: 50;
+        /* -------- Hero lockup + footer utility links --------
+           The previous nav bar (with brand text + language menu + theme
+           toggle) was deleted in favor of placing the brand lockup at the
+           top of the hero. Language and theme utilities now live as tiny
+           inline links in the footer instead. */
+        .cs-lockup {
+            margin: 0 0 2rem;
+            display: inline-flex;
         }
-        .cs-nav-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1rem 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-        }
-        .cs-brand {
+        .cs-foot-links {
             display: inline-flex;
             align-items: center;
-            gap: .5rem;
-            font-weight: 800;
-            font-size: 1.125rem;
-            letter-spacing: -0.02em;
-            color: var(--text);
+            gap: .75rem;
+            margin-left: .5rem;
         }
-        .cs-brand .dot { color: var(--brand); }
-        .cs-nav-right { display: flex; align-items: center; gap: .75rem; }
-
-        /* Language switcher chip — mirrors the marketing nav's variant. */
-        .lang-menu { position: relative; }
-        .lang-menu summary {
-            list-style: none;
+        .cs-foot-links .sep { color: var(--border-strong); }
+        .cs-foot-links a,
+        .cs-foot-links button {
+            background: transparent;
+            border: 0;
+            padding: 0;
+            color: var(--text-soft);
+            font: inherit;
+            font-size: 0.75rem;
+            letter-spacing: 0.04em;
             cursor: pointer;
-            padding: .5rem .75rem;
-            border-radius: 9999px;
-            border: 1px solid var(--border);
-            background: var(--bg-subtle);
-            color: var(--text-muted);
-            font-size: 0.8125rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: .375rem;
-            user-select: none;
-            transition: color .15s ease, border-color .15s ease, background-color .15s ease;
+            transition: color .15s ease;
+            text-decoration: none;
         }
-        .lang-menu summary::-webkit-details-marker,
-        .lang-menu summary::marker { display: none; content: none; }
-        .lang-menu summary:hover { color: var(--text); border-color: var(--border-strong); }
-        .lang-menu .globe { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; }
-        .lang-menu .chevron { width: 9px; height: 9px; fill: none; stroke: currentColor; stroke-width: 1.6; transition: transform .15s ease; }
-        .lang-menu[open] .chevron { transform: rotate(180deg); }
-        .lang-menu-items {
-            position: absolute;
-            top: calc(100% + .5rem);
-            right: 0;
-            min-width: 160px;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border);
-            border-radius: .625rem;
-            padding: .25rem;
-            box-shadow: var(--card-shadow);
-            z-index: 10;
-        }
-        .lang-menu-items a {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: .5rem .75rem;
-            border-radius: .375rem;
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            transition: background-color .12s ease, color .12s ease;
-        }
-        .lang-menu-items a:hover { background: var(--bg-subtle); color: var(--text); }
-        .lang-menu-items a.active { color: var(--brand); font-weight: 600; }
-        .lang-menu-items .check { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-        .lang-menu-items a:not(.active) .check { visibility: hidden; }
-
-        .theme-toggle {
-            background: var(--bg-subtle);
-            border: 1px solid var(--border);
-            border-radius: 9999px;
-            width: 36px; height: 36px;
-            display: inline-flex;
-            align-items: center; justify-content: center;
-            cursor: pointer;
-            color: var(--text-muted);
-            transition: color .15s ease, transform .15s ease, border-color .15s ease;
-        }
-        .theme-toggle:hover { color: var(--text); border-color: var(--border-strong); transform: rotate(15deg); }
-        .theme-toggle .sun, .theme-toggle .moon { font-size: 16px; line-height: 1; }
-        [data-theme="light"] .theme-toggle .moon,
-        [data-theme="dark"] .theme-toggle .sun { display: none; }
+        .cs-foot-links a:hover,
+        .cs-foot-links button:hover { color: var(--text); }
+        .cs-foot-links a.active { color: var(--text); font-weight: 600; }
+        [data-theme="light"] .cs-foot-links .moon,
+        [data-theme="dark"]  .cs-foot-links .sun { display: none; }
 
         /* -------- Hero -------- */
         .cs-hero {
@@ -520,41 +459,6 @@
         $brandedHost = str_replace(':8000', '', config('ganvo.central_domain'));
     @endphp
 
-    <nav class="cs-nav">
-        <div class="cs-nav-inner">
-            <a href="/" class="cs-brand">Ganvo<span class="dot">.</span></a>
-            <div class="cs-nav-right">
-                <details class="lang-menu">
-                    <summary aria-label="{{ __('site.lang.switch') }}">
-                        <svg class="globe" viewBox="0 0 24 24" aria-hidden="true">
-                            <circle cx="12" cy="12" r="9"/>
-                            <path d="M3 12h18"/>
-                            <path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>
-                        </svg>
-                        <span>{{ strtoupper($currentLocale) }}</span>
-                        <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true">
-                            <path d="M3 4.5L6 7.5L9 4.5"/>
-                        </svg>
-                    </summary>
-                    <div class="lang-menu-items" role="menu">
-                        @foreach ($languages as $code => $name)
-                            <a role="menuitem" href="/lang/{{ $code }}" class="@if($currentLocale === $code) active @endif">
-                                <span>{{ $name }}</span>
-                                <svg class="check" viewBox="0 0 20 20" aria-hidden="true">
-                                    <path d="M4 10l4 4 8-8"/>
-                                </svg>
-                            </a>
-                        @endforeach
-                    </div>
-                </details>
-                <button class="theme-toggle" type="button" aria-label="Toggle theme" id="csThemeToggle">
-                    <span class="sun" aria-hidden="true">☀</span>
-                    <span class="moon" aria-hidden="true">☾</span>
-                </button>
-            </div>
-        </div>
-    </nav>
-
     <section class="cs-hero">
         {{-- Decorative storefront preview floating in the top-right --}}
         <div class="cs-browser" aria-hidden="true">
@@ -590,6 +494,13 @@
         </div>
 
         <div class="cs-hero-inner">
+            {{-- Brand lockup replaces the old top nav. The mark uses
+                 var(--brand); wordmark follows var(--text) so it inverts
+                 cleanly between light and dark themes. --}}
+            <a href="/" class="cs-lockup" aria-label="Ganvo">
+                <x-brand-lockup size="lg" />
+            </a>
+
             <div class="cs-pill">
                 <span class="pulse" aria-hidden="true"></span>
                 {{ __('site.marketing.coming_soon.eyebrow') }}
@@ -614,12 +525,25 @@
 
     <footer class="cs-foot">
         © {{ date('Y') }} Ganvo
+        <span class="cs-foot-links">
+            <span class="sep">·</span>
+            @foreach ($languages as $code => $name)
+                <a href="/lang/{{ $code }}"
+                   class="@if($currentLocale === $code) active @endif"
+                   aria-label="{{ $name }}">{{ strtoupper($code) }}</a>@if(! $loop->last) <span style="color: var(--border)">/</span>@endif
+            @endforeach
+            <span class="sep">·</span>
+            <button type="button" id="csThemeToggle" aria-label="Toggle theme">
+                <span class="sun" aria-hidden="true">☀</span>
+                <span class="moon" aria-hidden="true">☾</span>
+            </button>
+        </span>
     </footer>
 
     <script>
-        // Theme toggle — same shape as the marketing-page version so the
-        // preference roundtrips cleanly when the visitor lands on the real
-        // site once it's live.
+        // Theme toggle — preference is shared with the main marketing
+        // page via localStorage so the choice roundtrips when the site
+        // launches.
         document.getElementById('csThemeToggle').addEventListener('click', function () {
             var current = document.documentElement.getAttribute('data-theme') || 'light';
             var next = current === 'light' ? 'dark' : 'light';
