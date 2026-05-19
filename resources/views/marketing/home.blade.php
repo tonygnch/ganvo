@@ -751,12 +751,19 @@
         .pricing:has(input[name="mkt_billing_period"][value="yearly"]:checked) .for-monthly { display: none; }
         .pricing:has(input[name="mkt_billing_period"][value="yearly"]:checked) .for-yearly  { display: block; }
 
+        .pricing-row {
+            display: flex;
+            align-items: baseline;
+            gap: .625rem;
+            flex-wrap: wrap;
+        }
+        .pricing-row .price { margin: 1rem 0 0; }
         .pricing-strike {
             color: var(--text-soft);
-            font-size: 0.875rem;
+            font-size: 0.9375rem;
             text-decoration: line-through;
             text-decoration-thickness: 1.5px;
-            margin-top: -.5rem;
+            font-weight: 600;
         }
         .pricing-discount-tag {
             position: absolute;
@@ -1000,9 +1007,14 @@
         <div class="price-grid pricing-grid-host">
             @foreach ($plans as $plan)
                 @php
-                    $hasDiscount = $plan->hasActiveDiscount();
-                    $monthlyEff = $plan->effectivePriceCentsFor('monthly');
-                    $yearlyEff  = $plan->effectivePriceCentsFor('yearly');
+                    $hasDiscount     = $plan->hasActiveDiscount();
+                    $monthlyEff      = $plan->effectivePriceCentsFor('monthly');
+                    $yearlyEff       = $plan->effectivePriceCentsFor('yearly');
+                    // See onboarding/plan.blade.php for the rationale —
+                    // yearly headline is the per-month equivalent so savings
+                    // is the immediate story.
+                    $yearlyAsMonthly = $yearlyEff > 0 ? (int) round($yearlyEff / 12) : 0;
+                    $strikeAnchor    = $plan->price_monthly_cents;
                 @endphp
                 <div class="price-card @if($plan->is_popular) featured @endif reveal">
                     @if ($plan->is_popular)
@@ -1013,39 +1025,45 @@
                             −{{ $plan->discount_percent }}%@if ($plan->discount_label) · {{ $plan->discount_label }} @endif
                         </span>
                     @endif
-                    <h3>{{ $plan->name }}</h3>
-                    @if ($plan->tagline)
-                        <p class="sub">{{ $plan->tagline }}</p>
+                    <h3>{{ $plan->translated('name') }}</h3>
+                    @if ($plan->translated('tagline'))
+                        <p class="sub">{{ $plan->translated('tagline') }}</p>
                     @endif
 
-                    {{-- Monthly pricing block --}}
+                    {{-- Monthly: effective price headline + struck original when discounted --}}
                     <div class="pricing-period-block for-monthly">
                         @if ($plan->isFree())
                             <div class="price">{{ __('site.onboarding.plan.free') }}</div>
                         @else
-                            <div class="price">
-                                {{ \App\Services\Money::format($monthlyEff, $plan->currency) }}<small>{{ __('site.onboarding.plan.per_month') }}</small>
+                            <div class="pricing-row">
+                                <div class="price">
+                                    {{ \App\Services\Money::format($monthlyEff, $plan->currency) }}<small>{{ __('site.onboarding.plan.per_month') }}</small>
+                                </div>
+                                @if ($monthlyEff < $strikeAnchor)
+                                    <div class="pricing-strike">{{ \App\Services\Money::format($strikeAnchor, $plan->currency) }}{{ __('site.onboarding.plan.per_month') }}</div>
+                                @endif
                             </div>
-                            @if ($hasDiscount && $monthlyEff !== $plan->price_monthly_cents)
-                                <div class="pricing-strike">{{ \App\Services\Money::format($plan->price_monthly_cents, $plan->currency) }}{{ __('site.onboarding.plan.per_month') }}</div>
-                            @endif
                             @if ($hasDiscount && $plan->discount_ends_at)
                                 <div class="tbd">{{ __('site.onboarding.plan.promo_ends', ['date' => $plan->discount_ends_at->isoFormat('LL')]) }}</div>
                             @endif
                         @endif
                     </div>
 
-                    {{-- Yearly pricing block --}}
+                    {{-- Yearly: per-month equivalent headline, struck original-monthly beside it,
+                         "Billed annually · $TOTAL" subtitle, savings line. --}}
                     <div class="pricing-period-block for-yearly">
                         @if ($plan->isFree())
                             <div class="price">{{ __('site.onboarding.plan.free') }}</div>
                         @else
-                            <div class="price">
-                                {{ \App\Services\Money::format($yearlyEff, $plan->currency) }}<small>{{ __('site.onboarding.plan.per_year') }}</small>
+                            <div class="pricing-row">
+                                <div class="price">
+                                    {{ \App\Services\Money::format($yearlyAsMonthly, $plan->currency) }}<small>{{ __('site.onboarding.plan.per_month') }}</small>
+                                </div>
+                                @if ($yearlyAsMonthly < $strikeAnchor)
+                                    <div class="pricing-strike">{{ \App\Services\Money::format($strikeAnchor, $plan->currency) }}{{ __('site.onboarding.plan.per_month') }}</div>
+                                @endif
                             </div>
-                            @if ($hasDiscount && $yearlyEff !== $plan->price_yearly_cents)
-                                <div class="pricing-strike">{{ \App\Services\Money::format($plan->price_yearly_cents, $plan->currency) }}{{ __('site.onboarding.plan.per_year') }}</div>
-                            @endif
+                            <div class="tbd">{{ __('site.onboarding.plan.billed_annually_as', ['total' => \App\Services\Money::format($yearlyEff, $plan->currency)]) }}</div>
                             @if ($plan->yearlySavingsCents() > 0)
                                 <div class="tbd" style="color: var(--success); font-style: normal; font-weight: 600;">{{ __('site.onboarding.plan.you_save', ['amount' => \App\Services\Money::format($plan->yearlySavingsCents(), $plan->currency)]) }}</div>
                             @elseif ($hasDiscount && $plan->discount_ends_at)
@@ -1055,7 +1073,7 @@
                     </div>
 
                     <ul>
-                        @foreach ((array) ($plan->features ?? []) as $feat)
+                        @foreach ((array) ($plan->translated('features') ?? []) as $feat)
                             <li>{{ $feat }}</li>
                         @endforeach
                     </ul>

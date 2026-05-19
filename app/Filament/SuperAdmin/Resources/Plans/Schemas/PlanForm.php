@@ -4,6 +4,7 @@ namespace App\Filament\SuperAdmin\Resources\Plans\Schemas;
 
 use App\Services\Money;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
@@ -88,6 +89,36 @@ class PlanForm
                             ->minValue(0)
                             ->default(10)
                             ->helperText('Lower numbers come first.'),
+                    ]),
+
+                Section::make('Translations')
+                    ->description('Optional per-locale overrides for name, tagline, and features. The English values above are used as the fallback when an override is blank.')
+                    ->schema([
+                        Repeater::make('translations')
+                            ->label('')
+                            ->schema([
+                                Select::make('locale')
+                                    ->label('Locale')
+                                    ->options([
+                                        // Mirrors SetLocale::SUPPORTED minus English (the canonical column).
+                                        'bg' => 'Български (bg)',
+                                    ])
+                                    ->required(),
+                                TextInput::make('name')
+                                    ->label('Name')
+                                    ->maxLength(60),
+                                TextInput::make('tagline')
+                                    ->label('Tagline')
+                                    ->maxLength(160),
+                                TagsInput::make('features')
+                                    ->label('Features')
+                                    ->placeholder('Add a feature bullet…'),
+                            ])
+                            ->collapsible()
+                            ->cloneable()
+                            ->itemLabel(fn (array $state): ?string => isset($state['locale']) ? strtoupper($state['locale']) : null)
+                            ->defaultItems(0)
+                            ->addActionLabel('Add a locale'),
                     ]),
 
                 Section::make('Promotional discount')

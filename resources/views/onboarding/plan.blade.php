@@ -214,9 +214,17 @@
                 @foreach ($plans as $plan)
                     @php
                         $isSelected = old('subscription_plan', $tenant->subscription_plan ?? $plans->first()->slug) === $plan->slug;
-                        $monthlyEff = $plan->effectivePriceCentsFor('monthly');
-                        $yearlyEff  = $plan->effectivePriceCentsFor('yearly');
-                        $hasDiscount = $plan->hasActiveDiscount();
+                        $hasDiscount     = $plan->hasActiveDiscount();
+                        $monthlyEff      = $plan->effectivePriceCentsFor('monthly');
+                        $yearlyEff       = $plan->effectivePriceCentsFor('yearly');
+                        // Per-month equivalent of the yearly price — what's
+                        // shown as the headline for the yearly view, so the
+                        // saving vs the monthly cadence is the visible story.
+                        $yearlyAsMonthly = $yearlyEff > 0 ? (int) round($yearlyEff / 12) : 0;
+                        // Strikethrough anchor: always the un-discounted full
+                        // monthly price. Shows the customer what they'd be
+                        // paying without (a) a promo or (b) yearly billing.
+                        $strikeAnchor    = $plan->price_monthly_cents;
                     @endphp
                     <label class="plan-card">
                         @if ($plan->is_popular)
@@ -230,18 +238,19 @@
 
                         <input type="radio" name="subscription_plan" value="{{ $plan->slug }}" @if($isSelected) checked @endif required>
 
-                        <p class="plan-name">{{ $plan->name }}</p>
+                        <p class="plan-name">{{ $plan->translated('name') }}</p>
 
                         <div class="plan-pricing">
-                            {{-- Monthly view --}}
+                            {{-- Monthly view: show effective monthly price; if a discount is active,
+                                 the original monthly is struck through next to it. --}}
                             <div class="for-monthly">
                                 @if ($plan->isFree())
                                     <p class="plan-price">{{ __('site.onboarding.plan.free') }}</p>
                                 @else
                                     <div class="plan-price-row">
                                         <span class="plan-price">{{ \App\Services\Money::format($monthlyEff, $plan->currency) }}</span>
-                                        @if ($hasDiscount && $monthlyEff !== $plan->price_monthly_cents)
-                                            <span class="plan-price-strike">{{ \App\Services\Money::format($plan->price_monthly_cents, $plan->currency) }}</span>
+                                        @if ($monthlyEff < $strikeAnchor)
+                                            <span class="plan-price-strike">{{ \App\Services\Money::format($strikeAnchor, $plan->currency) }}</span>
                                         @endif
                                         <span class="plan-price-suffix">{{ __('site.onboarding.plan.per_month') }}</span>
                                     </div>
@@ -251,18 +260,22 @@
                                 @endif
                             </div>
 
-                            {{-- Yearly view --}}
+                            {{-- Yearly view: show the per-month equivalent as the headline so the
+                                 savings vs paying monthly is immediately legible. The original
+                                 monthly price is struck through beside it; the subtitle reveals the
+                                 full annual amount the merchant will actually be charged. --}}
                             <div class="for-yearly">
                                 @if ($plan->isFree())
                                     <p class="plan-price">{{ __('site.onboarding.plan.free') }}</p>
                                 @else
                                     <div class="plan-price-row">
-                                        <span class="plan-price">{{ \App\Services\Money::format($yearlyEff, $plan->currency) }}</span>
-                                        @if ($hasDiscount && $yearlyEff !== $plan->price_yearly_cents)
-                                            <span class="plan-price-strike">{{ \App\Services\Money::format($plan->price_yearly_cents, $plan->currency) }}</span>
+                                        <span class="plan-price">{{ \App\Services\Money::format($yearlyAsMonthly, $plan->currency) }}</span>
+                                        @if ($yearlyAsMonthly < $strikeAnchor)
+                                            <span class="plan-price-strike">{{ \App\Services\Money::format($strikeAnchor, $plan->currency) }}</span>
                                         @endif
-                                        <span class="plan-price-suffix">{{ __('site.onboarding.plan.per_year') }}</span>
+                                        <span class="plan-price-suffix">{{ __('site.onboarding.plan.per_month') }}</span>
                                     </div>
+                                    <p class="plan-price-aux">{{ __('site.onboarding.plan.billed_annually_as', ['total' => \App\Services\Money::format($yearlyEff, $plan->currency)]) }}</p>
                                     @if ($plan->yearlySavingsCents() > 0)
                                         <p class="plan-price-aux savings">{{ __('site.onboarding.plan.you_save', ['amount' => \App\Services\Money::format($plan->yearlySavingsCents(), $plan->currency)]) }}</p>
                                     @elseif ($hasDiscount && $plan->discount_ends_at)
@@ -272,12 +285,12 @@
                             </div>
                         </div>
 
-                        @if ($plan->tagline)
-                            <p class="plan-tagline">{{ $plan->tagline }}</p>
+                        @if ($plan->translated('tagline'))
+                            <p class="plan-tagline">{{ $plan->translated('tagline') }}</p>
                         @endif
 
                         <ul class="plan-features">
-                            @foreach ((array) ($plan->features ?? []) as $feature)
+                            @foreach ((array) ($plan->translated('features') ?? []) as $feature)
                                 <li>{{ $feature }}</li>
                             @endforeach
                         </ul>

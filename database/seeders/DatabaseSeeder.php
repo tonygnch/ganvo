@@ -35,6 +35,19 @@ class DatabaseSeeder extends Seeder
                 'Standard storefront on a *.ganvo.io subdomain',
                 'Email support',
             ],
+            'translations' => [
+                [
+                    'locale' => 'bg',
+                    'name' => 'Starter',
+                    'tagline' => 'Пусни магазина онлайн — без нужда от карта.',
+                    'features' => [
+                        'До 25 продукта',
+                        '1 тема за витрината',
+                        'Витрина на *.ganvo.io поддомейн',
+                        'Поддръжка по имейл',
+                    ],
+                ],
+            ],
             'currency' => 'USD',
             'price_monthly_cents' => 0,
             'price_yearly_cents'  => 0,
@@ -52,6 +65,20 @@ class DatabaseSeeder extends Seeder
                 'Multi-currency display',
                 'Priority email support',
             ],
+            'translations' => [
+                [
+                    'locale' => 'bg',
+                    'name' => 'Pro',
+                    'tagline' => 'Расти без ограничения.',
+                    'features' => [
+                        'Неограничен брой продукти',
+                        'Всички теми + персонализация',
+                        'Собствен домейн',
+                        'Показване в няколко валути',
+                        'Приоритетна поддръжка по имейл',
+                    ],
+                ],
+            ],
             'currency' => 'USD',
             'price_monthly_cents' => 2900,
             'price_yearly_cents'  => 29000,
@@ -68,6 +95,20 @@ class DatabaseSeeder extends Seeder
                 'Lower transaction fees',
                 'Priority phone support',
                 'Onboarding concierge',
+            ],
+            'translations' => [
+                [
+                    'locale' => 'bg',
+                    'name' => 'Business',
+                    'tagline' => 'За утвърдени магазини, готови за растеж.',
+                    'features' => [
+                        'Всичко от Pro',
+                        'Разширена аналитика',
+                        'По-ниски такси по транзакция',
+                        'Приоритетна поддръжка по телефон',
+                        'Личен консултант при стартиране',
+                    ],
+                ],
             ],
             'currency' => 'USD',
             'price_monthly_cents' => 9900,

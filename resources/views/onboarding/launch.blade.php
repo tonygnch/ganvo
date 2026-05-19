@@ -149,10 +149,19 @@
                 @endphp
                 <span class="value">
                     @if ($selectedPlan)
-                        {{ $selectedPlan->name }}
+                        {{ $selectedPlan->translated('name') }}
                         @if (! $selectedPlan->isFree())
+                            @php
+                                // Match the wizard plan picker — yearly is
+                                // framed as the per-month equivalent so the
+                                // review screen matches what the merchant saw.
+                                $effective = $selectedPlan->effectivePriceCentsFor($billingPeriod);
+                                $headline  = $billingPeriod === 'yearly'
+                                    ? (int) round($effective / 12)
+                                    : $effective;
+                            @endphp
                             <span style="font-weight: 500; color: var(--text-muted); font-size: 0.8125rem; margin-left: .375rem;">
-                                · {{ \App\Services\Money::format($selectedPlan->effectivePriceCentsFor($billingPeriod), $selectedPlan->currency) }}{{ $billingPeriod === 'yearly' ? __('site.onboarding.plan.per_year') : __('site.onboarding.plan.per_month') }}
+                                · {{ \App\Services\Money::format($headline, $selectedPlan->currency) }}{{ __('site.onboarding.plan.per_month') }}{{ $billingPeriod === 'yearly' ? ' · ' . __('site.onboarding.plan.billed_annually_as', ['total' => \App\Services\Money::format($effective, $selectedPlan->currency)]) : '' }}
                             </span>
                         @endif
                     @else

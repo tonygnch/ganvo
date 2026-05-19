@@ -23,6 +23,7 @@ class Plan extends Model
         'name',
         'tagline',
         'features',
+        'translations',
         'currency',
         'price_monthly_cents',
         'price_yearly_cents',
@@ -37,11 +38,43 @@ class Plan extends Model
 
     protected $casts = [
         'features' => 'array',
+        'translations' => 'array',
         'is_popular' => 'boolean',
         'is_active' => 'boolean',
         'discount_starts_at' => 'datetime',
         'discount_ends_at' => 'datetime',
     ];
+
+    /**
+     * Return a translated field (name | tagline | features) for the given
+     * locale, falling back to the column value (= English) when no override
+     * is configured. Looks up by scanning the translations array — small N,
+     * not worth indexing.
+     *
+     * @return mixed
+     */
+    public function translated(string $field, ?string $locale = null)
+    {
+        $locale = $locale ?: app()->getLocale();
+        $fallbackLocale = (string) config('app.fallback_locale', 'en');
+
+        // Default-locale rows always read from the canonical column.
+        if ($locale === $fallbackLocale) {
+            return $this->{$field};
+        }
+
+        foreach ((array) $this->translations as $row) {
+            if (! is_array($row)) continue;
+            if (($row['locale'] ?? null) !== $locale) continue;
+            $value = $row[$field] ?? null;
+            // Empty string / empty array → fall back. A merchant might want
+            // to override only some fields, not all.
+            if ($value === null || $value === '' || $value === []) continue;
+            return $value;
+        }
+
+        return $this->{$field};
+    }
 
     /**
      * Whether a promo discount is currently in effect — non-zero percent AND

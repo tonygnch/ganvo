@@ -345,8 +345,9 @@ return [
             'per_year'        => ' / yr',
             'billing_monthly' => 'Monthly',
             'billing_yearly'  => 'Yearly',
-            'you_save'        => 'Save :amount vs paying monthly',
-            'promo_ends'      => 'Promo ends :date',
+            'you_save'           => 'Save :amount vs paying monthly',
+            'promo_ends'         => 'Promo ends :date',
+            'billed_annually_as' => 'Billed annually · :total',
             'back'            => 'Back',
             'cta'             => 'Continue',
             'names' => [

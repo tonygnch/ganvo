@@ -344,8 +344,9 @@ return [
             'per_year'        => ' / год.',
             'billing_monthly' => 'Месечно',
             'billing_yearly'  => 'Годишно',
-            'you_save'        => 'Спестяваш :amount спрямо месечно',
-            'promo_ends'      => 'Промоцията изтича :date',
+            'you_save'           => 'Спестяваш :amount спрямо месечно',
+            'promo_ends'         => 'Промоцията изтича :date',
+            'billed_annually_as' => 'Годишно плащане · :total',
             'back'            => 'Назад',
             'cta'             => 'Продължи',
             'names' => [
