@@ -346,7 +346,22 @@
     </style>
 </head>
 <body>
-    <div class="announce">{{ __('site.storefront.announce', ['amount' => '$50', 'days' => 30]) }}</div>
+    @php
+        // Merchant-configurable chrome — falls back to the original
+        // hardcoded copy when the merchant hasn't customized.
+        $csAnnouncement = $store->announcementBar();
+        $csNavMenu = $store->navMenuItems();
+    @endphp
+
+    @if ($csAnnouncement['enabled'] && $csAnnouncement['text'] !== '')
+        <div class="announce">
+            @if ($csAnnouncement['link'])
+                <a href="{{ $csAnnouncement['link'] }}" style="color: inherit;">{{ $csAnnouncement['text'] }}</a>
+            @else
+                {{ $csAnnouncement['text'] }}
+            @endif
+        </div>
+    @endif
 
     <header class="site">
         @php
@@ -358,7 +373,13 @@
         @endphp
         <div class="site-inner">
             <div class="nav-left">
-                <a href="/" class="nav-link">{{ __('site.storefront.nav.shop') }}</a>
+                @if (! empty($csNavMenu))
+                    @foreach ($csNavMenu as $item)
+                        <a href="{{ $item['url'] }}" class="nav-link">{{ $item['label'] }}</a>
+                    @endforeach
+                @else
+                    <a href="/" class="nav-link">{{ __('site.storefront.nav.shop') }}</a>
+                @endif
                 <details class="lang-menu">
                     <summary aria-label="{{ __('site.lang.switch') }}">
                         <svg class="globe" viewBox="0 0 24 24" aria-hidden="true">

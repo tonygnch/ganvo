@@ -165,7 +165,76 @@
             .section-head { margin-bottom: 2.5rem; }
             .grid { grid-template-columns: repeat(2, 1fr); gap: 2rem 1rem; }
         }
+
+        /* -------- Merchant-configurable hero banner (sits above the editorial hero). -------- */
+        .custom-hero {
+            position: relative;
+            padding: 5rem 1.5rem;
+            text-align: center;
+            color: var(--text);
+            border-bottom: 1px solid var(--hair);
+            overflow: hidden;
+        }
+        .custom-hero.with-image { color: white; border-bottom: 0; }
+        .custom-hero .bg-img {
+            position: absolute; inset: 0;
+            background-size: cover;
+            background-position: center;
+        }
+        .custom-hero .bg-img::after {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.55) 100%);
+        }
+        .custom-hero-inner { position: relative; max-width: 800px; margin: 0 auto; z-index: 1; }
+        .custom-hero h2 {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-weight: 500;
+            font-size: clamp(2rem, 4.5vw, 3.25rem);
+            letter-spacing: -0.01em;
+            margin: 0 0 .75rem;
+            line-height: 1.05;
+        }
+        .custom-hero p {
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: clamp(1rem, 1.8vw, 1.25rem);
+            font-style: italic;
+            margin: 0 0 1.75rem;
+            opacity: .92;
+        }
+        .custom-hero .cta {
+            display: inline-block;
+            padding: .75rem 1.75rem;
+            border: 1px solid currentColor;
+            font-size: 0.75rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: inherit;
+            transition: background-color .2s ease, color .2s ease;
+        }
+        .custom-hero .cta:hover { background: var(--text); color: var(--surface); }
+        .custom-hero.with-image .cta:hover { background: white; color: var(--text); }
     </style>
+
+    @php $csHero = $store->heroBanner(); @endphp
+
+    @if ($csHero['enabled'] && ($csHero['title'] !== '' || $csHero['subtitle'] !== '' || $csHero['image_path']))
+        <section class="custom-hero {{ $csHero['image_path'] ? 'with-image' : '' }} reveal">
+            @if ($csHero['image_path'])
+                <div class="bg-img" style="background-image: url('{{ \Illuminate\Support\Facades\Storage::url($csHero['image_path']) }}');" aria-hidden="true"></div>
+            @endif
+            <div class="custom-hero-inner">
+                @if ($csHero['title'] !== '')
+                    <h2>{{ $csHero['title'] }}</h2>
+                @endif
+                @if ($csHero['subtitle'] !== '')
+                    <p>{{ $csHero['subtitle'] }}</p>
+                @endif
+                @if ($csHero['cta_label'] !== '' && $csHero['cta_url'] !== '')
+                    <a href="{{ $csHero['cta_url'] }}" class="cta">{{ $csHero['cta_label'] }}</a>
+                @endif
+            </div>
+        </section>
+    @endif
 
     <section class="hero reveal">
         <p class="eyebrow">{{ __('site.storefront.hero.eyebrow', ['year' => date('Y')]) }}</p>

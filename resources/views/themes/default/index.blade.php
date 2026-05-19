@@ -323,7 +323,52 @@
             background: var(--primary);
             color: white;
         }
+
+        /* -------- Custom hero banner (merchant-configurable) -------- */
+        .custom-hero {
+            position: relative;
+            padding: 5rem 1.5rem;
+            text-align: center;
+            color: var(--text);
+            overflow: hidden;
+            background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 12%, white), color-mix(in srgb, var(--secondary) 10%, white));
+        }
+        .custom-hero.with-image { color: white; }
+        .custom-hero .bg-img {
+            position: absolute; inset: 0;
+            background-size: cover;
+            background-position: center;
+        }
+        .custom-hero .bg-img::after {
+            content: ""; position: absolute; inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.55) 100%);
+        }
+        .custom-hero-inner { position: relative; max-width: 800px; margin: 0 auto; z-index: 1; }
+        .custom-hero h2 { font-size: clamp(2rem, 4.5vw, 3.25rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 .75rem; }
+        .custom-hero p  { font-size: clamp(1rem, 1.8vw, 1.25rem); margin: 0 0 1.75rem; opacity: .9; }
+        .custom-hero .btn-primary { background: var(--primary); color: white; }
     </style>
+
+    @php $csHero = $store->heroBanner(); @endphp
+
+    @if ($csHero['enabled'] && ($csHero['title'] !== '' || $csHero['subtitle'] !== '' || $csHero['image_path']))
+        <section class="custom-hero {{ $csHero['image_path'] ? 'with-image' : '' }}">
+            @if ($csHero['image_path'])
+                <div class="bg-img" style="background-image: url('{{ \Illuminate\Support\Facades\Storage::url($csHero['image_path']) }}');" aria-hidden="true"></div>
+            @endif
+            <div class="custom-hero-inner">
+                @if ($csHero['title'] !== '')
+                    <h2>{{ $csHero['title'] }}</h2>
+                @endif
+                @if ($csHero['subtitle'] !== '')
+                    <p>{{ $csHero['subtitle'] }}</p>
+                @endif
+                @if ($csHero['cta_label'] !== '' && $csHero['cta_url'] !== '')
+                    <a href="{{ $csHero['cta_url'] }}" class="btn btn-primary btn-lg">{{ $csHero['cta_label'] }}</a>
+                @endif
+            </div>
+        </section>
+    @endif
 
     <section class="hero">
         <div class="hero-inner">

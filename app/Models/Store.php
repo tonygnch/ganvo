@@ -32,6 +32,9 @@ class Store extends Model
         'custom_domain_verification_token',
         'custom_domain_verified_at',
         'theme_settings',
+        'announcement',
+        'nav_menu',
+        'hero_banner',
         'is_live',
         'checkout_mode',
         'allow_registration',
@@ -41,6 +44,9 @@ class Store extends Model
         'theme_settings' => 'array',
         'display_currencies' => 'array',
         'fx_rates' => 'array',
+        'announcement' => 'array',
+        'nav_menu' => 'array',
+        'hero_banner' => 'array',
         'is_live' => 'boolean',
         'custom_domain_verified_at' => 'datetime',
         'allow_registration' => 'boolean',
@@ -143,5 +149,71 @@ class Store extends Model
             $this->save();
         }
         return $this->custom_domain_verification_token;
+    }
+
+    /*
+    |----------------------------------------------------------------------
+    | Storefront chrome accessors
+    |
+    | Themes always go through these helpers (never the raw JSON columns)
+    | so missing keys, null configs, and disabled toggles never cause a
+    | view error. Each helper returns a complete shape with safe defaults.
+    |----------------------------------------------------------------------
+    */
+
+    /**
+     * The announcement bar at the top of every theme.
+     *
+     * @return array{enabled: bool, text: string, link: ?string}
+     */
+    public function announcementBar(): array
+    {
+        $a = (array) ($this->announcement ?? []);
+        return [
+            'enabled' => (bool) ($a['enabled'] ?? false),
+            'text'    => trim((string) ($a['text'] ?? '')),
+            'link'    => isset($a['link']) && trim((string) $a['link']) !== ''
+                ? trim((string) $a['link'])
+                : null,
+        ];
+    }
+
+    /**
+     * Navigation menu items for the header, sorted by sort_order ascending.
+     * Each item: { label, url, sort_order }.
+     *
+     * @return array<int, array{label: string, url: string, sort_order: int}>
+     */
+    public function navMenuItems(): array
+    {
+        $items = collect((array) ($this->nav_menu ?? []))
+            ->filter(fn ($r) => is_array($r) && ! empty($r['label']) && ! empty($r['url']))
+            ->map(fn ($r) => [
+                'label'      => trim((string) $r['label']),
+                'url'        => trim((string) $r['url']),
+                'sort_order' => (int) ($r['sort_order'] ?? 0),
+            ])
+            ->sortBy('sort_order')
+            ->values()
+            ->all();
+        return $items;
+    }
+
+    /**
+     * Hero banner shown above the product grid on the storefront index.
+     *
+     * @return array{enabled: bool, title: string, subtitle: string, image_path: ?string, cta_label: string, cta_url: string}
+     */
+    public function heroBanner(): array
+    {
+        $h = (array) ($this->hero_banner ?? []);
+        return [
+            'enabled'    => (bool) ($h['enabled'] ?? false),
+            'title'      => trim((string) ($h['title'] ?? '')),
+            'subtitle'   => trim((string) ($h['subtitle'] ?? '')),
+            'image_path' => isset($h['image_path']) && $h['image_path'] !== '' ? $h['image_path'] : null,
+            'cta_label'  => trim((string) ($h['cta_label'] ?? '')),
+            'cta_url'    => trim((string) ($h['cta_url'] ?? '')),
+        ];
     }
 }

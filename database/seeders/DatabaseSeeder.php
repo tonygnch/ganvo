@@ -151,6 +151,26 @@ class DatabaseSeeder extends Seeder
                 // an explicit BGN rate here.
                 'display_currencies' => ['USD', 'EUR', 'GBP', 'BGN'],
                 'fx_rates' => ['EUR' => 0.92, 'GBP' => 0.79],
+                // Storefront chrome — demo the editable announcement,
+                // nav menu, and hero banner.
+                'announcement' => [
+                    'enabled' => true,
+                    'text'    => 'Free shipping on orders over $50 — easy returns within 30 days.',
+                    'link'    => null,
+                ],
+                'nav_menu' => [
+                    ['label' => 'Shop',     'url' => '/',          'sort_order' => 10],
+                    ['label' => 'Featured', 'url' => '/#featured', 'sort_order' => 20],
+                    ['label' => 'About',    'url' => '/#about',    'sort_order' => 30],
+                ],
+                'hero_banner' => [
+                    'enabled'    => true,
+                    'title'      => 'Acme Spring Edit',
+                    'subtitle'   => 'Bright pieces for sunny days. Designed and shipped from Boston.',
+                    'image_path' => null,
+                    'cta_label'  => 'Shop the edit',
+                    'cta_url'    => '/#shop',
+                ],
             ]
         );
 
@@ -279,6 +299,23 @@ class DatabaseSeeder extends Seeder
                 'currency' => 'EUR',
                 'display_currencies' => ['EUR', 'USD', 'GBP', 'BGN'],
                 'fx_rates' => ['USD' => 1.09, 'GBP' => 0.86],
+                'announcement' => [
+                    'enabled' => true,
+                    'text'    => 'Complimentary atelier consultations every Saturday.',
+                    'link'    => null,
+                ],
+                'nav_menu' => [
+                    ['label' => 'Atelier', 'url' => '/',          'sort_order' => 10],
+                    ['label' => 'Lookbook','url' => '/#shop',     'sort_order' => 20],
+                ],
+                'hero_banner' => [
+                    'enabled'    => true,
+                    'title'      => 'Made in small batches.',
+                    'subtitle'   => 'Editorial pieces, finished by hand in our Sofia studio.',
+                    'image_path' => null,
+                    'cta_label'  => null,
+                    'cta_url'    => null,
+                ],
             ]
         );
 

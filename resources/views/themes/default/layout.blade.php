@@ -336,12 +336,25 @@
     </style>
 </head>
 <body>
-    <div class="announce">
-        <span class="announce-inner">
-            <span>✨</span>
-            <span>{!! __('site.storefront.announce', ['amount' => '<strong>$50</strong>', 'days' => 30]) !!}</span>
-        </span>
-    </div>
+    @php
+        // Merchant-configurable storefront chrome — falls back gracefully
+        // to the original hardcoded copy if the merchant hasn't customized.
+        $csAnnouncement = $store->announcementBar();
+        $csNavMenu = $store->navMenuItems();
+    @endphp
+
+    @if ($csAnnouncement['enabled'] && $csAnnouncement['text'] !== '')
+        <div class="announce">
+            <span class="announce-inner">
+                <span>✨</span>
+                @if ($csAnnouncement['link'])
+                    <a href="{{ $csAnnouncement['link'] }}" style="color: inherit;">{{ $csAnnouncement['text'] }}</a>
+                @else
+                    <span>{{ $csAnnouncement['text'] }}</span>
+                @endif
+            </span>
+        </div>
+    @endif
 
     <header class="site">
         <div class="site-inner">
@@ -352,8 +365,15 @@
                 <span>{{ $tenant->name }}</span>
             </a>
             <nav class="nav">
-                <a href="/" class="nav-link">{{ __('site.storefront.nav.shop') }}</a>
-                <a href="#featured" class="nav-link">{{ __('site.storefront.nav.featured') }}</a>
+                @if (! empty($csNavMenu))
+                    @foreach ($csNavMenu as $item)
+                        <a href="{{ $item['url'] }}" class="nav-link">{{ $item['label'] }}</a>
+                    @endforeach
+                @else
+                    {{-- Fallback to original hardcoded links when the merchant hasn't configured a menu yet. --}}
+                    <a href="/" class="nav-link">{{ __('site.storefront.nav.shop') }}</a>
+                    <a href="#featured" class="nav-link">{{ __('site.storefront.nav.featured') }}</a>
+                @endif
                 @php
                     $customer = auth('customer')->user();
                     $currentLocale = app()->getLocale();
