@@ -81,8 +81,10 @@ return [
         ],
         'coming_soon' => [
             'eyebrow'           => 'Launching soon',
-            'title'             => "Something better for indie brands.",
-            'lead'              => 'A white-label e-commerce platform where you launch a beautiful storefront in minutes — pick a theme, customize, and start selling. We\'re putting the final touches on. Be first to know when we open.',
+            'title'             => 'Beautiful storefronts, launching soon.',
+            'headline_1'        => 'Beautiful storefronts',
+            'headline_2'        => 'launching soon.',
+            'lead'              => 'A white-label e-commerce platform where you launch a stunning storefront in minutes — pick a theme, customize, start selling. We\'re putting the final touches on. Be first to know when we open.',
             'email_placeholder' => 'you@yourbrand.com',
             'notify'            => 'Notify me',
             'thanks'            => "Thanks — we'll be in touch.",
