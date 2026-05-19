@@ -695,6 +695,86 @@
             font-weight: 700;
         }
 
+        /* -------- Monthly/Yearly toggle (CSS-only via :has(:checked)) -------- */
+        .pricing-toggle-wrap {
+            display: flex;
+            justify-content: center;
+            margin: 1.25rem 0 2.5rem;
+        }
+        .pricing-toggle {
+            display: inline-flex;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 9999px;
+            padding: 4px;
+        }
+        .pricing-toggle label {
+            position: relative;
+            padding: .5rem 1.25rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 9999px;
+            transition: color .2s ease, background-color .2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            user-select: none;
+        }
+        .pricing-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+        .pricing-toggle label:has(input:checked) {
+            background: var(--text);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,.15);
+        }
+        .pricing-toggle-savings {
+            font-size: 0.6875rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: rgba(34, 197, 94, 0.18);
+            color: #15803d;
+        }
+        .pricing-toggle label:has(input:checked) .pricing-toggle-savings {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        /* Each price card has both period blocks rendered; toggle swaps visibility */
+        .pricing-period-block.for-monthly { display: block; }
+        .pricing-period-block.for-yearly  { display: none; }
+        .pricing-grid-host:has(input[name="mkt_billing_period"][value="yearly"]:checked) .for-monthly { display: none; }
+        .pricing-grid-host:has(input[name="mkt_billing_period"][value="yearly"]:checked) .for-yearly  { display: block; }
+        /* The grid sits next to the toggle, so :has() on the section wraps both. */
+        .pricing:has(input[name="mkt_billing_period"][value="yearly"]:checked) .for-monthly { display: none; }
+        .pricing:has(input[name="mkt_billing_period"][value="yearly"]:checked) .for-yearly  { display: block; }
+
+        .pricing-strike {
+            color: var(--text-soft);
+            font-size: 0.875rem;
+            text-decoration: line-through;
+            text-decoration-thickness: 1.5px;
+            margin-top: -.5rem;
+        }
+        .pricing-discount-tag {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(34, 197, 94, 0.16);
+            color: #15803d;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            padding: .25rem .5rem;
+            border-radius: 6px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .price-card.featured .pricing-discount-tag {
+            top: 1.5rem;
+        }
+
         /* -------- CTA strip -------- */
         .cta-strip {
             background: var(--gradient-cta);
@@ -887,31 +967,121 @@
         </div>
     </section>
 
-    @php $plans = __('site.marketing.pricing.plans'); @endphp
+    @php
+        // Pull plans from the controller if provided (set on the marketing.home
+        // route) — older callers may not pass them, in which case fall back to
+        // an empty collection so the section quietly renders empty rather than
+        // erroring.
+        $plans = $plans ?? collect();
+        $maxSavingsPct = 0;
+        foreach ($plans as $p) { $maxSavingsPct = max($maxSavingsPct, $p->yearlySavingsPercent()); }
+    @endphp
+    @if ($plans->isNotEmpty())
     <section class="pricing" id="pricing">
         <div class="section-eyebrow reveal">{{ __('site.marketing.pricing.eyebrow') }}</div>
         <h2 class="reveal">{{ __('site.marketing.pricing.h2') }}</h2>
-        <div class="price-grid">
-            @foreach (['starter', 'pro', 'business'] as $key)
-                @php $plan = $plans[$key]; @endphp
-                <div class="price-card @if($key==='pro') featured @endif reveal">
-                    @if ($key === 'pro')
+
+        <div class="pricing-toggle-wrap reveal">
+            <div class="pricing-toggle" role="tablist">
+                <label>
+                    <input type="radio" name="mkt_billing_period" value="monthly" checked>
+                    {{ __('site.onboarding.plan.billing_monthly') }}
+                </label>
+                <label>
+                    <input type="radio" name="mkt_billing_period" value="yearly">
+                    {{ __('site.onboarding.plan.billing_yearly') }}
+                    @if ($maxSavingsPct > 0)
+                        <span class="pricing-toggle-savings">−{{ $maxSavingsPct }}%</span>
+                    @endif
+                </label>
+            </div>
+        </div>
+
+        <div class="price-grid pricing-grid-host">
+            @foreach ($plans as $plan)
+                @php
+                    $hasDiscount = $plan->hasActiveDiscount();
+                    $monthlyEff = $plan->effectivePriceCentsFor('monthly');
+                    $yearlyEff  = $plan->effectivePriceCentsFor('yearly');
+                @endphp
+                <div class="price-card @if($plan->is_popular) featured @endif reveal">
+                    @if ($plan->is_popular)
                         <span class="tag">{{ __('site.marketing.pricing.popular') }}</span>
                     @endif
-                    <h3>{{ $plan['name'] }}</h3>
-                    <p class="sub">{{ $plan['sub'] }}</p>
-                    <div class="price">{{ $plan['price'] }}@if(!empty($plan['price_unit']))<small>{{ $plan['price_unit'] }}</small>@endif</div>
-                    <div class="tbd">{{ __('site.marketing.pricing.tbd') }}</div>
+                    @if ($hasDiscount)
+                        <span class="pricing-discount-tag">
+                            −{{ $plan->discount_percent }}%@if ($plan->discount_label) · {{ $plan->discount_label }} @endif
+                        </span>
+                    @endif
+                    <h3>{{ $plan->name }}</h3>
+                    @if ($plan->tagline)
+                        <p class="sub">{{ $plan->tagline }}</p>
+                    @endif
+
+                    {{-- Monthly pricing block --}}
+                    <div class="pricing-period-block for-monthly">
+                        @if ($plan->isFree())
+                            <div class="price">{{ __('site.onboarding.plan.free') }}</div>
+                        @else
+                            <div class="price">
+                                {{ \App\Services\Money::format($monthlyEff, $plan->currency) }}<small>{{ __('site.onboarding.plan.per_month') }}</small>
+                            </div>
+                            @if ($hasDiscount && $monthlyEff !== $plan->price_monthly_cents)
+                                <div class="pricing-strike">{{ \App\Services\Money::format($plan->price_monthly_cents, $plan->currency) }}{{ __('site.onboarding.plan.per_month') }}</div>
+                            @endif
+                            @if ($hasDiscount && $plan->discount_ends_at)
+                                <div class="tbd">{{ __('site.onboarding.plan.promo_ends', ['date' => $plan->discount_ends_at->isoFormat('LL')]) }}</div>
+                            @endif
+                        @endif
+                    </div>
+
+                    {{-- Yearly pricing block --}}
+                    <div class="pricing-period-block for-yearly">
+                        @if ($plan->isFree())
+                            <div class="price">{{ __('site.onboarding.plan.free') }}</div>
+                        @else
+                            <div class="price">
+                                {{ \App\Services\Money::format($yearlyEff, $plan->currency) }}<small>{{ __('site.onboarding.plan.per_year') }}</small>
+                            </div>
+                            @if ($hasDiscount && $yearlyEff !== $plan->price_yearly_cents)
+                                <div class="pricing-strike">{{ \App\Services\Money::format($plan->price_yearly_cents, $plan->currency) }}{{ __('site.onboarding.plan.per_year') }}</div>
+                            @endif
+                            @if ($plan->yearlySavingsCents() > 0)
+                                <div class="tbd" style="color: var(--success); font-style: normal; font-weight: 600;">{{ __('site.onboarding.plan.you_save', ['amount' => \App\Services\Money::format($plan->yearlySavingsCents(), $plan->currency)]) }}</div>
+                            @elseif ($hasDiscount && $plan->discount_ends_at)
+                                <div class="tbd">{{ __('site.onboarding.plan.promo_ends', ['date' => $plan->discount_ends_at->isoFormat('LL')]) }}</div>
+                            @endif
+                        @endif
+                    </div>
+
                     <ul>
-                        @foreach ($plan['features'] as $feat)
+                        @foreach ((array) ($plan->features ?? []) as $feat)
                             <li>{{ $feat }}</li>
                         @endforeach
                     </ul>
-                    <a href="/onboarding/signup" class="btn @if($key==='pro') btn-primary @else btn-outline @endif btn-lg" style="display:block; text-align:center;">{{ $plan['cta'] }}</a>
+                    {{-- Two CTA links — one per period — only one shows at a
+                         time depending on which toggle is active. Avoids
+                         needing JS to update the href as the user clicks the
+                         toggle. --}}
+                    <a href="/onboarding/signup?plan={{ $plan->slug }}&billing_period=monthly" class="btn @if($plan->is_popular) btn-primary @else btn-outline @endif btn-lg pricing-period-block for-monthly" style="text-align:center;">
+                        @if ($plan->isFree())
+                            {{ __('site.marketing.pricing.cta_free') }}
+                        @else
+                            {{ __('site.marketing.pricing.cta_choose', ['name' => $plan->name]) }}
+                        @endif
+                    </a>
+                    <a href="/onboarding/signup?plan={{ $plan->slug }}&billing_period=yearly" class="btn @if($plan->is_popular) btn-primary @else btn-outline @endif btn-lg pricing-period-block for-yearly" style="text-align:center;">
+                        @if ($plan->isFree())
+                            {{ __('site.marketing.pricing.cta_free') }}
+                        @else
+                            {{ __('site.marketing.pricing.cta_choose', ['name' => $plan->name]) }}
+                        @endif
+                    </a>
                 </div>
             @endforeach
         </div>
     </section>
+    @endif
 
     <section class="cta-strip">
         <h2>{{ __('site.marketing.cta_strip.h2') }}</h2>

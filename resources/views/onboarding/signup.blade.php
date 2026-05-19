@@ -19,6 +19,14 @@
 
         <form method="post" action="/onboarding/signup">
             @csrf
+            {{-- Carry forward the plan + period the visitor clicked on the
+                 marketing page so the wizard's plan step opens pre-selected. --}}
+            @if (request('plan'))
+                <input type="hidden" name="plan" value="{{ request('plan') }}">
+            @endif
+            @if (request('billing_period'))
+                <input type="hidden" name="billing_period" value="{{ request('billing_period') }}">
+            @endif
 
             <div class="field">
                 <label class="lbl" for="business_name">{{ __('site.onboarding.signup.business_name') }}</label>

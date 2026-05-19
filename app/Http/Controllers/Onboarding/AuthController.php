@@ -40,15 +40,31 @@ class AuthController extends Controller
             'business_name' => ['required', 'string', 'max:120'],
             'email'         => ['required', 'email', 'max:255', 'unique:users,email'],
             'password'      => ['required', 'string', 'min:8', 'confirmed'],
+            // Optional — set by the marketing page's plan cards via a hidden
+            // input. Ignored if not a real active plan slug.
+            'plan'          => ['nullable', 'string', 'max:60'],
+            'billing_period'=> ['nullable', 'in:monthly,yearly'],
         ])->validate();
 
-        $user = DB::transaction(function () use ($data) {
+        // Resolve a starting plan from the carried-through marketing click.
+        // Default to 'starter' so existing flows are unchanged.
+        $startingPlan = 'starter';
+        if (! empty($data['plan'])) {
+            $exists = \App\Models\Plan::where('slug', $data['plan'])->where('is_active', true)->exists();
+            if ($exists) {
+                $startingPlan = $data['plan'];
+            }
+        }
+        $startingPeriod = $data['billing_period'] ?? 'monthly';
+
+        $user = DB::transaction(function () use ($data, $startingPlan, $startingPeriod) {
             $tenant = Tenant::create([
                 'name'             => $data['business_name'],
                 'slug'             => $this->uniqueSlug($data['business_name']),
                 'business_type'    => 'other',
                 'contact_email'    => $data['email'],
-                'subscription_plan' => Tenant::PLAN_STARTER,
+                'subscription_plan' => $startingPlan,
+                'billing_period'   => $startingPeriod,
                 'status'           => Tenant::STATUS_PENDING,
                 'onboarding_step'  => 'business',
             ]);

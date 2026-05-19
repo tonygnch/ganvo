@@ -18,7 +18,17 @@ use Illuminate\Support\Facades\Route;
 $centralDomain = config('ganvo.central_domain');
 
 Route::domain($centralDomain)->group(function () {
-    Route::get('/', fn () => view('marketing.home'))->name('marketing.home');
+    Route::get('/', function () {
+        // Plans are DB-driven and configurable in the SA panel; the marketing
+        // pricing section reads from the same source as the wizard so any
+        // edits there (new plan, discount, popular flag) show up on the
+        // homepage without redeploy.
+        $plans = \App\Models\Plan::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+        return view('marketing.home', compact('plans'));
+    })->name('marketing.home');
 
     Route::get('/lang/{locale}', [LanguageController::class, 'switch'])->name('lang.switch');
 

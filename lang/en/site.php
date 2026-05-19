@@ -65,15 +65,14 @@ return [
             'minimal_desc' => 'Quiet, text-forward layout. Great for boutique and editorial stores.',
         ],
         'pricing' => [
-            'eyebrow' => 'Pricing',
-            'h2' => 'Simple plans. Pay as you grow.',
-            'tbd' => 'Pricing finalizing',
-            'popular' => 'POPULAR',
-            'plans' => [
-                'starter' => ['name' => 'Starter', 'sub' => 'For getting your first sale.', 'price' => '$0', 'price_unit' => '/mo', 'cta' => 'Start free', 'features' => ['Free .ganvo.io subdomain', 'Up to 50 products', 'Standard themes', 'Email support']],
-                'pro'     => ['name' => 'Pro',     'sub' => 'For growing brands.',        'price' => 'TBD', 'price_unit' => '',    'cta' => 'Start Pro trial', 'features' => ['Custom domain', 'Unlimited products', 'Premium themes', 'Stripe Connect payouts', 'Priority support']],
-                'business'=> ['name' => 'Business','sub' => 'For serious operators.',    'price' => 'TBD', 'price_unit' => '',    'cta' => 'Talk to sales',  'features' => ['Everything in Pro', 'Multiple staff accounts', 'Advanced analytics', 'API access', 'Dedicated success manager']],
-            ],
+            'eyebrow'    => 'Pricing',
+            'h2'         => 'Simple plans. Pay as you grow.',
+            'tbd'        => 'Pricing finalizing',
+            'popular'    => 'POPULAR',
+            'cta_free'   => 'Start free',
+            'cta_choose' => 'Choose :name',
+            // The previous `plans` array was inlined here; pricing is now DB-
+            // driven via App\Models\Plan and managed in the SA panel.
         ],
         'cta_strip' => [
             'h2' => 'Ready to open your store?',
