@@ -18,7 +18,23 @@ use Illuminate\Support\Facades\Route;
 $centralDomain = config('ganvo.central_domain');
 
 Route::domain($centralDomain)->group(function () {
-    Route::get('/', function () {
+    Route::get('/', function (\Illuminate\Http\Request $request) {
+        // Coming-soon gate. When config('ganvo.coming_soon.enabled') is true,
+        // the public homepage shows a "Launching soon" splash instead of the
+        // full marketing site. Bypass via ?preview=<bypass_token> for
+        // stakeholder previews without needing to log in. Scoped to this
+        // route only — onboarding, admin, and storefronts remain reachable.
+        $cs = (array) config('ganvo.coming_soon');
+        if (! empty($cs['enabled'])) {
+            $token = $cs['bypass_token'] ?? null;
+            $bypass = is_string($token) && $token !== '' && $request->query('preview') === $token;
+            if (! $bypass) {
+                return response()
+                    ->view('marketing.coming-soon')
+                    ->header('Cache-Control', 'public, max-age=300');
+            }
+        }
+
         // Plans are DB-driven and configurable in the SA panel; the marketing
         // pricing section reads from the same source as the wizard so any
         // edits there (new plan, discount, popular flag) show up on the

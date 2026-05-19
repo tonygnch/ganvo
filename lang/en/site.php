@@ -79,6 +79,16 @@ return [
             'p' => 'Free to start. No credit card required.',
             'btn' => 'Start your store →',
         ],
+        'coming_soon' => [
+            'eyebrow'           => 'Launching soon',
+            'title'             => "Something better for indie brands.",
+            'lead'              => 'A white-label e-commerce platform where you launch a beautiful storefront in minutes — pick a theme, customize, and start selling. We\'re putting the final touches on. Be first to know when we open.',
+            'email_placeholder' => 'you@yourbrand.com',
+            'notify'            => 'Notify me',
+            'thanks'            => "Thanks — we'll be in touch.",
+            'helper'            => 'No spam. One email when we launch.',
+            'meta_description'  => 'Ganvo is a white-label e-commerce SaaS launching soon. Sign up to be notified.',
+        ],
     ],
 
     'storefront' => [
