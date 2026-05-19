@@ -1,16 +1,21 @@
 @props([
-    'size'         => 'md',   // sm | md | lg | xl
-    'wordmark'     => true,   // false to render mark only
-    'markColor'    => null,   // CSS color for the mark; defaults to var(--brand)
-    'wordColor'    => null,   // CSS color for "Ganvo"; defaults to var(--text)
+    'size'      => 'md',   // sm | md | lg | xl
+    'wordmark'  => true,   // false to render mark only
+    'markColor' => null,   // CSS color for the mark; defaults to var(--brand)
+    'wordColor' => null,   // CSS color for "Ganvo"; defaults to var(--text)
 ])
 @php
-    // Sizing presets — mark height in px, wordmark font-size in px, gap between them.
+    // Sizing presets. The mark is now drawn with a tight viewBox so its
+    // numeric `height` equals its visible height — no padding to compensate
+    // for. Proportions: text font-size ≈ 1.4× mark height puts the wordmark
+    // cap-height at roughly the same visual size as the mark, so the lockup
+    // reads as a single unit (matching the Ganvo lockup artwork the user
+    // provided).
     $presets = [
-        'sm' => ['mark' => 22, 'text' => 16, 'gap' => 8,  'tracking' => '-0.015em'],
-        'md' => ['mark' => 32, 'text' => 22, 'gap' => 10, 'tracking' => '-0.02em' ],
-        'lg' => ['mark' => 56, 'text' => 36, 'gap' => 14, 'tracking' => '-0.025em'],
-        'xl' => ['mark' => 80, 'text' => 52, 'gap' => 18, 'tracking' => '-0.03em' ],
+        'sm' => ['mark' => 22, 'text' => 28,  'gap' => 8,  'tracking' => '-0.02em' ],
+        'md' => ['mark' => 32, 'text' => 42,  'gap' => 10, 'tracking' => '-0.025em'],
+        'lg' => ['mark' => 48, 'text' => 64,  'gap' => 14, 'tracking' => '-0.03em' ],
+        'xl' => ['mark' => 72, 'text' => 96,  'gap' => 18, 'tracking' => '-0.035em'],
     ];
     $s = $presets[$size] ?? $presets['md'];
     $markStyle = 'color: ' . ($markColor ?? 'var(--brand)') . '; display: inline-flex; line-height: 0;';
@@ -22,11 +27,9 @@
     );
 @endphp
 
-{{-- Inline-flex so the lockup behaves like a single piece of text in headers,
-     nav rows, etc. The mark color is independent of the wordmark color so the
-     mark stays brand-blue in both light and dark themes while the wordmark
-     follows var(--text). --}}
-<span {{ $attributes->merge(['style' => 'display: inline-flex; align-items: center; gap: ' . $s['gap'] . 'px;']) }}>
+{{-- inline-flex with baseline-ish alignment so the mark's flat bottom sits
+     on the same line as the wordmark's baseline. --}}
+<span {{ $attributes->merge(['style' => 'display: inline-flex; align-items: flex-end; gap: ' . $s['gap'] . 'px;']) }}>
     <span style="{{ $markStyle }}">
         <x-brand-mark :size="$s['mark']" />
     </span>
