@@ -158,14 +158,17 @@
             z-index: 2;
         }
 
-        /* -------- COMING SOON loading bar, full-width filled --------
-                    Sits directly under the brand lockup. The bar is 100%
-                    filled with the brand gradient (no indeterminate
-                    shimmer animation) — reads as "almost done!" rather
-                    than "still loading". The only animation here is the
-                    pulsing dot in the label. */
+        /* -------- COMING SOON loading bar --------
+                    Sits directly under the brand lockup with comfortable
+                    breathing room before the headline below it.
+
+                    Animation: the bar fills from 0% → 100% over 1.6s with
+                    an easing curve, then a moving highlight shimmer slides
+                    across the full track on repeat — so the page lands
+                    showing the bar mid-fill (no "empty bar" first frame
+                    on slow connections) and continues to feel alive after. */
         .cs-progress {
-            margin: 1.25rem auto 0;
+            margin: 1.25rem auto 3rem;  /* extra bottom space — was crowding the headline */
             max-width: 460px;
             width: 100%;
         }
@@ -194,6 +197,7 @@
             100% { box-shadow: 0 0 0 0 transparent; }
         }
         .cs-progress-track {
+            position: relative;
             height: 8px;
             border-radius: 999px;
             background: var(--brand-soft);
@@ -205,10 +209,44 @@
             width: 100%;
             background: var(--gradient-cta);
             border-radius: 999px;
-            /* Subtle inner highlight so the solid fill doesn't look flat. */
             box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, .35),
                 0 1px 6px -2px color-mix(in srgb, var(--brand) 50%, transparent);
+            /* Load-in animation: width grows from 0 → 100% on first paint,
+               then forwards holds the bar full so the rest of the loop is
+               just the highlight shimmer below. */
+            transform-origin: left center;
+            animation: csProgressLoad 1.6s cubic-bezier(.2, .7, .2, 1) both;
+        }
+        @keyframes csProgressLoad {
+            0%   { transform: scaleX(0); }
+            100% { transform: scaleX(1); }
+        }
+        /* Moving highlight on the full bar — slides left → right on repeat
+           after the load-in completes. Uses a separate pseudo-element so
+           the shimmer doesn't get clipped by the fill's scale animation. */
+        .cs-progress-track::after {
+            content: "";
+            position: absolute;
+            top: 0; bottom: 0;
+            left: -35%;
+            width: 35%;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(255, 255, 255, .75) 50%,
+                transparent 100%);
+            animation: csProgressShimmer 2.4s ease-in-out 1.4s infinite;
+            pointer-events: none;
+        }
+        [data-theme="dark"] .cs-progress-track::after {
+            background: linear-gradient(90deg,
+                transparent 0%,
+                color-mix(in srgb, var(--brand) 75%, white) 50%,
+                transparent 100%);
+        }
+        @keyframes csProgressShimmer {
+            0%   { left: -35%; }
+            100% { left: 135%; }
         }
 
         .cs-hero h1 {

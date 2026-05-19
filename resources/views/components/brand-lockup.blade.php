@@ -17,7 +17,7 @@
     $heights = ['sm' => 28, 'md' => 40, 'lg' => 64, 'xl' => 96];
     $h = $heights[$size] ?? $heights['md'];
 
-    $src ??= '/images/brand/logo-lockup.png';
+    $src ??= '/images/brand/logo-full.png';
 
     // Resolve to a filesystem path for the existence check. Only run for
     // /-rooted paths (i.e. local public files) — leave remote URLs alone.
