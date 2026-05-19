@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Onboarding;
 
 use App\Http\Controllers\Controller;
+use App\Models\Plan;
 use App\Models\Product;
 use App\Models\Tenant;
 use App\Services\Money;
@@ -42,40 +43,10 @@ class WizardController extends Controller
         'other'               => 'Something else',
     ];
 
-    private const PLANS = [
-        'starter' => [
-            'price_label' => 'Free',
-            'tagline'     => 'Get your store online — no card required.',
-            'features'    => [
-                'Up to 25 products',
-                '1 storefront theme',
-                'Standard storefront on a *.ganvo.io subdomain',
-                'Email support',
-            ],
-        ],
-        'pro' => [
-            'price_label' => '$29 / mo',
-            'tagline'     => 'Grow without limits.',
-            'features'    => [
-                'Unlimited products',
-                'All themes + customization',
-                'Custom domain',
-                'Multi-currency display',
-                'Priority email support',
-            ],
-        ],
-        'business' => [
-            'price_label' => '$99 / mo',
-            'tagline'     => 'For established stores ready to scale.',
-            'features'    => [
-                'Everything in Pro',
-                'Advanced analytics',
-                'Lower transaction fees',
-                'Priority phone support',
-                'Onboarding concierge',
-            ],
-        ],
-    ];
+    // Plans now live in the `plans` table and are managed by super admins —
+    // App\Filament\SuperAdmin\Resources\Plans. The wizard fetches them at
+    // runtime so changes (pricing, discounts, popular flag, new plans) take
+    // effect without redeploy.
 
     public function entry(): RedirectResponse
     {
@@ -134,17 +105,25 @@ class WizardController extends Controller
     public function showPlan(): ViewContract
     {
         $tenant = $this->tenant();
+        $plans = Plan::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
         return view('onboarding.plan', [
-            'tenant'         => $tenant,
+            'tenant'        => $tenant,
             'progressSteps' => $this->progressFor('plan'),
-            'plans'          => self::PLANS,
+            'plans'         => $plans,
         ]);
     }
 
     public function savePlan(Request $request): RedirectResponse
     {
+        // Build the allowed slug list dynamically so newly added plans work
+        // without code changes.
+        $allowedSlugs = Plan::query()->where('is_active', true)->pluck('slug')->all();
         $data = $request->validate([
-            'subscription_plan' => ['required', 'in:' . implode(',', array_keys(self::PLANS))],
+            'subscription_plan' => ['required', 'in:' . implode(',', $allowedSlugs)],
+            'billing_period'    => ['required', 'in:' . implode(',', Plan::PERIODS)],
         ]);
         $this->tenant()->update($data);
         $this->advanceIfOnOrBefore('plan');

@@ -143,7 +143,22 @@
             <div class="lp-cell">
                 <a href="/onboarding/plan" class="edit">{{ __('site.onboarding.launch.edit') }} →</a>
                 <span class="label">{{ __('site.onboarding.steps.plan') }}</span>
-                <span class="value">{{ __('site.onboarding.plan.names.' . ($tenant->subscription_plan ?? 'starter')) }}</span>
+                @php
+                    $selectedPlan = $tenant->plan();
+                    $billingPeriod = $tenant->billing_period ?? 'monthly';
+                @endphp
+                <span class="value">
+                    @if ($selectedPlan)
+                        {{ $selectedPlan->name }}
+                        @if (! $selectedPlan->isFree())
+                            <span style="font-weight: 500; color: var(--text-muted); font-size: 0.8125rem; margin-left: .375rem;">
+                                · {{ \App\Services\Money::format($selectedPlan->effectivePriceCentsFor($billingPeriod), $selectedPlan->currency) }}{{ $billingPeriod === 'yearly' ? __('site.onboarding.plan.per_year') : __('site.onboarding.plan.per_month') }}
+                            </span>
+                        @endif
+                    @else
+                        {{ $tenant->subscription_plan ?: '—' }}
+                    @endif
+                </span>
             </div>
             <div class="lp-cell">
                 <a href="/onboarding/theme" class="edit">{{ __('site.onboarding.launch.edit') }} →</a>

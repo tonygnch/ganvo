@@ -38,6 +38,7 @@ class Tenant extends Model
         'contact_email',
         'contact_phone',
         'subscription_plan',
+        'billing_period',
         'stripe_account_id',
         'stripe_customer_id',
         'status',
@@ -121,5 +122,18 @@ class Tenant extends Model
     public function planLabel(): string
     {
         return self::PLANS[$this->subscription_plan] ?? $this->subscription_plan;
+    }
+
+    /**
+     * Resolve the configured Plan model for this tenant by slug. Returns null
+     * if the slug doesn't match anything (e.g. a plan was renamed/deleted in
+     * the SA panel — the tenant's stored slug is then stale).
+     */
+    public function plan(): ?Plan
+    {
+        if (! $this->subscription_plan) {
+            return null;
+        }
+        return Plan::where('slug', $this->subscription_plan)->first();
     }
 }

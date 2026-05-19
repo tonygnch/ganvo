@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Plan;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\Tenant;
@@ -21,6 +22,60 @@ class DatabaseSeeder extends Seeder
     {
         $superAdminRole = Role::firstOrCreate(['name' => 'super_admin']);
         $storeAdminRole = Role::firstOrCreate(['name' => 'store_admin']);
+
+        // Subscription plans — now DB-driven, configurable from the SA panel.
+        // Yearly price is roughly 10× monthly (2 months free) — convention,
+        // not enforced.
+        Plan::firstOrCreate(['slug' => 'starter'], [
+            'name' => 'Starter',
+            'tagline' => 'Get your store online — no card required.',
+            'features' => [
+                'Up to 25 products',
+                '1 storefront theme',
+                'Standard storefront on a *.ganvo.io subdomain',
+                'Email support',
+            ],
+            'currency' => 'USD',
+            'price_monthly_cents' => 0,
+            'price_yearly_cents'  => 0,
+            'is_popular' => false,
+            'is_active'  => true,
+            'sort_order' => 10,
+        ]);
+        Plan::firstOrCreate(['slug' => 'pro'], [
+            'name' => 'Pro',
+            'tagline' => 'Grow without limits.',
+            'features' => [
+                'Unlimited products',
+                'All themes + customization',
+                'Custom domain',
+                'Multi-currency display',
+                'Priority email support',
+            ],
+            'currency' => 'USD',
+            'price_monthly_cents' => 2900,
+            'price_yearly_cents'  => 29000,
+            'is_popular' => true,
+            'is_active'  => true,
+            'sort_order' => 20,
+        ]);
+        Plan::firstOrCreate(['slug' => 'business'], [
+            'name' => 'Business',
+            'tagline' => 'For established stores ready to scale.',
+            'features' => [
+                'Everything in Pro',
+                'Advanced analytics',
+                'Lower transaction fees',
+                'Priority phone support',
+                'Onboarding concierge',
+            ],
+            'currency' => 'USD',
+            'price_monthly_cents' => 9900,
+            'price_yearly_cents'  => 99000,
+            'is_popular' => false,
+            'is_active'  => true,
+            'sort_order' => 30,
+        ]);
 
         $superAdmin = User::firstOrCreate(
             ['email' => 'super@ganvo.test'],
