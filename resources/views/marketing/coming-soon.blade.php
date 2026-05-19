@@ -62,13 +62,22 @@
 
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
+        /* Lock the splash to the viewport — no scrollbar, no overflow.
+           Uses dvh so iOS Safari's chrome doesn't cause a sudden resize
+           when it hides/shows; falls back to vh on browsers that don't
+           support dvh. The nav + hero + footer flex-children below
+           must add up to fit, which is why hero gets `min-height: 0`
+           and `overflow: hidden`. */
+        html, body {
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
             color: var(--text);
             background: var(--bg);
             line-height: 1.6;
-            min-height: 100vh;
             display: flex;
             flex-direction: column;
             transition: background-color .25s ease, color .25s ease;
@@ -78,12 +87,13 @@
 
         /* -------- Nav -------- */
         nav.cs-nav {
-            position: sticky;
-            top: 0;
-            z-index: 50;
+            /* Not sticky — page doesn't scroll. flex-shrink keeps it at its
+               natural height so the hero gets all the remaining room. */
+            flex-shrink: 0;
             background: color-mix(in srgb, var(--bg) 80%, transparent);
             backdrop-filter: saturate(180%) blur(10px);
             border-bottom: 1px solid var(--border);
+            z-index: 50;
         }
         .cs-nav-inner {
             max-width: 1200px;
@@ -173,14 +183,18 @@
 
         /* -------- Hero -------- */
         .cs-hero {
+            /* flex: 1 + min-height: 0 lets the hero shrink to fill exactly
+               the space left over by nav + footer in the 100dvh shell.
+               overflow: hidden keeps the floating browser/phone mockups
+               clipped to the hero rather than pushing the page taller. */
             flex: 1;
+            min-height: 0;
             position: relative;
             overflow: hidden;
-            min-height: calc(100vh - 72px);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 4rem 1.5rem;
+            padding: 2rem 1.5rem;
             background:
                 radial-gradient(ellipse 80% 60% at 50% 0%, var(--brand-soft), transparent 60%),
                 radial-gradient(circle 700px at 90% 110%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 60%);
@@ -470,12 +484,24 @@
 
         /* -------- Footer -------- */
         footer.cs-foot {
-            padding: 1.5rem;
+            /* flex-shrink: 0 so the footer keeps its natural height instead
+               of being squeezed when the hero wants more room. */
+            flex-shrink: 0;
+            padding: 1rem 1.5rem;
             text-align: center;
             color: var(--text-soft);
             font-size: 0.75rem;
             letter-spacing: 0.04em;
             border-top: 1px solid var(--border);
+        }
+
+        /* On very short viewports (landscape phones, etc.) free the page to
+           scroll so nothing gets clipped. The visual lock is still in place
+           for any reasonably tall screen — laptops, desktops, portrait
+           phones, tablets. */
+        @media (max-height: 620px) {
+            html, body { height: auto; overflow: auto; }
+            .cs-hero { padding: 2rem 1.5rem 3rem; }
         }
 
         @media (prefers-reduced-motion: reduce) {
