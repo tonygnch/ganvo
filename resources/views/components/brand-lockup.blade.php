@@ -1,45 +1,70 @@
 @props([
-    'size' => 'md',           // sm | md | lg | xl — drives the rendered height in px
-    'src'  => null,           // override the asset path; defaults below
-    'alt'  => 'Ganvo',
+    'size'     => 'md',  // sm | md | lg | xl — drives rendered height in px
+    'lightSrc' => null,  // image shown on light theme (dark ink on light bg)
+    'darkSrc'  => null,  // image shown on dark theme (light ink on dark bg)
+    'alt'      => 'Ganvo',
 ])
 @php
     /*
-     | Brand lockup — uses the actual logo artwork file shipped in
-     | public/images/brand/ rather than a recreated SVG. Default path
-     | is logo-lockup.png; the merchant can override via the `src` prop
-     | (e.g. for a light-on-dark version).
+     | Theme-aware Ganvo brand lockup.
      |
-     | Falls back to a text-only "Ganvo" wordmark when the file isn't
-     | present on disk, so the layout doesn't break on a fresh clone
-     | that hasn't shipped the binary asset yet.
+     | Two image files are rendered side-by-side and CSS toggles their
+     | visibility based on the [data-theme] attribute on <html>. Pure-CSS
+     | switching (no JS) so the right image is in the DOM before paint,
+     | avoiding a flash of the wrong logo on theme load.
+     |
+     | Falls back gracefully when files are missing on disk — only the
+     | present version(s) render, or a text "Ganvo" wordmark if neither
+     | exists.
      */
     $heights = ['sm' => 28, 'md' => 40, 'lg' => 64, 'xl' => 96];
     $h = $heights[$size] ?? $heights['md'];
 
-    $src ??= '/images/brand/logo-full.png';
+    $lightSrc ??= '/images/brand/logo-full-black.png';
+    $darkSrc  ??= '/images/brand/logo-full-white.png';
 
-    // Resolve to a filesystem path for the existence check. Only run for
-    // /-rooted paths (i.e. local public files) — leave remote URLs alone.
-    $exists = true;
-    if (is_string($src) && str_starts_with($src, '/') && ! str_starts_with($src, '//')) {
-        $exists = file_exists(public_path(ltrim($src, '/')));
-    }
+    // Closure so we can check both paths concisely. Remote URLs (starting
+    // with //) and non-/-rooted strings are assumed present — we only check
+    // local public files.
+    $existsOnDisk = function (?string $src): bool {
+        if (! is_string($src)) return false;
+        if (! str_starts_with($src, '/') || str_starts_with($src, '//')) return true;
+        return file_exists(public_path(ltrim($src, '/')));
+    };
+
+    $lightOk = $existsOnDisk($lightSrc);
+    $darkOk  = $existsOnDisk($darkSrc);
+
+    $imgStyle = "height: {$h}px; width: auto; display: inline-block; vertical-align: middle;";
 @endphp
 
-@if ($exists)
+@if ($lightOk && $darkOk)
+    {{-- Both present — pure-CSS theme switcher via .brand-lockup-img-* classes.
+         The hide rule lives in the page's CSS (see coming-soon.blade.php). --}}
     <img
-        src="{{ $src }}"
+        src="{{ $lightSrc }}"
         alt="{{ $alt }}"
-        style="height: {{ $h }}px; width: auto; display: inline-block;"
+        class="brand-lockup-img brand-lockup-img-light"
+        style="{{ $imgStyle }}"
         {{ $attributes }}
     >
+    <img
+        src="{{ $darkSrc }}"
+        alt=""
+        aria-hidden="true"
+        class="brand-lockup-img brand-lockup-img-dark"
+        style="{{ $imgStyle }}"
+        {{ $attributes }}
+    >
+@elseif ($lightOk)
+    <img src="{{ $lightSrc }}" alt="{{ $alt }}" style="{{ $imgStyle }}" {{ $attributes }}>
+@elseif ($darkOk)
+    <img src="{{ $darkSrc }}" alt="{{ $alt }}" style="{{ $imgStyle }}" {{ $attributes }}>
 @else
-    {{-- File hasn't been shipped yet. Render a sensible text-only
-         fallback so the page still reads as Ganvo. The merchant should
-         drop the artwork at public{{ $src }} to replace this. --}}
+    {{-- Neither image is on disk. Render a text-only fallback so the page
+         doesn't break on a fresh clone that hasn't shipped the assets yet. --}}
     <span
-        style="display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: {{ (int) round($h * 0.75) }}px; letter-spacing: -0.025em; line-height: 1; color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;"
+        style="display: inline-flex; align-items: center; font-weight: 800; font-size: {{ (int) round($h * 0.75) }}px; letter-spacing: -0.025em; line-height: 1; color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;"
         {{ $attributes }}
     >Ganvo</span>
 @endif

@@ -85,6 +85,16 @@
         a { color: var(--brand); text-decoration: none; }
         a:hover { text-decoration: none; }
 
+        /* -------- Brand lockup theme switch --------
+                    The lockup component renders BOTH the light- and dark-
+                    theme variants of the logo as <img> tags; this rule
+                    hides whichever one doesn't match the current theme.
+                    Pure-CSS so there's no flash of the wrong logo on
+                    initial paint or when the user toggles the theme. */
+        .brand-lockup-img { display: inline-block; }
+        :root[data-theme="light"] .brand-lockup-img-dark,
+        :root[data-theme="dark"]  .brand-lockup-img-light { display: none; }
+
         /* -------- Hero lockup + footer utility links --------
            The previous nav bar (with brand text + language menu + theme
            toggle) was deleted in favor of placing the brand lockup at the
