@@ -80,20 +80,22 @@
             line-height: 1.6;
             display: flex;
             flex-direction: column;
-            transition: background-color .25s ease, color .25s ease;
+            /* 300ms matches the logo crossfade in the brand-lockup component,
+               so theme toggle animates the bg, text, and lockup in lockstep. */
+            transition: background-color .3s ease, color .3s ease;
         }
         a { color: var(--brand); text-decoration: none; }
         a:hover { text-decoration: none; }
 
         /* -------- Brand lockup theme switch --------
-                    The lockup component renders BOTH the light- and dark-
-                    theme variants of the logo as <img> tags; this rule
-                    hides whichever one doesn't match the current theme.
-                    Pure-CSS so there's no flash of the wrong logo on
-                    initial paint or when the user toggles the theme. */
-        .brand-lockup-img { display: inline-block; }
+                    The lockup component stacks BOTH logo variants in the
+                    same grid cell. This rule fades out whichever one
+                    doesn't match :root[data-theme]. Opacity (not display)
+                    so the transition the component declares on each img
+                    (.3s ease) actually animates, giving us a crossfade
+                    that lines up with the body bg/color transition. */
         :root[data-theme="light"] .brand-lockup-img-dark,
-        :root[data-theme="dark"]  .brand-lockup-img-light { display: none; }
+        :root[data-theme="dark"]  .brand-lockup-img-light { opacity: 0; }
 
         /* -------- Hero lockup + footer utility links --------
            The previous nav bar (with brand text + language menu + theme
