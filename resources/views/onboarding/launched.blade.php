@@ -97,7 +97,7 @@
         @for ($i = 0; $i < 50; $i++)
             <span style="
                 left: {{ rand(0, 100) }}%;
-                background: {{ $i % 2 === 0 ? '#10B981' : '#1F2937' }};
+                background: {{ $i % 2 === 0 ? '#2563EB' : '#1F2937' }};
                 animation-delay: {{ rand(0, 3000) / 1000 }}s;
                 animation-duration: {{ rand(3000, 5500) / 1000 }}s;
             "></span>

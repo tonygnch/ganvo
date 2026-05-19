@@ -9,9 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #10B981;
-            --primary-soft: color-mix(in srgb, #10B981 12%, white);
-            --primary-strong: color-mix(in srgb, #10B981 80%, black);
+            --primary: #2563EB;
+            --primary-soft: color-mix(in srgb, #2563EB 12%, white);
+            --primary-strong: color-mix(in srgb, #2563EB 80%, black);
             --bg: #fafaf9;
             --surface: #ffffff;
             --muted: #f5f5f4;
