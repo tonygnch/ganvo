@@ -20,6 +20,21 @@ class ThemeRegistry
                 'description' => 'Quiet, text-forward layout. Great for boutique and editorial stores.',
                 'screenshot' => '/images/themes/minimal.svg',
             ],
+            'gallery' => [
+                'name' => 'Gallery',
+                'description' => 'Asymmetric editorial grid with a featured product. Built for art, photography, and handcraft brands.',
+                'screenshot' => '/images/themes/gallery.svg',
+            ],
+            'menu' => [
+                'name' => 'Menu',
+                'description' => 'Restaurant-card layout with dotted leader lines from each item to its price. Built for food, drink, and tasting menus.',
+                'screenshot' => '/images/themes/menu.svg',
+            ],
+            'tech' => [
+                'name' => 'Tech',
+                'description' => 'Spec-forward card grid with at-a-glance details. Built for electronics, gear, and digital products.',
+                'screenshot' => '/images/themes/tech.svg',
+            ],
         ];
     }
 
