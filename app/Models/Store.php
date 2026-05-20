@@ -35,6 +35,7 @@ class Store extends Model
         'announcement',
         'nav_menu',
         'hero_banner',
+        'signup_fields',
         'is_live',
         'checkout_mode',
         'allow_registration',
@@ -47,10 +48,18 @@ class Store extends Model
         'announcement' => 'array',
         'nav_menu' => 'array',
         'hero_banner' => 'array',
+        'signup_fields' => 'array',
         'is_live' => 'boolean',
         'custom_domain_verified_at' => 'datetime',
         'allow_registration' => 'boolean',
     ];
+
+    /**
+     * The set of optional storefront-signup fields the merchant can enable.
+     * Order here drives both the admin form and the rendered registration
+     * page; treat this as the canonical schema.
+     */
+    public const SIGNUP_FIELDS = ['phone', 'birthday', 'shipping_address', 'marketing_optin'];
 
     protected $attributes = [
         'currency' => 'USD',
@@ -215,5 +224,29 @@ class Store extends Model
             'cta_label'  => trim((string) ($h['cta_label'] ?? '')),
             'cta_url'    => trim((string) ($h['cta_url'] ?? '')),
         ];
+    }
+
+    /**
+     * Normalized signup-field config for the storefront customer registration
+     * form. Returns each known field with explicit enabled + required flags,
+     * even when the stored JSON is missing or partial — so callers never
+     * have to defend against null keys.
+     *
+     * @return array<string, array{enabled: bool, required: bool}>
+     */
+    public function signupFieldsConfig(): array
+    {
+        $stored = (array) ($this->signup_fields ?? []);
+        $out = [];
+        foreach (self::SIGNUP_FIELDS as $field) {
+            $row = (array) ($stored[$field] ?? []);
+            $enabled  = (bool) ($row['enabled']  ?? false);
+            // `required` only matters when the field is enabled; storing
+            // required=true on a disabled field is meaningless, so we
+            // normalize it to false to avoid confusion downstream.
+            $required = $enabled && (bool) ($row['required'] ?? false);
+            $out[$field] = compact('enabled', 'required');
+        }
+        return $out;
     }
 }

@@ -82,6 +82,14 @@ class StoreSettings extends Page implements HasForms
         $data['hero_title']     = $hero['title'];
         $data['hero_subtitle']  = $hero['subtitle'];
         $data['hero_image_path']= $hero['image_path'];
+
+        // Signup-field config: flatten the per-field map into
+        // signup_FIELD_enabled / signup_FIELD_required input names so each
+        // toggle gets its own Filament component.
+        foreach ($store->signupFieldsConfig() as $field => $cfg) {
+            $data["signup_{$field}_enabled"]  = $cfg['enabled'];
+            $data["signup_{$field}_required"] = $cfg['required'];
+        }
         $data['hero_cta_label'] = $hero['cta_label'];
         $data['hero_cta_url']   = $hero['cta_url'];
 
@@ -263,6 +271,25 @@ class StoreSettings extends Page implements HasForms
                             ->default(true),
                     ]),
 
+                Section::make('Signup form fields')
+                    ->description('Choose which optional fields your storefront signup form collects. Each field can be enabled and, separately, marked required.')
+                    ->collapsed()
+                    ->columns(2)
+                    ->schema([
+                        // Phone
+                        Toggle::make('signup_phone_enabled')->label('Collect phone number')->columnSpan(1),
+                        Toggle::make('signup_phone_required')->label('Required')->helperText('Only honored when "Collect" is on.')->columnSpan(1),
+                        // Birthday
+                        Toggle::make('signup_birthday_enabled')->label('Collect birthday')->columnSpan(1),
+                        Toggle::make('signup_birthday_required')->label('Required')->columnSpan(1),
+                        // Shipping address (4 sub-inputs rendered together at signup)
+                        Toggle::make('signup_shipping_address_enabled')->label('Collect shipping address')->columnSpan(1),
+                        Toggle::make('signup_shipping_address_required')->label('Required')->columnSpan(1),
+                        // Marketing opt-in
+                        Toggle::make('signup_marketing_optin_enabled')->label('Show marketing opt-in checkbox')->columnSpan(1),
+                        Toggle::make('signup_marketing_optin_required')->label('Required (must check to sign up)')->helperText('Useful for double opt-in flows; less common.')->columnSpan(1),
+                    ]),
+
                 Section::make('Visibility')
                     ->schema([
                         Toggle::make('is_live')
@@ -340,6 +367,21 @@ class StoreSettings extends Page implements HasForms
         ];
         unset($state['hero_enabled'], $state['hero_title'], $state['hero_subtitle'],
               $state['hero_image_path'], $state['hero_cta_label'], $state['hero_cta_url']);
+
+        // Fold the per-field signup toggles back into the signup_fields JSON.
+        // Walks Store::SIGNUP_FIELDS so adding a new field name in the model
+        // is the only edit needed to support it here too.
+        $signup = [];
+        foreach (\App\Models\Store::SIGNUP_FIELDS as $field) {
+            $enabledKey  = "signup_{$field}_enabled";
+            $requiredKey = "signup_{$field}_required";
+            $signup[$field] = [
+                'enabled'  => (bool) ($state[$enabledKey] ?? false),
+                'required' => (bool) ($state[$requiredKey] ?? false),
+            ];
+            unset($state[$enabledKey], $state[$requiredKey]);
+        }
+        $state['signup_fields'] = $signup;
 
         $store->update($state);
 

@@ -256,6 +256,16 @@ return [
         'have_account' => 'Already have an account?',
         'sign_in_link' => 'Sign in',
         'bad_credentials' => 'These credentials do not match our records.',
+        // Optional signup fields — only render when the store enables them.
+        'optional'          => 'optional',
+        'phone'             => 'Phone number',
+        'birthday'          => 'Birthday',
+        'shipping_address'  => 'Shipping address',
+        'address_line'      => 'Street address',
+        'address_city'      => 'City',
+        'address_postal'    => 'Postal code',
+        'address_country'   => 'Country (ISO code)',
+        'marketing_consent' => "Send me product news and offers from :tenant. I can unsubscribe anytime.",
     ],
 
     'account' => [

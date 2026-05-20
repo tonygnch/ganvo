@@ -19,6 +19,9 @@ class Customer extends Authenticatable
         'password',
         'email_verified_at',
         'default_shipping_address',
+        'phone',
+        'birthday',
+        'marketing_optin_at',
     ];
 
     protected $hidden = [
@@ -32,6 +35,8 @@ class Customer extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'default_shipping_address' => 'array',
+            'birthday' => 'date',
+            'marketing_optin_at' => 'datetime',
         ];
     }
 
