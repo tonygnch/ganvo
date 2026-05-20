@@ -73,6 +73,22 @@ class PlanForm
                             ->dehydrateStateUsing(fn ($state) => (int) round(((float) $state) * 100)),
                     ]),
 
+                Section::make('Stripe billing')
+                    ->description('Map this plan to Stripe Price objects. Create one Price per billing period in Stripe Dashboard → Products, then paste the IDs here. Free plans (price = 0) can skip these.')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('stripe_price_id_monthly')
+                            ->label('Monthly Stripe Price ID')
+                            ->placeholder('price_…')
+                            ->maxLength(120)
+                            ->helperText('From Stripe → Products → Price (recurring, monthly).'),
+                        TextInput::make('stripe_price_id_yearly')
+                            ->label('Yearly Stripe Price ID')
+                            ->placeholder('price_…')
+                            ->maxLength(120)
+                            ->helperText('From Stripe → Products → Price (recurring, yearly).'),
+                    ]),
+
                 Section::make('Visibility & order')
                     ->columns(3)
                     ->schema([

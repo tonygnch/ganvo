@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Billing\BillingController;
 use App\Http\Controllers\ImpersonateController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\Onboarding\AuthController as OnboardingAuthController;
@@ -99,6 +100,16 @@ Route::domain($centralDomain)->group(function () {
 
     // Backwards-compat: legacy /store/register links should land on the wizard.
     Route::redirect('/store/register', '/onboarding/signup');
+
+    // ---- Platform billing (Stripe Checkout + Customer Portal) ----
+    // These routes are auth-only and operate on the authenticated merchant's
+    // tenant. Filament's StoreAdmin Billing page redirects into them.
+    Route::middleware('auth')->group(function () {
+        Route::post('/billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
+        Route::get('/billing/checkout/success', [BillingController::class, 'checkoutSuccess'])->name('billing.checkout.success');
+        Route::post('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
+        Route::get('/billing', [BillingController::class, 'show'])->name('billing.show');
+    });
 });
 
 // Shared storefront route definitions, reused for both subdomain and custom-domain matching.

@@ -27,6 +27,8 @@ class Plan extends Model
         'currency',
         'price_monthly_cents',
         'price_yearly_cents',
+        'stripe_price_id_monthly',
+        'stripe_price_id_yearly',
         'is_popular',
         'is_active',
         'sort_order',
@@ -144,5 +146,24 @@ class Plan extends Model
     public function isFree(): bool
     {
         return $this->price_monthly_cents === 0 && $this->price_yearly_cents === 0;
+    }
+
+    /**
+     * The Stripe Price ID corresponding to this plan + billing period. Returns
+     * null when the SuperAdmin hasn't wired the Stripe Price yet (e.g. before
+     * the platform is configured against Stripe) — the caller decides whether
+     * that's an error or a soft skip.
+     */
+    public function stripePriceFor(string $period): ?string
+    {
+        return $period === self::PERIOD_YEARLY
+            ? ($this->stripe_price_id_yearly ?: null)
+            : ($this->stripe_price_id_monthly ?: null);
+    }
+
+    /** Does this plan have any Stripe Price configured? Useful for the SA UI. */
+    public function hasStripePrices(): bool
+    {
+        return (bool) ($this->stripe_price_id_monthly || $this->stripe_price_id_yearly);
     }
 }

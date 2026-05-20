@@ -72,10 +72,38 @@ class ViewTenant extends ViewRecord
 
             Section::make('Stripe')
                 ->columns(2)
-                ->visible(fn (Tenant $r) => $r->stripe_account_id || $r->stripe_customer_id)
+                ->visible(fn (Tenant $r) => $r->stripe_account_id || $r->stripe_id)
                 ->schema([
-                    TextEntry::make('stripe_account_id')->placeholder('—')->copyable(),
-                    TextEntry::make('stripe_customer_id')->placeholder('—')->copyable(),
+                    TextEntry::make('stripe_account_id')
+                        ->label('Connect (payouts)')
+                        ->placeholder('—')->copyable(),
+                    TextEntry::make('stripe_id')
+                        ->label('Customer (billing)')
+                        ->placeholder('—')->copyable(),
+                ]),
+
+            Section::make('Platform billing')
+                ->columns(3)
+                ->visible(fn (Tenant $r) => $r->stripe_id !== null)
+                ->schema([
+                    TextEntry::make('billing_period')
+                        ->label('Period')
+                        ->placeholder('—')
+                        ->badge(),
+                    TextEntry::make('billing_status')
+                        ->label('Status')
+                        ->state(fn (Tenant $r) => $r->platformSubscription()?->stripe_status ?? '—')
+                        ->badge()
+                        ->color(fn ($state) => match ($state) {
+                            'active', 'trialing' => 'success',
+                            'past_due', 'unpaid', 'incomplete' => 'danger',
+                            'canceled' => 'gray',
+                            default => 'gray',
+                        }),
+                    TextEntry::make('trial_ends_at')
+                        ->label('Trial ends')
+                        ->placeholder('—')
+                        ->dateTime(),
                 ]),
         ]);
     }

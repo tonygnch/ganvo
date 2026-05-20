@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Cashier\Billable;
 
 class Tenant extends Model
 {
-    use SoftDeletes;
+    use Billable, SoftDeletes;
 
     public const STATUS_PENDING = 'pending';
     public const STATUS_ACTIVE = 'active';
@@ -40,7 +41,10 @@ class Tenant extends Model
         'subscription_plan',
         'billing_period',
         'stripe_account_id',
-        'stripe_customer_id',
+        'stripe_id',
+        'pm_type',
+        'pm_last_four',
+        'trial_ends_at',
         'status',
         'onboarding_progress',
         'onboarding_step',
@@ -50,6 +54,7 @@ class Tenant extends Model
     protected $casts = [
         'onboarding_progress' => 'array',
         'onboarded_at' => 'datetime',
+        'trial_ends_at' => 'datetime',
     ];
 
     // The wizard step sequence — order matters; advance() walks this list.
@@ -135,5 +140,35 @@ class Tenant extends Model
             return null;
         }
         return Plan::where('slug', $this->subscription_plan)->first();
+    }
+
+    /**
+     * The Stripe Price ID for this tenant's currently selected plan + period,
+     * or null if the plan is free / not configured in Stripe yet.
+     */
+    public function activeStripePriceId(): ?string
+    {
+        $plan = $this->plan();
+        if (! $plan || $plan->isFree()) {
+            return null;
+        }
+        return $plan->stripePriceFor($this->billing_period ?: Plan::PERIOD_MONTHLY);
+    }
+
+    /**
+     * Cashier's primary subscription identifier. We use 'default' as the name
+     * across the platform so all billing helpers can stay on one canonical
+     * subscription per tenant.
+     */
+    public const SUBSCRIPTION_NAME = 'default';
+
+    public function platformSubscription()
+    {
+        return $this->subscription(self::SUBSCRIPTION_NAME);
+    }
+
+    public function platformSubscribed(): bool
+    {
+        return $this->subscribed(self::SUBSCRIPTION_NAME);
     }
 }

@@ -25,8 +25,12 @@ class TenantForm
                 TextInput::make('subscription_plan')
                     ->required()
                     ->default('starter'),
-                TextInput::make('stripe_account_id'),
-                TextInput::make('stripe_customer_id'),
+                TextInput::make('stripe_account_id')
+                    ->label('Stripe Connect account (payouts)')
+                    ->helperText('For client → end-customer payments. Different from billing.'),
+                TextInput::make('stripe_id')
+                    ->label('Stripe customer (platform billing)')
+                    ->helperText('Auto-populated when the tenant subscribes via Cashier.'),
                 TextInput::make('status')
                     ->required()
                     ->default('pending'),
