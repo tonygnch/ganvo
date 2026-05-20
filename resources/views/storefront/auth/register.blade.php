@@ -87,6 +87,16 @@
         }
         .auth-footer a { color: var(--primary); font-weight: 600; }
         .auth-footer a:hover { text-decoration: underline; }
+
+        /* Hooks for the shared _signup_fields partial. */
+        .shipping-group { border-top: 1px solid var(--border, #e7e5e4); padding-top: 1.5rem; margin-top: 1.5rem; }
+        .shipping-group .field-label { margin-bottom: .75rem; }
+        .shipping-group .field-input { margin-bottom: .5rem; }
+        .shipping-row { display: grid; grid-template-columns: 2fr 1fr; gap: .5rem; }
+        .shipping-row .field-input { margin-bottom: .5rem; }
+        .marketing-field { margin-top: 1rem; }
+        .marketing-label { display: flex; align-items: flex-start; gap: .625rem; cursor: pointer; font-size: 0.875rem; line-height: 1.5; }
+        .marketing-label input { margin-top: .15rem; flex-shrink: 0; }
     </style>
 
     <div class="auth-page">
@@ -132,62 +142,10 @@
                     <input class="field-input" type="password" name="password_confirmation" id="password_confirmation" required>
                 </div>
 
-                {{-- Merchant-toggleable fields. Each renders only when the
-                     store has enabled it via the admin Signup form section. --}}
-                @if ($csSignup['phone']['enabled'])
-                    <div class="field">
-                        <label class="field-label" for="phone">
-                            {{ __('site.auth.phone') }}{!! $reqMarker($csSignup['phone']['required']) !!}
-                        </label>
-                        <input class="field-input" type="tel" name="phone" id="phone" value="{{ old('phone') }}"
-                               @if ($csSignup['phone']['required']) required @endif>
-                    </div>
-                @endif
-
-                @if ($csSignup['birthday']['enabled'])
-                    <div class="field">
-                        <label class="field-label" for="birthday">
-                            {{ __('site.auth.birthday') }}{!! $reqMarker($csSignup['birthday']['required']) !!}
-                        </label>
-                        <input class="field-input" type="date" name="birthday" id="birthday" value="{{ old('birthday') }}"
-                               @if ($csSignup['birthday']['required']) required @endif>
-                    </div>
-                @endif
-
-                @if ($csSignup['shipping_address']['enabled'])
-                    <div class="field" style="border-top: 1px solid var(--hair, #e7e5e4); padding-top: 1.5rem; margin-top: 1.5rem;">
-                        <label class="field-label" style="margin-bottom: .75rem;">
-                            {{ __('site.auth.shipping_address') }}{!! $reqMarker($csSignup['shipping_address']['required']) !!}
-                        </label>
-                        <input class="field-input" style="margin-bottom: .5rem;" type="text" name="address_line" value="{{ old('address_line') }}"
-                               placeholder="{{ __('site.auth.address_line') }}"
-                               @if ($csSignup['shipping_address']['required']) required @endif>
-                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: .5rem; margin-bottom: .5rem;">
-                            <input class="field-input" type="text" name="address_city" value="{{ old('address_city') }}"
-                                   placeholder="{{ __('site.auth.address_city') }}"
-                                   @if ($csSignup['shipping_address']['required']) required @endif>
-                            <input class="field-input" type="text" name="address_postal" value="{{ old('address_postal') }}"
-                                   placeholder="{{ __('site.auth.address_postal') }}"
-                                   @if ($csSignup['shipping_address']['required']) required @endif>
-                        </div>
-                        <input class="field-input" type="text" name="address_country" value="{{ old('address_country') }}"
-                               placeholder="{{ __('site.auth.address_country') }}"
-                               maxlength="2" style="text-transform: uppercase;"
-                               @if ($csSignup['shipping_address']['required']) required @endif>
-                    </div>
-                @endif
-
-                @if ($csSignup['marketing_optin']['enabled'])
-                    <div class="field" style="margin-top: 1rem;">
-                        <label style="display: flex; align-items: flex-start; gap: .625rem; cursor: pointer; font-size: 0.875rem; line-height: 1.5;">
-                            <input type="checkbox" name="marketing_optin" value="1"
-                                   @if (old('marketing_optin')) checked @endif
-                                   @if ($csSignup['marketing_optin']['required']) required @endif
-                                   style="margin-top: .15rem; flex-shrink: 0;">
-                            <span>{{ __('site.auth.marketing_consent', ['tenant' => $tenant->name]) }}{!! $reqMarker($csSignup['marketing_optin']['required']) !!}</span>
-                        </label>
-                    </div>
-                @endif
+                {{-- Merchant-toggleable fields. Single source of truth lives in
+                     storefront/auth/_signup_fields.blade.php so every theme renders
+                     identical field markup with theme-styled wrappers. --}}
+                @include('storefront.auth._signup_fields')
 
                 <button type="submit" class="submit-btn">{{ __('site.auth.create_account_btn') }}</button>
             </form>

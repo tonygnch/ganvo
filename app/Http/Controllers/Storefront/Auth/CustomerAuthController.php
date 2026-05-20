@@ -21,7 +21,7 @@ class CustomerAuthController extends Controller
             return redirect('/account');
         }
 
-        return view('storefront.auth.login', $this->viewData());
+        return view($this->themedView('auth.login', 'storefront.auth.login'), $this->viewData());
     }
 
     public function login(Request $request): RedirectResponse
@@ -60,7 +60,7 @@ class CustomerAuthController extends Controller
             abort(404);
         }
 
-        return view('storefront.auth.register', $this->viewData());
+        return view($this->themedView('auth.register', 'storefront.auth.register'), $this->viewData());
     }
 
     public function register(Request $request): RedirectResponse
@@ -158,5 +158,19 @@ class CustomerAuthController extends Controller
             'store' => $store,
             'theme' => ThemeRegistry::exists($store->theme) ? $store->theme : 'default',
         ];
+    }
+
+    /**
+     * Prefer themes.{theme}.{view} when it exists, fall back to the shared
+     * default. Mirrors the same hook CartController + CheckoutController use,
+     * so a theme can opt into a full custom auth UI just by dropping in the
+     * matching Blade file — no controller changes needed.
+     */
+    private function themedView(string $themeRelative, string $fallback): string
+    {
+        $tenant = app('current_tenant');
+        $themeSlug = ThemeRegistry::exists($tenant->store->theme) ? $tenant->store->theme : 'default';
+        $candidate = "themes.{$themeSlug}.{$themeRelative}";
+        return view()->exists($candidate) ? $candidate : $fallback;
     }
 }
