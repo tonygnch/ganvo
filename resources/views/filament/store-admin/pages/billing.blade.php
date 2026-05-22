@@ -1,6 +1,5 @@
 <x-filament-panels::page>
     @php
-        use App\Services\Money;
         $statusColors = [
             'active'    => ['#10b981', '#064e3b'],
             'trialing'  => ['#22d3ee', '#155e75'],
@@ -42,7 +41,7 @@
                         @if ($currentPlan->isFree())
                             <span style="font-weight: 600;">{{ __('billing.free') }}</span>
                         @else
-                            <span style="font-weight: 700; font-size: 1.5rem;">{{ Money::display($currentPlan->effectivePriceCentsFor($currentPeriod), 1, $currentPlan->currency) }}</span>
+                            <span style="font-weight: 700; font-size: 1.5rem;">{{ \App\Services\Money::display($currentPlan->effectivePriceCentsFor($currentPeriod), 1, $currentPlan->currency) }}</span>
                             <span style="color: rgb(148,163,184);">/ {{ __('billing.period.' . $currentPeriod) }}</span>
                         @endif
                     </p>
@@ -129,9 +128,9 @@
                             <p style="margin: 0; font-size: 1.5rem; font-weight: 700;">{{ __('billing.free') }}</p>
                         @else
                             @if ($plan->hasActiveDiscount())
-                                <p style="margin: 0; font-size: 0.8125rem; color: rgb(148,163,184); text-decoration: line-through;">{{ Money::display($plan->priceCentsFor($period), 1, $plan->currency) }}</p>
+                                <p style="margin: 0; font-size: 0.8125rem; color: rgb(148,163,184); text-decoration: line-through;">{{ \App\Services\Money::display($plan->priceCentsFor($period), 1, $plan->currency) }}</p>
                             @endif
-                            <p style="margin: 0; font-size: 1.75rem; font-weight: 700;">{{ Money::display($cents, 1, $plan->currency) }}</p>
+                            <p style="margin: 0; font-size: 1.75rem; font-weight: 700;">{{ \App\Services\Money::display($cents, 1, $plan->currency) }}</p>
                             <p style="margin: 0; font-size: 0.8125rem; color: rgb(148,163,184);">/ {{ __('billing.period.' . $period) }}</p>
                         @endif
                     </div>
