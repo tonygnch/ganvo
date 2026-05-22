@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::table('stores', function (Blueprint $table) {
             // The base currency the merchant prices in and gets paid in.
-            $table->string('currency', 3)->default('USD')->after('font_family');
+            $table->string('currency', 3)->default('EUR')->after('font_family');
             // List of ISO codes customers can switch to in the storefront header.
             // Always implicitly includes the base currency.
             $table->json('display_currencies')->nullable()->after('currency');

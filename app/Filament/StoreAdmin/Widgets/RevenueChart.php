@@ -30,10 +30,15 @@ class RevenueChart extends ChartWidget
             $data[] = round(($rows[$day->toDateString()] ?? 0) / 100, 2);
         }
 
+        // Label is the store's base currency so the chart legend stays honest
+        // for non-EUR merchants. Falls back to EUR if the user/store isn't
+        // resolvable (shouldn't happen in normal panel use).
+        $currency = strtoupper(auth()->user()?->tenant?->store?->currency ?? 'EUR');
+
         return [
             'datasets' => [
                 [
-                    'label' => 'Revenue (USD)',
+                    'label' => 'Revenue (' . $currency . ')',
                     'data' => $data,
                     'borderColor' => '#10B981',
                     'backgroundColor' => 'rgba(16, 185, 129, 0.15)',

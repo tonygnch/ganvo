@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('slug');
             $table->text('description')->nullable();
             $table->integer('price_cents');
-            $table->string('currency', 3)->default('USD');
+            $table->string('currency', 3)->default('EUR');
             $table->integer('stock_quantity')->default(0);
             $table->string('image_path')->nullable();
             $table->boolean('is_active')->default(true);

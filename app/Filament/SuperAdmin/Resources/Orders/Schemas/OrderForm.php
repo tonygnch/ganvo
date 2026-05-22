@@ -28,7 +28,7 @@ class OrderForm
                     ->numeric(),
                 TextInput::make('currency')
                     ->required()
-                    ->default('USD'),
+                    ->default('EUR'),
                 TextInput::make('status')
                     ->required()
                     ->default('pending'),

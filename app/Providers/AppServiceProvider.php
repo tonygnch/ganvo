@@ -27,7 +27,7 @@ class AppServiceProvider extends ServiceProvider
             return "<?php echo \App\Services\Money::display(
                 {$expression},
                 \$displayRate ?? 1.0,
-                \$displayCurrency ?? (isset(\$store) ? \$store->currency : 'USD')
+                \$displayCurrency ?? (isset(\$store) ? \$store->currency : 'EUR')
             ); ?>";
         });
     }

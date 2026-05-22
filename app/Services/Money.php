@@ -21,8 +21,10 @@ class Money
      *   suffix → "1,234.56 лв."  (used by Bulgarian Lev — the local convention)
      */
     public const SUPPORTED = [
-        'USD' => ['symbol' => '$',    'name' => 'US Dollar',         'decimals' => 2, 'position' => 'prefix'],
+        // Order here drives the dropdown / radio order in the admin UI; EUR
+        // is the platform default so it leads.
         'EUR' => ['symbol' => '€',    'name' => 'Euro',              'decimals' => 2, 'position' => 'prefix'],
+        'USD' => ['symbol' => '$',    'name' => 'US Dollar',         'decimals' => 2, 'position' => 'prefix'],
         'GBP' => ['symbol' => '£',    'name' => 'British Pound',     'decimals' => 2, 'position' => 'prefix'],
         'CAD' => ['symbol' => 'CA$',  'name' => 'Canadian Dollar',   'decimals' => 2, 'position' => 'prefix'],
         'AUD' => ['symbol' => 'A$',   'name' => 'Australian Dollar', 'decimals' => 2, 'position' => 'prefix'],
@@ -61,7 +63,7 @@ class Money
      * Convert minor-units from base currency to a target currency at the given rate.
      *
      * The rate is "units of target per 1 unit of base" — same convention as
-     * Stripe/Wise UIs. So 1 USD * 0.92 = 0.92 EUR.
+     * Stripe/Wise UIs. So 1 EUR * 1.09 = 1.09 USD.
      *
      * Both base and target are assumed to be in the same decimal scale (2 for
      * everything we currently support). When/if we add JPY etc., extend with a
@@ -146,7 +148,7 @@ class Money
         return self::SUPPORTED;
     }
 
-    /** Options array for Filament Select / Radio — [code => "USD — US Dollar ($)"]. */
+    /** Options array for Filament Select / Radio — [code => "EUR — Euro (€)"]. */
     public static function options(): array
     {
         $out = [];

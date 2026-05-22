@@ -62,7 +62,7 @@ class Store extends Model
     public const SIGNUP_FIELDS = ['phone', 'birthday', 'shipping_address', 'marketing_optin'];
 
     protected $attributes = [
-        'currency' => 'USD',
+        'currency' => 'EUR',
     ];
 
     /**
@@ -73,7 +73,7 @@ class Store extends Model
      */
     public function supportedDisplayCurrencies(): array
     {
-        $base = strtoupper($this->currency ?? 'USD');
+        $base = strtoupper($this->currency ?? 'EUR');
         $extra = array_map('strtoupper', (array) ($this->display_currencies ?? []));
         return array_values(array_unique(array_merge([$base], $extra)));
     }
@@ -92,7 +92,7 @@ class Store extends Model
     public function fxRateFor(string $code): float
     {
         $code = strtoupper($code);
-        $base = strtoupper($this->currency ?? 'USD');
+        $base = strtoupper($this->currency ?? 'EUR');
         if ($code === $base) {
             return 1.0;
         }

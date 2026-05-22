@@ -37,7 +37,7 @@ class ProductsTable
                     ->label('Price')
                     // The store's base currency is the source of truth — the
                     // legacy per-product `currency` column is ignored now.
-                    ->money(fn (Product $r) => $r->tenant?->store?->currency ?? 'USD')
+                    ->money(fn (Product $r) => $r->tenant?->store?->currency ?? 'EUR')
                     ->state(fn (Product $r) => $r->price_cents / 100)
                     ->sortable(),
                 TextColumn::make('stock_quantity')

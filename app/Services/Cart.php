@@ -94,7 +94,7 @@ class Cart
         if (app()->bound('display_currency')) {
             return app('display_currency');
         }
-        return strtoupper($this->tenant->store->currency ?? 'USD');
+        return strtoupper($this->tenant->store->currency ?? 'EUR');
     }
 
     /** FX rate from base currency to the customer's display currency. */

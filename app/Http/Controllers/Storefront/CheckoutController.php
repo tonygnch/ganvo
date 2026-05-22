@@ -93,7 +93,7 @@ class CheckoutController extends Controller
                 'customer_email' => $data['customer_email'],
                 'customer_name' => $data['customer_name'],
                 'total_cents' => $grandTotal,
-                'currency' => strtoupper($store->currency ?? 'USD'),
+                'currency' => strtoupper($store->currency ?? 'EUR'),
                 'display_currency' => $displayCurrency,
                 'display_total_cents' => $displayTotal,
                 'status' => 'paid', // stub payment — always succeeds

@@ -125,7 +125,7 @@
                     <div class="field">
                         <label class="lbl" for="price">{{ __('site.onboarding.products.price') }}</label>
                         <input class="input" type="number" step="0.01" min="0" name="price" id="price" value="{{ old('price') }}" placeholder="19.99">
-                        <p class="help">{{ __('site.onboarding.products.price_help', ['currency' => $store->currency ?? 'USD']) }}</p>
+                        <p class="help">{{ __('site.onboarding.products.price_help', ['currency' => $store->currency ?? 'EUR']) }}</p>
                     </div>
                     <div class="field">
                         <label class="lbl" for="image">{{ __('site.onboarding.products.image') }}</label>
@@ -181,7 +181,7 @@
                             </div>
                             <div>
                                 <div class="name">{{ $p->name }}</div>
-                                <div class="meta">{{ \App\Services\Money::format($p->price_cents, $store->currency ?? 'USD') }}</div>
+                                <div class="meta">{{ \App\Services\Money::format($p->price_cents, $store->currency ?? 'EUR') }}</div>
                             </div>
                         </div>
                     @endforeach

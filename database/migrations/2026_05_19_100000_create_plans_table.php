@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->json('features')->nullable();
             // The currency the platform charges merchants in for THIS plan.
             // ISO 4217 — restricted to Money::SUPPORTED via Filament validation.
-            $table->string('currency', 3)->default('USD');
+            $table->string('currency', 3)->default('EUR');
             $table->unsignedInteger('price_monthly_cents')->default(0);
             $table->unsignedInteger('price_yearly_cents')->default(0);
             // Render a "Most popular" badge on this card in the wizard.

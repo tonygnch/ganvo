@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('customer_email');
             $table->string('customer_name')->nullable();
             $table->integer('total_cents');
-            $table->string('currency', 3)->default('USD');
+            $table->string('currency', 3)->default('EUR');
             $table->string('status')->default('pending');
             $table->string('stripe_payment_intent_id')->nullable();
             $table->json('shipping_address')->nullable();

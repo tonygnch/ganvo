@@ -227,7 +227,7 @@ class StoreSettings extends Page implements HasForms
                             ->helperText('The currency you price products in and get paid in.')
                             ->options(Money::options())
                             ->required()
-                            ->default('USD')
+                            ->default('EUR')
                             ->live(),
                         CheckboxList::make('display_currencies')
                             ->label('Customer display currencies')
@@ -237,11 +237,11 @@ class StoreSettings extends Page implements HasForms
                             ->bulkToggleable(),
                         KeyValue::make('fx_rates')
                             ->label('Exchange rates from base currency')
-                            ->helperText('Units of target per 1 unit of base. E.g. if base is USD and 1 USD = 0.92 EUR, enter EUR → 0.92. You do not need a row for your base currency.')
+                            ->helperText('Units of target per 1 unit of base. E.g. if base is EUR and 1 EUR = 1.09 USD, enter USD → 1.09. You do not need a row for your base currency.')
                             ->keyLabel('Currency code')
                             ->valueLabel('Rate from base')
-                            ->keyPlaceholder('EUR')
-                            ->valuePlaceholder('0.92')
+                            ->keyPlaceholder('USD')
+                            ->valuePlaceholder('1.09')
                             ->reorderable(false),
                     ]),
 
@@ -308,7 +308,7 @@ class StoreSettings extends Page implements HasForms
         $state = $this->form->getState();
 
         // Sanitize currency state.
-        $state['currency'] = strtoupper($state['currency'] ?? 'USD');
+        $state['currency'] = strtoupper($state['currency'] ?? 'EUR');
 
         // CheckboxList may return null; coerce + uppercase + drop the base
         // (it's always implicit) + de-dupe.

@@ -202,7 +202,7 @@ class WizardController extends Controller
         app()->instance('current_tenant', $tenant);
 
         // Share what SetDisplayCurrency would normally share.
-        $base = strtoupper($store->currency ?? 'USD');
+        $base = strtoupper($store->currency ?? 'EUR');
         View::share('displayCurrency', $base);
         View::share('displayRate', 1.0);
         View::share('baseCurrency', $base);
@@ -305,7 +305,7 @@ class WizardController extends Controller
                 'slug'           => $this->uniqueProductSlug($tenant, $data['name']),
                 'description'    => $data['description'] ?? null,
                 'price_cents'    => (int) round(((float) $data['price']) * 100),
-                'currency'       => $tenant->store->currency ?? 'USD',
+                'currency'       => $tenant->store->currency ?? 'EUR',
                 'stock_quantity' => 100,
                 'is_active'      => true,
                 'image_path'     => $imagePath,
@@ -530,7 +530,7 @@ class WizardController extends Controller
             ['name' => 'Brass Bottle Opener', 'slug' => 's-4', 'price_cents' => 1999, 'stock_quantity' => 40, 'description' => 'Cast in solid brass, built to outlast you.'],
         ];
         return collect($samples)->map(fn ($s) => new Product(array_merge($s, [
-            'currency'   => 'USD',
+            'currency'   => 'EUR',
             'is_active'  => true,
             'image_path' => null,
         ])));

@@ -46,7 +46,7 @@ class ProductForm
                             ->numeric()
                             ->step('0.01')
                             ->prefix(fn () => \App\Services\Money::symbol(
-                                auth()->user()?->tenant?->store?->currency ?? 'USD'
+                                auth()->user()?->tenant?->store?->currency ?? 'EUR'
                             ))
                             ->formatStateUsing(fn ($state) => $state !== null ? number_format($state / 100, 2, '.', '') : null)
                             ->dehydrateStateUsing(fn ($state) => (int) round(((float) $state) * 100)),

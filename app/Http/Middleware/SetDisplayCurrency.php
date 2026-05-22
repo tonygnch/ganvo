@@ -33,7 +33,7 @@ class SetDisplayCurrency
         }
 
         $store = $tenant->store;
-        $base = strtoupper($store->currency ?? 'USD');
+        $base = strtoupper($store->currency ?? 'EUR');
         $supported = $store->supportedDisplayCurrencies();
 
         $code = $this->resolve($request, $base, $supported);

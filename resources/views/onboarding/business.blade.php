@@ -40,7 +40,7 @@
                     <label class="lbl" for="currency">{{ __('site.onboarding.business.currency') }}</label>
                     <select class="input" name="currency" id="currency" required>
                         @foreach ($currencies as $key => $label)
-                            <option value="{{ $key }}" @if(old('currency', $store->currency ?? 'USD') === $key) selected @endif>{{ $label }}</option>
+                            <option value="{{ $key }}" @if(old('currency', $store->currency ?? 'EUR') === $key) selected @endif>{{ $label }}</option>
                         @endforeach
                     </select>
                     <p class="help">{{ __('site.onboarding.business.currency_help') }}</p>

@@ -52,14 +52,14 @@ class PlanForm
                             ->label('Currency')
                             ->options(Money::options())
                             ->required()
-                            ->default('USD'),
+                            ->default('EUR'),
                         TextInput::make('price_monthly_cents')
                             ->label('Monthly price')
                             ->required()
                             ->numeric()
                             ->step('0.01')
                             ->minValue(0)
-                            ->prefix(fn ($get) => Money::symbol($get('currency') ?: 'USD'))
+                            ->prefix(fn ($get) => Money::symbol($get('currency') ?: 'EUR'))
                             ->formatStateUsing(fn ($state) => $state !== null ? number_format(((int) $state) / 100, 2, '.', '') : null)
                             ->dehydrateStateUsing(fn ($state) => (int) round(((float) $state) * 100)),
                         TextInput::make('price_yearly_cents')
@@ -68,7 +68,7 @@ class PlanForm
                             ->numeric()
                             ->step('0.01')
                             ->minValue(0)
-                            ->prefix(fn ($get) => Money::symbol($get('currency') ?: 'USD'))
+                            ->prefix(fn ($get) => Money::symbol($get('currency') ?: 'EUR'))
                             ->formatStateUsing(fn ($state) => $state !== null ? number_format(((int) $state) / 100, 2, '.', '') : null)
                             ->dehydrateStateUsing(fn ($state) => (int) round(((float) $state) * 100)),
                     ]),
