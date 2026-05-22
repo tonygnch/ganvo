@@ -36,17 +36,19 @@ class SignupController extends Controller
             return $this->respondSuccess($request);
         }
 
-        // Throttle by IP. A short window stops a single client from
-        // hammering the endpoint; the longer window stops slower
-        // automated brute-forcing.
+        // Throttle by IP. Burst window catches accidental double-clicks
+        // without blocking them outright; hour window stops slower
+        // automated brute-forcing. Numbers tuned for "a real human signing
+        // up + maybe fat-fingering submit twice" being fine, but "a script
+        // hammering the endpoint" being shut down.
         $ipKey = 'marketing-signup:' . $request->ip();
-        if (RateLimiter::tooManyAttempts($ipKey . ':burst', 1)) {
+        if (RateLimiter::tooManyAttempts($ipKey . ':burst', 5)) {
             return $this->respondError($request, __('site.marketing.coming_soon.error_throttled'), 429);
         }
-        if (RateLimiter::tooManyAttempts($ipKey . ':hour', 10)) {
+        if (RateLimiter::tooManyAttempts($ipKey . ':hour', 20)) {
             return $this->respondError($request, __('site.marketing.coming_soon.error_throttled'), 429);
         }
-        RateLimiter::hit($ipKey . ':burst', 30);
+        RateLimiter::hit($ipKey . ':burst', 60);
         RateLimiter::hit($ipKey . ':hour', 3600);
 
         $validator = Validator::make($request->all(), [
