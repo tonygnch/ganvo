@@ -32,7 +32,17 @@ Route::domain($centralDomain)->group(function () {
             if (! $bypass) {
                 return response()
                     ->view('marketing.coming-soon')
-                    ->header('Cache-Control', 'public, max-age=300');
+                    // private — the page contains a locale-dependent body so
+                    //   shared caches (CDNs, proxies) must not store one
+                    //   user's localized HTML and serve it to others.
+                    // Vary: Cookie — Chrome aggressively honors max-age; without
+                    //   this, /lang/bg changes the locale cookie but Chrome
+                    //   keeps serving the cached English page until the
+                    //   max-age expires. Varying by Cookie keys the cache
+                    //   entry by cookie value, so the new locale cookie is
+                    //   treated as a different request → cache miss → refetch.
+                    ->header('Cache-Control', 'private, max-age=300')
+                    ->header('Vary', 'Cookie');
             }
         }
 
