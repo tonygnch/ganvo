@@ -38,6 +38,9 @@ class StoreAdminPanelProvider extends PanelProvider
             // merchant signup so it can create the Tenant + Store and start
             // the wizard in one transaction.
             ->brandName('Ganvo Store')
+            // Browser tab icon for the storefront admin panel. Same source
+            // as the SA panel — both panels are platform UI.
+            ->favicon(asset('favicon.ico'))
             ->colors([
                 'primary' => Color::Emerald,
             ])

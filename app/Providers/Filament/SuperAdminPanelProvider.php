@@ -33,6 +33,10 @@ class SuperAdminPanelProvider extends PanelProvider
             ->domain(config('ganvo.central_domain'))
             ->login()
             ->brandName('Ganvo Admin')
+            // Browser tab icon for the admin panel. Reads from
+            // public/favicon.ico; the asset() helper handles versioned
+            // URL generation if asset hashing is in play.
+            ->favicon(asset('favicon.ico'))
             ->colors([
                 'primary' => Color::Indigo,
             ])

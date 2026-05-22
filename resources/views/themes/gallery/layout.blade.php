@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    @include('partials.favicon')
     <title>{{ ($title ?? null) ? $title . ' — ' . $tenant->name : $tenant->name }}</title>
     @php
         // Same dynamic Google Fonts loader as other themes — only ship the
