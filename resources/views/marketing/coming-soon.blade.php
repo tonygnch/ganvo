@@ -4,8 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     @include('partials.favicon')
-    <title>{{ __('site.marketing.coming_soon.title') }} — Ganvo</title>
-    <meta name="description" content="{{ __('site.marketing.coming_soon.meta_description') }}">
+    <title>{{ $cs['page_title'] ?? __('site.marketing.coming_soon.title') }} — Ganvo</title>
+    <meta name="description" content="{{ $cs['meta_description'] ?? __('site.marketing.coming_soon.meta_description') }}">
     <meta name="robots" content="noindex, nofollow">
 
     {{-- Set theme before paint, same approach the main marketing page uses. --}}
@@ -690,7 +690,7 @@
             <div class="cs-progress" role="status" aria-live="polite">
                 <div class="cs-progress-label">
                     <span class="pulse" aria-hidden="true"></span>
-                    {{ __('site.marketing.coming_soon.eyebrow') }}
+                    {{ $cs['eyebrow'] ?? __('site.marketing.coming_soon.eyebrow') }}
                 </div>
                 <div class="cs-progress-track" aria-hidden="true">
                     <div class="cs-progress-fill"></div>
@@ -698,11 +698,11 @@
             </div>
 
             <h1>
-                {{ __('site.marketing.coming_soon.headline_1') }}
+                {{ $cs['headline_1'] ?? __('site.marketing.coming_soon.headline_1') }}
                 <br>
-                <span class="accent">{{ __('site.marketing.coming_soon.headline_2') }}</span>
+                <span class="accent">{{ $cs['headline_2'] ?? __('site.marketing.coming_soon.headline_2') }}</span>
             </h1>
-            <p class="lead">{{ __('site.marketing.coming_soon.lead') }}</p>
+            <p class="lead">{{ $cs['lead'] ?? __('site.marketing.coming_soon.lead') }}</p>
 
             {{-- Email capture. Posts to /coming-soon/signup; the JS handler
                  below intercepts to submit via fetch + show inline success.
@@ -722,18 +722,18 @@
                        name="email"
                        required
                        value="{{ old('email') }}"
-                       placeholder="{{ __('site.marketing.coming_soon.email_placeholder') }}"
-                       aria-label="{{ __('site.marketing.coming_soon.email_placeholder') }}">
-                <button type="submit">{{ __('site.marketing.coming_soon.notify') }}</button>
+                       placeholder="{{ $cs['email_placeholder'] ?? __('site.marketing.coming_soon.email_placeholder') }}"
+                       aria-label="{{ $cs['email_placeholder'] ?? __('site.marketing.coming_soon.email_placeholder') }}">
+                <button type="submit">{{ $cs['notify_button'] ?? __('site.marketing.coming_soon.notify') }}</button>
             </form>
             <p class="cs-form-thanks @if(session('signup_status') === 'ok') visible @endif" id="csNotifyThanks">
-                ✓ {{ __('site.marketing.coming_soon.thanks') }}
+                ✓ {{ $cs['thanks_message'] ?? __('site.marketing.coming_soon.thanks') }}
             </p>
             <p class="cs-form-error @if(session('signup_error')) visible @endif" id="csNotifyError" role="alert">
                 {{ session('signup_error') }}
             </p>
 
-            <p class="cs-helper">{{ __('site.marketing.coming_soon.helper') }}</p>
+            <p class="cs-helper">{{ $cs['helper_text'] ?? __('site.marketing.coming_soon.helper') }}</p>
         </div>
     </section>
 

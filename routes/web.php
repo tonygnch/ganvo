@@ -31,8 +31,15 @@ Route::domain($centralDomain)->group(function () {
             $token = $cs['bypass_token'] ?? null;
             $bypass = is_string($token) && $token !== '' && $request->query('preview') === $token;
             if (! $bypass) {
+                // Pull SA-editable strings up front (DB-backed, with locale
+                // + i18n fallback) so the view doesn't need to know about
+                // the SitePage model.
+                $cs = \App\Models\SitePage::bulk(
+                    \App\Services\SitePageSchemas::PAGE_COMING_SOON
+                );
+
                 return response()
-                    ->view('marketing.coming-soon')
+                    ->view('marketing.coming-soon', compact('cs'))
                     // private — the page contains a locale-dependent body so
                     //   shared caches (CDNs, proxies) must not store one
                     //   user's localized HTML and serve it to others.
