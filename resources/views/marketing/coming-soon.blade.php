@@ -768,7 +768,7 @@
         // intercept the submit and POST via fetch so the page never reloads.
         // If JS is off (or this script fails), the form falls through to a
         // normal POST and the server redirects back with a session flash
-        // (handled by the @if(session('signup_status')) markup above).
+        // (handled by the session(signup_status) check in the markup above).
         (function () {
             var form = document.getElementById('csNotifyForm');
             if (! form) return;
