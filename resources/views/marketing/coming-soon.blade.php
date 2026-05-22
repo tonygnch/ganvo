@@ -511,11 +511,66 @@
 
         /* On very short viewports (landscape phones, etc.) free the page to
            scroll so nothing gets clipped. The visual lock is still in place
-           for any reasonably tall screen — laptops, desktops, portrait
-           phones, tablets. */
+           for any reasonably tall screen — laptops, desktops, tablets. */
         @media (max-height: 620px) {
             html, body { height: auto; overflow: auto; }
             .cs-hero { padding: 2rem 1.5rem 3rem; }
+        }
+
+        /* -------- Mobile (≤ 720px) --------
+           Portrait phones can't fit lockup + progress + 2-line headline +
+           lead + form + helper inside 100dvh once we account for the OS
+           chrome and the footer. Release the viewport lock and let the page
+           scroll naturally; tighten vertical spacing so the content still
+           feels intentional rather than padded. */
+        @media (max-width: 720px) {
+            html, body { height: auto; overflow: auto; }
+            .cs-hero {
+                /* The hero still fills available height where possible
+                   (so the lockup lands roughly centered on tall phones),
+                   but min-height: 100dvh — not 100% — lets it grow with
+                   the content on shorter phones instead of clipping. */
+                min-height: 100dvh;
+                flex: 0 0 auto;
+                padding: 2rem 1.25rem 2.5rem;
+                /* Squashed-ellipse background fits the narrower hero. */
+                background:
+                    radial-gradient(ellipse 100% 50% at 50% 0%, var(--brand-soft), transparent 65%),
+                    radial-gradient(circle 500px at 100% 110%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 65%);
+            }
+            .cs-lockup    { margin: 0 0 1.25rem; }
+            .cs-progress  { margin: .75rem auto 1.75rem; max-width: 320px; }
+            .cs-hero h1   { margin: 0 0 .75rem; line-height: 1.15; }
+            .cs-hero p.lead { margin: 0 auto 1.5rem; padding: 0 .25rem; }
+            .cs-form      { padding: 5px; max-width: 100%; }
+            .cs-form input  { font-size: 16px; /* prevents iOS zoom-on-focus */ padding: .625rem .75rem; }
+            .cs-form button { padding: .625rem 1rem; font-size: 0.875rem; }
+            .cs-helper    { font-size: 0.75rem; margin-top: .875rem; }
+            footer.cs-foot {
+                padding: .875rem 1rem;
+                /* Wrap the brand line + links onto two lines on tiny widths
+                   instead of squishing them into the same row. */
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: .25rem .5rem;
+            }
+            .cs-foot-links { margin-left: 0; flex-wrap: wrap; justify-content: center; gap: .5rem; }
+        }
+
+        /* -------- Tiny phones (≤ 380px) — iPhone SE-class --------
+           One more notch tighter so nothing feels cramped at the smallest
+           realistic viewport widths. */
+        @media (max-width: 380px) {
+            .cs-hero        { padding: 1.5rem 1rem 2rem; }
+            .cs-hero h1     { font-size: 2rem; }
+            .cs-hero p.lead { font-size: 0.9375rem; }
+            .cs-progress    { margin: .5rem auto 1.25rem; max-width: 280px; }
+            .cs-progress-label { font-size: 0.625rem; letter-spacing: 0.18em; }
+            .cs-lockup .brand-lockup-stack img,
+            .cs-lockup img { height: 48px !important; }
+            .cs-form input  { padding: .5rem .625rem; }
+            .cs-form button { padding: .5rem .875rem; }
         }
 
         @media (prefers-reduced-motion: reduce) {
