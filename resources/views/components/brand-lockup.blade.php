@@ -43,6 +43,16 @@
 @endphp
 
 @if ($lightOk && $darkOk)
+    @once
+        {{-- Theme toggle rule. Lives with the component (not in each page's
+             inline styles) so every layout that uses the lockup gets the
+             crossfade automatically. @once guarantees the rule renders only
+             once per request even if the lockup appears multiple times. --}}
+        <style>
+            :root[data-theme="light"] .brand-lockup-img-dark,
+            :root[data-theme="dark"]  .brand-lockup-img-light { opacity: 0; }
+        </style>
+    @endonce
     {{-- Both variants present — stack them and crossfade between them. --}}
     <span
         class="brand-lockup-stack"

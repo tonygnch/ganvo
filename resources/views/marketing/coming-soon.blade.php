@@ -88,15 +88,11 @@
         a { color: var(--brand); text-decoration: none; }
         a:hover { text-decoration: none; }
 
-        /* -------- Brand lockup theme switch --------
-                    The lockup component stacks BOTH logo variants in the
-                    same grid cell. This rule fades out whichever one
-                    doesn't match :root[data-theme]. Opacity (not display)
-                    so the transition the component declares on each img
-                    (.3s ease) actually animates, giving us a crossfade
-                    that lines up with the body bg/color transition. */
-        :root[data-theme="light"] .brand-lockup-img-dark,
-        :root[data-theme="dark"]  .brand-lockup-img-light { opacity: 0; }
+        /* The theme-toggle CSS that drives the lockup crossfade now lives
+           inside the brand-lockup Blade component itself (rendered once
+           per request via @once), so every layout that uses the lockup
+           gets the behavior automatically — no need to duplicate the
+           rule here or in any other page. */
 
         /* -------- Hero lockup + footer utility links --------
            The previous nav bar (with brand text + language menu + theme
