@@ -41,6 +41,13 @@ class StoreAdminPanelProvider extends PanelProvider
             // Browser tab icon for the storefront admin panel. Same source
             // as the SA panel — both panels are platform UI.
             ->favicon(asset('favicon.ico'))
+            // Header + login-screen logo. Mirrors the SuperAdmin panel
+            // and the coming-soon page so the merchant sees the same
+            // mark wherever they land. Filament auto-switches to the
+            // dark variant in dark mode.
+            ->brandLogo(asset('images/brand/logo-full-black.png'))
+            ->darkModeBrandLogo(asset('images/brand/logo-full-white.png'))
+            ->brandLogoHeight('2rem')
             ->colors([
                 'primary' => Color::Emerald,
             ])

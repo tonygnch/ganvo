@@ -37,6 +37,13 @@ class SuperAdminPanelProvider extends PanelProvider
             // public/favicon.ico; the asset() helper handles versioned
             // URL generation if asset hashing is in play.
             ->favicon(asset('favicon.ico'))
+            // Header + login-screen logo. Same PNGs the coming-soon page
+            // and storefronts use, so the brand is consistent everywhere.
+            // Filament picks the dark-mode variant automatically when the
+            // panel is in dark mode.
+            ->brandLogo(asset('images/brand/logo-full-black.png'))
+            ->darkModeBrandLogo(asset('images/brand/logo-full-white.png'))
+            ->brandLogoHeight('2rem')
             ->colors([
                 'primary' => Color::Indigo,
             ])

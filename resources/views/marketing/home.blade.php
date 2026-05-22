@@ -850,7 +850,9 @@
 <body>
     <nav class="nav">
         <div class="nav-inner">
-            <div class="brand">ganvo<span class="brand-dot">.</span></div>
+            <a href="/" class="brand" aria-label="Ganvo" style="display: inline-flex; align-items: center; text-decoration: none;">
+                <x-brand-lockup size="sm" />
+            </a>
             <div class="nav-links">
                 <a href="#features" class="nav-link-hide-mobile">{{ __('site.marketing.nav.features') }}</a>
                 <a href="#themes" class="nav-link-hide-mobile">{{ __('site.marketing.nav.themes') }}</a>
