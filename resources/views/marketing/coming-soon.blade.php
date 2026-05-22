@@ -329,8 +329,37 @@
             font-weight: 600;
             margin-top: 1rem;
         }
-        .cs-form:has(input.submitted) { display: none; }
-        .cs-form:has(input.submitted) + .cs-form-thanks { display: block; }
+        .cs-form-thanks.visible { display: block; }
+        .cs-form.hidden { display: none; }
+
+        .cs-form-error {
+            display: none;
+            color: #b91c1c;
+            font-weight: 500;
+            font-size: 0.8125rem;
+            margin-top: .625rem;
+        }
+        [data-theme="dark"] .cs-form-error { color: #fca5a5; }
+        .cs-form-error.visible { display: block; }
+
+        /* Honeypot — visually hidden from real users but not display:none
+           so screen-reader users + bots both still see it in the DOM.
+           If it gets filled, the server rejects the submission. */
+        .cs-honeypot {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .cs-form button:disabled {
+            opacity: .6;
+            cursor: progress;
+            transform: none !important;
+        }
 
         .cs-helper { margin-top: 1rem; color: var(--text-soft); font-size: 0.8125rem; }
 
@@ -674,12 +703,34 @@
             </h1>
             <p class="lead">{{ __('site.marketing.coming_soon.lead') }}</p>
 
-            <form class="cs-form"
-                  onsubmit="event.preventDefault(); var i = this.querySelector('input'); i.classList.add('submitted'); i.setAttribute('readonly','');">
-                <input type="email" required placeholder="{{ __('site.marketing.coming_soon.email_placeholder') }}">
+            {{-- Email capture. Posts to /coming-soon/signup; the JS handler
+                 below intercepts to submit via fetch + show inline success.
+                 With JS off the form falls back to a normal POST + 302
+                 redirect back here with a session flash. --}}
+            <form class="cs-form @if(session('signup_status') === 'ok') hidden @endif"
+                  method="post"
+                  action="{{ route('marketing.signup') }}"
+                  id="csNotifyForm"
+                  novalidate>
+                @csrf
+                {{-- Honeypot. Real users don't see it (CSS off-screen);
+                     bots that auto-fill forms will trip it. --}}
+                <input class="cs-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+                <input type="email"
+                       name="email"
+                       required
+                       value="{{ old('email') }}"
+                       placeholder="{{ __('site.marketing.coming_soon.email_placeholder') }}"
+                       aria-label="{{ __('site.marketing.coming_soon.email_placeholder') }}">
                 <button type="submit">{{ __('site.marketing.coming_soon.notify') }}</button>
             </form>
-            <p class="cs-form-thanks">✓ {{ __('site.marketing.coming_soon.thanks') }}</p>
+            <p class="cs-form-thanks @if(session('signup_status') === 'ok') visible @endif" id="csNotifyThanks">
+                ✓ {{ __('site.marketing.coming_soon.thanks') }}
+            </p>
+            <p class="cs-form-error @if(session('signup_error')) visible @endif" id="csNotifyError" role="alert">
+                {{ session('signup_error') }}
+            </p>
 
             <p class="cs-helper">{{ __('site.marketing.coming_soon.helper') }}</p>
         </div>
@@ -712,6 +763,60 @@
             document.documentElement.setAttribute('data-theme', next);
             try { localStorage.setItem('ganvo-theme', next); } catch (e) { /* private mode */ }
         });
+
+        // Notify-me form — progressive enhancement. If JS is on, we
+        // intercept the submit and POST via fetch so the page never reloads.
+        // If JS is off (or this script fails), the form falls through to a
+        // normal POST and the server redirects back with a session flash
+        // (handled by the @if(session('signup_status')) markup above).
+        (function () {
+            var form = document.getElementById('csNotifyForm');
+            if (! form) return;
+            var thanks = document.getElementById('csNotifyThanks');
+            var errorEl = document.getElementById('csNotifyError');
+            var button = form.querySelector('button[type="submit"]');
+            var emailInput = form.querySelector('input[name="email"]');
+
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                errorEl.classList.remove('visible');
+                errorEl.textContent = '';
+                button.disabled = true;
+
+                var data = new FormData(form);
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: data,
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                }).then(function (r) {
+                    return r.json().then(function (body) { return { status: r.status, body: body }; });
+                }).then(function (result) {
+                    if (result.status >= 200 && result.status < 300 && result.body && result.body.ok) {
+                        form.classList.add('hidden');
+                        thanks.classList.add('visible');
+                    } else {
+                        var msg = (result.body && result.body.message) ||
+                                  @json(__('site.marketing.coming_soon.error_generic'));
+                        errorEl.textContent = msg;
+                        errorEl.classList.add('visible');
+                        button.disabled = false;
+                        emailInput.focus();
+                    }
+                }).catch(function () {
+                    // Network failure — let the user retry. We could also
+                    // fall through to a native submit here, but a clear
+                    // error is friendlier than a surprise page reload.
+                    errorEl.textContent = @json(__('site.marketing.coming_soon.error_network'));
+                    errorEl.classList.add('visible');
+                    button.disabled = false;
+                });
+            });
+        })();
     </script>
 </body>
 </html>

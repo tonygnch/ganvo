@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Billing\BillingController;
 use App\Http\Controllers\ImpersonateController;
+use App\Http\Controllers\Marketing\SignupController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\Onboarding\AuthController as OnboardingAuthController;
 use App\Http\Controllers\Onboarding\WizardController;
@@ -58,6 +59,11 @@ Route::domain($centralDomain)->group(function () {
     })->name('marketing.home');
 
     Route::get('/lang/{locale}', [LanguageController::class, 'switch'])->name('lang.switch');
+
+    // Coming-soon waitlist signup. Reachable even when coming_soon mode is
+    // off (the form still appears on the main marketing page in some
+    // flows). Throttling + honeypot + dupe handling live in the controller.
+    Route::post('/coming-soon/signup', [SignupController::class, 'store'])->name('marketing.signup');
 
     Route::post('/stop-impersonating', [ImpersonateController::class, 'stop'])
         ->middleware('auth')

@@ -90,6 +90,9 @@ return [
             'thanks'            => "Thanks — we'll be in touch.",
             'helper'            => 'No spam. One email when we launch.',
             'meta_description'  => 'Ganvo is a white-label e-commerce SaaS launching soon. Sign up to be notified.',
+            'error_throttled'   => 'Too many requests — please try again in a minute.',
+            'error_generic'     => 'Something went wrong. Please check your email and try again.',
+            'error_network'     => 'Couldn\'t reach the server. Please try again.',
         ],
     ],
 
