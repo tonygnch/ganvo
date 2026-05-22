@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
             'features' => [
                 'Up to 25 products',
                 '1 storefront theme',
-                'Standard storefront on a *.ganvo.io subdomain',
+                'Standard storefront on a *.ganvo.bg subdomain',
                 'Email support',
             ],
             'translations' => [
@@ -43,7 +43,7 @@ class DatabaseSeeder extends Seeder
                     'features' => [
                         'До 25 продукта',
                         '1 тема за витрината',
-                        'Витрина на *.ganvo.io поддомейн',
+                        'Витрина на *.ganvo.bg поддомейн',
                         'Поддръжка по имейл',
                     ],
                 ],

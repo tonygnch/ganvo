@@ -49,7 +49,7 @@ return [
             'h2' => 'Built for builders, not coders',
             'items' => [
                 ['title' => 'Theme marketplace', 'body' => 'Pick from polished, mobile-first themes. Live preview before you commit. Customize colors, fonts, and logo in one place.'],
-                ['title' => 'Bring your own domain', 'body' => 'Use your own domain or a free yourname.ganvo.io subdomain. We handle routing and certificates.'],
+                ['title' => 'Bring your own domain', 'body' => 'Use your own domain or a free yourname.ganvo.bg subdomain. We handle routing and certificates.'],
                 ['title' => 'Instant payouts to you', 'body' => 'Stripe Connect routes every sale directly to your account. We never hold your money.'],
                 ['title' => 'Order fulfillment', 'body' => 'A clean admin for products, orders, and shipping. Mark orders shipped with tracking and your customers are notified automatically.'],
                 ['title' => 'Multi-tenant by design', 'body' => 'Each store lives in its own isolated space. Your data is yours; nothing leaks across tenants.'],
@@ -349,7 +349,7 @@ return [
             'title'                => 'Tell us about your store',
             'lead'                 => "We'll use this on your storefront and in support emails.",
             'store_name'           => 'Store name',
-            'store_name_help'      => 'Your storefront URL will be :slug.ganvo.io — change the name and slug stays the same.',
+            'store_name_help'      => 'Your storefront URL will be :slug.ganvo.bg — change the name and slug stays the same.',
             'business_type'        => 'What do you sell?',
             'business_type_ph'     => 'Pick a category',
             'contact_email'        => 'Contact email',

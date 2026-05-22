@@ -407,7 +407,7 @@ class WizardController extends Controller
     {
         $parsed = parse_url((string) config('app.url')) ?: [];
         $scheme = $parsed['scheme'] ?? 'http';
-        $host = $parsed['host'] ?? config('ganvo.central_domain', 'ganvo.io');
+        $host = $parsed['host'] ?? config('ganvo.central_domain', 'ganvo.bg');
         $port = isset($parsed['port']) ? ':' . $parsed['port'] : '';
         return "{$scheme}://{$tenant->slug}.{$host}{$port}";
     }

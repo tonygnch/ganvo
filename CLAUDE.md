@@ -3,7 +3,7 @@
 ## Project Overview
 Ganvo is a white-label SaaS platform where clients self-onboard through a guided wizard, pick a storefront theme, customize their store, manage products, and go live — all managed through a permission-based admin system.
 
-> **Domain note:** ganvo.com is taken by an unrelated online store. Consider **ganvo.io** or **getganvo.com** as the primary domain.
+> **Domain note:** the platform runs on **ganvo.bg** as the primary domain.
 
 ---
 
@@ -105,7 +105,7 @@ Suggestions to consider:
 
 ## What's Not Yet Decided
 - Subscription tier details (pricing, feature breakdown per tier)
-- Whether clients get subdomains (client.ganvo.io) or custom domains
+- Whether clients get subdomains (client.ganvo.bg) or custom domains
 - Hosting & domain strategy (to be discussed after core build)
 - Analytics scope (basic vs. advanced)
 
