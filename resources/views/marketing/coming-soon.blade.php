@@ -490,9 +490,20 @@
             50%      { transform: rotate(6deg) translateY(-10px); }
         }
 
-        /* Hide both mockups on narrow viewports — same rule the marketing
-           hero uses, so we never overlap the headline copy. */
+        /* Tablet + phone (~420–900px): shrink the mockups so they don't crowd
+           the narrower headline column, lower their opacity so they read as
+           background decoration rather than competing with the form. */
         @media (max-width: 900px) {
+            .cs-browser { width: 220px; top: 4%; right: 3%; opacity: .55; }
+            .cs-phone   { width: 110px; height: 210px; bottom: 6%; left: 3%; opacity: .55; }
+        }
+        @media (max-width: 600px) {
+            .cs-browser { width: 170px; top: 2%; right: 2%; opacity: .4; }
+            .cs-phone   { width: 90px; height: 170px; bottom: 4%; left: 2%; opacity: .4; }
+        }
+        /* Below ~420px the headline runs edge-to-edge — at that point the
+           mockups crash into the form regardless of size. Hide them. */
+        @media (max-width: 420px) {
             .cs-browser, .cs-phone { display: none; }
         }
 
@@ -524,14 +535,16 @@
            scroll naturally; tighten vertical spacing so the content still
            feels intentional rather than padded. */
         @media (max-width: 720px) {
+            /* Release the desktop viewport lock. The body becomes the thing
+               that holds the viewport minimum — so footer sits at the
+               bottom of a tall phone, and the page can grow past the
+               viewport (and scroll) when content needs more room. The hero
+               keeps its flex:1 from the base rule so it eats the leftover
+               space above the footer without itself being forced to 100dvh
+               (which is what was pushing the footer off-screen). */
             html, body { height: auto; overflow: auto; }
+            body { min-height: 100dvh; }
             .cs-hero {
-                /* The hero still fills available height where possible
-                   (so the lockup lands roughly centered on tall phones),
-                   but min-height: 100dvh — not 100% — lets it grow with
-                   the content on shorter phones instead of clipping. */
-                min-height: 100dvh;
-                flex: 0 0 auto;
                 padding: 2rem 1.25rem 2.5rem;
                 /* Squashed-ellipse background fits the narrower hero. */
                 background:
