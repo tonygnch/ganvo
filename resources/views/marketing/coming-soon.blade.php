@@ -90,9 +90,9 @@
 
         /* The theme-toggle CSS that drives the lockup crossfade now lives
            inside the brand-lockup Blade component itself (rendered once
-           per request via @once), so every layout that uses the lockup
-           gets the behavior automatically — no need to duplicate the
-           rule here or in any other page. */
+           per request), so every layout that uses the lockup gets the
+           behavior automatically — no need to duplicate the rule here
+           or in any other page. */
 
         /* -------- Hero lockup + footer utility links --------
            The previous nav bar (with brand text + language menu + theme
