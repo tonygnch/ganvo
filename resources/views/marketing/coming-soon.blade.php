@@ -501,9 +501,18 @@
             .cs-browser { width: 170px; top: 2%; right: 2%; opacity: .4; }
             .cs-phone   { width: 90px; height: 170px; bottom: 4%; left: 2%; opacity: .4; }
         }
-        /* Below ~420px the headline runs edge-to-edge — at that point the
-           mockups crash into the form regardless of size. Hide them. */
-        @media (max-width: 420px) {
+        /* iPhone 12 / 13 / 14-class widths (~390–428px): keep the mockups
+           visible but tuck them into the corners small enough that the
+           centered form doesn't crash into them. They live behind the
+           content (z-index: 1 vs cs-hero-inner z-index: 2) so even at
+           these widths the headline + form stay legible. */
+        @media (max-width: 460px) {
+            .cs-browser { width: 130px; top: 1.5%; right: 1.5%; opacity: .35; }
+            .cs-phone   { width: 72px; height: 138px; bottom: 3%; left: 1.5%; opacity: .35; }
+        }
+        /* Below ~340px (older Androids, iPhone SE 1st gen) every pixel of
+           horizontal space is needed for the headline — hide the mockups. */
+        @media (max-width: 340px) {
             .cs-browser, .cs-phone { display: none; }
         }
 
