@@ -327,20 +327,34 @@ class BillingController extends Controller
             ]);
 
             $currency = strtoupper($preview->currency);
+
+            // Filter to ONLY proration line items. createPreview returns the
+            // upcoming next invoice in full — proration adjustments (credit
+            // for unused old + prorated new for remaining cycle) AND the
+            // regular subscription charge that fires at the next renewal.
+            // swapAndInvoice() only bills the proration delta today; the
+            // regular renewal happens on its normal cycle. Showing
+            // non-proration lines in the modal made the "today" total look
+            // way bigger than what actually gets charged.
             $lines = [];
+            $prorationTotal = 0;
             foreach ($preview->lines->data as $line) {
+                if (! ($line->proration ?? false)) {
+                    continue;
+                }
                 $lines[] = [
                     'description' => $line->description ?: ($line->price->nickname ?? 'Line item'),
                     'amount_cents' => $line->amount,
                     'formatted' => \App\Services\Money::format($line->amount, $currency),
                 ];
+                $prorationTotal += $line->amount;
             }
 
-            $isCharge = $preview->total > 0;
+            $isCharge = $prorationTotal > 0;
             return response()->json([
                 'ok' => true,
-                'total_cents' => $preview->total,
-                'total_formatted' => \App\Services\Money::format(abs($preview->total), $currency),
+                'total_cents' => $prorationTotal,
+                'total_formatted' => \App\Services\Money::format(abs($prorationTotal), $currency),
                 'currency' => $currency,
                 'is_charge' => $isCharge,                  // false → credit applied forward
                 'plan_label' => $plan->translated('name'),
