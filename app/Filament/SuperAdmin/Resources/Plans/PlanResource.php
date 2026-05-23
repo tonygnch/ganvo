@@ -8,6 +8,7 @@ use App\Filament\SuperAdmin\Resources\Plans\Pages\ListPlans;
 use App\Filament\SuperAdmin\Resources\Plans\Schemas\PlanForm;
 use App\Filament\SuperAdmin\Resources\Plans\Tables\PlansTable;
 use App\Models\Plan;
+use App\Services\RoleMatrix;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -22,9 +23,31 @@ class PlanResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Billing';
+
     protected static ?string $recordTitleAttribute = 'name';
 
     protected static ?int $navigationSort = 30;
+
+    public static function canViewAny(): bool
+    {
+        return RoleMatrix::canSee(auth()->user(), RoleMatrix::SEC_PLANS);
+    }
+
+    public static function canCreate(): bool
+    {
+        return RoleMatrix::canSee(auth()->user(), RoleMatrix::SEC_PLANS_MANAGE);
+    }
+
+    public static function canEdit($record): bool
+    {
+        return RoleMatrix::canSee(auth()->user(), RoleMatrix::SEC_PLANS_MANAGE);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return RoleMatrix::canSee(auth()->user(), RoleMatrix::SEC_PLANS_MANAGE);
+    }
 
     public static function form(Schema $schema): Schema
     {

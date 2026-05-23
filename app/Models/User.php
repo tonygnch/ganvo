@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Services\RoleMatrix;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['tenant_id', 'name', 'email', 'password', 'email_verified_at'])]
@@ -36,7 +37,10 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         return match ($panel->getId()) {
-            'super' => $this->hasRole('super_admin'),
+            // Any of the platform sub-roles (super / billing / marketing /
+            // support admin) can open the SuperAdmin panel; what they see
+            // inside is gated per-Resource via RoleMatrix::canSee.
+            'super' => RoleMatrix::canAccessSuperPanel($this),
             'store' => $this->hasRole('store_admin') && $this->tenant_id !== null,
             default => false,
         };

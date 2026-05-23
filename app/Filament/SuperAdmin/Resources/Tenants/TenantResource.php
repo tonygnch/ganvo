@@ -9,6 +9,7 @@ use App\Filament\SuperAdmin\Resources\Tenants\Pages\ViewTenant;
 use App\Filament\SuperAdmin\Resources\Tenants\Schemas\TenantForm;
 use App\Filament\SuperAdmin\Resources\Tenants\Tables\TenantsTable;
 use App\Models\Tenant;
+use App\Services\RoleMatrix;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -23,7 +24,29 @@ class TenantResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Clients';
+
     protected static ?string $recordTitleAttribute = 'name';
+
+    public static function canViewAny(): bool
+    {
+        return RoleMatrix::canSee(auth()->user(), RoleMatrix::SEC_TENANTS);
+    }
+
+    public static function canCreate(): bool
+    {
+        return RoleMatrix::canSee(auth()->user(), RoleMatrix::SEC_TENANTS_MANAGE);
+    }
+
+    public static function canEdit($record): bool
+    {
+        return RoleMatrix::canSee(auth()->user(), RoleMatrix::SEC_TENANTS_MANAGE);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return RoleMatrix::canSee(auth()->user(), RoleMatrix::SEC_TENANTS_MANAGE);
+    }
 
     public static function form(Schema $schema): Schema
     {

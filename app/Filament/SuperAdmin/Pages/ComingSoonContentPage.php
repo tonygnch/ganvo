@@ -4,6 +4,7 @@ namespace App\Filament\SuperAdmin\Pages;
 
 use App\Http\Middleware\SetLocale;
 use App\Models\SitePage;
+use App\Services\RoleMatrix;
 use App\Services\SitePageSchemas;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -41,11 +42,18 @@ class ComingSoonContentPage extends Page implements HasForms
 
     protected static ?string $navigationLabel = 'Coming-soon content';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Marketing';
+
     protected static ?string $title = 'Coming-soon page content';
 
     protected static ?string $slug = 'coming-soon-content';
 
     protected static ?int $navigationSort = 95;
+
+    public static function canAccess(): bool
+    {
+        return RoleMatrix::canSee(auth()->user(), RoleMatrix::SEC_CONTENT);
+    }
 
     public ?array $data = [];
 

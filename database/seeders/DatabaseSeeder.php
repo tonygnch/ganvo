@@ -20,7 +20,14 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $superAdminRole = Role::firstOrCreate(['name' => 'super_admin']);
+        // Platform sub-roles. Source of truth for which role can see what
+        // lives in App\Services\RoleMatrix — these names must match
+        // RoleMatrix's constants.
+        $superAdminRole = Role::firstOrCreate(['name' => \App\Services\RoleMatrix::SUPER_ADMIN]);
+        Role::firstOrCreate(['name' => \App\Services\RoleMatrix::BILLING_ADMIN]);
+        Role::firstOrCreate(['name' => \App\Services\RoleMatrix::MARKETING_ADMIN]);
+        Role::firstOrCreate(['name' => \App\Services\RoleMatrix::SUPPORT_ADMIN]);
+
         $storeAdminRole = Role::firstOrCreate(['name' => 'store_admin']);
 
         // Subscription plans — now DB-driven, configurable from the SA panel.

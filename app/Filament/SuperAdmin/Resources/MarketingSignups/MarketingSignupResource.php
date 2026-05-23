@@ -5,6 +5,7 @@ namespace App\Filament\SuperAdmin\Resources\MarketingSignups;
 use App\Filament\SuperAdmin\Resources\MarketingSignups\Pages\ListMarketingSignups;
 use App\Filament\SuperAdmin\Resources\MarketingSignups\Tables\MarketingSignupsTable;
 use App\Models\MarketingSignup;
+use App\Services\RoleMatrix;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
@@ -23,11 +24,28 @@ class MarketingSignupResource extends Resource
 
     protected static ?string $navigationLabel = 'Waitlist';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Marketing';
+
     protected static ?string $modelLabel = 'Signup';
 
     protected static ?string $pluralModelLabel = 'Waitlist';
 
     protected static ?int $navigationSort = 90;
+
+    public static function canViewAny(): bool
+    {
+        return RoleMatrix::canSee(auth()->user(), RoleMatrix::SEC_WAITLIST);
+    }
+
+    public static function canEdit($record): bool
+    {
+        return RoleMatrix::canSee(auth()->user(), RoleMatrix::SEC_WAITLIST_MANAGE);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return RoleMatrix::canSee(auth()->user(), RoleMatrix::SEC_WAITLIST_MANAGE);
+    }
 
     public static function table(Table $table): Table
     {

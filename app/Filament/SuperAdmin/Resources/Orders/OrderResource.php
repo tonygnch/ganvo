@@ -7,6 +7,7 @@ use App\Filament\SuperAdmin\Resources\Orders\Pages\ViewOrder;
 use App\Filament\SuperAdmin\Resources\Orders\Schemas\OrderForm;
 use App\Filament\SuperAdmin\Resources\Orders\Tables\OrdersTable;
 use App\Models\Order;
+use App\Services\RoleMatrix;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -18,7 +19,14 @@ class OrderResource extends Resource
 {
     protected static ?string $model = Order::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingBag;
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Billing';
+
+    public static function canViewAny(): bool
+    {
+        return RoleMatrix::canSee(auth()->user(), RoleMatrix::SEC_ORDERS);
+    }
 
     public static function form(Schema $schema): Schema
     {

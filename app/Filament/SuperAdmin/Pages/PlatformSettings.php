@@ -2,6 +2,7 @@
 
 namespace App\Filament\SuperAdmin\Pages;
 
+use App\Services\RoleMatrix;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -29,9 +30,16 @@ class PlatformSettings extends Page
 
     protected static ?string $navigationLabel = 'Platform Settings';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'System';
+
     protected static ?string $title = 'Platform Settings';
 
     protected static ?int $navigationSort = 100;
+
+    public static function canAccess(): bool
+    {
+        return RoleMatrix::canSee(auth()->user(), RoleMatrix::SEC_PLATFORM_SETTINGS);
+    }
 
     /** Most recent Stripe ping result — shown inline below the credentials card. */
     public ?array $stripePingResult = null;
