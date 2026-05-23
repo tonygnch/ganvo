@@ -60,13 +60,17 @@ class BillingController extends Controller
         $request->session()->put('billing.pending_period', $data['period']);
 
         try {
+            // No customer_email here — once Cashier has created a Stripe
+            // customer for the tenant (stored as stripe_id), it auto-passes
+            // `customer` and Stripe rejects with "You may only specify one
+            // of these parameters: customer, customer_email." Stripe
+            // Checkout collects the email from the user if no customer
+            // exists yet.
             $checkout = $tenant
                 ->newSubscription(Tenant::SUBSCRIPTION_NAME, $priceId)
                 ->checkout([
                     'success_url' => route('billing.checkout.success') . '?session_id={CHECKOUT_SESSION_ID}',
                     'cancel_url' => route('billing.show') . '?canceled=1',
-                    // Pre-fill the customer's email so they don't have to retype it.
-                    'customer_email' => $tenant->contact_email ?: ($request->user()->email ?? null),
                 ]);
         } catch (\Throwable $e) {
             Log::error('Stripe Checkout creation failed', [

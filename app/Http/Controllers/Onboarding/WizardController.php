@@ -149,12 +149,17 @@ class WizardController extends Controller
                         $request->session()->put('billing.pending_period', $data['billing_period']);
                         $request->session()->put('billing.return_to_wizard', true);
 
+                        // No customer_email here — Cashier auto-attaches
+                        // the tenant's stripe_id once a customer has been
+                        // created, and Stripe rejects with "You may only
+                        // specify one of these parameters: customer,
+                        // customer_email." Stripe Checkout collects the
+                        // email from the user if no customer exists yet.
                         $checkout = $tenant
                             ->newSubscription(\App\Models\Tenant::SUBSCRIPTION_NAME, $priceId)
                             ->checkout([
                                 'success_url' => route('onboarding.plan.checkout_success') . '?session_id={CHECKOUT_SESSION_ID}',
                                 'cancel_url'  => route('onboarding.plan') . '?canceled=1',
-                                'customer_email' => $tenant->contact_email ?: ($request->user()->email ?? null),
                             ]);
                         return redirect($checkout->url);
                     } catch (\Throwable $e) {
@@ -164,7 +169,7 @@ class WizardController extends Controller
                             'error' => $e->getMessage(),
                         ]);
                         return redirect()->route('onboarding.plan')
-                            ->with('billing_error', __('site.billing.errors.stripe_unavailable', [], null) ?: 'Stripe unavailable — try again.');
+                            ->with('billing_error', __('billing.errors.stripe_unavailable'));
                     }
                 }
             }
