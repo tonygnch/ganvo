@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     @include('partials.favicon')
-    <title>{{ __('site.marketing.title') }}</title>
+    <title>{{ $cs['page_title'] ?? __('site.marketing.title') }}</title>
+    <meta name="description" content="{{ $cs['meta_description'] ?? __('site.marketing.meta_description') }}">
 
     {{-- Set theme before paint to avoid a flash --}}
     <script>
@@ -854,9 +855,9 @@
                 <x-brand-lockup size="sm" />
             </a>
             <div class="nav-links">
-                <a href="#features" class="nav-link-hide-mobile">{{ __('site.marketing.nav.features') }}</a>
-                <a href="#themes" class="nav-link-hide-mobile">{{ __('site.marketing.nav.themes') }}</a>
-                <a href="#pricing" class="nav-link-hide-mobile">{{ __('site.marketing.nav.pricing') }}</a>
+                <a href="#features" class="nav-link-hide-mobile">{{ $cs['nav_features'] ?? __('site.marketing.nav.features') }}</a>
+                <a href="#themes" class="nav-link-hide-mobile">{{ $cs['nav_themes'] ?? __('site.marketing.nav.themes') }}</a>
+                <a href="#pricing" class="nav-link-hide-mobile">{{ $cs['nav_pricing'] ?? __('site.marketing.nav.pricing') }}</a>
                 @php
                     $currentLocale = app()->getLocale();
                     $languages = \App\Http\Middleware\SetLocale::available();
@@ -926,12 +927,12 @@
         </div>
         <span class="shape s3" aria-hidden="true"></span>
         <div class="hero-inner">
-            <span class="badge-pill">{{ __('site.marketing.hero.pill') }}</span>
-            <h1>{{ __('site.marketing.hero.headline_1') }}<br><span class="accent">{{ __('site.marketing.hero.headline_2') }}</span></h1>
-            <p class="sub">{{ __('site.marketing.hero.sub') }}</p>
+            <span class="badge-pill">{{ $cs['hero_pill'] ?? __('site.marketing.hero.pill') }}</span>
+            <h1>{{ $cs['hero_headline_1'] ?? __('site.marketing.hero.headline_1') }}<br><span class="accent">{{ $cs['hero_headline_2'] ?? __('site.marketing.hero.headline_2') }}</span></h1>
+            <p class="sub">{{ $cs['hero_sub'] ?? __('site.marketing.hero.sub') }}</p>
             <div class="cta-row">
-                <a href="/onboarding/signup" class="btn btn-primary btn-lg">{{ __('site.marketing.hero.cta_primary') }}</a>
-                <a href="#features" class="btn btn-outline btn-lg">{{ __('site.marketing.hero.cta_secondary') }}</a>
+                <a href="/onboarding/signup" class="btn btn-primary btn-lg">{{ $cs['hero_cta_primary'] ?? __('site.marketing.hero.cta_primary') }}</a>
+                <a href="#features" class="btn btn-outline btn-lg">{{ $cs['hero_cta_secondary'] ?? __('site.marketing.hero.cta_secondary') }}</a>
             </div>
         </div>
     </section>
@@ -941,8 +942,8 @@
         $features = __('site.marketing.features.items');
     @endphp
     <section class="features" id="features">
-        <div class="section-eyebrow reveal">{{ __('site.marketing.features.eyebrow') }}</div>
-        <h2 class="reveal">{{ __('site.marketing.features.h2') }}</h2>
+        <div class="section-eyebrow reveal">{{ $cs['features_eyebrow'] ?? __('site.marketing.features.eyebrow') }}</div>
+        <h2 class="reveal">{{ $cs['features_h2'] ?? __('site.marketing.features.h2') }}</h2>
         <div class="feature-grid">
             @foreach ($features as $i => $f)
                 <div class="feature-card reveal">
@@ -956,8 +957,8 @@
 
     <section class="themes" id="themes">
         <div class="themes-inner">
-            <div class="section-eyebrow reveal">{{ __('site.marketing.themes.eyebrow') }}</div>
-            <h2 class="reveal">{{ __('site.marketing.themes.h2') }}</h2>
+            <div class="section-eyebrow reveal">{{ $cs['themes_eyebrow'] ?? __('site.marketing.themes.eyebrow') }}</div>
+            <h2 class="reveal">{{ $cs['themes_h2'] ?? __('site.marketing.themes.h2') }}</h2>
             <div class="theme-grid">
                 <div class="theme-card reveal">
                     <div class="theme-preview">{{ Str::upper(__('site.marketing.themes.default_name')) }}</div>
@@ -988,8 +989,8 @@
     @endphp
     @if ($plans->isNotEmpty())
     <section class="pricing" id="pricing">
-        <div class="section-eyebrow reveal">{{ __('site.marketing.pricing.eyebrow') }}</div>
-        <h2 class="reveal">{{ __('site.marketing.pricing.h2') }}</h2>
+        <div class="section-eyebrow reveal">{{ $cs['pricing_eyebrow'] ?? __('site.marketing.pricing.eyebrow') }}</div>
+        <h2 class="reveal">{{ $cs['pricing_h2'] ?? __('site.marketing.pricing.h2') }}</h2>
 
         <div class="pricing-toggle-wrap reveal">
             <div class="pricing-toggle" role="tablist">
@@ -1105,9 +1106,9 @@
     @endif
 
     <section class="cta-strip">
-        <h2>{{ __('site.marketing.cta_strip.h2') }}</h2>
-        <p>{{ __('site.marketing.cta_strip.p') }}</p>
-        <a href="/onboarding/signup" class="btn btn-on-dark btn-lg">{{ __('site.marketing.cta_strip.btn') }}</a>
+        <h2>{{ $cs['cta_strip_h2'] ?? __('site.marketing.cta_strip.h2') }}</h2>
+        <p>{{ $cs['cta_strip_p'] ?? __('site.marketing.cta_strip.p') }}</p>
+        <a href="/onboarding/signup" class="btn btn-on-dark btn-lg">{{ $cs['cta_strip_btn'] ?? __('site.marketing.cta_strip.btn') }}</a>
     </section>
 
     <footer>

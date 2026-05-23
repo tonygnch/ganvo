@@ -31,6 +31,7 @@ return [
 
     'marketing' => [
         'title' => 'Ganvo — White-label e-commerce, in minutes',
+        'meta_description' => 'Launch a beautiful e-commerce storefront in minutes. Pick a theme, customize, start selling — Stripe payouts straight to you. Built for indie brands.',
         'nav' => [
             'features' => 'Features',
             'themes' => 'Themes',

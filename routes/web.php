@@ -62,7 +62,14 @@ Route::domain($centralDomain)->group(function () {
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->get();
-        return view('marketing.home', compact('plans'));
+
+        // SA-editable text content (title, hero, section headings, CTA strip).
+        // Falls back to i18n catalog for any field not overridden in DB.
+        $cs = \App\Models\SitePage::bulk(
+            \App\Services\SitePageSchemas::PAGE_MARKETING_HOME
+        );
+
+        return view('marketing.home', compact('plans', 'cs'));
     })->name('marketing.home');
 
     Route::get('/lang/{locale}', [LanguageController::class, 'switch'])->name('lang.switch');
