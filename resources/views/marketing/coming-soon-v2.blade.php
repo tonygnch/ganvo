@@ -406,23 +406,19 @@
         })();
     </script>
 
-    {{-- Bo — full-body robot. Hops in from above the viewport, lands
-         in the top quarter of the page, then animates his right arm to
-         point down at the brand lockup. After the entrance, idles with
-         hover bob, breathing, occasional yaw, eye-tracking on cursor.
+    {{-- Bo — RobotExpressive model by Tomás Laulhé (CC0/MIT, shipped
+         with Three.js examples). Loaded via GLTFLoader; animations
+         driven by AnimationMixer using the model's named clips
+         (Jump, ThumbsUp, Wave, Yes, Idle, Dance, etc.).
 
-         Structure (parent → children):
-           body (root group, positions whole robot in world)
-             head (sphere) — has eyes (groups with sclera+pupil) + antenna
-             torso (rounded cylinder)
-             leftArm.shoulder (group, attached to torso L-shoulder)
-               upperArm → elbow (group) → forearm → hand
-             rightArm.shoulder (group, attached to torso R-shoulder)
-               upperArm → elbow → forearm → hand
-             hoverBase (torus disc under torso)
+         State machine: 'hop-in' → 'thumbs-up' → 'idle' → periodic
+         gesture (Wave / Yes / ThumbsUp / Dance) → back to 'idle'.
 
-         State machine: 'hop-in' → 'point-at-brand' → 'idle' (loops).
-         All transitions dt-based + reduced-motion safe. --}}
+         During hop-in, the model's world Y is lerped from above the
+         viewport down to home + the "Jump" clip plays so the character
+         looks like it leapt onto the screen. Fallbacks (no WebGL,
+         GLTF load failure, prefers-reduced-motion) leave the inline
+         SVG bo-fallback visible. --}}
     <script type="module">
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const canvas = document.getElementById('boCanvas');
@@ -438,12 +434,22 @@
             console.info('[bo] WebGL unavailable — SVG fallback stays');
         } else {
             try {
-                const THREE = await import('https://esm.sh/three@0.160.0');
+                // Pin the three version + load GLTFLoader from the same
+                // build to avoid two different THREE namespaces (Three.js
+                // throws hard if mixed).
+                const THREE_VERSION = '0.160.0';
+                const THREE = await import(`https://esm.sh/three@${THREE_VERSION}`);
+                const { GLTFLoader } = await import(
+                    `https://esm.sh/three@${THREE_VERSION}/examples/jsm/loaders/GLTFLoader.js`
+                );
 
-                // ---- Renderer ------------------------------------------------
+                // ---- Renderer -------------------------------------------
                 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 renderer.setClearColor(0x000000, 0);
+                renderer.outputColorSpace = THREE.SRGBColorSpace;
+                renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                renderer.toneMappingExposure = 1.0;
 
                 const scene = new THREE.Scene();
                 const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
@@ -458,211 +464,22 @@
                 sizeRenderer();
                 window.addEventListener('resize', sizeRenderer);
 
-                // ---- Lighting ----------------------------------------------
-                scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-                const key = new THREE.DirectionalLight(0xcbe8ff, 1.2);
-                key.position.set(3, 4, 5);
+                // ---- Lighting -------------------------------------------
+                // Three-point lighting tuned for a stylized model: warm-ish
+                // key, cyan rim to match the brand palette, broad ambient.
+                scene.add(new THREE.HemisphereLight(0xcbe8ff, 0x0a1430, 1.4));
+                const key = new THREE.DirectionalLight(0xffffff, 1.8);
+                key.position.set(3, 5, 4);
                 scene.add(key);
-                const rim = new THREE.DirectionalLight(0x00d4ff, 0.8);
-                rim.position.set(-3, -2, -4);
+                const rim = new THREE.DirectionalLight(0x00d4ff, 1.2);
+                rim.position.set(-4, -2, -3);
                 scene.add(rim);
 
-                // ---- Materials (reused across body parts) ------------------
-                const matBlueMetal = new THREE.MeshStandardMaterial({
-                    color: 0x1a3a8a, metalness: 0.55, roughness: 0.35,
-                    emissive: 0x0a1430, emissiveIntensity: 0.4,
-                });
-                const matBlueLight = new THREE.MeshStandardMaterial({
-                    color: 0x4a9eff, metalness: 0.4, roughness: 0.4,
-                    emissive: 0x1a3a8a, emissiveIntensity: 0.3,
-                });
-                const matGlowCyan = new THREE.MeshStandardMaterial({
-                    color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 1.5,
-                });
-                const matChrome = new THREE.MeshStandardMaterial({
-                    color: 0x4a6fa5, metalness: 0.8, roughness: 0.3,
-                });
-
-                // ===== ROBOT BODY ==========================================
-                // Root group — the whole robot positions/animates via this.
-                const body = new THREE.Group();
-                scene.add(body);
-
-                // ---- Head -------------------------------------------------
-                const head = new THREE.Group();
-                head.position.y = 1.65;
-                body.add(head);
-
-                const skull = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.65, 48, 48), matBlueMetal
-                );
-                head.add(skull);
-                // Glow halo around the head
-                head.add(new THREE.Mesh(
-                    new THREE.SphereGeometry(0.78, 32, 32),
-                    new THREE.MeshBasicMaterial({
-                        color: 0x00d4ff, transparent: true, opacity: 0.12,
-                        side: THREE.BackSide, depthWrite: false,
-                    })
-                ));
-
-                // ---- Eyes (groups that lookAt cursor each frame) ----------
-                const makeEye = () => {
-                    const eye = new THREE.Group();
-                    eye.add(new THREE.Mesh(
-                        new THREE.SphereGeometry(0.18, 24, 24),
-                        new THREE.MeshStandardMaterial({
-                            color: 0xeaf4ff, roughness: 0.35, metalness: 0.1,
-                            emissive: 0xcbe8ff, emissiveIntensity: 0.25,
-                        })
-                    ));
-                    const pupil = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.08, 16, 16),
-                        new THREE.MeshStandardMaterial({
-                            color: 0x020a18, emissive: 0x00d4ff, emissiveIntensity: 0.8,
-                        })
-                    );
-                    pupil.position.z = 0.14;
-                    eye.add(pupil);
-                    return eye;
-                };
-                const leftEye  = makeEye(); leftEye.position.set(-0.24, 0.06, 0.55);
-                const rightEye = makeEye(); rightEye.position.set(0.24, 0.06, 0.55);
-                head.add(leftEye, rightEye);
-
-                // ---- Antenna ----------------------------------------------
-                const antennaStem = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.02, 0.02, 0.35, 8), matChrome
-                );
-                antennaStem.position.y = 0.82;
-                head.add(antennaStem);
-                const antennaTip = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.08, 16, 16), matGlowCyan
-                );
-                antennaTip.position.y = 1.02;
-                head.add(antennaTip);
-
-                // ---- Neck -------------------------------------------------
-                const neck = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.18, 0.22, 0.22, 16), matChrome
-                );
-                neck.position.y = 1.05;
-                body.add(neck);
-
-                // ---- Torso ------------------------------------------------
-                // A slightly squashed sphere reads as a rounded chest plate
-                // without needing a custom shape. Scaled non-uniformly.
-                const torso = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.7, 32, 32), matBlueMetal
-                );
-                torso.scale.set(1, 1.25, 0.7);
-                torso.position.y = 0.4;
-                body.add(torso);
-                // A glowing chest dot — brand accent
-                const chestDot = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.10, 16, 16), matGlowCyan
-                );
-                chestDot.position.set(0, 0.45, 0.52);
-                body.add(chestDot);
-
-                // ---- Arm factory ------------------------------------------
-                // Returns the shoulder group + handles to subgroups so the
-                // animation code can rotate joints directly. Arms hang down
-                // by default; rotating the shoulder.x raises them forward.
-                const makeArm = (side /* -1 = left, +1 = right */) => {
-                    const shoulder = new THREE.Group();
-                    shoulder.position.set(side * 0.65, 0.85, 0);
-                    body.add(shoulder);
-
-                    const upperArm = new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.10, 0.08, 0.7, 16), matBlueLight
-                    );
-                    upperArm.position.y = -0.35;
-                    shoulder.add(upperArm);
-
-                    const elbow = new THREE.Group();
-                    elbow.position.y = -0.7;
-                    shoulder.add(elbow);
-
-                    const forearm = new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.08, 0.07, 0.65, 16), matBlueLight
-                    );
-                    forearm.position.y = -0.32;
-                    elbow.add(forearm);
-
-                    const hand = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.12, 16, 16), matChrome
-                    );
-                    hand.position.y = -0.7;
-                    elbow.add(hand);
-                    // Tiny glowing fingertip — sells the "pointing" gesture
-                    const fingertip = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.045, 12, 12), matGlowCyan
-                    );
-                    fingertip.position.y = -0.12;
-                    hand.add(fingertip);
-
-                    return { shoulder, elbow, hand, fingertip };
-                };
-                const leftArm  = makeArm(-1);
-                const rightArm = makeArm(+1);
-
-                // ---- Hover base (a glowing disc instead of legs) ----------
-                const hoverBase = new THREE.Group();
-                hoverBase.position.y = -0.5;
-                body.add(hoverBase);
-                // Inner solid disc
-                hoverBase.add(new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.55, 0.45, 0.08, 32), matBlueMetal
-                ));
-                // Outer glowing ring (additive blend for halo)
-                const baseRing = new THREE.Mesh(
-                    new THREE.TorusGeometry(0.65, 0.025, 8, 64),
-                    new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.7 })
-                );
-                baseRing.rotation.x = Math.PI / 2;
-                baseRing.position.y = 0;
-                hoverBase.add(baseRing);
-                // Soft glow underneath the base — sells the "hovering" feel
-                const baseGlow = new THREE.Mesh(
-                    new THREE.CircleGeometry(0.95, 32),
-                    new THREE.MeshBasicMaterial({
-                        color: 0x00d4ff, transparent: true, opacity: 0.18,
-                        side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false,
-                    })
-                );
-                baseGlow.rotation.x = -Math.PI / 2;
-                baseGlow.position.y = -0.1;
-                hoverBase.add(baseGlow);
-
-                // ---- Particle dust around the whole body ------------------
-                const PARTICLES = 120;
-                const positions = new Float32Array(PARTICLES * 3);
-                for (let i = 0; i < PARTICLES; i++) {
-                    const r = 1.5 + Math.random() * 1.5;
-                    const theta = Math.random() * Math.PI * 2;
-                    const phi = Math.acos(2 * Math.random() - 1);
-                    positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
-                    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-                    positions[i * 3 + 2] = r * Math.cos(phi);
-                }
-                const pGeo = new THREE.BufferGeometry();
-                pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                const particles = new THREE.Points(pGeo, new THREE.PointsMaterial({
-                    color: 0xcbe8ff, size: 0.035, transparent: true, opacity: 0.5,
-                    blending: THREE.AdditiveBlending, depthWrite: false,
-                }));
-                body.add(particles);
-
-                // ===== POSITIONING + LOCKUP TARGET ==========================
-                // Bo's "home" position above the brand lockup. Computed from
-                // the DOM rect so he visually sits over the wordmark on any
-                // viewport size.
+                // ---- DOM → world position projection --------------------
+                // Bo's home Y in world space is computed from the brand
+                // lockup's screen rect, then offset up so the model lands
+                // above the wordmark on any viewport.
                 let homePos = new THREE.Vector3(0, 1.5, 0);
-                let lockupWorldPos = new THREE.Vector3(0, -0.5, 0);
-
-                // Convert a screen-space point (px) to a world-space point
-                // on the camera's z=0 plane.
                 function screenToWorld(sx, sy) {
                     const ndc = new THREE.Vector2(
                         (sx / window.innerWidth) * 2 - 1,
@@ -673,175 +490,169 @@
                     const distance = -camera.position.z / dir.z;
                     return camera.position.clone().add(dir.multiplyScalar(distance));
                 }
-                function recomputeTargets() {
+                function recomputeHome() {
                     if (! lockupEl) return;
                     const r = lockupEl.getBoundingClientRect();
                     const cx = r.left + r.width / 2;
-                    const cy = r.top + r.height / 2;
-                    lockupWorldPos = screenToWorld(cx, cy);
-                    // Bo lands a fixed distance above the lockup. Scale that
-                    // distance with viewport so he isn't too cramped on phones.
-                    const liftPx = Math.max(180, window.innerHeight * 0.30);
-                    const aboveWorld = screenToWorld(cx, cy - liftPx);
-                    homePos = aboveWorld.clone();
+                    // Place Bo's pivot ~28% of viewport height above the
+                    // lockup's top edge so his upper body is centered there.
+                    const aboveY = r.top - window.innerHeight * 0.28;
+                    homePos = screenToWorld(cx, aboveY);
                 }
-                recomputeTargets();
-                window.addEventListener('resize', recomputeTargets);
+                recomputeHome();
+                window.addEventListener('resize', recomputeHome);
 
-                // ===== STATE MACHINE ========================================
-                // 'hop-in' → 'point-at-brand' → 'idle' (loops with periodic re-points)
+                // ---- Load the GLB ---------------------------------------
+                const loader = new GLTFLoader();
+                const gltf = await new Promise((resolve, reject) => {
+                    loader.load('/models/RobotExpressive.glb', resolve, undefined, reject);
+                });
+
+                const model = gltf.scene;
+                // Scale: model is ~2 units tall in its own coords; bump up
+                // a bit so it reads well in the camera frame.
+                model.scale.setScalar(0.55);
+                // Default model faces +Z (away from camera at z=10 looking
+                // at origin); flip 180° to face the viewer.
+                model.rotation.y = Math.PI;
+                scene.add(model);
+
+                // ---- Animation mixer + clip catalog ---------------------
+                // RobotExpressive ships with these clips (by name): Idle,
+                // Walking, Running, Dance, Death, Sitting, Standing, Jump,
+                // No, Punch, ThumbsUp, Wave, Yes. We keep references to a
+                // few so we can fade between them.
+                const mixer = new THREE.AnimationMixer(model);
+                const actions = {};
+                for (const clip of gltf.animations) {
+                    actions[clip.name] = mixer.clipAction(clip);
+                }
+
+                let currentAction = null;
+                function fadeTo(name, duration = 0.35, loop = true) {
+                    const next = actions[name];
+                    if (! next) {
+                        console.warn(`[bo] no clip named '${name}' (have: ${Object.keys(actions).join(', ')})`);
+                        return null;
+                    }
+                    next.reset();
+                    if (! loop) {
+                        next.setLoop(THREE.LoopOnce, 1);
+                        next.clampWhenFinished = true;
+                    } else {
+                        next.setLoop(THREE.LoopRepeat, Infinity);
+                        next.clampWhenFinished = false;
+                    }
+                    next.enabled = true;
+                    next.setEffectiveTimeScale(1);
+                    next.setEffectiveWeight(1);
+                    next.fadeIn(duration).play();
+                    if (currentAction && currentAction !== next) {
+                        currentAction.fadeOut(duration);
+                    }
+                    currentAction = next;
+                    return next;
+                }
+
+                // ---- State machine ---------------------------------------
+                // Drives both the animation clip AND any world-position
+                // tween that needs to run alongside it (hop entrance).
                 let state = 'hop-in';
                 let stateStart = 0;
-                const HOP_DURATION = 1.2;
-                const POINT_DURATION = 0.6;
-                const POINT_HOLD = 1.4;        // hold the point pose this long before relaxing
-                const IDLE_BEFORE_REPOINT = 7.0; // every 7s in idle, point again
-                // Pose targets (rotations applied via lerp toward these)
-                const armIdle  = { shoulderX: 0,           elbowX: 0 };
-                const armPoint = { shoulderX: -Math.PI*0.6, elbowX: Math.PI*0.05 }; // arm raised + slightly extended
-                const armRelax = { shoulderX: 0,           elbowX: 0 };
+                const HOP_DURATION = 1.0;
+                const THUMBS_HOLD = 1.8;
+                const IDLE_BEFORE_GESTURE = 6.0;
+                const gestureBag = ['Wave', 'Yes', 'ThumbsUp', 'Dance'];
+                let gestureIndex = 0;
 
-                // Helper: smoothly approach a target value via lerp at given
-                // smoothing factor (per-frame). Used for joint angles.
-                function approach(current, target, factor) {
-                    return current + (target - current) * factor;
-                }
+                // Kick off the entrance: start the Jump clip immediately so
+                // the model is in mid-leap pose during the fall-in.
+                fadeTo('Jump', 0.001, false);
 
-                // Easing for the hop entrance — fall-with-overshoot. Returns
-                // y-offset in world units to ADD to the home Y (start above,
-                // settle to home, slight squish on landing).
+                // Ease for the hop fall — fast initial drop + small bounce.
                 function hopOffset(p) {
-                    // p in [0, 1]. Curve:
-                    //   0.0 → +5 (start high above home)
-                    //   0.6 → -0.3 (slight overshoot below home — squish frame)
-                    //   1.0 → 0 (settle)
-                    if (p < 0.6) {
-                        const t = p / 0.6;
-                        // ease-in (gravity acceleration)
-                        const eased = t * t;
-                        return 5 + (-0.3 - 5) * eased;
+                    if (p < 0.7) {
+                        const t = p / 0.7;
+                        return 6 * Math.pow(1 - t, 2);     // gravity-ish ease-in to 0
                     } else {
-                        const t = (p - 0.6) / 0.4;
-                        // spring back up
-                        const eased = Math.sin(t * Math.PI * 0.5);
-                        return -0.3 + (0 - -0.3) * eased;
+                        const t = (p - 0.7) / 0.3;
+                        return Math.sin(t * Math.PI) * -0.25; // bounce below + back up
                     }
                 }
 
-                // ===== CURSOR TARGET (eye tracking) =========================
-                const cursorWorld = new THREE.Vector3();
-                function updateCursorTarget() {
-                    cursorWorld.set(window.__cursor.x * 3, window.__cursor.y * 2 + 1.5, 3);
-                }
-
-                // ===== ANIMATION LOOP =======================================
+                // ---- Animation loop --------------------------------------
                 const clock = new THREE.Clock();
-                clock.start();
-                stateStart = 0;
-
                 function animate() {
                     requestAnimationFrame(animate);
                     const t = clock.getElapsedTime();
                     const dt = Math.min(clock.getDelta(), 0.05);
+                    mixer.update(dt);
 
                     if (reducedMotion) {
-                        // Skip animation: settle Bo directly at home with arm idle.
-                        body.position.copy(homePos);
-                        leftArm.shoulder.rotation.x = armIdle.shoulderX;
-                        rightArm.shoulder.rotation.x = armIdle.shoulderX;
+                        model.position.copy(homePos);
                         renderer.render(scene, camera);
                         return;
                     }
 
-                    const stateTime = t - stateStart;
+                    const st = t - stateStart;
 
-                    // ---- HOP IN -------------------------------------------
                     if (state === 'hop-in') {
-                        const p = Math.min(1, stateTime / HOP_DURATION);
-                        const yOffset = hopOffset(p);
-                        body.position.set(homePos.x, homePos.y + yOffset, homePos.z);
-                        // Slight forward tumble during the fall, settles to upright
-                        body.rotation.x = (1 - p) * -0.15;
-                        // Squish-on-impact: scale Y a bit when bouncing
-                        const squishP = Math.max(0, Math.min(1, (p - 0.55) / 0.15));
-                        const squish = 1 - Math.sin(squishP * Math.PI) * 0.10;
-                        body.scale.set(1 / squish, squish, 1 / squish);
-
+                        const p = Math.min(1, st / HOP_DURATION);
+                        model.position.set(homePos.x, homePos.y + hopOffset(p), homePos.z);
                         if (p >= 1) {
-                            body.rotation.x = 0;
-                            body.scale.set(1, 1, 1);
-                            state = 'point-at-brand';
+                            state = 'thumbs-up';
                             stateStart = t;
+                            fadeTo('ThumbsUp', 0.3, false);
                         }
                     }
-                    // ---- POINT AT BRAND -----------------------------------
-                    else if (state === 'point-at-brand') {
-                        const p = Math.min(1, stateTime / POINT_DURATION);
-                        const eased = 1 - Math.pow(1 - p, 3);
-                        // Animate right arm from idle to point pose
-                        rightArm.shoulder.rotation.x = armIdle.shoulderX + (armPoint.shoulderX - armIdle.shoulderX) * eased;
-                        rightArm.elbow.rotation.x    = armIdle.elbowX    + (armPoint.elbowX    - armIdle.elbowX)    * eased;
-                        // Lean body slightly toward the lockup for emphasis
-                        body.rotation.z = eased * 0.05;
-                        body.position.set(homePos.x, homePos.y + Math.sin(t * 1.4) * 0.05, homePos.z);
-
-                        if (stateTime >= POINT_DURATION + POINT_HOLD) {
-                            state = 'relax-arm';
-                            stateStart = t;
-                        }
-                    }
-                    // ---- RELAX ARM BACK TO IDLE ---------------------------
-                    else if (state === 'relax-arm') {
-                        const p = Math.min(1, stateTime / POINT_DURATION);
-                        const eased = 1 - Math.pow(1 - p, 2);
-                        rightArm.shoulder.rotation.x = armPoint.shoulderX + (armRelax.shoulderX - armPoint.shoulderX) * eased;
-                        rightArm.elbow.rotation.x    = armPoint.elbowX    + (armRelax.elbowX    - armPoint.elbowX)    * eased;
-                        body.rotation.z = 0.05 * (1 - eased);
-                        body.position.set(homePos.x, homePos.y + Math.sin(t * 1.4) * 0.08, homePos.z);
-
-                        if (p >= 1) {
+                    else if (state === 'thumbs-up') {
+                        // Idle bob during the hold
+                        model.position.set(homePos.x, homePos.y + Math.sin(t * 1.4) * 0.05, homePos.z);
+                        if (st > THUMBS_HOLD) {
                             state = 'idle';
                             stateStart = t;
+                            fadeTo('Idle', 0.4);
                         }
                     }
-                    // ---- IDLE (loops; periodically re-points) -------------
                     else if (state === 'idle') {
-                        // Bob + breathing scale + subtle yaw
-                        body.position.set(homePos.x, homePos.y + Math.sin(t * 1.4) * 0.10, homePos.z);
-                        const breath = 1 + Math.sin(t * 1.8) * 0.012;
-                        torso.scale.set(1 * breath, 1.25 * breath, 0.7);
-                        body.rotation.y = Math.sin(t * 0.4) * 0.10;
-                        body.rotation.z = Math.sin(t * 0.7) * 0.02;
-
-                        // Re-point at the brand every IDLE_BEFORE_REPOINT seconds
-                        if (stateTime > IDLE_BEFORE_REPOINT) {
-                            state = 'point-at-brand';
+                        // Bob in place while idling. The Idle clip has its
+                        // own subtle motion; the bob is a world-position
+                        // offset on top of that for a "hovering" feel.
+                        model.position.set(homePos.x, homePos.y + Math.sin(t * 1.2) * 0.08, homePos.z);
+                        if (st > IDLE_BEFORE_GESTURE) {
+                            state = 'gesture';
                             stateStart = t;
+                            const next = gestureBag[gestureIndex++ % gestureBag.length];
+                            fadeTo(next, 0.3, false);
+                        }
+                    }
+                    else if (state === 'gesture') {
+                        model.position.set(homePos.x, homePos.y + Math.sin(t * 1.4) * 0.05, homePos.z);
+                        // Gesture clips run ~1.5-3s; return to idle after the
+                        // current action's clip duration plus a small buffer.
+                        const clipDur = currentAction?.getClip()?.duration ?? 2;
+                        if (st > clipDur - 0.15) {
+                            state = 'idle';
+                            stateStart = t;
+                            fadeTo('Idle', 0.4);
                         }
                     }
 
-                    // ---- Always-on: antenna sway, base ring spin, particles
-                    antennaStem.rotation.z = Math.sin(t * 2) * 0.08;
-                    antennaTip.position.x = Math.sin(t * 2) * 0.04;
-                    baseRing.rotation.z += dt * 0.7;
-                    particles.rotation.y += dt * 0.06;
-
-                    // ---- Eye tracking — pupils follow the cursor ---------
-                    updateCursorTarget();
-                    // Need world coords for lookAt; eyes are nested deep in
-                    // the body group, so getWorldPosition is more reliable
-                    // than passing the cursor target directly.
-                    leftEye.lookAt(cursorWorld);
-                    rightEye.lookAt(cursorWorld);
+                    // Gentle yaw toward cursor so Bo feels engaged with the
+                    // viewer (the model has no individually-controllable
+                    // head bone via name lookup that's stable across
+                    // exports, so we yaw the whole body subtly instead).
+                    const yawTarget = window.__cursor.x * 0.18;
+                    model.rotation.y += (Math.PI + yawTarget - model.rotation.y) * 0.05;
 
                     renderer.render(scene, camera);
                 }
                 animate();
 
-                // Fade canvas in after first frame
+                // Reveal canvas once we're actually drawing
                 requestAnimationFrame(() => canvas.classList.add('ready'));
             } catch (err) {
-                console.warn('[bo] Three.js failed — SVG fallback stays', err);
+                console.warn('[bo] Three.js / GLB load failed — SVG fallback stays', err);
             }
         }
     </script>
