@@ -144,6 +144,10 @@ Route::domain($centralDomain)->group(function () {
         // Swap = change plan/period on an EXISTING subscription with proration.
         // Stripe handles credit-for-unused + charge-for-new automatically.
         Route::post('/billing/swap', [BillingController::class, 'swap'])->name('billing.swap');
+        // Preview = JSON endpoint that returns what the proration invoice
+        // WOULD look like (line items + total) without charging anything.
+        // Backs the confirmation modal on the Billing page.
+        Route::post('/billing/swap/preview', [BillingController::class, 'swapPreview'])->name('billing.swap.preview');
         Route::post('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
         Route::get('/billing', [BillingController::class, 'show'])->name('billing.show');
     });

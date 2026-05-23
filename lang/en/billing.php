@@ -45,4 +45,20 @@ return [
     ],
 
     'swap_warning' => 'Changing plans will charge or credit the prorated difference today, and your next bill date stays the same.',
+
+    'preview' => [
+        'loading_title' => 'Calculating…',
+        'loading_body'  => 'Asking Stripe for the prorated total.',
+        'charge_title'  => 'Pay :total today',
+        'charge_body'   => 'Stripe credits the unused time on your current plan and charges the prorated cost of the new plan for the rest of this cycle.',
+        'credit_title'  => 'Credit on your account: :total',
+        'credit_body'   => 'Downgrades create a credit on your Stripe account that\'s applied against your next invoice. No refund to your card.',
+        'cancel_title'  => 'Cancel paid subscription',
+        'cancel_body_with_date' => 'Your subscription stays active until :date — then you\'ll be on the free plan. No charge today.',
+        'cancel_body_no_date'   => 'Your subscription will end at the current period — then you\'ll be on the free plan. No charge today.',
+        'already_on_plan_title' => 'Already on this plan',
+        'no_change'             => 'Nothing to change.',
+        'cancel'    => 'Keep current plan',
+        'confirm'   => 'Confirm change',
+    ],
 ];

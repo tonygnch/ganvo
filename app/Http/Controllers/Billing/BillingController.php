@@ -241,6 +241,123 @@ class BillingController extends Controller
     }
 
     /**
+     * Compute (but don't apply) the proration invoice for a hypothetical
+     * swap. Used by the Billing page's confirmation modal so the merchant
+     * sees the exact charge amount + line breakdown before committing.
+     *
+     * Returns JSON for the modal's fetch() call; never charges anything.
+     */
+    public function swapPreview(Request $request)
+    {
+        $tenant = $this->tenant();
+
+        $data = $request->validate([
+            'plan_slug' => 'required|string|exists:plans,slug',
+            'period' => 'required|in:' . implode(',', Plan::PERIODS),
+        ]);
+
+        if (! $tenant->platformSubscribed()) {
+            return response()->json(['ok' => false, 'message' => __('billing.errors.no_subscription')], 400);
+        }
+
+        $plan = Plan::where('slug', $data['plan_slug'])->where('is_active', true)->first();
+        if (! $plan) {
+            return response()->json(['ok' => false, 'message' => __('billing.errors.plan_not_found')], 400);
+        }
+
+        // Free plan = cancel the paid subscription at period end. Show a
+        // dedicated message instead of a proration breakdown.
+        if ($plan->isFree()) {
+            $current = $tenant->platformSubscription();
+            $endDate = null;
+            if ($current?->stripe_id) {
+                try {
+                    $sub = \Laravel\Cashier\Cashier::stripe()->subscriptions->retrieve($current->stripe_id);
+                    $endTs = $sub->items->data[0]->current_period_end ?? $sub->current_period_end ?? null;
+                    $endDate = $endTs ? \Carbon\Carbon::createFromTimestamp($endTs)->toFormattedDateString() : null;
+                } catch (\Throwable $e) { /* shrug — modal still works */ }
+            }
+            return response()->json([
+                'ok' => true,
+                'is_cancel' => true,
+                'plan_label' => $plan->translated('name'),
+                'end_date' => $endDate,
+            ]);
+        }
+
+        $priceId = $plan->stripePriceFor($data['period']);
+        if (! $priceId) {
+            return response()->json(['ok' => false, 'message' => __('billing.errors.stripe_price_missing')], 400);
+        }
+
+        $current = $tenant->platformSubscription();
+        if ($current && $current->stripe_price === $priceId) {
+            return response()->json([
+                'ok' => true,
+                'already_on_plan' => true,
+                'message' => __('billing.status.already_on_plan'),
+            ]);
+        }
+
+        try {
+            $stripe = \Laravel\Cashier\Cashier::stripe();
+
+            // Need the subscription item ID (different from the subscription
+            // ID itself) — that's what Stripe wants to override.
+            $sub = $stripe->subscriptions->retrieve($current->stripe_id);
+            $itemId = $sub->items->data[0]->id ?? null;
+            if (! $itemId) {
+                return response()->json(['ok' => false, 'message' => __('billing.errors.stripe_unavailable')], 500);
+            }
+
+            // createPreview is the modern Stripe API (replaced the older
+            // invoices/upcoming endpoint in API version 2024-10-28). Returns
+            // a full Invoice object that hasn't been persisted — perfect
+            // for "what would happen if we swapped right now."
+            $preview = $stripe->invoices->createPreview([
+                'customer' => $tenant->stripe_id,
+                'subscription' => $current->stripe_id,
+                'subscription_details' => [
+                    'items' => [[
+                        'id' => $itemId,
+                        'price' => $priceId,
+                    ]],
+                    'proration_behavior' => 'create_prorations',
+                ],
+            ]);
+
+            $currency = strtoupper($preview->currency);
+            $lines = [];
+            foreach ($preview->lines->data as $line) {
+                $lines[] = [
+                    'description' => $line->description ?: ($line->price->nickname ?? 'Line item'),
+                    'amount_cents' => $line->amount,
+                    'formatted' => \App\Services\Money::format($line->amount, $currency),
+                ];
+            }
+
+            $isCharge = $preview->total > 0;
+            return response()->json([
+                'ok' => true,
+                'total_cents' => $preview->total,
+                'total_formatted' => \App\Services\Money::format(abs($preview->total), $currency),
+                'currency' => $currency,
+                'is_charge' => $isCharge,                  // false → credit applied forward
+                'plan_label' => $plan->translated('name'),
+                'period' => $data['period'],
+                'lines' => $lines,
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Swap preview failed', [
+                'tenant_id' => $tenant->id,
+                'to' => $priceId,
+                'error' => $e->getMessage(),
+            ]);
+            return response()->json(['ok' => false, 'message' => __('billing.errors.stripe_unavailable')], 500);
+        }
+    }
+
+    /**
      * Redirect the merchant into Stripe's Customer Portal where they can
      * change payment methods, view invoices, cancel, etc.
      */
