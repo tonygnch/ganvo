@@ -138,6 +138,8 @@
         <h2 class="menu-heading">{{ __('site.storefront.shop_all.h2') }}</h2>
         <div class="menu-ornament" aria-hidden="true"><span class="dot">●</span></div>
 
+        @include('storefront.partials.catalog-controls')
+
         @if ($products->isEmpty())
             <p class="menu-empty">{{ __('site.storefront.no_products') }}</p>
         @else
@@ -158,6 +160,8 @@
                     <span class="menu-price">@money($product->price_cents)</span>
                 </a>
             @endforeach
+
+            @include('storefront.partials.pagination')
         @endif
     </section>
 @endsection

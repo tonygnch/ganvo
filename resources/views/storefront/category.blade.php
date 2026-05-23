@@ -91,6 +91,8 @@
                     </a>
                 @endforeach
             </div>
+
+            @include('storefront.partials.pagination')
         @endif
     </div>
 @endsection

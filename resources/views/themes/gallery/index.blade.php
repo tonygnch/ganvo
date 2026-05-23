@@ -119,14 +119,31 @@
     <section class="gallery-section container" id="shop">
         <p class="gallery-eyebrow">{{ __('site.storefront.shop_all.h2') }}</p>
 
+        @include('storefront.partials.catalog-controls')
+
         @if ($products->isEmpty())
             <div class="gallery-empty">{{ __('site.storefront.no_products') }}</div>
         @else
+            @php
+                // On filtered/paginated views, drop the asymmetric "feature
+                // card" — it'd inconsistently promote whichever product
+                // happens to land first, which is meaningless under
+                // search/filter semantics. Plain uniform grid instead.
+                $useFeatureLayout = ! (
+                    ($filters['q'] ?? null)
+                    || ($filters['category'] ?? null)
+                    || ($filters['min_price'] ?? null) !== null
+                    || ($filters['max_price'] ?? null) !== null
+                    || ($filters['in_stock'] ?? false)
+                    || (($filters['sort'] ?? 'newest') !== 'newest')
+                    || $products->currentPage() > 1
+                );
+            @endphp
             <div class="gallery-grid">
                 @foreach ($products as $i => $product)
-                    <a href="/products/{{ $product->slug }}" class="gallery-card {{ $i === 0 ? 'feature' : '' }}">
+                    <a href="/products/{{ $product->slug }}" class="gallery-card {{ ($useFeatureLayout && $i === 0) ? 'feature' : '' }}">
                         <div class="gallery-img">
-                            @if ($i === 0)<span class="pill">{{ __('site.storefront.featured.badge') }}</span>@endif
+                            @if ($useFeatureLayout && $i === 0)<span class="pill">{{ __('site.storefront.featured.badge') }}</span>@endif
                             @if ($product->image_path)
                                 <img src="{{ \Illuminate\Support\Facades\Storage::url($product->image_path) }}" alt="{{ $product->name }}">
                             @else
@@ -140,6 +157,8 @@
                     </a>
                 @endforeach
             </div>
+
+            @include('storefront.partials.pagination')
         @endif
     </section>
 @endsection

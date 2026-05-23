@@ -1,6 +1,18 @@
 @extends('themes.minimal.layout')
 
 @section('content')
+    @php
+        // Only show marketing chrome (hero + quote band) on the unfiltered
+        // landing — once shoppers search/filter/paginate, jump them
+        // straight to results.
+        $isFiltered = ($filters['q'] ?? null)
+            || ($filters['category'] ?? null)
+            || ($filters['min_price'] ?? null) !== null
+            || ($filters['max_price'] ?? null) !== null
+            || ($filters['in_stock'] ?? false)
+            || (($filters['sort'] ?? 'newest') !== 'newest')
+            || $products->currentPage() > 1;
+    @endphp
     <style>
         /* -------- Editorial hero -------- */
         .hero {
@@ -217,7 +229,7 @@
 
     @php $csHero = $store->heroBanner(); @endphp
 
-    @if ($csHero['enabled'] && ($csHero['title'] !== '' || $csHero['subtitle'] !== '' || $csHero['image_path']))
+    @if (! $isFiltered && $csHero['enabled'] && ($csHero['title'] !== '' || $csHero['subtitle'] !== '' || $csHero['image_path']))
         <section class="custom-hero {{ $csHero['image_path'] ? 'with-image' : '' }} reveal">
             @if ($csHero['image_path'])
                 <div class="bg-img" style="background-image: url('{{ \Illuminate\Support\Facades\Storage::url($csHero['image_path']) }}');" aria-hidden="true"></div>
@@ -236,12 +248,14 @@
         </section>
     @endif
 
+    @if (! $isFiltered)
     <section class="hero reveal">
         <p class="eyebrow">{{ __('site.storefront.hero.eyebrow', ['year' => date('Y')]) }}</p>
         <h1>{!! str_replace('.', '<em>.</em>', __('site.storefront.hero.headline', ['tenant' => $tenant->name])) !!}</h1>
         <p class="sub">{{ __('site.storefront.hero.sub') }}</p>
         <a href="#shop" class="cta">{{ __('site.storefront.hero.cta_primary') }}</a>
     </section>
+    @endif
 
     <section class="section reveal" id="shop">
         <div class="section-head">
@@ -249,6 +263,8 @@
             <h2>{{ __('site.storefront.shop_all.h2') }}</h2>
             <div class="hairline"></div>
         </div>
+
+        @include('storefront.partials.catalog-controls')
 
         @if ($products->isEmpty())
             <p class="empty">{{ __('site.storefront.no_products') }}</p>
@@ -270,10 +286,12 @@
                     </a>
                 @endforeach
             </div>
+
+            @include('storefront.partials.pagination')
         @endif
     </section>
 
-    @if ($products->isNotEmpty())
+    @if (! $isFiltered && $products->isNotEmpty())
         <section class="quote-band reveal">
             <blockquote>{{ __('site.storefront.hero.sub') }}</blockquote>
             <cite>— {{ $tenant->name }}</cite>

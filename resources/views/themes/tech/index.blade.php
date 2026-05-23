@@ -152,8 +152,10 @@
     <section class="container tech-section" id="shop">
         <div class="tech-section-head">
             <h2>{{ __('site.storefront.shop_all.h2') }}</h2>
-            <span class="meta">{{ $products->count() }} {{ str()->plural('item', $products->count()) }}</span>
+            <span class="meta">{{ method_exists($products, 'total') ? $products->total() : $products->count() }} {{ str()->plural('item', method_exists($products, 'total') ? $products->total() : $products->count()) }}</span>
         </div>
+
+        @include('storefront.partials.catalog-controls')
 
         <div class="tech-grid">
             @forelse ($products as $product)
@@ -189,5 +191,7 @@
                 <div class="tech-empty">{{ __('site.storefront.no_products') }}</div>
             @endforelse
         </div>
+
+        @include('storefront.partials.pagination')
     </section>
 @endsection

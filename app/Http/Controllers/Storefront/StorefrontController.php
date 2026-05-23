@@ -10,25 +10,102 @@ use Illuminate\View\View;
 
 class StorefrontController extends Controller
 {
-    public function index(): View
+    /**
+     * Storefront index — paginated, filterable, sortable product grid.
+     *
+     * Query params (all optional, all GET so URLs are shareable):
+     *   q          search string; matches name + description (LIKE)
+     *   sort       newest | price_asc | price_desc | name_asc
+     *   category   category slug (single)
+     *   min_price  in major units (e.g. 9.99); converted to cents
+     *   max_price  same
+     *   in_stock   "1" → only stock > 0
+     */
+    public function index(Request $request): View
     {
         $tenant = app('current_tenant');
         $store = $tenant->store;
         $theme = $this->themeFor($store);
 
-        $products = $tenant->products()
-            ->where('is_active', true)
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $filters = $this->extractFilters($request);
+        $query = $this->buildProductQuery($tenant, $filters);
 
-        // Active root categories surfaced to the home + nav. The theme
-        // layout reads this from view('categories') via View::share OR
-        // we pass it explicitly so themes that don't expect it don't
-        // break. Limit to roots so the home nav stays compact; child
-        // categories are reachable from each parent's page.
+        // 12 per page is a clean 3×4 / 4×3 grid on most themes; small
+        // enough to keep first paint fast on mobile.
+        $products = $query->paginate(12)->withQueryString();
+
         $categories = $this->rootCategoriesFor($tenant);
 
-        return view("themes.{$theme}.index", compact('tenant', 'store', 'products', 'categories'));
+        return view("themes.{$theme}.index", compact(
+            'tenant', 'store', 'products', 'categories', 'filters'
+        ));
+    }
+
+    /**
+     * Extract + normalize the filter query params into a stable shape
+     * the view can rely on. Always present keys; nullable values where
+     * "no filter applied" makes sense.
+     *
+     * @return array{q: ?string, sort: string, category: ?string, min_price: ?int, max_price: ?int, in_stock: bool}
+     */
+    private function extractFilters(Request $request): array
+    {
+        $sort = $request->query('sort');
+        if (! in_array($sort, ['newest', 'price_asc', 'price_desc', 'name_asc'], true)) {
+            $sort = 'newest';
+        }
+
+        // Prices arrive in major units (€9.99); convert to cents to match
+        // the column. Null when blank so we don't filter on 0.
+        $toCents = fn ($v) => ($v === null || $v === '') ? null : (int) round(((float) $v) * 100);
+
+        return [
+            'q'         => trim((string) $request->query('q', '')) ?: null,
+            'sort'      => $sort,
+            'category'  => trim((string) $request->query('category', '')) ?: null,
+            'min_price' => $toCents($request->query('min_price')),
+            'max_price' => $toCents($request->query('max_price')),
+            'in_stock'  => $request->query('in_stock') === '1',
+        ];
+    }
+
+    private function buildProductQuery($tenant, array $filters)
+    {
+        $query = $tenant->products()->where('is_active', true);
+
+        if ($filters['q']) {
+            $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', $term)
+                  ->orWhere('description', 'like', $term);
+            });
+        }
+
+        if ($filters['category']) {
+            // EXISTS subquery on the pivot — avoids a join that'd
+            // duplicate rows when a product is in multiple categories.
+            $query->whereHas('categories', function ($q) use ($filters, $tenant) {
+                $q->where('slug', $filters['category'])
+                  ->where('tenant_id', $tenant->id);
+            });
+        }
+
+        if ($filters['min_price'] !== null) {
+            $query->where('price_cents', '>=', $filters['min_price']);
+        }
+        if ($filters['max_price'] !== null) {
+            $query->where('price_cents', '<=', $filters['max_price']);
+        }
+        if ($filters['in_stock']) {
+            $query->where('stock_quantity', '>', 0);
+        }
+
+        return match ($filters['sort']) {
+            'price_asc'  => $query->orderBy('price_cents'),
+            'price_desc' => $query->orderByDesc('price_cents'),
+            'name_asc'   => $query->orderBy('name'),
+            default      => $query->orderByDesc('created_at'),
+        };
     }
 
     public function product(Request $request): View
@@ -76,7 +153,8 @@ class StorefrontController extends Controller
         $products = $category->products()
             ->where('is_active', true)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(12)
+            ->withQueryString();
 
         $categories = $this->rootCategoriesFor($tenant);
 

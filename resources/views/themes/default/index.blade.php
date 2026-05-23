@@ -2,8 +2,18 @@
 
 @section('content')
     @php
+        // Marketing chrome (hero / featured / promo) only on the unfiltered
+        // landing — once shoppers start searching or paginating, surface
+        // results immediately without scrolling past the hero again.
+        $isFiltered = ($filters['q'] ?? null)
+            || ($filters['category'] ?? null)
+            || ($filters['min_price'] ?? null) !== null
+            || ($filters['max_price'] ?? null) !== null
+            || ($filters['in_stock'] ?? false)
+            || (($filters['sort'] ?? 'newest') !== 'newest')
+            || $products->currentPage() > 1;
+
         $featured = $products->take(3);
-        $rest = $products->slice(3);
     @endphp
 
     <style>
@@ -351,7 +361,7 @@
 
     @php $csHero = $store->heroBanner(); @endphp
 
-    @if ($csHero['enabled'] && ($csHero['title'] !== '' || $csHero['subtitle'] !== '' || $csHero['image_path']))
+    @if (! $isFiltered && $csHero['enabled'] && ($csHero['title'] !== '' || $csHero['subtitle'] !== '' || $csHero['image_path']))
         <section class="custom-hero {{ $csHero['image_path'] ? 'with-image' : '' }}">
             @if ($csHero['image_path'])
                 <div class="bg-img" style="background-image: url('{{ \Illuminate\Support\Facades\Storage::url($csHero['image_path']) }}');" aria-hidden="true"></div>
@@ -370,6 +380,7 @@
         </section>
     @endif
 
+    @if (! $isFiltered)
     <section class="hero">
         <div class="hero-inner">
             <div>
@@ -400,7 +411,9 @@
             </div>
         </div>
     </section>
+    @endif
 
+    @if (! $isFiltered)
     <section class="value-props">
         <div class="value-props-inner">
             <div class="value-prop">
@@ -417,8 +430,9 @@
             </div>
         </div>
     </section>
+    @endif
 
-    @if ($featured->isNotEmpty())
+    @if (! $isFiltered && $featured->isNotEmpty())
         <section class="section reveal" id="featured">
             <div class="section-head">
                 <div>
@@ -461,6 +475,9 @@
                 <h2>{{ __('site.storefront.shop_all.h2') }}</h2>
             </div>
         </div>
+
+        @include('storefront.partials.catalog-controls')
+
         @if ($products->isEmpty())
             <div class="empty">
                 <p>{{ __('site.storefront.no_products') }}</p>
@@ -486,9 +503,12 @@
                     </a>
                 @endforeach
             </div>
+
+            @include('storefront.partials.pagination')
         @endif
     </section>
 
+    @if (! $isFiltered)
     <section class="promo reveal">
         <div class="promo-inner">
             <h3>{{ __('site.storefront.promo.h2_prefix', ['tenant' => $tenant->name]) }}</h3>
@@ -496,4 +516,5 @@
             <a href="#" class="btn btn-primary" onclick="document.querySelector('footer .newsletter input').focus(); event.preventDefault();">{{ __('site.storefront.promo.btn') }}</a>
         </div>
     </section>
+    @endif
 @endsection
