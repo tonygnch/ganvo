@@ -30,7 +30,14 @@ echo "==> Installing PHP dependencies"
 $COMPOSER_BIN install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
 
 echo "==> Installing JS dependencies + building Vite assets"
-$NPM_BIN ci --no-audit --no-fund --prefer-offline
+# `npm ci` is faster + reproducible but requires package-lock.json.
+# Fall back to `npm install` so the first deploy works even if the lock
+# file hasn't been committed yet; subsequent deploys use ci.
+if [ -f package-lock.json ]; then
+    $NPM_BIN ci --no-audit --no-fund --prefer-offline
+else
+    $NPM_BIN install --no-audit --no-fund
+fi
 $NPM_BIN run build
 
 echo "==> Running database migrations"

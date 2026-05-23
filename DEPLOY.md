@@ -105,7 +105,7 @@ cd ganvo
 
 ```bash
 composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
-npm ci --no-audit --no-fund
+npm ci --no-audit --no-fund        # use `npm install` if package-lock.json is missing
 npm run build                       # builds public/build/* via Vite
 ```
 
