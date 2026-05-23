@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Plan;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
 use App\Models\Tenant;
@@ -261,6 +262,26 @@ class DatabaseSeeder extends Seeder
                 'image_path' => $bundleImg,
             ]
         );
+
+        // Demo categories for Acme. Flat structure to start; the schema
+        // supports parents but the seed keeps it simple. firstOrCreate
+        // makes the seeder idempotent — re-running won't dupe.
+        $catFeatured = Category::firstOrCreate(
+            ['tenant_id' => $tenant->id, 'slug' => 'featured'],
+            ['name' => 'Featured', 'sort_order' => 10, 'is_active' => true]
+        );
+        $catWidgets = Category::firstOrCreate(
+            ['tenant_id' => $tenant->id, 'slug' => 'widgets'],
+            ['name' => 'Widgets', 'sort_order' => 20, 'is_active' => true]
+        );
+        $catBundles = Category::firstOrCreate(
+            ['tenant_id' => $tenant->id, 'slug' => 'bundles'],
+            ['name' => 'Bundles', 'sort_order' => 30, 'is_active' => true]
+        );
+        // syncWithoutDetaching → idempotent re-seeds without dropping
+        // any operator-added category assignments.
+        $product->categories()->syncWithoutDetaching([$catFeatured->id, $catWidgets->id]);
+        $premium->categories()->syncWithoutDetaching([$catFeatured->id, $catBundles->id]);
 
         // Seed a spread of orders across the last 14 days so the chart looks alive.
         if (Order::where('tenant_id', $tenant->id)->count() === 0) {

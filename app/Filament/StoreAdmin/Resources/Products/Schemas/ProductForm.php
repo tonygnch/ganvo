@@ -69,6 +69,22 @@ class ProductForm
                             ->columnSpanFull(),
                     ]),
 
+                Section::make('Categories')
+                    ->description('Pick one or more categories this product belongs to. Customers browse by these on the storefront.')
+                    ->schema([
+                        Select::make('categories')
+                            ->label('')
+                            ->multiple()
+                            ->relationship(
+                                name: 'categories',
+                                titleAttribute: 'name',
+                                // Scope to the merchant's own categories.
+                                modifyQueryUsing: fn ($query) => $query->where('tenant_id', auth()->user()?->tenant_id),
+                            )
+                            ->preload()
+                            ->searchable(),
+                    ]),
+
                 Section::make('Visibility')
                     ->schema([
                         Toggle::make('is_active')
