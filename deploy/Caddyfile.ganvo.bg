@@ -1,0 +1,74 @@
+# Drop this site block into your Caddyfile (typically /etc/caddy/Caddyfile)
+# or include it from there with `import /var/www/ganvo/deploy/Caddyfile.ganvo.bg`.
+# Caddy will auto-provision the Let's Encrypt certificate on first request.
+#
+# Reload Caddy after changes:
+#   sudo systemctl reload caddy
+#
+# Adjust php_fastcgi socket to your PHP-FPM version (default for Debian 12 +
+# Ubuntu 24.04 is php8.3-fpm). Check with:  ls /run/php/
+
+ganvo.bg, www.ganvo.bg {
+    root * /var/www/ganvo/public
+
+    # Brotli + gzip on for HTML / CSS / JS. Caddy auto-skips already-compressed
+    # bytes like images.
+    encode zstd gzip
+
+    # PHP-FPM. Adjust socket path to your installed version.
+    php_fastcgi unix//run/php/php8.3-fpm.sock
+
+    # Static files served directly by Caddy; everything else falls through to index.php.
+    file_server
+
+    # Long cache for built assets + brand images (Vite fingerprints filenames,
+    # so the cache is safe to set forever).
+    @immutable {
+        path /build/* /images/* /favicon.ico
+    }
+    header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+    # Security headers.
+    header {
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Frame-Options "SAMEORIGIN"
+        # Remove the server token from responses.
+        -Server
+    }
+
+    # Block direct access to dotfiles + sensitive paths.
+    @blocked {
+        path /.env* /.git* /storage/* /.htaccess /composer.* /artisan /docker-compose.yml
+    }
+    respond @blocked 404
+
+    # Redirect www → apex for canonical URL.
+    @www host www.ganvo.bg
+    redir @www https://ganvo.bg{uri} permanent
+
+    log {
+        output file /var/log/caddy/ganvo.bg.log {
+            roll_size 50mb
+            roll_keep 7
+        }
+        format console
+    }
+}
+
+# When you're ready for tenant storefronts on subdomains (acme.ganvo.bg),
+# add the wildcard block below. Requires a wildcard DNS record (*.ganvo.bg
+# A → server IP) AND the DNS-01 ACME challenge enabled (Caddy can't use
+# HTTP-01 for wildcards). See https://caddyserver.com/docs/automatic-https
+# for the DNS provider plugin matching your registrar.
+#
+# *.ganvo.bg {
+#     root * /var/www/ganvo/public
+#     encode zstd gzip
+#     php_fastcgi unix//run/php/php8.3-fpm.sock
+#     file_server
+#     tls {
+#         dns <your_dns_provider> {env.YOUR_DNS_API_TOKEN}
+#     }
+# }

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Services\RoleMatrix;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +24,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Force https:// in generated URLs when behind a TLS-terminating
+        // proxy (Caddy in prod). Without this, url() / route() / asset()
+        // can leak http:// links — mixed-content warnings + broken assets
+        // on https pages. Opt-in via APP_FORCE_HTTPS=true in .env.
+        if (env('APP_FORCE_HTTPS', false)) {
+            URL::forceScheme('https');
+        }
+
         // @money($cents) — format a base-currency amount using the current
         // request's display currency + FX rate (shared by SetDisplayCurrency).
         // Falls back to base currency at rate 1.0 if not set (e.g. admin views).
