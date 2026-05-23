@@ -46,6 +46,27 @@ class Product extends Model
         return $this->hasMany(ProductImage::class)->orderBy('sort_order');
     }
 
+    /** All variant rows (incl. inactive — use for admin). */
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Active variants only — what the storefront should show. Wrapped
+     * as a method rather than a scope so callers can eager-load via
+     * `with('variants')` and still filter cheaply in PHP if needed.
+     */
+    public function activeVariants()
+    {
+        return $this->variants()->where('is_active', true);
+    }
+
+    public function hasVariants(): bool
+    {
+        return $this->activeVariants()->exists();
+    }
+
     /**
      * Every image for the product as a unified collection: primary
      * first (when set), then gallery rows in sort order. Each item is

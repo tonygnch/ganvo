@@ -110,8 +110,14 @@ class CheckoutController extends Controller
                 OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $row['product']->id,
+                    'product_variant_id' => $row['variant']?->id,
                     'product_name' => $row['product']->name,
-                    'unit_price_cents' => $row['product']->price_cents,
+                    // Snapshot the variant label — keeps receipts accurate
+                    // even after the variant is renamed or deleted.
+                    'variant_label' => $row['variant']?->label,
+                    // Use the per-line unit price the cart computed (already
+                    // resolves variant override → product fallback).
+                    'unit_price_cents' => $row['unit_price_cents'],
                     'quantity' => $row['quantity'],
                     'subtotal_cents' => $row['subtotal_cents'],
                 ]);

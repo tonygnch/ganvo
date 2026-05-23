@@ -302,7 +302,7 @@
             @foreach ($order->items as $item)
                 <div class="item-line">
                     <div>
-                        <div class="name">{{ $item->product_name }}</div>
+                        <div class="name">{{ $item->displayName() }}</div>
                         <div class="meta">{{ __('site.order.qty_unit', ['qty' => $item->quantity, 'price' => \App\Services\Money::format($item->unit_price_cents, $order->currency)]) }}</div>
                     </div>
                     <div class="price">{{ \App\Services\Money::format($item->subtotal_cents, $order->currency) }}</div>

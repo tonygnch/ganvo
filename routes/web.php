@@ -161,8 +161,11 @@ $storefrontRoutes = function () {
 
     Route::get('/cart', [CartController::class, 'show']);
     Route::post('/cart/add/{slug}', [CartController::class, 'add']);
-    Route::patch('/cart/{productId}', [CartController::class, 'update'])->whereNumber('productId');
-    Route::delete('/cart/{productId}', [CartController::class, 'remove'])->whereNumber('productId');
+    // Cart line ids are "{productId}:{variantId|0}" — colon-delimited so
+    // we can address variant-specific lines distinctly. Constrain to the
+    // expected shape so stray characters can't muck about with sessions.
+    Route::patch('/cart/{lineId}', [CartController::class, 'update'])->where('lineId', '[0-9]+:[0-9]+');
+    Route::delete('/cart/{lineId}', [CartController::class, 'remove'])->where('lineId', '[0-9]+:[0-9]+');
 
     Route::get('/checkout', [CheckoutController::class, 'show']);
     Route::post('/checkout', [CheckoutController::class, 'process']);

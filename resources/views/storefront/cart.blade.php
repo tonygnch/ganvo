@@ -291,7 +291,11 @@
                     @foreach ($items as $row)
                         @php
                             $product = $row['product'];
+                            $variant = $row['variant'] ?? null;
                             $qty = $row['quantity'];
+                            // Cart line id format: "{productId}:{variantId|0}"
+                            $lineId = $row['line_id'];
+                            $unitCents = $row['unit_price_cents'];
                         @endphp
                         <div class="item">
                             <div class="item-image">
@@ -303,25 +307,28 @@
                             </div>
                             <div class="item-details">
                                 <h3><a href="/products/{{ $product->slug }}">{{ $product->name }}</a></h3>
-                                <div class="unit">{{ __('site.cart.unit_each', ['price' => \App\Services\Money::display($product->price_cents, $displayRate, $displayCurrency)]) }}</div>
+                                @if ($variant)
+                                    <div class="variant">{{ $variant->label }}</div>
+                                @endif
+                                <div class="unit">{{ __('site.cart.unit_each', ['price' => \App\Services\Money::display($unitCents, $displayRate, $displayCurrency)]) }}</div>
                             </div>
                             <div class="item-actions">
                                 <div class="item-subtotal">@money($row['subtotal_cents'])</div>
                                 <div class="item-controls">
                                     <div class="qty">
-                                        <form method="post" action="/cart/{{ $product->id }}">
+                                        <form method="post" action="/cart/{{ $lineId }}">
                                             @csrf @method('PATCH')
                                             <input type="hidden" name="quantity" value="{{ max(0, $qty - 1) }}">
                                             <button type="submit" aria-label="{{ __('site.cart.decrease') }}">−</button>
                                         </form>
                                         <span class="value">{{ $qty }}</span>
-                                        <form method="post" action="/cart/{{ $product->id }}">
+                                        <form method="post" action="/cart/{{ $lineId }}">
                                             @csrf @method('PATCH')
                                             <input type="hidden" name="quantity" value="{{ $qty + 1 }}">
                                             <button type="submit" aria-label="{{ __('site.cart.increase') }}">+</button>
                                         </form>
                                     </div>
-                                    <form method="post" action="/cart/{{ $product->id }}">
+                                    <form method="post" action="/cart/{{ $lineId }}">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="remove-btn" aria-label="{{ __('site.cart.remove') }}" title="{{ __('site.cart.remove') }}">×</button>
                                     </form>

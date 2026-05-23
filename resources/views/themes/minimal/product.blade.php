@@ -112,7 +112,9 @@
             background: var(--primary);
         }
 
-        .add-form { display: flex; gap: .75rem; align-items: stretch; }
+        .add-form { display: flex; flex-direction: column; gap: 0; }
+        .add-row { display: flex; gap: .75rem; align-items: stretch; }
+        .add-btn[disabled] { opacity: .5; cursor: not-allowed; }
         .add-btn {
             flex: 1;
             background: var(--text);
@@ -189,10 +191,10 @@
             <div class="info">
                 <p class="eyebrow">{{ $tenant->name }}</p>
                 <h2>{{ $product->name }}</h2>
-                <div class="price">@money($product->price_cents)</div>
+                <div class="price"><span data-vp-price>@money($product->price_cents)</span></div>
                 <p class="tax">{{ __('site.storefront.product.tax_included') }}</p>
 
-                @if ($product->stock_quantity > 0)
+                @if (! $product->hasVariants() && $product->stock_quantity > 0)
                     <div class="stock">
                         <span class="dot"></span>
                         @if ($product->stock_quantity < 10)
@@ -209,8 +211,11 @@
 
                 <form method="post" action="/cart/add/{{ $product->slug }}" class="add-form">
                     @csrf
-                    <button type="submit" class="add-btn">{{ __('site.storefront.product.add_to_cart') }}</button>
-                    <button type="button" class="wishlist-btn" aria-label="{{ __('site.storefront.product.wishlist') }}" title="{{ __('site.storefront.product.wishlist') }}">♡</button>
+                    @include('storefront.partials.variant-picker')
+                    <div class="add-row">
+                        <button type="submit" class="add-btn" data-vp-submit>{{ __('site.storefront.product.add_to_cart') }}</button>
+                        <button type="button" class="wishlist-btn" aria-label="{{ __('site.storefront.product.wishlist') }}" title="{{ __('site.storefront.product.wishlist') }}">♡</button>
+                    </div>
                 </form>
 
                 <div class="perks">

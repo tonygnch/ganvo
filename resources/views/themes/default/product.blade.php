@@ -108,7 +108,9 @@
         }
         .stock.low .dot { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18); }
 
-        .add-form { display: flex; gap: .75rem; align-items: stretch; }
+        .add-form { display: flex; flex-direction: column; gap: 0; }
+        .add-row { display: flex; gap: .75rem; align-items: stretch; }
+        .add-btn[disabled] { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
         .add-btn {
             flex: 1;
             background: var(--primary);
@@ -192,11 +194,14 @@
                 <p class="eyebrow">{{ $tenant->name }}</p>
                 <h2>{{ $product->name }}</h2>
                 <div class="price-large">
-                    @money($product->price_cents)
+                    {{-- Updated in place by the variant picker JS via data-vp-price. --}}
+                    <span data-vp-price>@money($product->price_cents)</span>
                     <small>{{ __('site.storefront.product.tax_included') }}</small>
                 </div>
 
-                @if ($product->stock_quantity > 0)
+                {{-- Product-level stock indicator hides when variants exist; each
+                     variant carries its own stock readout inside the picker. --}}
+                @if (! $product->hasVariants() && $product->stock_quantity > 0)
                     <div class="stock {{ $product->stock_quantity < 10 ? 'low' : '' }}">
                         <span class="dot"></span>
                         @if ($product->stock_quantity < 10)
@@ -213,12 +218,15 @@
 
                 <form method="post" action="/cart/add/{{ $product->slug }}" class="add-form">
                     @csrf
-                    <button type="submit" class="add-btn">
-                        <span>{{ __('site.storefront.product.add_to_cart') }}</span>
-                        <span>·</span>
-                        <span>@money($product->price_cents)</span>
-                    </button>
-                    <button type="button" class="wishlist-btn" aria-label="{{ __('site.storefront.product.wishlist') }}" title="{{ __('site.storefront.product.wishlist') }}">♡</button>
+                    @include('storefront.partials.variant-picker')
+                    <div class="add-row">
+                        <button type="submit" class="add-btn" data-vp-submit>
+                            <span>{{ __('site.storefront.product.add_to_cart') }}</span>
+                            <span>·</span>
+                            <span data-vp-submit-price>@money($product->price_cents)</span>
+                        </button>
+                        <button type="button" class="wishlist-btn" aria-label="{{ __('site.storefront.product.wishlist') }}" title="{{ __('site.storefront.product.wishlist') }}">♡</button>
+                    </div>
                 </form>
 
                 <div class="perks">

@@ -462,7 +462,12 @@
                                     @endif
                                     <span class="qty-pill">{{ $row['quantity'] }}</span>
                                 </div>
-                                <div class="line-name">{{ $row['product']->name }}</div>
+                                <div class="line-name">
+                                    {{ $row['product']->name }}
+                                    @if (! empty($row['variant']))
+                                        <span class="line-variant">— {{ $row['variant']->label }}</span>
+                                    @endif
+                                </div>
                                 <div class="line-price">@money($row['subtotal_cents'])</div>
                             </div>
                         @endforeach

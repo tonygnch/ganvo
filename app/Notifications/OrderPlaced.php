@@ -33,7 +33,7 @@ class OrderPlaced extends Notification
 
         foreach ($order->items as $item) {
             $mail->line(__('site.email.placed_line_item', [
-                'name' => $item->product_name,
+                'name' => $item->displayName(),
                 'qty' => $item->quantity,
                 'amount' => number_format($item->subtotal_cents / 100, 2),
             ]));

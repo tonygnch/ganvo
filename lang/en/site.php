@@ -147,6 +147,9 @@ return [
             ],
             'in_stock_badge' => 'In stock',
             'no_image' => 'No image',
+            // Variants
+            'choose_variant' => 'Choose an option',
+            'out_of_stock'   => 'Out of stock',
         ],
         'no_products' => 'No products yet. Check back soon.',
         // Toolbar above the product grid: search + sort + category + price.
@@ -187,6 +190,10 @@ return [
         ],
         'added_to_cart' => 'Added :name to your cart.',
         'sign_in_for_checkout' => 'Please sign in to complete checkout.',
+        // Variant-related cart messages
+        'cart' => [
+            'pick_a_variant' => 'Please choose an option before adding to your cart.',
+        ],
     ],
 
     'cart' => [

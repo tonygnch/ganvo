@@ -102,6 +102,58 @@ class ProductForm
                             ->columnSpanFull(),
                     ]),
 
+                Section::make('Variants')
+                    ->description('Optional. Add purchasable variations (e.g. sizes, colors). When a product has variants, the customer must pick one — they buy the variant, not the bare product. Leave empty for single-SKU products.')
+                    ->schema([
+                        // Bound to the variants() hasMany. Each row is
+                        // one ProductVariant; sort_order is auto-synced
+                        // from the repeater drag order.
+                        Repeater::make('variants')
+                            ->label('')
+                            ->relationship()
+                            ->orderColumn('sort_order')
+                            ->collapsed()
+                            ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
+                            ->addActionLabel('Add variant')
+                            ->reorderableWithDragAndDrop()
+                            ->defaultItems(0)
+                            ->schema([
+                                TextInput::make('label')
+                                    ->label('Label')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->placeholder('e.g. Small / Red')
+                                    ->helperText('Shown to the customer in the picker.'),
+                                TextInput::make('sku')
+                                    ->label('SKU')
+                                    ->maxLength(120)
+                                    ->placeholder('Optional, your inventory code.'),
+                                TextInput::make('price_cents')
+                                    ->label('Price override')
+                                    ->numeric()
+                                    ->step('0.01')
+                                    ->prefix(fn () => \App\Services\Money::symbol(
+                                        auth()->user()?->tenant?->store?->currency ?? 'EUR'
+                                    ))
+                                    ->helperText('Leave empty to use the product price.')
+                                    // Same cent ↔ display dance as the
+                                    // product-level price field above.
+                                    ->formatStateUsing(fn ($state) => $state !== null ? number_format($state / 100, 2, '.', '') : null)
+                                    ->dehydrateStateUsing(fn ($state) => ($state === null || $state === '') ? null : (int) round(((float) $state) * 100)),
+                                TextInput::make('stock_quantity')
+                                    ->label('Stock')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->default(0)
+                                    ->required(),
+                                Toggle::make('is_active')
+                                    ->label('Active')
+                                    ->default(true),
+                            ])
+                            ->columns(2)
+                            ->columnSpanFull(),
+                    ]),
+
                 Section::make('Categories')
                     ->description('Pick one or more categories this product belongs to. Customers browse by these on the storefront.')
                     ->schema([

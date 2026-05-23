@@ -210,7 +210,12 @@
             <div class="cart-layout">
                 <section class="items">
                     @foreach ($items as $row)
-                        @php $product = $row['product']; @endphp
+                        @php
+                            $product = $row['product'];
+                            $variant = $row['variant'] ?? null;
+                            $lineId = $row['line_id'];
+                            $unitCents = $row['unit_price_cents'];
+                        @endphp
                         <div class="item">
                             <div class="item-image">
                                 @if ($product->image_path)
@@ -221,8 +226,11 @@
                             </div>
                             <div class="item-details">
                                 <h3>{{ $product->name }}</h3>
-                                <p class="unit">{{ __('site.cart.unit_each', ['price' => \App\Services\Money::display($product->price_cents, $displayRate, $displayCurrency)]) }}</p>
-                                <form method="post" action="/cart/{{ $product->id }}" style="display:inline;">
+                                @if ($variant)
+                                    <p class="variant">{{ $variant->label }}</p>
+                                @endif
+                                <p class="unit">{{ __('site.cart.unit_each', ['price' => \App\Services\Money::display($unitCents, $displayRate, $displayCurrency)]) }}</p>
+                                <form method="post" action="/cart/{{ $lineId }}" style="display:inline;">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="remove-btn">{{ __('site.cart.remove') }}</button>
                                 </form>
@@ -230,13 +238,13 @@
                             <div class="item-actions">
                                 <div class="item-subtotal">@money($row['subtotal_cents'])</div>
                                 <div class="item-controls">
-                                    <form method="post" action="/cart/{{ $product->id }}">
+                                    <form method="post" action="/cart/{{ $lineId }}">
                                         @csrf @method('PATCH')
                                         <input type="hidden" name="quantity" value="{{ $row['quantity'] - 1 }}">
                                         <button type="submit" class="qty-step" @if($row['quantity'] <= 1) disabled @endif>−</button>
                                     </form>
                                     <span class="qty-display">{{ $row['quantity'] }}</span>
-                                    <form method="post" action="/cart/{{ $product->id }}">
+                                    <form method="post" action="/cart/{{ $lineId }}">
                                         @csrf @method('PATCH')
                                         <input type="hidden" name="quantity" value="{{ $row['quantity'] + 1 }}">
                                         <button type="submit" class="qty-step">+</button>

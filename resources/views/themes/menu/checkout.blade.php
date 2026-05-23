@@ -312,7 +312,7 @@
                         @foreach ($items as $row)
                             <div class="line">
                                 <span class="qty-pill">{{ $row['quantity'] }}×</span>
-                                <span class="name">{{ $row['product']->name }}</span>
+                                <span class="name">{{ $row['product']->name }}@if (! empty($row['variant'])) <span class="line-variant">— {{ $row['variant']->label }}</span>@endif</span>
                                 <span class="line-price">@money($row['subtotal_cents'])</span>
                             </div>
                         @endforeach

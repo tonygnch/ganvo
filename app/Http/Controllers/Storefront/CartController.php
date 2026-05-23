@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Services\Cart;
 use App\Themes\ThemeRegistry;
 use Illuminate\Http\RedirectResponse;
@@ -40,24 +41,51 @@ class CartController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
-        Cart::forCurrent()->add($product->id);
+        $variantId = $request->input('variant_id') !== null
+            ? (int) $request->input('variant_id')
+            : null;
 
-        return back()->with('cart.flash', __('site.storefront.added_to_cart', ['name' => $product->name]));
+        // Force variant selection when the product has any active
+        // variants — otherwise the customer would be ordering an
+        // ambiguous "default" version.
+        if ($product->hasVariants() && ! $variantId) {
+            return back()->with('cart.flash', __('site.storefront.cart.pick_a_variant'));
+        }
+
+        // Validate the variant belongs to this product + tenant + is
+        // active. Trust nothing from the POST.
+        if ($variantId) {
+            $variant = ProductVariant::where('id', $variantId)
+                ->where('product_id', $product->id)
+                ->where('is_active', true)
+                ->first();
+            if (! $variant) {
+                abort(404);
+            }
+        }
+
+        Cart::forCurrent()->add($product->id, $variantId);
+
+        $flashName = $variantId
+            ? sprintf('%s — %s', $product->name, $variant->label)
+            : $product->name;
+
+        return back()->with('cart.flash', __('site.storefront.added_to_cart', ['name' => $flashName]));
     }
 
     public function update(Request $request): RedirectResponse
     {
-        $productId = (int) $request->route('productId');
+        $lineId = (string) $request->route('lineId');
         $quantity = (int) $request->input('quantity', 1);
-        Cart::forCurrent()->setQuantity($productId, $quantity);
+        Cart::forCurrent()->setQuantity($lineId, $quantity);
 
         return redirect('/cart');
     }
 
     public function remove(Request $request): RedirectResponse
     {
-        $productId = (int) $request->route('productId');
-        Cart::forCurrent()->remove($productId);
+        $lineId = (string) $request->route('lineId');
+        Cart::forCurrent()->remove($lineId);
 
         return redirect('/cart');
     }

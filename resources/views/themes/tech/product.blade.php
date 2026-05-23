@@ -117,7 +117,9 @@
             font-weight: 600;
         }
 
-        .add-form { display: flex; gap: .5rem; }
+        .add-form { display: flex; flex-direction: column; gap: 0; }
+        .add-row { display: flex; gap: .5rem; }
+        .add-btn[disabled] { opacity: .5; cursor: not-allowed; }
         .add-btn {
             flex: 1;
             background: var(--text);
@@ -162,7 +164,7 @@
             </div>
 
             <div class="info">
-                @if ($product->stock_quantity > 0)
+                @if (! $product->hasVariants() && $product->stock_quantity > 0)
                     <span class="pill">
                         @if ($product->stock_quantity < 10)
                             {{ __('site.storefront.product.in_stock_low', ['count' => $product->stock_quantity]) }}
@@ -173,7 +175,7 @@
                 @endif
                 <h2>{{ $product->name }}</h2>
                 <div class="price-row">
-                    <span class="price">@money($product->price_cents)</span>
+                    <span class="price"><span data-vp-price>@money($product->price_cents)</span></span>
                     <span class="tax">{{ __('site.storefront.product.tax_included') }}</span>
                 </div>
 
@@ -185,13 +187,18 @@
                     <div class="row"><dt>SKU</dt><dd>#{{ str_pad((string) $product->id, 6, '0', STR_PAD_LEFT) }}</dd></div>
                     <div class="row"><dt>{{ __('site.storefront.value_props.shipping_title') }}</dt><dd>{{ __('site.storefront.value_props.shipping_sub') }}</dd></div>
                     <div class="row"><dt>{{ __('site.storefront.value_props.returns_title') }}</dt><dd>{{ __('site.storefront.value_props.returns_sub') }}</dd></div>
-                    <div class="row"><dt>Stock</dt><dd>{{ $product->stock_quantity }}</dd></div>
+                    @if (! $product->hasVariants())
+                        <div class="row"><dt>Stock</dt><dd>{{ $product->stock_quantity }}</dd></div>
+                    @endif
                 </dl>
 
                 <form method="post" action="/cart/add/{{ $product->slug }}" class="add-form">
                     @csrf
-                    <button type="submit" class="add-btn">{{ __('site.storefront.product.add_to_cart') }}</button>
-                    <button type="button" class="wishlist-btn" aria-label="{{ __('site.storefront.product.wishlist') }}" title="{{ __('site.storefront.product.wishlist') }}">♡</button>
+                    @include('storefront.partials.variant-picker')
+                    <div class="add-row">
+                        <button type="submit" class="add-btn" data-vp-submit>{{ __('site.storefront.product.add_to_cart') }}</button>
+                        <button type="button" class="wishlist-btn" aria-label="{{ __('site.storefront.product.wishlist') }}" title="{{ __('site.storefront.product.wishlist') }}">♡</button>
+                    </div>
                 </form>
             </div>
         </div>
