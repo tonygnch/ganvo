@@ -165,10 +165,13 @@ $storefrontRoutes = function () {
     Route::post('/account/logout', [CustomerAuthController::class, 'logout']);
     Route::get('/account', [AccountController::class, 'show']);
 
+    // Storefront-scoped lang + currency switchers. No ->name() here — the
+    // closure is registered twice (once for the subdomain group, once for
+    // the custom-domain catch-all), and a named duplicate breaks
+    // `php artisan route:cache` ("name already assigned").
     Route::get('/lang/{locale}', [LanguageController::class, 'switch']);
     Route::get('/currency/{code}', [CurrencyController::class, 'switch'])
-        ->whereAlpha('code')
-        ->name('currency.switch');
+        ->whereAlpha('code');
 };
 
 // Subdomain routing: acme.ganvo.lvh.me
