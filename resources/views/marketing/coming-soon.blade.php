@@ -676,13 +676,20 @@
                  at public/images/brand/logo-lockup.png. The Blade
                  component falls back to a text-only wordmark when the
                  file isn't on disk. --}}
+            <h1>
+                {{ $cs['headline_1'] ?? __('site.marketing.coming_soon.headline_1') }}
+                <br>
+                <span class="accent">{{ $cs['headline_2'] ?? __('site.marketing.coming_soon.headline_2') }}</span>
+            </h1>
+
+            {{-- Lockup + COMING SOON loading bar now sit between the
+                 headline and the lead paragraph. The lockup is the
+                 brand mark + the bar reads as "almost there" with the
+                 brand-gradient fill running to 100%. --}}
             <a href="/" class="cs-lockup" aria-label="Ganvo">
                 <x-brand-lockup size="lg" />
             </a>
 
-            {{-- COMING SOON loading bar — sits directly under the lockup
-                 with the bar 100% filled (brand gradient), so it reads as
-                 "almost there" rather than mid-loading. --}}
             <div class="cs-progress" role="status" aria-live="polite">
                 <div class="cs-progress-label">
                     <span class="pulse" aria-hidden="true"></span>
@@ -693,11 +700,6 @@
                 </div>
             </div>
 
-            <h1>
-                {{ $cs['headline_1'] ?? __('site.marketing.coming_soon.headline_1') }}
-                <br>
-                <span class="accent">{{ $cs['headline_2'] ?? __('site.marketing.coming_soon.headline_2') }}</span>
-            </h1>
             <p class="lead">{{ $cs['lead'] ?? __('site.marketing.coming_soon.lead') }}</p>
 
             {{-- Email capture. Posts to /coming-soon/signup; the JS handler
