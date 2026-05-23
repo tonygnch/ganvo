@@ -476,10 +476,11 @@
                 scene.add(rim);
 
                 // ---- DOM → world position projection --------------------
-                // Bo's home Y in world space is computed from the brand
-                // lockup's screen rect, then offset up so the model lands
-                // above the wordmark on any viewport.
-                let homePos = new THREE.Vector3(0, 1.5, 0);
+                // Bo's home position in world space is computed from the
+                // brand lockup's screen rect, then offset up by a desired
+                // pixel amount so the model lands above the wordmark on
+                // any viewport.
+                let homePos = new THREE.Vector3(0, 0, 0);
                 function screenToWorld(sx, sy) {
                     const ndc = new THREE.Vector2(
                         (sx / window.innerWidth) * 2 - 1,
@@ -493,14 +494,22 @@
                 function recomputeHome() {
                     if (! lockupEl) return;
                     const r = lockupEl.getBoundingClientRect();
+                    // Defensive: if the lockup hasn't been laid out yet
+                    // (font/img async load, animation transform), fall
+                    // back to a fixed-percent position so Bo at least
+                    // shows up centered until the next recompute.
+                    if (r.width === 0 || r.height === 0) {
+                        homePos = screenToWorld(window.innerWidth / 2, window.innerHeight * 0.35);
+                        return;
+                    }
                     const cx = r.left + r.width / 2;
-                    // Place Bo's pivot ~28% of viewport height above the
-                    // lockup's top edge so his upper body is centered there.
-                    const aboveY = r.top - window.innerHeight * 0.28;
+                    // Place Bo's CENTER ~22% of viewport above the lockup.
+                    // Was bottoming-out before because the model's pivot
+                    // is at the feet — we now center the model within a
+                    // wrapper group so this point is the visual center.
+                    const aboveY = Math.max(window.innerHeight * 0.15, r.top - window.innerHeight * 0.22);
                     homePos = screenToWorld(cx, aboveY);
                 }
-                recomputeHome();
-                window.addEventListener('resize', recomputeHome);
 
                 // ---- Load the GLB ---------------------------------------
                 const loader = new GLTFLoader();
@@ -508,14 +517,46 @@
                     loader.load('/models/RobotExpressive.glb', resolve, undefined, reject);
                 });
 
+                // ---- Size + center the model inside a wrapper -----------
+                // The wrapper Group is what we move + rotate in the animation
+                // loop. The model is offset down inside the wrapper so the
+                // wrapper's origin lines up with the model's visual center
+                // (not its feet, which is where RobotExpressive's pivot is).
                 const model = gltf.scene;
-                // Scale: model is ~2 units tall in its own coords; bump up
-                // a bit so it reads well in the camera frame.
-                model.scale.setScalar(0.55);
-                // Default model faces +Z (away from camera at z=10 looking
-                // at origin); flip 180° to face the viewer.
-                model.rotation.y = Math.PI;
-                scene.add(model);
+
+                // Probe the unscaled bounding box, then pick a scale that
+                // makes the model ~1.6 world units tall — fits comfortably
+                // inside the camera's vertical fov (~±3.15 at z=10, fov=35).
+                const probeBox = new THREE.Box3().setFromObject(model);
+                const probeHeight = probeBox.max.y - probeBox.min.y || 1;
+                const DESIRED_HEIGHT = 1.8;
+                model.scale.setScalar(DESIRED_HEIGHT / probeHeight);
+
+                // Re-probe after scaling and shift the model so its center
+                // sits at the wrapper's origin.
+                const sizedBox = new THREE.Box3().setFromObject(model);
+                const sizedCenter = sizedBox.getCenter(new THREE.Vector3());
+                model.position.sub(sizedCenter);
+
+                const character = new THREE.Group();
+                character.add(model);
+                // RobotExpressive exports facing -Z; the camera at +Z looks
+                // down -Z, so leaving rotation.y = 0 makes the model face
+                // the viewer. (Was incorrectly rotating 180° in the previous
+                // pass.)
+                scene.add(character);
+
+                // Initial home position — recomputed after page load + resize
+                // because the lockup's bounding rect changes once images +
+                // fonts settle in.
+                recomputeHome();
+                window.addEventListener('resize', recomputeHome);
+                window.addEventListener('load', recomputeHome);
+                // Also poll a few times after boot to catch the brand-lockup
+                // <img> load completing — cheaper than hooking every img.onload.
+                setTimeout(recomputeHome, 100);
+                setTimeout(recomputeHome, 500);
+                setTimeout(recomputeHome, 1500);
 
                 // ---- Animation mixer + clip catalog ---------------------
                 // RobotExpressive ships with these clips (by name): Idle,
@@ -589,7 +630,7 @@
                     mixer.update(dt);
 
                     if (reducedMotion) {
-                        model.position.copy(homePos);
+                        character.position.copy(homePos);
                         renderer.render(scene, camera);
                         return;
                     }
@@ -598,7 +639,7 @@
 
                     if (state === 'hop-in') {
                         const p = Math.min(1, st / HOP_DURATION);
-                        model.position.set(homePos.x, homePos.y + hopOffset(p), homePos.z);
+                        character.position.set(homePos.x, homePos.y + hopOffset(p), homePos.z);
                         if (p >= 1) {
                             state = 'thumbs-up';
                             stateStart = t;
@@ -607,7 +648,7 @@
                     }
                     else if (state === 'thumbs-up') {
                         // Idle bob during the hold
-                        model.position.set(homePos.x, homePos.y + Math.sin(t * 1.4) * 0.05, homePos.z);
+                        character.position.set(homePos.x, homePos.y + Math.sin(t * 1.4) * 0.05, homePos.z);
                         if (st > THUMBS_HOLD) {
                             state = 'idle';
                             stateStart = t;
@@ -618,7 +659,7 @@
                         // Bob in place while idling. The Idle clip has its
                         // own subtle motion; the bob is a world-position
                         // offset on top of that for a "hovering" feel.
-                        model.position.set(homePos.x, homePos.y + Math.sin(t * 1.2) * 0.08, homePos.z);
+                        character.position.set(homePos.x, homePos.y + Math.sin(t * 1.2) * 0.08, homePos.z);
                         if (st > IDLE_BEFORE_GESTURE) {
                             state = 'gesture';
                             stateStart = t;
@@ -627,7 +668,7 @@
                         }
                     }
                     else if (state === 'gesture') {
-                        model.position.set(homePos.x, homePos.y + Math.sin(t * 1.4) * 0.05, homePos.z);
+                        character.position.set(homePos.x, homePos.y + Math.sin(t * 1.4) * 0.05, homePos.z);
                         // Gesture clips run ~1.5-3s; return to idle after the
                         // current action's clip duration plus a small buffer.
                         const clipDur = currentAction?.getClip()?.duration ?? 2;
@@ -638,12 +679,11 @@
                         }
                     }
 
-                    // Gentle yaw toward cursor so Bo feels engaged with the
-                    // viewer (the model has no individually-controllable
-                    // head bone via name lookup that's stable across
-                    // exports, so we yaw the whole body subtly instead).
+                    // Gentle yaw toward cursor so Bo feels engaged with
+                    // the viewer. Model already faces the camera (rotation
+                    // 0); the cursor just adds a small ±10° offset.
                     const yawTarget = window.__cursor.x * 0.18;
-                    model.rotation.y += (Math.PI + yawTarget - model.rotation.y) * 0.05;
+                    character.rotation.y += (yawTarget - character.rotation.y) * 0.05;
 
                     renderer.render(scene, camera);
                 }
