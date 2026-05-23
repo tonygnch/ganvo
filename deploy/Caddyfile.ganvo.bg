@@ -6,7 +6,7 @@
 #   sudo systemctl reload caddy
 #
 # Adjust php_fastcgi socket to your PHP-FPM version (default for Debian 12 +
-# Ubuntu 24.04 is php8.3-fpm). Check with:  ls /run/php/
+# Ubuntu 24.04 is php8.4-fpm). Check with:  ls /run/php/
 
 ganvo.bg, www.ganvo.bg {
     root * /var/www/ganvo/public
@@ -16,7 +16,7 @@ ganvo.bg, www.ganvo.bg {
     encode zstd gzip
 
     # PHP-FPM. Adjust socket path to your installed version.
-    php_fastcgi unix//run/php/php8.3-fpm.sock
+    php_fastcgi unix//run/php/php8.4-fpm.sock
 
     # Static files served directly by Caddy; everything else falls through to index.php.
     file_server
@@ -66,7 +66,7 @@ ganvo.bg, www.ganvo.bg {
 # *.ganvo.bg {
 #     root * /var/www/ganvo/public
 #     encode zstd gzip
-#     php_fastcgi unix//run/php/php8.3-fpm.sock
+#     php_fastcgi unix//run/php/php8.4-fpm.sock
 #     file_server
 #     tls {
 #         dns <your_dns_provider> {env.YOUR_DNS_API_TOKEN}

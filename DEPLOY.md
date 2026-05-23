@@ -7,7 +7,7 @@ Re-deploys after the first one use [`deploy/deploy.sh`](deploy/deploy.sh).
 - Domain: `ganvo.bg` (DNS already pointing at the server)
 - App path: `/var/www/ganvo`
 - Web server: Caddy (auto HTTPS via Let's Encrypt)
-- PHP: 8.3+
+- PHP: **8.4+** (composer.lock pins Symfony 8.x which requires 8.4)
 - Database: MySQL 8
 
 ---
@@ -18,7 +18,7 @@ SSH in and check each:
 
 ```bash
 caddy version           # any v2.x
-php --version           # 8.3 or newer
+php --version           # 8.4 or newer (NOT 8.3 — see below)
 composer --version
 mysql --version         # 8.0+
 node --version          # 20 LTS or newer
@@ -32,19 +32,29 @@ Plus PHP extensions Laravel needs:
 php -m | grep -iE 'pdo_mysql|mbstring|openssl|tokenizer|xml|ctype|json|bcmath|fileinfo|curl|intl|zip|gd'
 ```
 
-Install anything missing on Debian/Ubuntu:
+If your distro ships an older PHP (e.g. Debian 12 has 8.2, Ubuntu 24.04 has 8.3), install 8.4 from the third-party repo:
 
 ```bash
+# Debian (sury.org repo):
+sudo apt install -y apt-transport-https lsb-release ca-certificates curl
+sudo curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
+echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/php.list
+sudo apt update
+
+# Ubuntu (ondrej PPA):
+# sudo add-apt-repository -y ppa:ondrej/php && sudo apt update
+
 sudo apt install -y \
-    php8.3-fpm php8.3-mysql php8.3-mbstring php8.3-xml php8.3-curl \
-    php8.3-bcmath php8.3-intl php8.3-zip php8.3-gd php8.3-tokenizer
+    php8.4-fpm php8.4-mysql php8.4-mbstring php8.4-xml php8.4-curl \
+    php8.4-bcmath php8.4-intl php8.4-zip php8.4-gd php8.4-tokenizer
+sudo update-alternatives --set php /usr/bin/php8.4
 ```
 
 PHP-FPM must be running:
 
 ```bash
-sudo systemctl enable --now php8.3-fpm
-ls /run/php/                        # confirms the socket: php8.3-fpm.sock
+sudo systemctl enable --now php8.4-fpm
+ls /run/php/                        # confirms the socket: php8.4-fpm.sock
 ```
 
 ---
