@@ -10,7 +10,6 @@
 
     <style>
         :root {
-            --bg:        #050817;
             --bg-deep:   #020310;
             --grid:      rgba(120, 180, 255, .04);
             --hair:      rgba(140, 180, 255, .08);
@@ -25,9 +24,6 @@
         }
 
         * { box-sizing: border-box; }
-        /* Locked viewport, no scroll — splash should fit any reasonable screen
-           in one paint, same approach as v1. The escape hatch at the bottom
-           handles freakishly-short landscape phones. */
         html, body {
             margin: 0; padding: 0;
             height: 100vh; height: 100dvh;
@@ -74,74 +70,31 @@
             background: radial-gradient(circle 400px at var(--mx, 50%) var(--my, 50%), rgba(0, 240, 255, .08), transparent 70%);
         }
 
-        /* -------- Abstract floating SVG storefront wireframes (z-index: 1) --------
-           Three SVGs sit absolutely in the corners. Each is decorative — they
-           draw themselves on a stroke-dasharray loop so they feel "alive" without
-           depicting real content. Hidden on small screens. */
-        .wireframe {
-            position: absolute; z-index: 1; pointer-events: none;
-            opacity: .25;
-            animation: drift 18s ease-in-out infinite;
+        /* -------- WebGL scene canvas (z-index: 1, behind text) -------- */
+        #scene {
+            position: absolute; inset: 0; z-index: 1; pointer-events: none;
+            opacity: 0;            /* fades in once Three.js boots */
+            transition: opacity .8s ease;
         }
-        .wireframe svg { display: block; width: 100%; height: 100%; overflow: visible; }
-        .wireframe svg * {
-            stroke: var(--cyan);
-            stroke-width: 1;
-            fill: none;
-            stroke-dasharray: 200;
-            stroke-dashoffset: 200;
-            animation: drawIn 4s ease-out forwards infinite;
-        }
-        @keyframes drawIn {
-            0%   { stroke-dashoffset: 200; opacity: 0; }
-            20%  { opacity: 1; }
-            70%  { stroke-dashoffset: 0; opacity: 1; }
-            100% { stroke-dashoffset: -200; opacity: 0; }
-        }
-        @keyframes drift {
-            0%, 100% { transform: translate(0, 0); }
-            50%      { transform: translate(0, -16px); }
-        }
-        .wf-1 { top: 6%; left: 4%; width: 220px; height: 160px; animation-delay: 0s; transform: rotate(-3deg); }
-        .wf-1 svg * { animation-delay: 0s; }
-        .wf-2 { top: 10%; right: 5%; width: 260px; height: 190px; animation-delay: -6s; transform: rotate(4deg); }
-        .wf-2 svg * { animation-delay: -1.5s; stroke: var(--magenta); }
-        .wf-3 { bottom: 12%; right: 7%; width: 200px; height: 150px; animation-delay: -12s; transform: rotate(-2deg); }
-        .wf-3 svg * { animation-delay: -3s; stroke: var(--violet); }
-        @media (max-width: 900px) { .wf-2 { display: none; } }
-        @media (max-width: 600px) { .wireframe { display: none; } }
+        #scene.ready { opacity: 1; }
 
-        /* -------- Theme palette swatches floating bottom-left -------- */
-        .palettes {
+        /* -------- Static SVG fallback (shown if WebGL unavailable / no JS) -------- */
+        .fallback-wireframe {
             position: absolute; z-index: 1; pointer-events: none;
-            bottom: 4rem; left: 2rem;
-            display: flex; gap: .5rem;
-            opacity: .8;
+            top: 50%; left: 50%;
+            width: 320px; height: 320px;
+            transform: translate(-50%, -50%);
+            opacity: .35;
+            animation: rotateSlow 30s linear infinite;
         }
-        .palette {
-            display: flex; align-items: center; gap: .5rem;
-            padding: .375rem .625rem .375rem .375rem;
-            background: rgba(15, 20, 45, .55);
-            border: 1px solid var(--hair);
-            border-radius: 999px;
-            backdrop-filter: blur(8px);
-            font: 600 0.625rem/1 ui-monospace, 'JetBrains Mono', SFMono-Regular, monospace;
-            color: var(--text-faint);
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            animation: paletteFloat 8s ease-in-out infinite;
+        @keyframes rotateSlow {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to   { transform: translate(-50%, -50%) rotate(360deg); }
         }
-        .palette .swatch { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
-        @keyframes paletteFloat {
-            0%, 100% { transform: translateY(0); }
-            50%      { transform: translateY(-4px); }
-        }
-        .palette:nth-child(1) { animation-delay: 0s; }
-        .palette:nth-child(2) { animation-delay: -1.5s; }
-        .palette:nth-child(3) { animation-delay: -3s; }
-        .palette:nth-child(4) { animation-delay: -4.5s; }
-        .palette:nth-child(5) { animation-delay: -6s; }
-        @media (max-width: 900px) { .palettes { bottom: 3.5rem; left: 50%; transform: translateX(-50%); flex-wrap: wrap; justify-content: center; max-width: 90%; } }
+        .fallback-wireframe svg { display: block; width: 100%; height: 100%; }
+        .fallback-wireframe svg polygon { fill: none; stroke: var(--cyan); stroke-width: 1; }
+        /* Hide the fallback once the WebGL scene reports ready. */
+        #scene.ready ~ .fallback-wireframe { display: none; }
 
         /* -------- Top status bar -------- */
         .statusbar {
@@ -165,16 +118,29 @@
         .statusbar a:hover { color: var(--cyan); }
         .statusbar a.active { color: var(--text); }
 
-        /* -------- Hero (centered single column, fills remaining viewport) -------- */
+        /* -------- Hero (centered, in front of the 3D scene) -------- */
         .hero {
             position: relative; z-index: 2;
             flex: 1; min-height: 0;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 1.5rem 1.5rem 6rem;
+            padding: 1.5rem 1.5rem 5rem;
             text-align: center;
         }
         .lockup-wrap { margin: 0 0 1.75rem; }
         .lockup-wrap img { filter: drop-shadow(0 0 24px rgba(0, 240, 255, .25)); }
+
+        /* Staggered reveal animation — everything starts hidden + below
+           its final position; each piece slides up + fades in on its
+           own delay. animation-fill-mode: forwards holds the final state. */
+        .stagger { opacity: 0; transform: translateY(12px); animation: revealUp .7s cubic-bezier(.2, .7, .2, 1) forwards; }
+        @keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
+        .stagger.d0 { animation-delay: .0s; }
+        .stagger.d1 { animation-delay: .12s; }
+        .stagger.d2 { animation-delay: .24s; }
+        .stagger.d3 { animation-delay: .36s; }
+        .stagger.d4 { animation-delay: .48s; }
+        .stagger.d5 { animation-delay: .60s; }
+        .stagger.d6 { animation-delay: .72s; }
 
         .eyebrow {
             display: inline-flex; align-items: center; gap: .5rem;
@@ -212,8 +178,6 @@
             0%   { background-position: 0% 50%; }
             100% { background-position: 200% 50%; }
         }
-        h1 .reveal { display: inline-block; opacity: 0; transform: translateY(8px); animation: revealUp .6s ease forwards; }
-        @keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
 
         .lead {
             color: var(--text-dim);
@@ -283,22 +247,24 @@
         footer.foot a:hover, footer.foot a.active { color: var(--cyan); }
         footer.foot .sep { color: rgba(140, 180, 255, .15); margin: 0 .5rem; }
 
-        /* -------- Mobile / short-viewport escape hatches -------- */
         @media (max-width: 720px) {
-            .hero { padding: 1rem 1rem 8rem; }
+            .hero { padding: 1rem 1rem 6rem; }
             .form input { font-size: 16px; padding: .625rem .875rem; }
             .form button { padding: 0 1rem; font-size: 0.875rem; }
+            .fallback-wireframe { width: 220px; height: 220px; }
         }
-        /* Landscape phones / very short viewports: free the page to scroll
-           so nothing gets clipped. */
         @media (max-height: 620px) {
             html, body { height: auto; overflow: auto; }
-            .palettes { position: relative; bottom: auto; left: auto; margin: 2rem auto; flex-wrap: wrap; justify-content: center; }
             footer.foot { position: relative; }
+            #scene, .fallback-wireframe { position: fixed; }
         }
 
+        /* Reduced-motion: kill the staggered reveal + flatten Three.js
+           animation in JS (handled below). The hero shows fully immediately. */
         @media (prefers-reduced-motion: reduce) {
+            .stagger { opacity: 1 !important; transform: none !important; animation: none !important; }
             *, *::before, *::after { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; transition-duration: 0.001s !important; }
+            .fallback-wireframe { animation: none !important; }
         }
     </style>
 </head>
@@ -306,14 +272,6 @@
     @php
         $currentLocale = app()->getLocale();
         $languages = \App\Http\Middleware\SetLocale::available();
-        // Real themes we ship — signature colors for each. No fake data.
-        $themes = [
-            ['name' => 'DEFAULT', 'color' => '#10B981'],
-            ['name' => 'MINIMAL', 'color' => '#a8a29e'],
-            ['name' => 'GALLERY', 'color' => '#f5f5f5'],
-            ['name' => 'MENU',    'color' => '#dc2626'],
-            ['name' => 'TECH',    'color' => '#2563eb'],
-        ];
     @endphp
 
     <div class="bg-mesh"></div>
@@ -321,47 +279,20 @@
     <div class="bg-scanlines"></div>
     <div class="bg-spotlight" id="spotlight"></div>
 
-    {{-- Abstract floating storefront wireframes. Pure decoration — they
-         draw themselves on a slow loop, no faux content. --}}
-    <div class="wireframe wf-1" aria-hidden="true">
-        <svg viewBox="0 0 220 160" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="216" height="156" rx="8"/>
-            <line x1="2" y1="22" x2="218" y2="22"/>
-            <circle cx="14" cy="12" r="3"/>
-            <circle cx="26" cy="12" r="3"/>
-            <circle cx="38" cy="12" r="3"/>
-            <rect x="14" y="36" width="192" height="40" rx="4"/>
-            <rect x="14" y="84" width="56" height="64" rx="4"/>
-            <rect x="82" y="84" width="56" height="64" rx="4"/>
-            <rect x="150" y="84" width="56" height="64" rx="4"/>
-        </svg>
-    </div>
-    <div class="wireframe wf-2" aria-hidden="true">
-        <svg viewBox="0 0 260 190" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="256" height="186" rx="8"/>
-            <line x1="2" y1="24" x2="258" y2="24"/>
-            <circle cx="14" cy="13" r="3"/>
-            <circle cx="26" cy="13" r="3"/>
-            <circle cx="38" cy="13" r="3"/>
-            <rect x="14" y="40" width="112" height="80" rx="4"/>
-            <rect x="138" y="40" width="108" height="14" rx="3"/>
-            <rect x="138" y="62" width="80" height="10" rx="3"/>
-            <rect x="138" y="80" width="60" height="10" rx="3"/>
-            <rect x="138" y="100" width="60" height="20" rx="4"/>
-            <rect x="14" y="134" width="232" height="40" rx="4"/>
-        </svg>
-    </div>
-    <div class="wireframe wf-3" aria-hidden="true">
-        <svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="100" height="146" rx="14"/>
-            <line x1="2" y1="22" x2="102" y2="22"/>
-            <circle cx="52" cy="12" r="2"/>
-            <rect x="10" y="32" width="84" height="20" rx="3"/>
-            <rect x="10" y="58" width="60" height="6" rx="2"/>
-            <rect x="10" y="72" width="84" height="6" rx="2"/>
-            <rect x="10" y="86" width="50" height="6" rx="2"/>
-            <rect x="10" y="100" width="84" height="6" rx="2"/>
-            <rect x="10" y="118" width="40" height="20" rx="3"/>
+    {{-- 3D scene canvas. Hidden until Three.js boots (transitions opacity in). --}}
+    <canvas id="scene" aria-hidden="true"></canvas>
+
+    {{-- Static SVG fallback: shown if WebGL is unavailable or JS is off.
+         Hidden via #scene.ready ~ .fallback-wireframe once Three.js boots. --}}
+    <div class="fallback-wireframe" aria-hidden="true">
+        <svg viewBox="-110 -110 220 220" xmlns="http://www.w3.org/2000/svg">
+            {{-- Icosahedron-ish wireframe; pre-projected so we don't ship a 3D lib for the fallback. --}}
+            <polygon points="0,-100  87,-50  87,50  0,100  -87,50  -87,-50"/>
+            <polygon points="0,-100  87,50  -87,50"/>
+            <polygon points="87,-50  87,50  -87,-50"/>
+            <polygon points="0,100  87,-50  -87,-50"/>
+            <polygon points="-87,50  87,-50  0,-100"/>
+            <polygon points="-87,-50  -87,50  87,-50"/>
         </svg>
     </div>
 
@@ -380,44 +311,36 @@
     </div>
 
     <section class="hero">
-        <div class="lockup-wrap"><a href="/" aria-label="Ganvo"><x-brand-lockup size="lg" /></a></div>
+        <div class="lockup-wrap stagger d0"><a href="/" aria-label="Ganvo"><x-brand-lockup size="lg" /></a></div>
 
-        <div class="eyebrow">{{ $cs['eyebrow'] ?? __('site.marketing.coming_soon.eyebrow') }}</div>
+        <div class="eyebrow stagger d1">{{ $cs['eyebrow'] ?? __('site.marketing.coming_soon.eyebrow') }}</div>
 
         <h1>
-            <span class="reveal" style="animation-delay: 0s">{{ $cs['headline_1'] ?? __('site.marketing.coming_soon.headline_1') }}</span>
+            <span class="stagger d2" style="display: inline-block">{{ $cs['headline_1'] ?? __('site.marketing.coming_soon.headline_1') }}</span>
             <br>
-            <span class="reveal gradient" style="animation-delay: .15s">{{ $cs['headline_2'] ?? __('site.marketing.coming_soon.headline_2') }}</span>
+            <span class="stagger d3 gradient" style="display: inline-block">{{ $cs['headline_2'] ?? __('site.marketing.coming_soon.headline_2') }}</span>
         </h1>
 
-        <p class="lead">{{ $cs['lead'] ?? __('site.marketing.coming_soon.lead') }}</p>
+        <p class="lead stagger d4">{{ $cs['lead'] ?? __('site.marketing.coming_soon.lead') }}</p>
 
-        <form class="form @if(session('signup_status') === 'ok') hidden @endif"
-              method="post" action="{{ route('marketing.signup') }}" id="csNotifyForm" novalidate>
-            @csrf
-            <input class="cs-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-            <input type="email" name="email" required value="{{ old('email') }}"
-                   placeholder="{{ $cs['email_placeholder'] ?? __('site.marketing.coming_soon.email_placeholder') }}"
-                   aria-label="{{ $cs['email_placeholder'] ?? __('site.marketing.coming_soon.email_placeholder') }}">
-            <button type="submit">{{ $cs['notify_button'] ?? __('site.marketing.coming_soon.notify') }} →</button>
-        </form>
-        <p class="form-thanks @if(session('signup_status') === 'ok') visible @endif" id="csNotifyThanks">
-            ✓ {{ $cs['thanks_message'] ?? __('site.marketing.coming_soon.thanks') }}
-        </p>
-        <p class="form-error @if(session('signup_error')) visible @endif" id="csNotifyError" role="alert">{{ session('signup_error') }}</p>
-        <p class="form-helper">{{ $cs['helper_text'] ?? __('site.marketing.coming_soon.helper') }}</p>
+        <div class="stagger d5" style="width: 100%; max-width: 480px;">
+            <form class="form @if(session('signup_status') === 'ok') hidden @endif"
+                  method="post" action="{{ route('marketing.signup') }}" id="csNotifyForm" novalidate>
+                @csrf
+                <input class="cs-honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+                <input type="email" name="email" required value="{{ old('email') }}"
+                       placeholder="{{ $cs['email_placeholder'] ?? __('site.marketing.coming_soon.email_placeholder') }}"
+                       aria-label="{{ $cs['email_placeholder'] ?? __('site.marketing.coming_soon.email_placeholder') }}">
+                <button type="submit">{{ $cs['notify_button'] ?? __('site.marketing.coming_soon.notify') }} →</button>
+            </form>
+            <p class="form-thanks @if(session('signup_status') === 'ok') visible @endif" id="csNotifyThanks">
+                ✓ {{ $cs['thanks_message'] ?? __('site.marketing.coming_soon.thanks') }}
+            </p>
+            <p class="form-error @if(session('signup_error')) visible @endif" id="csNotifyError" role="alert">{{ session('signup_error') }}</p>
+        </div>
+
+        <p class="form-helper stagger d6">{{ $cs['helper_text'] ?? __('site.marketing.coming_soon.helper') }}</p>
     </section>
-
-    {{-- Theme palette swatches floating bottom-left — these are the
-         REAL themes we ship, not fake metrics. --}}
-    <div class="palettes" aria-hidden="true">
-        @foreach ($themes as $t)
-            <span class="palette">
-                <span class="swatch" style="background: {{ $t['color'] }}; color: {{ $t['color'] }};"></span>
-                {{ $t['name'] }}
-            </span>
-        @endforeach
-    </div>
 
     <footer class="foot">
         © {{ date('Y') }} GANVO
@@ -425,32 +348,29 @@
         <a href="/preview/coming-soon-v1">← classic version</a>
     </footer>
 
+    {{-- Cursor spotlight + clock + form handler (no module needed). --}}
     <script>
-        // Cursor-following spotlight (rAF-throttled)
         const spotlight = document.getElementById('spotlight');
-        let rafId = null, pendingMx = 50, pendingMy = 50;
+        let rafId = null, mx = 50, my = 50;
         document.addEventListener('mousemove', (e) => {
-            pendingMx = (e.clientX / window.innerWidth) * 100;
-            pendingMy = (e.clientY / window.innerHeight) * 100;
+            mx = (e.clientX / window.innerWidth) * 100;
+            my = (e.clientY / window.innerHeight) * 100;
             if (rafId) return;
             rafId = requestAnimationFrame(() => {
-                spotlight.style.setProperty('--mx', pendingMx + '%');
-                spotlight.style.setProperty('--my', pendingMy + '%');
+                spotlight.style.setProperty('--mx', mx + '%');
+                spotlight.style.setProperty('--my', my + '%');
                 rafId = null;
             });
         });
 
-        // UTC clock in the status bar
         const clockOut = document.getElementById('clockOut');
         function tick() {
             const d = new Date();
-            const hms = [d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds()]
-                .map(n => String(n).padStart(2, '0')).join(':');
-            clockOut.textContent = hms + ' UTC';
+            clockOut.textContent = [d.getUTCHours(), d.getUTCMinutes(), d.getUTCSeconds()]
+                .map(n => String(n).padStart(2, '0')).join(':') + ' UTC';
         }
         tick(); setInterval(tick, 1000);
 
-        // Notify form — same handler as v1
         (function () {
             const form = document.getElementById('csNotifyForm');
             if (! form) return;
@@ -484,6 +404,135 @@
                   });
             });
         })();
+    </script>
+
+    {{-- Three.js scene as ES module. Loaded from esm.sh which resolves
+         peer deps for us. Total ~150KB gzipped, cached after first load.
+         All scene logic + the prefers-reduced-motion check live here.
+         If the import fails (offline, CSP, ad blocker), the static SVG
+         fallback stays visible. --}}
+    <script type="module">
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const canvas = document.getElementById('scene');
+
+        // Quick WebGL feature detection. If unavailable, bail and leave the
+        // SVG fallback visible.
+        function hasWebGL() {
+            try {
+                const c = document.createElement('canvas');
+                return !!(c.getContext('webgl2') || c.getContext('webgl'));
+            } catch (e) { return false; }
+        }
+        if (! hasWebGL()) {
+            console.info('[coming-soon-v2] WebGL unavailable — using SVG fallback');
+        } else {
+            try {
+                const THREE = await import('https://esm.sh/three@0.160.0');
+
+                // ---- Renderer ------------------------------------------------
+                const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                renderer.setSize(window.innerWidth, window.innerHeight, false);
+                renderer.setClearColor(0x000000, 0);
+
+                // ---- Scene + camera -----------------------------------------
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+                camera.position.z = 10;
+
+                // ---- Main icosahedron (cyan wireframe) ----------------------
+                // EdgesGeometry collapses overlapping coplanar edges, so the
+                // wireframe reads as actual edges rather than a noisy triangle mesh.
+                const icoGeo = new THREE.IcosahedronGeometry(2.4, 0);
+                const icoEdges = new THREE.EdgesGeometry(icoGeo);
+                const icoMat = new THREE.LineBasicMaterial({
+                    color: 0x00f0ff, transparent: true, opacity: 0.85,
+                });
+                const icosahedron = new THREE.LineSegments(icoEdges, icoMat);
+                scene.add(icosahedron);
+
+                // ---- Smaller dodecahedron behind it (magenta, lower opacity) -
+                const dodGeo = new THREE.DodecahedronGeometry(3.6, 0);
+                const dodEdges = new THREE.EdgesGeometry(dodGeo);
+                const dodMat = new THREE.LineBasicMaterial({
+                    color: 0xff2dd0, transparent: true, opacity: 0.35,
+                });
+                const dodecahedron = new THREE.LineSegments(dodEdges, dodMat);
+                scene.add(dodecahedron);
+
+                // ---- Particle dust around them ------------------------------
+                // Random points distributed in a sphere shell. Additive
+                // blending gives the dust a soft glow without a real
+                // post-processing pass.
+                const PARTICLE_COUNT = 320;
+                const positions = new Float32Array(PARTICLE_COUNT * 3);
+                for (let i = 0; i < PARTICLE_COUNT; i++) {
+                    // Spherical shell, radius 4–6, random direction
+                    const r = 4 + Math.random() * 2;
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+                    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                    positions[i * 3 + 2] = r * Math.cos(phi);
+                }
+                const particleGeo = new THREE.BufferGeometry();
+                particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const particleMat = new THREE.PointsMaterial({
+                    color: 0xa8b6ff, size: 0.04,
+                    transparent: true, opacity: 0.7,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false,
+                });
+                const particles = new THREE.Points(particleGeo, particleMat);
+                scene.add(particles);
+
+                // ---- Mouse parallax — camera follows the cursor a little ----
+                // Smoothed via lerp so the camera doesn't jitter on every event.
+                const target = { x: 0, y: 0 };
+                document.addEventListener('mousemove', (e) => {
+                    target.x = (e.clientX / window.innerWidth - 0.5) * 1.2;
+                    target.y = (e.clientY / window.innerHeight - 0.5) * 0.8;
+                });
+
+                // ---- Resize handling ---------------------------------------
+                window.addEventListener('resize', () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight, false);
+                });
+
+                // ---- Animation loop ----------------------------------------
+                const clock = new THREE.Clock();
+                function animate() {
+                    requestAnimationFrame(animate);
+                    const dt = clock.getDelta();
+
+                    if (! reducedMotion) {
+                        // Slow auto-rotation: ico rotates one way, dodec the other,
+                        // particles drift slowly. dt-based so it's framerate-agnostic.
+                        icosahedron.rotation.x += dt * 0.15;
+                        icosahedron.rotation.y += dt * 0.25;
+                        dodecahedron.rotation.x -= dt * 0.10;
+                        dodecahedron.rotation.y -= dt * 0.18;
+                        particles.rotation.y += dt * 0.06;
+
+                        // Camera parallax — ease toward the mouse-driven target.
+                        camera.position.x += (target.x - camera.position.x) * 0.05;
+                        camera.position.y += (-target.y - camera.position.y) * 0.05;
+                        camera.lookAt(0, 0, 0);
+                    }
+
+                    renderer.render(scene, camera);
+                }
+                animate();
+
+                // Fade the canvas in once it's drawing — avoids a flash of
+                // black or a single frame of static scene.
+                requestAnimationFrame(() => canvas.classList.add('ready'));
+            } catch (err) {
+                console.warn('[coming-soon-v2] Three.js failed to load — using SVG fallback', err);
+            }
+        }
     </script>
 </body>
 </html>
