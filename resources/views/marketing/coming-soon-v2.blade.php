@@ -255,7 +255,43 @@
             .stagger { opacity: 1 !important; transform: none !important; animation: none !important; }
             *, *::before, *::after { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; transition-duration: 0.001s !important; }
         }
+
+        /* Status badge — bottom-right, shows the boot sequence + any
+           error. Disappears once Bo is on screen and animating. */
+        .bo-status {
+            position: fixed; bottom: 4rem; right: 1rem; z-index: 4;
+            padding: .5rem .75rem;
+            background: rgba(2, 10, 24, .85);
+            border: 1px solid var(--hair);
+            border-radius: 8px;
+            backdrop-filter: blur(8px);
+            color: var(--text-dim);
+            font: 500 0.6875rem/1.4 ui-monospace, 'JetBrains Mono', monospace;
+            letter-spacing: 0.04em;
+            max-width: 320px;
+            pointer-events: none;
+            transition: opacity .4s ease;
+        }
+        .bo-status.ok    { color: var(--cyan); border-color: rgba(0, 212, 255, .3); }
+        .bo-status.err   { color: #ff6b9d; border-color: rgba(255, 107, 157, .3); }
+        .bo-status.fade  { opacity: 0; }
     </style>
+
+    {{-- Import map: canonical "three" resolution so the main module +
+         every addon (GLTFLoader etc.) share the SAME THREE instance.
+         Without this, esm.sh / unpkg can hand back two separate three
+         modules and operations like `model instanceof THREE.Group`
+         silently fail, the AnimationMixer ticks on the wrong root, and
+         Bo never appears. This is the pattern the official Three.js
+         examples use. --}}
+    <script type="importmap">
+    {
+        "imports": {
+            "three":          "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/":  "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
 </head>
 <body>
     @php
@@ -270,6 +306,8 @@
 
     {{-- Full-page WebGL canvas — Bo lives here. --}}
     <canvas id="boCanvas" aria-hidden="true"></canvas>
+    {{-- Visible boot status — auto-hides once Bo is animating. --}}
+    <div class="bo-status" id="boStatus" aria-hidden="true">Bo: booting…</div>
     {{-- Static SVG fallback shown when WebGL is unavailable or the
          dynamic import fails. Hidden via #boCanvas.ready ~ .bo-fallback. --}}
     <div class="bo-fallback" aria-hidden="true">
@@ -423,6 +461,20 @@
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         const canvas = document.getElementById('boCanvas');
         const lockupEl = document.getElementById('brandLockup');
+        const statusEl = document.getElementById('boStatus');
+
+        // Status helper — surfaces what's happening to the corner badge
+        // AND the console, so failures don't go silent.
+        function status(msg, kind = '') {
+            console.log(`[bo] ${msg}`);
+            if (! statusEl) return;
+            statusEl.textContent = `Bo: ${msg}`;
+            statusEl.classList.remove('ok', 'err');
+            if (kind) statusEl.classList.add(kind);
+        }
+        function fadeStatus(delay = 1200) {
+            setTimeout(() => statusEl?.classList.add('fade'), delay);
+        }
 
         function hasWebGL() {
             try {
@@ -431,17 +483,15 @@
             } catch (e) { return false; }
         }
         if (! hasWebGL()) {
-            console.info('[bo] WebGL unavailable — SVG fallback stays');
+            status('no WebGL — SVG fallback', 'err');
         } else {
             try {
-                // Pin the three version + load GLTFLoader from the same
-                // build to avoid two different THREE namespaces (Three.js
-                // throws hard if mixed).
-                const THREE_VERSION = '0.160.0';
-                const THREE = await import(`https://esm.sh/three@${THREE_VERSION}`);
-                const { GLTFLoader } = await import(
-                    `https://esm.sh/three@${THREE_VERSION}/examples/jsm/loaders/GLTFLoader.js`
-                );
+                status('loading three.js…');
+                // Resolved via the importmap in <head> — guarantees the
+                // main module + addons share one THREE instance.
+                const THREE = await import('three');
+                status('loading GLTFLoader…');
+                const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
 
                 // ---- Renderer -------------------------------------------
                 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
@@ -512,10 +562,22 @@
                 }
 
                 // ---- Load the GLB ---------------------------------------
+                status('loading RobotExpressive.glb…');
                 const loader = new GLTFLoader();
                 const gltf = await new Promise((resolve, reject) => {
-                    loader.load('/models/RobotExpressive.glb', resolve, undefined, reject);
+                    loader.load(
+                        '/models/RobotExpressive.glb',
+                        resolve,
+                        (progress) => {
+                            if (progress.total) {
+                                const pct = Math.round(progress.loaded / progress.total * 100);
+                                status(`loading model… ${pct}%`);
+                            }
+                        },
+                        reject
+                    );
                 });
+                status('model loaded, setting up…');
 
                 // ---- Size + center the model inside a wrapper -----------
                 // The wrapper Group is what we move + rotate in the animation
@@ -606,6 +668,12 @@
                 const gestureBag = ['Wave', 'Yes', 'ThumbsUp', 'Dance'];
                 let gestureIndex = 0;
 
+                // Available clip names — useful for debugging if any
+                // gesture call later complains about missing names.
+                console.log('[bo] available clips:', Object.keys(actions));
+                status(`ready — ${Object.keys(actions).length} clips`, 'ok');
+                fadeStatus(2500);
+
                 // Kick off the entrance: start the Jump clip immediately so
                 // the model is in mid-leap pose during the fall-in.
                 fadeTo('Jump', 0.001, false);
@@ -693,6 +761,7 @@
                 requestAnimationFrame(() => canvas.classList.add('ready'));
             } catch (err) {
                 console.warn('[bo] Three.js / GLB load failed — SVG fallback stays', err);
+                status(`error: ${err?.message || err}`, 'err');
             }
         }
     </script>
