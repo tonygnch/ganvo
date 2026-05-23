@@ -134,27 +134,43 @@ class WizardController extends Controller
         $this->advanceIfOnOrBefore('plan');
 
         // "Skip for now" → continue the wizard as before.
-        // "Pay now" → bounce to Stripe Checkout. Skip Stripe entirely if
-        // the plan is free (no Price exists), so the button works on the
-        // Starter plan too without erroring.
+        // "Pay now" → either:
+        //   (a) start Stripe Checkout for a brand-new subscription, OR
+        //   (b) swap the existing one with proration if the merchant is
+        //       already subscribed (revisited the wizard, picked a
+        //       different plan). Without the swap branch we'd end up
+        //       with multiple concurrent active subscriptions on the
+        //       same Stripe customer — duplicate billing.
+        // Free plans bypass Stripe entirely.
         if ($action === 'pay_now') {
             $plan = $tenant->plan();
             if ($plan && ! $plan->isFree()) {
                 $priceId = $plan->stripePriceFor($data['billing_period']);
                 if ($priceId) {
+                    // ALREADY SUBSCRIBED → swap with proration.
+                    if ($tenant->platformSubscribed()) {
+                        try {
+                            $tenant->platformSubscription()->swapAndInvoice($priceId);
+                            return redirect($this->nextStepUrl('plan'))
+                                ->with('billing_status', __('billing.status.plan_swapped'));
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::error('Onboarding plan swap failed', [
+                                'tenant_id' => $tenant->id,
+                                'plan' => $plan->slug,
+                                'error' => $e->getMessage(),
+                            ]);
+                            return redirect()->route('onboarding.plan')
+                                ->with('billing_error', __('billing.errors.stripe_unavailable'));
+                        }
+                    }
+                    // NOT YET SUBSCRIBED → Stripe Checkout creates the
+                    // subscription. No customer_email — Cashier handles
+                    // customer creation transparently.
                     try {
-                        // Stash so the success callback knows what to
-                        // continue with after Stripe redirects back.
                         $request->session()->put('billing.pending_plan', $plan->slug);
                         $request->session()->put('billing.pending_period', $data['billing_period']);
                         $request->session()->put('billing.return_to_wizard', true);
 
-                        // No customer_email here — Cashier auto-attaches
-                        // the tenant's stripe_id once a customer has been
-                        // created, and Stripe rejects with "You may only
-                        // specify one of these parameters: customer,
-                        // customer_email." Stripe Checkout collects the
-                        // email from the user if no customer exists yet.
                         $checkout = $tenant
                             ->newSubscription(\App\Models\Tenant::SUBSCRIPTION_NAME, $priceId)
                             ->checkout([
