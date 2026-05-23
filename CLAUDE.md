@@ -103,6 +103,30 @@ Suggestions to consider:
 
 ---
 
+## Database
+
+**Dev default:** SQLite (`database/database.sqlite`). Zero setup, single file in the repo.
+
+**Switch to MySQL when:** you hit production traffic, need concurrent writes, want managed backups, or any feature wants real JSON indexing.
+
+### How to switch (≈ 5 minutes)
+
+1. Edit `.env` — comment out `DB_CONNECTION=sqlite` and uncomment the MySQL stanza (already there with values matching the compose profile).
+2. Start the MySQL container alongside the app:
+   ```bash
+   docker compose --profile mysql up -d
+   ```
+3. Run migrations against the fresh MySQL instance:
+   ```bash
+   docker exec ganvo php artisan migrate:fresh --seed
+   ```
+
+No Docker rebuild needed — `pdo_mysql` is baked into the image. The MySQL service is opt-in via the `mysql` compose profile, so SQLite users aren't paying for it.
+
+To move existing SQLite data: `sqlite3 database/database.sqlite .dump > dump.sql`, hand-tweak SQL dialect differences (mostly quoting), then `mysql -u ganvo -p ganvo < dump.sql`. For a serious migration use Laravel's own tooling (`php artisan db:seed` with extracted fixtures) or a script per-table.
+
+---
+
 ## What's Not Yet Decided
 - Subscription tier details (pricing, feature breakdown per tier)
 - Whether clients get subdomains (client.ganvo.bg) or custom domains

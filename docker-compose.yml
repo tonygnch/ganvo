@@ -12,6 +12,9 @@ services:
       APP_DEBUG: "true"
       APP_URL: http://ganvo.lvh.me:8000
       CENTRAL_DOMAIN: ganvo.lvh.me
+      # SQLite by default for zero-setup dev. Switch to MySQL by either:
+      #   (a) editing .env (see the DB_* stanza there), or
+      #   (b) overriding here with DB_CONNECTION=mysql + the matching host/port.
       DB_CONNECTION: sqlite
     volumes:
       # Live-mount source so PHP/Blade edits are picked up without rebuilding.
@@ -21,3 +24,38 @@ services:
       - /var/www/html/vendor
       - /var/www/html/node_modules
     restart: unless-stopped
+
+  # MySQL is opt-in via the `mysql` profile so a plain `docker compose up`
+  # doesn't spin it up (SQLite users don't need it). Switch your local dev
+  # to MySQL with:
+  #
+  #   1. In .env: set DB_CONNECTION=mysql and uncomment the MySQL stanza.
+  #   2. Start the container alongside the app:
+  #         docker compose --profile mysql up -d
+  #   3. Run migrations against the fresh MySQL instance:
+  #         docker exec ganvo php artisan migrate:fresh --seed
+  #
+  # Stop just MySQL (keep app running):
+  #     docker compose --profile mysql stop mysql
+  mysql:
+    image: mysql:8.4
+    container_name: ganvo-mysql
+    profiles: [mysql]
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: ganvo
+      MYSQL_USER: ganvo
+      MYSQL_PASSWORD: ganvo
+      MYSQL_ROOT_PASSWORD: ganvo
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uganvo", "-pganvo"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  mysql-data:

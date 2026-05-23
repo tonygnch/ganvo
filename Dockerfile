@@ -12,11 +12,14 @@ RUN apk add --no-cache --virtual .build-deps \
     && docker-php-ext-install \
         intl \
         pdo_sqlite \
+        pdo_mysql \
         zip \
         gd \
         bcmath \
     && apk del .build-deps \
     && apk add --no-cache icu-libs libzip libpng sqlite-libs git unzip
+# pdo_mysql is baked in even when DB_CONNECTION=sqlite so flipping to
+# MySQL is a config change only — no Docker rebuild required.
 
 COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
 
