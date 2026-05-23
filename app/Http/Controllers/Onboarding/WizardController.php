@@ -153,6 +153,15 @@ class WizardController extends Controller
                             $tenant->platformSubscription()->swapAndInvoice($priceId);
                             return redirect($this->nextStepUrl('plan'))
                                 ->with('billing_status', __('billing.status.plan_swapped'));
+                        } catch (\Laravel\Cashier\Exceptions\IncompletePayment $e) {
+                            // SCA / 3DS required for the proration charge.
+                            // Send the merchant to Stripe's hosted payment
+                            // confirmation page; on return they continue
+                            // the wizard.
+                            return redirect()->route('cashier.payment', [
+                                $e->payment->id,
+                                'redirect' => $this->nextStepUrl('plan'),
+                            ]);
                         } catch (\Throwable $e) {
                             \Illuminate\Support\Facades\Log::error('Onboarding plan swap failed', [
                                 'tenant_id' => $tenant->id,

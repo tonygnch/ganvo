@@ -205,6 +205,22 @@ class BillingController extends Controller
             // customer.subscription.updated) will refresh our local
             // subscription row with the new stripe_price afterward.
             $tenant->platformSubscription()->swapAndInvoice($priceId);
+        } catch (\Laravel\Cashier\Exceptions\IncompletePayment $e) {
+            // SCA / 3D Secure flow. Stripe needs the customer to confirm
+            // the proration charge (test mode + EU cards both commonly
+            // trigger this on the second charge to a saved payment
+            // method). Cashier exposes the Payment intent with a hosted
+            // confirmation URL — bounce the merchant there. Once they
+            // confirm, Stripe webhooks fire and the subscription leaves
+            // past_due automatically.
+            $tenant->update([
+                'subscription_plan' => $plan->slug,
+                'billing_period' => $data['period'],
+            ]);
+            return redirect()->route('cashier.payment', [
+                $e->payment->id,
+                'redirect' => route('billing.show'),
+            ]);
         } catch (\Throwable $e) {
             Log::error('Plan swap failed', [
                 'tenant_id' => $tenant->id,
