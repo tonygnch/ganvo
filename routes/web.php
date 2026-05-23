@@ -103,6 +103,10 @@ Route::domain($centralDomain)->group(function () {
 
         Route::get('/onboarding/plan', [WizardController::class, 'showPlan'])->name('onboarding.plan');
         Route::post('/onboarding/plan', [WizardController::class, 'savePlan']);
+        // Stripe → back-to-wizard target when the merchant clicks "Pay now"
+        // at the plan step instead of "Skip for now".
+        Route::get('/onboarding/plan/checkout/success', [WizardController::class, 'planCheckoutSuccess'])
+            ->name('onboarding.plan.checkout_success');
 
         Route::get('/onboarding/theme', [WizardController::class, 'showTheme'])->name('onboarding.theme');
         Route::post('/onboarding/theme', [WizardController::class, 'saveTheme']);

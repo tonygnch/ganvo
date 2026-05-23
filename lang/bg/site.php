@@ -375,6 +375,8 @@ return [
             'billed_annually_as' => 'Годишно плащане · :total',
             'back'            => 'Назад',
             'cta'             => 'Продължи',
+            'skip'            => 'Пропусни засега',
+            'pay_now'         => 'Плати сега',
             'names' => [
                 'starter'  => 'Starter',
                 'pro'      => 'Pro',

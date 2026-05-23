@@ -376,6 +376,8 @@ return [
             'billed_annually_as' => 'Billed annually · :total',
             'back'            => 'Back',
             'cta'             => 'Continue',
+            'skip'            => 'Skip for now',
+            'pay_now'         => 'Pay now',
             'names' => [
                 'starter'  => 'Starter',
                 'pro'      => 'Pro',

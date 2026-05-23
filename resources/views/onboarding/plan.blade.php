@@ -298,9 +298,25 @@
                 @endforeach
             </div>
 
-            <div class="actions">
+            @if (session('billing_error'))
+                <div class="billing-error" role="alert" style="margin: 1rem 0; padding: .875rem 1rem; border-radius: 8px; background: rgba(239, 68, 68, .1); border: 1px solid rgba(239, 68, 68, .35); color: #b91c1c; font-size: .875rem;">
+                    {{ session('billing_error') }}
+                </div>
+            @endif
+
+            {{-- Two submits on the same form, distinguished by the `action`
+                 hidden input each button sets. Skip = save plan choice +
+                 continue the wizard (free or "pay later"). Pay now = save
+                 plan choice + bounce to Stripe Checkout, return to next
+                 wizard step after success. --}}
+            <div class="actions" style="gap: .75rem;">
                 <a href="/onboarding/business" class="btn btn-ghost">← {{ __('site.onboarding.plan.back') }}</a>
-                <button type="submit" class="btn btn-primary">{{ __('site.onboarding.plan.cta') }} →</button>
+                <button type="submit"
+                        name="action" value="skip"
+                        class="btn btn-ghost">{{ __('site.onboarding.plan.skip') }}</button>
+                <button type="submit"
+                        name="action" value="pay_now"
+                        class="btn btn-primary">{{ __('site.onboarding.plan.pay_now') }} →</button>
             </div>
         </form>
     </div>

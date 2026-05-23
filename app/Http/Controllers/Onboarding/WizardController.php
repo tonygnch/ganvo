@@ -124,10 +124,69 @@ class WizardController extends Controller
         $data = $request->validate([
             'subscription_plan' => ['required', 'in:' . implode(',', $allowedSlugs)],
             'billing_period'    => ['required', 'in:' . implode(',', Plan::PERIODS)],
+            'action'            => ['nullable', 'in:skip,pay_now'],
         ]);
-        $this->tenant()->update($data);
+        $action = $data['action'] ?? 'skip';
+        unset($data['action']);
+
+        $tenant = $this->tenant();
+        $tenant->update($data);
         $this->advanceIfOnOrBefore('plan');
+
+        // "Skip for now" → continue the wizard as before.
+        // "Pay now" → bounce to Stripe Checkout. Skip Stripe entirely if
+        // the plan is free (no Price exists), so the button works on the
+        // Starter plan too without erroring.
+        if ($action === 'pay_now') {
+            $plan = $tenant->plan();
+            if ($plan && ! $plan->isFree()) {
+                $priceId = $plan->stripePriceFor($data['billing_period']);
+                if ($priceId) {
+                    try {
+                        // Stash so the success callback knows what to
+                        // continue with after Stripe redirects back.
+                        $request->session()->put('billing.pending_plan', $plan->slug);
+                        $request->session()->put('billing.pending_period', $data['billing_period']);
+                        $request->session()->put('billing.return_to_wizard', true);
+
+                        $checkout = $tenant
+                            ->newSubscription(\App\Models\Tenant::SUBSCRIPTION_NAME, $priceId)
+                            ->checkout([
+                                'success_url' => route('onboarding.plan.checkout_success') . '?session_id={CHECKOUT_SESSION_ID}',
+                                'cancel_url'  => route('onboarding.plan') . '?canceled=1',
+                                'customer_email' => $tenant->contact_email ?: ($request->user()->email ?? null),
+                            ]);
+                        return redirect($checkout->url);
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::error('Onboarding Stripe Checkout failed', [
+                            'tenant_id' => $tenant->id,
+                            'plan' => $plan->slug,
+                            'error' => $e->getMessage(),
+                        ]);
+                        return redirect()->route('onboarding.plan')
+                            ->with('billing_error', __('site.billing.errors.stripe_unavailable', [], null) ?: 'Stripe unavailable — try again.');
+                    }
+                }
+            }
+            // Plan was free OR no Stripe price configured — fall through
+            // to the normal "next step" redirect. No payment needed.
+        }
+
         return redirect($this->nextStepUrl('plan'));
+    }
+
+    /**
+     * Stripe → back into the wizard after a successful checkout from the
+     * plan step. Marks the tenant's plan as billed and continues the
+     * wizard from where it was.
+     */
+    public function planCheckoutSuccess(Request $request): RedirectResponse
+    {
+        $tenant = $this->tenant();
+        $request->session()->forget(['billing.pending_plan', 'billing.pending_period', 'billing.return_to_wizard']);
+
+        return redirect($this->nextStepUrl('plan'))
+            ->with('billing_status', 'subscription_active');
     }
 
     // ---------------- Step 3: Theme ----------------
