@@ -40,6 +40,14 @@ class Product extends Model
         return $this->belongsToMany(Category::class);
     }
 
+    /** Curated merchandising groupings the operator has placed this product into. */
+    public function collections(): BelongsToMany
+    {
+        return $this->belongsToMany(Collection::class)
+            ->withPivot('sort_order')
+            ->withTimestamps();
+    }
+
     /** Gallery extras (primary image stays on $this->image_path). */
     public function gallery(): HasMany
     {

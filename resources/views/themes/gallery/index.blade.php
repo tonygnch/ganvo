@@ -1,6 +1,17 @@
 @extends('themes.gallery.layout')
 
 @section('content')
+    @php
+        // True once shoppers narrow the catalog — suppresses marketing
+        // chrome (collection strips, hero banner) so results come first.
+        $isFiltered = ($filters['q'] ?? null)
+            || ($filters['category'] ?? null)
+            || ($filters['min_price'] ?? null) !== null
+            || ($filters['max_price'] ?? null) !== null
+            || ($filters['in_stock'] ?? false)
+            || (($filters['sort'] ?? 'newest') !== 'newest')
+            || $products->currentPage() > 1;
+    @endphp
     <style>
         /* Gallery grid — asymmetric editorial layout. First product gets
            a hero 2-column span; the rest tile in a regular 3-up grid.
@@ -113,6 +124,12 @@
                     <a href="{{ $csHero['cta_url'] }}" class="cta">{{ $csHero['cta_label'] }}</a>
                 @endif
             </div>
+        </section>
+    @endif
+
+    @if (! $isFiltered && (isset($featuredCollections) ? $featuredCollections->isNotEmpty() : false))
+        <section class="gallery-section container">
+            @include('storefront.partials.collection-strips')
         </section>
     @endif
 

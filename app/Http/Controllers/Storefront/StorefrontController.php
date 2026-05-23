@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Collection;
 use App\Themes\ThemeRegistry;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -36,9 +37,51 @@ class StorefrontController extends Controller
 
         $categories = $this->rootCategoriesFor($tenant);
 
+        // Featured collections render as named strips on the home page
+        // (themes only show them on the unfiltered landing, so it's fine
+        // to query them eagerly here). Only those marked is_featured —
+        // non-featured ones still live at /collections/{slug} via
+        // collection() below.
+        $featuredCollections = $this->featuredCollectionsFor($tenant);
+
         return view("themes.{$theme}.index", compact(
-            'tenant', 'store', 'products', 'categories', 'filters'
+            'tenant', 'store', 'products', 'categories', 'filters', 'featuredCollections'
         ));
+    }
+
+    /**
+     * /collections/{slug} — single curated collection's products page.
+     * Mirrors the category() flow so themes that ship a custom
+     * `themes.{theme}.collection` view get used; otherwise the generic
+     * `storefront.collection` template renders inside the theme layout.
+     */
+    public function collection(Request $request): View
+    {
+        $slug = $request->route('slug');
+        $tenant = app('current_tenant');
+        $store = $tenant->store;
+        $theme = $this->themeFor($store);
+
+        $collection = Collection::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        // Only active products — and respect the pivot sort order set
+        // by the operator in the admin picker.
+        $products = $collection->products()
+            ->where('is_active', true)
+            ->paginate(12)
+            ->withQueryString();
+
+        $categories = $this->rootCategoriesFor($tenant);
+
+        $view = view()->exists("themes.{$theme}.collection")
+            ? "themes.{$theme}.collection"
+            : 'storefront.collection';
+
+        return view($view, compact('tenant', 'store', 'collection', 'products', 'categories'));
     }
 
     /**
@@ -179,6 +222,26 @@ class StorefrontController extends Controller
             ->whereNull('parent_id')
             ->orderBy('sort_order')
             ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * Featured collections (active + is_featured) with a small bounded
+     * preview of products for the homepage strip. Limit to 8 products
+     * per strip so the home doesn't turn into a wall — the strip's
+     * "view all" link goes to the full /collections/{slug} page.
+     */
+    private function featuredCollectionsFor($tenant)
+    {
+        return Collection::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->where('is_featured', true)
+            ->orderBy('sort_order')
+            ->orderBy('title')
+            ->with(['products' => function ($q) {
+                $q->where('is_active', true)->limit(8);
+            }])
             ->get();
     }
 }

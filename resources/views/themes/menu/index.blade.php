@@ -1,6 +1,18 @@
 @extends('themes.menu.layout')
 
 @section('content')
+    @php
+        // Filtered = customer narrowed the catalog; we then skip
+        // marketing chrome (collection strips, ornaments) and surface
+        // results immediately.
+        $isFiltered = ($filters['q'] ?? null)
+            || ($filters['category'] ?? null)
+            || ($filters['min_price'] ?? null) !== null
+            || ($filters['max_price'] ?? null) !== null
+            || ($filters['in_stock'] ?? false)
+            || (($filters['sort'] ?? 'newest') !== 'newest')
+            || $products->currentPage() > 1;
+    @endphp
     <style>
         /* The "menu sheet" — single-column list of products styled like a
            printed cafe menu. Each row: name + description on the left,
@@ -130,6 +142,12 @@
                     <a href="{{ $csHero['cta_url'] }}" class="cta">{{ $csHero['cta_label'] }}</a>
                 @endif
             </div>
+        </section>
+    @endif
+
+    @if (! $isFiltered && (isset($featuredCollections) ? $featuredCollections->isNotEmpty() : false))
+        <section class="menu-sheet">
+            @include('storefront.partials.collection-strips')
         </section>
     @endif
 

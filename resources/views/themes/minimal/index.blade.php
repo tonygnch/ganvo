@@ -257,6 +257,12 @@
     </section>
     @endif
 
+    @if (! $isFiltered && (isset($featuredCollections) ? $featuredCollections->isNotEmpty() : false))
+        <section class="section reveal">
+            @include('storefront.partials.collection-strips')
+        </section>
+    @endif
+
     <section class="section reveal" id="shop">
         <div class="section-head">
             <p class="eyebrow">{{ __('site.storefront.shop_all.eyebrow') }}</p>

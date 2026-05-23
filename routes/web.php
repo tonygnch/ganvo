@@ -158,6 +158,7 @@ $storefrontRoutes = function () {
     Route::get('/', [StorefrontController::class, 'index']);
     Route::get('/products/{slug}', [StorefrontController::class, 'product']);
     Route::get('/categories/{slug}', [StorefrontController::class, 'category'])->name('storefront.category');
+    Route::get('/collections/{slug}', [StorefrontController::class, 'collection'])->name('storefront.collection');
 
     Route::get('/cart', [CartController::class, 'show']);
     Route::post('/cart/add/{slug}', [CartController::class, 'add']);

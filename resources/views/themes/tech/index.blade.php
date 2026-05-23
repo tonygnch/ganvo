@@ -1,6 +1,18 @@
 @extends('themes.tech.layout')
 
 @section('content')
+    @php
+        // Filtered = customer narrowed the catalog; we then skip
+        // marketing chrome (collection strips) and surface results
+        // immediately.
+        $isFiltered = ($filters['q'] ?? null)
+            || ($filters['category'] ?? null)
+            || ($filters['min_price'] ?? null) !== null
+            || ($filters['max_price'] ?? null) !== null
+            || ($filters['in_stock'] ?? false)
+            || (($filters['sort'] ?? 'newest') !== 'newest')
+            || $products->currentPage() > 1;
+    @endphp
     <style>
         .tech-section { padding: 4rem 0 5rem; }
         .tech-section-head {
@@ -146,6 +158,12 @@
                     <a href="{{ $csHero['cta_url'] }}" class="cta">{{ $csHero['cta_label'] }}</a>
                 @endif
             </div>
+        </section>
+    @endif
+
+    @if (! $isFiltered && (isset($featuredCollections) ? $featuredCollections->isNotEmpty() : false))
+        <section class="container tech-section">
+            @include('storefront.partials.collection-strips')
         </section>
     @endif
 

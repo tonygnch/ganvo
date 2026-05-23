@@ -176,6 +176,11 @@ return [
             'prev'       => 'Prev',
             'next'       => 'Next',
         ],
+        // Curated product groupings — strips on the home, dedicated pages.
+        'collections' => [
+            'view_all' => 'View all',
+            'empty'    => 'No products in this collection yet.',
+        ],
         'footer' => [
             'tagline' => 'Thoughtfully made. Honestly priced. Shipped fast.',
             'col_shop' => 'Shop',
