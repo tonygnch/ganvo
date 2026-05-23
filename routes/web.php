@@ -74,6 +74,21 @@ Route::domain($centralDomain)->group(function () {
 
     Route::get('/lang/{locale}', [LanguageController::class, 'switch'])->name('lang.switch');
 
+    // Coming-soon preview routes — always reachable, not gated by the
+    // COMING_SOON_ENABLED env flag, so we can A/B designs without flipping
+    // the production switch. v1 is the current splash, v2 is the
+    // holographic experiment. Same SitePage content + same waitlist form
+    // action; only the view differs.
+    Route::get('/preview/coming-soon-v1', function () {
+        $cs = \App\Models\SitePage::bulk(\App\Services\SitePageSchemas::PAGE_COMING_SOON);
+        return view('marketing.coming-soon', compact('cs'));
+    })->name('marketing.coming_soon.preview_v1');
+
+    Route::get('/preview/coming-soon-v2', function () {
+        $cs = \App\Models\SitePage::bulk(\App\Services\SitePageSchemas::PAGE_COMING_SOON);
+        return view('marketing.coming-soon-v2', compact('cs'));
+    })->name('marketing.coming_soon.preview_v2');
+
     // Coming-soon waitlist signup. Reachable even when coming_soon mode is
     // off (the form still appears on the main marketing page in some
     // flows). Throttling + honeypot + dupe handling live in the controller.
