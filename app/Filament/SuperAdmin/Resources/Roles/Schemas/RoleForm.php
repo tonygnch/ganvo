@@ -70,11 +70,15 @@ class RoleForm
                 ? 'Super admin always has every permission — this checkbox list is informational only.'
                 : null)
             // Persist as Spatie role↔permission attachments, not as a JSON
-            // column. Hydration pulls the role's current permissions.
+            // column. Hydration pulls the role's current permissions; the
+            // page's mutateFormData hook extracts + unsets the field
+            // before the model save so Eloquent doesn't try to write
+            // 'permissions' as a column. (We don't use ->dehydrated(false)
+            // here — that drops the value from $data BEFORE the mutator
+            // runs, defeating the capture.)
             ->formatStateUsing(fn (?Role $record) => $record
                 ? $record->permissions->pluck('name')->all()
                 : [])
-            ->dehydrated(false) // We sync manually in the page's afterSave.
             ->live();
     }
 }

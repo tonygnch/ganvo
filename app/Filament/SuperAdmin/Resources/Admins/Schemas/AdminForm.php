@@ -67,10 +67,13 @@ class AdminForm
                                 }
                                 return $state ?? RoleMatrix::SUPPORT_ADMIN;
                             })
-                            // Don't save 'role' as a column on users — it's
-                            // applied via syncRoles() in the page's
-                            // afterCreate/afterSave hooks instead.
-                            ->dehydrated(false),
+                            // 'role' isn't a column on users — the page's
+                            // mutateFormData hook extracts + unsets it
+                            // before the model save, then applies it via
+                            // syncRoles() in afterCreate/afterSave.
+                            // (We don't use ->dehydrated(false) here —
+                            // that drops the value from $data BEFORE the
+                            // mutator runs, defeating the capture.)
                     ]),
             ]);
     }
