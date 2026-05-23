@@ -6,6 +6,10 @@
     @include('partials.favicon')
     <title>{{ $cs['page_title'] ?? __('site.marketing.title') }}</title>
     <meta name="description" content="{{ $cs['meta_description'] ?? __('site.marketing.meta_description') }}">
+    @include('partials.social-meta', [
+        'title'       => $cs['page_title'] ?? __('site.marketing.title'),
+        'description' => $cs['meta_description'] ?? __('site.marketing.meta_description'),
+    ])
 
     {{-- Set theme before paint to avoid a flash --}}
     <script>

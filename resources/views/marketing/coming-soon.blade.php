@@ -7,6 +7,10 @@
     <title>{{ $cs['page_title'] ?? __('site.marketing.coming_soon.title') }} — Ganvo</title>
     <meta name="description" content="{{ $cs['meta_description'] ?? __('site.marketing.coming_soon.meta_description') }}">
     <meta name="robots" content="noindex, nofollow">
+    @include('partials.social-meta', [
+        'title'       => ($cs['page_title'] ?? __('site.marketing.coming_soon.title')) . ' — Ganvo',
+        'description' => $cs['meta_description'] ?? __('site.marketing.coming_soon.meta_description'),
+    ])
 
     {{-- Set theme before paint, same approach the main marketing page uses. --}}
     <script>
