@@ -10,17 +10,20 @@
 
     <style>
         :root {
-            --bg-deep:   #020310;
+            --bg-deep:   #020a18;
+            --bg:        #050f26;
+            --hair:      rgba(120, 180, 255, .08);
+            --hair-soft: rgba(120, 180, 255, .04);
             --grid:      rgba(120, 180, 255, .04);
-            --hair:      rgba(140, 180, 255, .08);
-            --hair-soft: rgba(140, 180, 255, .04);
             --text:      #e8edff;
-            --text-dim:  #92a0c8;
-            --text-faint:#5b6789;
-            --cyan:      #00f0ff;
-            --magenta:   #ff2dd0;
-            --violet:    #7c3aed;
-            --primary-gradient: linear-gradient(135deg, var(--cyan), var(--violet) 50%, var(--magenta));
+            --text-dim:  #8aa0c8;
+            --text-faint:#5b6f99;
+            --cyan:      #00d4ff;        /* primary accent */
+            --blue-mid:  #4a9eff;
+            --blue-deep: #1a3a8a;
+            --ice:       #cbe8ff;        /* highlights */
+            --navy:      #0a1430;
+            --primary-gradient: linear-gradient(135deg, var(--cyan), var(--blue-mid) 60%, var(--ice));
         }
 
         * { box-sizing: border-box; }
@@ -35,13 +38,13 @@
         body { display: flex; flex-direction: column; position: relative; }
         a { color: var(--cyan); text-decoration: none; }
 
-        /* -------- Background atmospherics (z-index: 0) -------- */
+        /* -------- Background atmospherics (z-index: 0) - all blue now -------- */
         .bg-mesh {
             position: absolute; inset: 0; z-index: 0; pointer-events: none;
             background:
-                radial-gradient(ellipse 600px 400px at 20% 30%, rgba(124, 58, 237, .35), transparent 60%),
-                radial-gradient(ellipse 700px 500px at 80% 70%, rgba(255, 45, 208, .25), transparent 60%),
-                radial-gradient(ellipse 500px 400px at 50% 100%, rgba(0, 240, 255, .25), transparent 60%);
+                radial-gradient(ellipse 700px 500px at 20% 25%, rgba(74, 158, 255, .35), transparent 60%),
+                radial-gradient(ellipse 800px 600px at 80% 75%, rgba(0, 212, 255, .25), transparent 60%),
+                radial-gradient(ellipse 600px 500px at 50% 100%, rgba(26, 58, 138, .3),  transparent 60%);
             filter: blur(2px);
             animation: meshShift 24s ease-in-out infinite alternate;
         }
@@ -60,41 +63,15 @@
             -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 40%, transparent 85%);
         }
         .bg-scanlines {
-            position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: .3;
+            position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: .25;
             background-image: repeating-linear-gradient(0deg,
                 rgba(255, 255, 255, .015) 0px, rgba(255, 255, 255, .015) 1px,
                 transparent 1px, transparent 3px);
         }
         .bg-spotlight {
             position: absolute; inset: 0; z-index: 0; pointer-events: none;
-            background: radial-gradient(circle 400px at var(--mx, 50%) var(--my, 50%), rgba(0, 240, 255, .08), transparent 70%);
+            background: radial-gradient(circle 400px at var(--mx, 50%) var(--my, 50%), rgba(0, 212, 255, .10), transparent 70%);
         }
-
-        /* -------- WebGL scene canvas (z-index: 1, behind text) -------- */
-        #scene {
-            position: absolute; inset: 0; z-index: 1; pointer-events: none;
-            opacity: 0;            /* fades in once Three.js boots */
-            transition: opacity .8s ease;
-        }
-        #scene.ready { opacity: 1; }
-
-        /* -------- Static SVG fallback (shown if WebGL unavailable / no JS) -------- */
-        .fallback-wireframe {
-            position: absolute; z-index: 1; pointer-events: none;
-            top: 50%; left: 50%;
-            width: 320px; height: 320px;
-            transform: translate(-50%, -50%);
-            opacity: .35;
-            animation: rotateSlow 30s linear infinite;
-        }
-        @keyframes rotateSlow {
-            from { transform: translate(-50%, -50%) rotate(0deg); }
-            to   { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-        .fallback-wireframe svg { display: block; width: 100%; height: 100%; }
-        .fallback-wireframe svg polygon { fill: none; stroke: var(--cyan); stroke-width: 1; }
-        /* Hide the fallback once the WebGL scene reports ready. */
-        #scene.ready ~ .fallback-wireframe { display: none; }
 
         /* -------- Top status bar -------- */
         .statusbar {
@@ -107,31 +84,58 @@
             text-transform: uppercase;
             color: var(--text-faint);
             backdrop-filter: blur(8px);
-            background: rgba(5, 8, 23, .3);
+            background: rgba(2, 10, 24, .3);
         }
         .statusbar .left  { display: flex; gap: 1.25rem; align-items: center; }
         .statusbar .right { display: flex; gap: 1rem; align-items: center; }
-        .statusbar .sep   { color: rgba(140, 180, 255, .15); }
+        .statusbar .sep   { color: rgba(120, 180, 255, .15); }
         .statusbar .dot   { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan); animation: livePulse 2s ease-in-out infinite; }
         @keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
         .statusbar a { color: var(--text-faint); transition: color .15s; }
         .statusbar a:hover { color: var(--cyan); }
         .statusbar a.active { color: var(--text); }
 
-        /* -------- Hero (centered, in front of the 3D scene) -------- */
+        /* -------- Hero (centered) -------- */
         .hero {
             position: relative; z-index: 2;
             flex: 1; min-height: 0;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 1.5rem 1.5rem 5rem;
+            padding: 1rem 1.5rem 5rem;
             text-align: center;
         }
-        .lockup-wrap { margin: 0 0 1.75rem; }
-        .lockup-wrap img { filter: drop-shadow(0 0 24px rgba(0, 240, 255, .25)); }
 
-        /* Staggered reveal animation — everything starts hidden + below
-           its final position; each piece slides up + fades in on its
-           own delay. animation-fill-mode: forwards holds the final state. */
+        /* -------- Character canvas wrapper -------- */
+        /* Lives above the lockup. Fixed size (in px) so the Three.js
+           renderer has a stable viewport to draw into. Falls back to a
+           pulsing CSS orb if WebGL is unavailable. */
+        .character {
+            width: 240px; height: 240px;
+            margin: 0 0 .5rem;
+            position: relative;
+        }
+        .character canvas { display: block; width: 100%; height: 100%; }
+        /* Pulsing CSS-only fallback orb. Visible until Three.js takes over,
+           or stays forever if WebGL is unavailable / the import fails. */
+        .character::before {
+            content: ""; position: absolute; inset: 25% 25% 25% 25%;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--cyan), var(--blue-deep) 70%, transparent 100%);
+            opacity: .8;
+            animation: orbPulse 2.4s ease-in-out infinite;
+        }
+        .character.ready::before { display: none; }
+        @keyframes orbPulse {
+            0%, 100% { transform: scale(1);    opacity: .8; }
+            50%      { transform: scale(1.05); opacity: 1; }
+        }
+        @media (max-width: 720px) { .character { width: 180px; height: 180px; } }
+        @media (max-height: 720px) { .character { width: 180px; height: 180px; } }
+        @media (max-height: 620px) { .character { width: 140px; height: 140px; } }
+
+        .lockup-wrap { margin: 0 0 1.5rem; }
+        .lockup-wrap img { filter: drop-shadow(0 0 24px rgba(0, 212, 255, .25)); }
+
+        /* Staggered reveal */
         .stagger { opacity: 0; transform: translateY(12px); animation: revealUp .7s cubic-bezier(.2, .7, .2, 1) forwards; }
         @keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
         .stagger.d0 { animation-delay: .0s; }
@@ -141,12 +145,13 @@
         .stagger.d4 { animation-delay: .48s; }
         .stagger.d5 { animation-delay: .60s; }
         .stagger.d6 { animation-delay: .72s; }
+        .stagger.d7 { animation-delay: .84s; }
 
         .eyebrow {
             display: inline-flex; align-items: center; gap: .5rem;
             padding: .375rem .875rem;
-            background: rgba(0, 240, 255, .08);
-            border: 1px solid rgba(0, 240, 255, .25);
+            background: rgba(0, 212, 255, .08);
+            border: 1px solid rgba(0, 212, 255, .25);
             border-radius: 999px;
             font: 600 0.6875rem/1 ui-monospace, monospace;
             color: var(--cyan);
@@ -160,17 +165,13 @@
         }
 
         h1 {
-            font-size: clamp(2.25rem, 5.5vw, 4rem);
-            font-weight: 800;
-            line-height: 1.05;
-            letter-spacing: -0.03em;
-            margin: 0 0 1.25rem;
-            max-width: 720px;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 800; line-height: 1.05; letter-spacing: -0.03em;
+            margin: 0 0 1rem; max-width: 720px;
         }
         h1 .gradient {
             background: var(--primary-gradient);
-            background-clip: text; -webkit-background-clip: text;
-            color: transparent;
+            background-clip: text; -webkit-background-clip: text; color: transparent;
             background-size: 200% auto;
             animation: gradientSlide 6s linear infinite;
         }
@@ -182,12 +183,10 @@
         .lead {
             color: var(--text-dim);
             font-size: clamp(0.9375rem, 1.4vw, 1.0625rem);
-            line-height: 1.6;
-            max-width: 540px;
-            margin: 0 auto 2rem;
+            line-height: 1.6; max-width: 540px;
+            margin: 0 auto 1.5rem;
         }
 
-        /* Form */
         .form {
             display: flex; gap: .5rem;
             width: 100%; max-width: 480px;
@@ -195,8 +194,7 @@
             background: rgba(255, 255, 255, .03);
             border: 1px solid var(--hair);
             border-radius: 14px;
-            position: relative;
-            margin: 0 auto;
+            position: relative; margin: 0 auto;
             transition: border-color .2s, box-shadow .2s, background .2s;
         }
         .form::before {
@@ -208,7 +206,7 @@
             -webkit-mask-composite: xor; mask-composite: exclude;
         }
         .form:focus-within::before { opacity: 1; }
-        .form:focus-within { background: rgba(255, 255, 255, .05); box-shadow: 0 0 24px rgba(0, 240, 255, .35); }
+        .form:focus-within { background: rgba(255, 255, 255, .05); box-shadow: 0 0 24px rgba(0, 212, 255, .35); }
         .form input {
             flex: 1; border: 0; background: transparent;
             color: var(--text); font: inherit; font-size: 0.9375rem;
@@ -231,40 +229,31 @@
         .form-thanks.visible, .form-error.visible { display: block; }
         .cs-honeypot { position: absolute; left: -9999px; opacity: 0; pointer-events: none; }
 
-        /* -------- Footer -------- */
         footer.foot {
             position: absolute; bottom: 0; left: 0; right: 0; z-index: 3;
-            padding: 1rem 1.5rem;
-            text-align: center;
+            padding: 1rem 1.5rem; text-align: center;
             font: 500 0.75rem/1 ui-monospace, monospace;
-            color: var(--text-faint);
-            letter-spacing: 0.06em;
+            color: var(--text-faint); letter-spacing: 0.06em;
             border-top: 1px solid var(--hair-soft);
-            background: rgba(5, 8, 23, .3);
+            background: rgba(2, 10, 24, .3);
             backdrop-filter: blur(8px);
         }
         footer.foot a { color: var(--text-faint); transition: color .15s; }
         footer.foot a:hover, footer.foot a.active { color: var(--cyan); }
-        footer.foot .sep { color: rgba(140, 180, 255, .15); margin: 0 .5rem; }
+        footer.foot .sep { color: rgba(120, 180, 255, .15); margin: 0 .5rem; }
 
         @media (max-width: 720px) {
-            .hero { padding: 1rem 1rem 6rem; }
+            .hero { padding: 0.5rem 1rem 6rem; }
             .form input { font-size: 16px; padding: .625rem .875rem; }
             .form button { padding: 0 1rem; font-size: 0.875rem; }
-            .fallback-wireframe { width: 220px; height: 220px; }
         }
         @media (max-height: 620px) {
             html, body { height: auto; overflow: auto; }
             footer.foot { position: relative; }
-            #scene, .fallback-wireframe { position: fixed; }
         }
-
-        /* Reduced-motion: kill the staggered reveal + flatten Three.js
-           animation in JS (handled below). The hero shows fully immediately. */
         @media (prefers-reduced-motion: reduce) {
             .stagger { opacity: 1 !important; transform: none !important; animation: none !important; }
             *, *::before, *::after { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; transition-duration: 0.001s !important; }
-            .fallback-wireframe { animation: none !important; }
         }
     </style>
 </head>
@@ -278,23 +267,6 @@
     <div class="bg-grid"></div>
     <div class="bg-scanlines"></div>
     <div class="bg-spotlight" id="spotlight"></div>
-
-    {{-- 3D scene canvas. Hidden until Three.js boots (transitions opacity in). --}}
-    <canvas id="scene" aria-hidden="true"></canvas>
-
-    {{-- Static SVG fallback: shown if WebGL is unavailable or JS is off.
-         Hidden via #scene.ready ~ .fallback-wireframe once Three.js boots. --}}
-    <div class="fallback-wireframe" aria-hidden="true">
-        <svg viewBox="-110 -110 220 220" xmlns="http://www.w3.org/2000/svg">
-            {{-- Icosahedron-ish wireframe; pre-projected so we don't ship a 3D lib for the fallback. --}}
-            <polygon points="0,-100  87,-50  87,50  0,100  -87,50  -87,-50"/>
-            <polygon points="0,-100  87,50  -87,50"/>
-            <polygon points="87,-50  87,50  -87,-50"/>
-            <polygon points="0,100  87,-50  -87,-50"/>
-            <polygon points="-87,50  87,-50  0,-100"/>
-            <polygon points="-87,-50  -87,50  87,-50"/>
-        </svg>
-    </div>
 
     <div class="statusbar">
         <div class="left">
@@ -311,19 +283,26 @@
     </div>
 
     <section class="hero">
-        <div class="lockup-wrap stagger d0"><a href="/" aria-label="Ganvo"><x-brand-lockup size="lg" /></a></div>
+        {{-- Bo — the Ganvo droid. Fixed-size container; canvas inside fills it.
+             The ::before pseudo on .character renders a pulsing CSS orb that
+             stays visible if WebGL/Three.js doesn't boot. --}}
+        <div class="character stagger d0" id="character" title="Hi, I'm Bo">
+            <canvas id="characterCanvas" aria-hidden="true"></canvas>
+        </div>
 
-        <div class="eyebrow stagger d1">{{ $cs['eyebrow'] ?? __('site.marketing.coming_soon.eyebrow') }}</div>
+        <div class="lockup-wrap stagger d1"><a href="/" aria-label="Ganvo"><x-brand-lockup size="md" /></a></div>
+
+        <div class="eyebrow stagger d2">{{ $cs['eyebrow'] ?? __('site.marketing.coming_soon.eyebrow') }}</div>
 
         <h1>
-            <span class="stagger d2" style="display: inline-block">{{ $cs['headline_1'] ?? __('site.marketing.coming_soon.headline_1') }}</span>
+            <span class="stagger d3" style="display: inline-block">{{ $cs['headline_1'] ?? __('site.marketing.coming_soon.headline_1') }}</span>
             <br>
-            <span class="stagger d3 gradient" style="display: inline-block">{{ $cs['headline_2'] ?? __('site.marketing.coming_soon.headline_2') }}</span>
+            <span class="stagger d4 gradient" style="display: inline-block">{{ $cs['headline_2'] ?? __('site.marketing.coming_soon.headline_2') }}</span>
         </h1>
 
-        <p class="lead stagger d4">{{ $cs['lead'] ?? __('site.marketing.coming_soon.lead') }}</p>
+        <p class="lead stagger d5">{{ $cs['lead'] ?? __('site.marketing.coming_soon.lead') }}</p>
 
-        <div class="stagger d5" style="width: 100%; max-width: 480px;">
+        <div class="stagger d6" style="width: 100%; max-width: 480px;">
             <form class="form @if(session('signup_status') === 'ok') hidden @endif"
                   method="post" action="{{ route('marketing.signup') }}" id="csNotifyForm" novalidate>
                 @csrf
@@ -339,7 +318,7 @@
             <p class="form-error @if(session('signup_error')) visible @endif" id="csNotifyError" role="alert">{{ session('signup_error') }}</p>
         </div>
 
-        <p class="form-helper stagger d6">{{ $cs['helper_text'] ?? __('site.marketing.coming_soon.helper') }}</p>
+        <p class="form-helper stagger d7">{{ $cs['helper_text'] ?? __('site.marketing.coming_soon.helper') }}</p>
     </section>
 
     <footer class="foot">
@@ -348,13 +327,18 @@
         <a href="/preview/coming-soon-v1">← classic version</a>
     </footer>
 
-    {{-- Cursor spotlight + clock + form handler (no module needed). --}}
+    {{-- Cursor spotlight + clock + form handler --}}
     <script>
         const spotlight = document.getElementById('spotlight');
         let rafId = null, mx = 50, my = 50;
+        // mouseTarget is exported globally so the Three.js module can read it.
+        window.__cursor = { x: 0, y: 0 };
         document.addEventListener('mousemove', (e) => {
             mx = (e.clientX / window.innerWidth) * 100;
             my = (e.clientY / window.innerHeight) * 100;
+            // NDC range, roughly. The Three.js loop will scale this to world coords.
+            window.__cursor.x = (e.clientX / window.innerWidth) * 2 - 1;
+            window.__cursor.y = -((e.clientY / window.innerHeight) * 2 - 1);
             if (rafId) return;
             rafId = requestAnimationFrame(() => {
                 spotlight.style.setProperty('--mx', mx + '%');
@@ -406,17 +390,16 @@
         })();
     </script>
 
-    {{-- Three.js scene as ES module. Loaded from esm.sh which resolves
-         peer deps for us. Total ~150KB gzipped, cached after first load.
-         All scene logic + the prefers-reduced-motion check live here.
-         If the import fails (offline, CSP, ad blocker), the static SVG
-         fallback stays visible. --}}
+    {{-- Bo, the Ganvo droid — built from Three.js primitives.
+         Spherical body with soft cyan glow, oversized white eyes whose
+         pupils track the cursor, a glowing antenna, and a slowly-rotating
+         orbital ring. All animations dt-based so framerate doesn't change
+         the speed. WebGL/JS missing = pulsing CSS orb stays visible. --}}
     <script type="module">
         const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        const canvas = document.getElementById('scene');
+        const wrapper = document.getElementById('character');
+        const canvas = document.getElementById('characterCanvas');
 
-        // Quick WebGL feature detection. If unavailable, bail and leave the
-        // SVG fallback visible.
         function hasWebGL() {
             try {
                 const c = document.createElement('canvas');
@@ -424,113 +407,199 @@
             } catch (e) { return false; }
         }
         if (! hasWebGL()) {
-            console.info('[coming-soon-v2] WebGL unavailable — using SVG fallback');
+            console.info('[bo] WebGL unavailable — CSS orb fallback stays visible');
         } else {
             try {
                 const THREE = await import('https://esm.sh/three@0.160.0');
 
-                // ---- Renderer ------------------------------------------------
+                // ---- Renderer (sized to the wrapper div, not the viewport) --
                 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                renderer.setSize(window.innerWidth, window.innerHeight, false);
-                renderer.setClearColor(0x000000, 0);
+                const sizeRenderer = () => {
+                    const w = wrapper.clientWidth, h = wrapper.clientHeight;
+                    renderer.setSize(w, h, false);
+                    camera.aspect = w / h;
+                    camera.updateProjectionMatrix();
+                };
 
-                // ---- Scene + camera -----------------------------------------
                 const scene = new THREE.Scene();
-                const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-                camera.position.z = 10;
+                const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+                camera.position.set(0, 0, 5.5);
 
-                // ---- Main icosahedron (cyan wireframe) ----------------------
-                // EdgesGeometry collapses overlapping coplanar edges, so the
-                // wireframe reads as actual edges rather than a noisy triangle mesh.
-                const icoGeo = new THREE.IcosahedronGeometry(2.4, 0);
-                const icoEdges = new THREE.EdgesGeometry(icoGeo);
-                const icoMat = new THREE.LineBasicMaterial({
-                    color: 0x00f0ff, transparent: true, opacity: 0.85,
-                });
-                const icosahedron = new THREE.LineSegments(icoEdges, icoMat);
-                scene.add(icosahedron);
+                // ---- Lighting -----------------------------------------------
+                // Three lights: ambient for base fill, a cool key light coming
+                // from front-right, and a cyan rim from behind to halo the body.
+                scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+                const key = new THREE.DirectionalLight(0xcbe8ff, 1.2);
+                key.position.set(2, 3, 4);
+                scene.add(key);
+                const rim = new THREE.DirectionalLight(0x00d4ff, 0.9);
+                rim.position.set(-2, -1, -3);
+                scene.add(rim);
 
-                // ---- Smaller dodecahedron behind it (magenta, lower opacity) -
-                const dodGeo = new THREE.DodecahedronGeometry(3.6, 0);
-                const dodEdges = new THREE.EdgesGeometry(dodGeo);
-                const dodMat = new THREE.LineBasicMaterial({
-                    color: 0xff2dd0, transparent: true, opacity: 0.35,
-                });
-                const dodecahedron = new THREE.LineSegments(dodEdges, dodMat);
-                scene.add(dodecahedron);
+                // ---- Body (root group; everything else attaches to it) ------
+                // Group lets us bob + breathe the whole character at once.
+                const body = new THREE.Group();
+                scene.add(body);
 
-                // ---- Particle dust around them ------------------------------
-                // Random points distributed in a sphere shell. Additive
-                // blending gives the dust a soft glow without a real
-                // post-processing pass.
-                const PARTICLE_COUNT = 320;
-                const positions = new Float32Array(PARTICLE_COUNT * 3);
-                for (let i = 0; i < PARTICLE_COUNT; i++) {
-                    // Spherical shell, radius 4–6, random direction
-                    const r = 4 + Math.random() * 2;
+                // Main body sphere — slightly metallic blue
+                const bodyMesh = new THREE.Mesh(
+                    new THREE.SphereGeometry(1, 64, 64),
+                    new THREE.MeshStandardMaterial({
+                        color: 0x1a3a8a, metalness: 0.5, roughness: 0.35,
+                        emissive: 0x0a1430, emissiveIntensity: 0.5,
+                    })
+                );
+                body.add(bodyMesh);
+
+                // Outer glow shell — backside-rendered larger sphere with
+                // a translucent cyan material. Cheap halo without a real shader.
+                const glow = new THREE.Mesh(
+                    new THREE.SphereGeometry(1.18, 32, 32),
+                    new THREE.MeshBasicMaterial({
+                        color: 0x00d4ff, transparent: true, opacity: 0.12,
+                        side: THREE.BackSide, depthWrite: false,
+                    })
+                );
+                body.add(glow);
+
+                // ---- Eyes (two groups, each containing a sclera + pupil) ----
+                // The whole eye GROUP lookAt()s the cursor target each frame —
+                // since the pupil is offset along the group's +Z axis, the
+                // pupil visually slides around the sclera surface to face
+                // the cursor. This is what gives Bo the "looking at you" feel.
+                const makeEye = () => {
+                    const eye = new THREE.Group();
+                    const sclera = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.26, 32, 32),
+                        new THREE.MeshStandardMaterial({
+                            color: 0xeaf4ff, roughness: 0.4, metalness: 0.1,
+                            emissive: 0xcbe8ff, emissiveIntensity: 0.25,
+                        })
+                    );
+                    const pupil = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.11, 16, 16),
+                        new THREE.MeshStandardMaterial({
+                            color: 0x020a18, emissive: 0x00d4ff, emissiveIntensity: 0.8,
+                        })
+                    );
+                    pupil.position.z = 0.20;     // sits on the sclera's surface
+                    eye.add(sclera, pupil);
+                    return eye;
+                };
+                const leftEye  = makeEye();  leftEye.position.set(-0.36, 0.12, 0.85);
+                const rightEye = makeEye();  rightEye.position.set(0.36, 0.12, 0.85);
+                body.add(leftEye, rightEye);
+
+                // ---- Antenna — short cylinder + glowing tip -----------------
+                const antennaStem = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.025, 0.025, 0.55, 8),
+                    new THREE.MeshStandardMaterial({ color: 0x4a6fa5, roughness: 0.5, metalness: 0.7 })
+                );
+                antennaStem.position.y = 1.25;
+                body.add(antennaStem);
+                const antennaTip = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.10, 16, 16),
+                    new THREE.MeshStandardMaterial({
+                        color: 0x00d4ff, emissive: 0x00d4ff, emissiveIntensity: 1.5,
+                    })
+                );
+                antennaTip.position.y = 1.55;
+                body.add(antennaTip);
+
+                // ---- Orbital ring (horizontal torus around the body) --------
+                // Rendered as a wireframe so it reads as a holographic line
+                // rather than a solid donut. Slowly counter-rotates.
+                const ring = new THREE.Mesh(
+                    new THREE.TorusGeometry(1.55, 0.015, 8, 96),
+                    new THREE.MeshBasicMaterial({
+                        color: 0x00d4ff, transparent: true, opacity: 0.6,
+                    })
+                );
+                ring.rotation.x = Math.PI / 2.2;
+                scene.add(ring);
+
+                // ---- Tiny particle dust around Bo ---------------------------
+                const PARTICLES = 80;
+                const positions = new Float32Array(PARTICLES * 3);
+                for (let i = 0; i < PARTICLES; i++) {
+                    const r = 1.8 + Math.random() * 1.2;
                     const theta = Math.random() * Math.PI * 2;
                     const phi = Math.acos(2 * Math.random() - 1);
                     positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
                     positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
                     positions[i * 3 + 2] = r * Math.cos(phi);
                 }
-                const particleGeo = new THREE.BufferGeometry();
-                particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                const particleMat = new THREE.PointsMaterial({
-                    color: 0xa8b6ff, size: 0.04,
-                    transparent: true, opacity: 0.7,
-                    blending: THREE.AdditiveBlending,
-                    depthWrite: false,
-                });
-                const particles = new THREE.Points(particleGeo, particleMat);
+                const pGeo = new THREE.BufferGeometry();
+                pGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const particles = new THREE.Points(pGeo, new THREE.PointsMaterial({
+                    color: 0xcbe8ff, size: 0.035, transparent: true, opacity: 0.6,
+                    blending: THREE.AdditiveBlending, depthWrite: false,
+                }));
                 scene.add(particles);
 
-                // ---- Mouse parallax — camera follows the cursor a little ----
-                // Smoothed via lerp so the camera doesn't jitter on every event.
-                const target = { x: 0, y: 0 };
-                document.addEventListener('mousemove', (e) => {
-                    target.x = (e.clientX / window.innerWidth - 0.5) * 1.2;
-                    target.y = (e.clientY / window.innerHeight - 0.5) * 0.8;
-                });
+                // ---- Cursor target in world space ---------------------------
+                // window.__cursor is set in the page-level script above as NDC.
+                // Project it to a point at z = 3 in front of the camera so the
+                // eyes have something stable to lookAt().
+                const cursorWorld = new THREE.Vector3();
+                function updateCursorTarget() {
+                    cursorWorld.set(
+                        window.__cursor.x * 3,   // wider X mapping → eyes turn further
+                        window.__cursor.y * 2,
+                        3
+                    );
+                }
 
-                // ---- Resize handling ---------------------------------------
-                window.addEventListener('resize', () => {
-                    camera.aspect = window.innerWidth / window.innerHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(window.innerWidth, window.innerHeight, false);
-                });
+                // ---- Resize handling ----------------------------------------
+                sizeRenderer();
+                window.addEventListener('resize', sizeRenderer);
+                // Observe wrapper too — small viewports change the size via CSS.
+                if (typeof ResizeObserver !== 'undefined') {
+                    new ResizeObserver(sizeRenderer).observe(wrapper);
+                }
 
-                // ---- Animation loop ----------------------------------------
+                // ---- Animation loop -----------------------------------------
                 const clock = new THREE.Clock();
                 function animate() {
                     requestAnimationFrame(animate);
+                    const t  = clock.getElapsedTime();
                     const dt = clock.getDelta();
 
                     if (! reducedMotion) {
-                        // Slow auto-rotation: ico rotates one way, dodec the other,
-                        // particles drift slowly. dt-based so it's framerate-agnostic.
-                        icosahedron.rotation.x += dt * 0.15;
-                        icosahedron.rotation.y += dt * 0.25;
-                        dodecahedron.rotation.x -= dt * 0.10;
-                        dodecahedron.rotation.y -= dt * 0.18;
-                        particles.rotation.y += dt * 0.06;
+                        // Bob: subtle vertical sine, slow breathing scale on body
+                        body.position.y = Math.sin(t * 1.4) * 0.10;
+                        const breath = 1 + Math.sin(t * 1.8) * 0.015;
+                        bodyMesh.scale.setScalar(breath);
 
-                        // Camera parallax — ease toward the mouse-driven target.
-                        camera.position.x += (target.x - camera.position.x) * 0.05;
-                        camera.position.y += (-target.y - camera.position.y) * 0.05;
-                        camera.lookAt(0, 0, 0);
+                        // Slow yaw so Bo "looks around"
+                        body.rotation.y = Math.sin(t * 0.4) * 0.18;
+                        body.rotation.z = Math.sin(t * 0.7) * 0.04;
+
+                        // Antenna sway
+                        antennaStem.rotation.z = Math.sin(t * 2) * 0.08;
+                        antennaTip.position.x = Math.sin(t * 2) * 0.04;
+
+                        // Ring spin
+                        ring.rotation.z += dt * 0.4;
+
+                        // Particle drift
+                        particles.rotation.y += dt * 0.08;
+
+                        // Eye tracking — pupil follows cursor
+                        updateCursorTarget();
+                        leftEye.lookAt(cursorWorld);
+                        rightEye.lookAt(cursorWorld);
                     }
 
                     renderer.render(scene, camera);
                 }
                 animate();
 
-                // Fade the canvas in once it's drawing — avoids a flash of
-                // black or a single frame of static scene.
-                requestAnimationFrame(() => canvas.classList.add('ready'));
+                // Hide the CSS-orb fallback now that WebGL is drawing.
+                wrapper.classList.add('ready');
             } catch (err) {
-                console.warn('[coming-soon-v2] Three.js failed to load — using SVG fallback', err);
+                console.warn('[bo] Three.js failed to load — CSS orb stays', err);
             }
         }
     </script>
