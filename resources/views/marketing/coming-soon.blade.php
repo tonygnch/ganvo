@@ -100,7 +100,10 @@
            top of the hero. Language and theme utilities now live as tiny
            inline links in the footer instead. */
         .cs-lockup {
-            margin: 0 0 2rem;
+            /* Sits between the headline and the progress bar — give it
+               room above so the headline doesn't crowd it; tighter
+               below so the bar reads as a paired unit with the lockup. */
+            margin: 2.5rem 0 1.75rem;
             display: inline-flex;
         }
         .cs-foot-links {
@@ -177,7 +180,9 @@
                     showing the bar mid-fill (no "empty bar" first frame
                     on slow connections) and continues to feel alive after. */
         .cs-progress {
-            margin: 1.25rem auto 3rem;  /* extra bottom space — was crowding the headline */
+            /* Tight above (the lockup just preceded it — they're a unit);
+               generous below so the lead paragraph has its own breath. */
+            margin: 0 auto 3.25rem;
             max-width: 460px;
             width: 100%;
         }
@@ -586,9 +591,9 @@
                     radial-gradient(ellipse 100% 50% at 50% 0%, var(--brand-soft), transparent 65%),
                     radial-gradient(circle 500px at 100% 110%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 65%);
             }
-            .cs-lockup    { margin: 0 0 1.25rem; }
-            .cs-progress  { margin: .75rem auto 1.75rem; max-width: 320px; }
-            .cs-hero h1   { margin: 0 0 .75rem; line-height: 1.15; }
+            .cs-lockup    { margin: 1.75rem 0 1.25rem; }
+            .cs-progress  { margin: 0 auto 2rem; max-width: 320px; }
+            .cs-hero h1   { margin: 0 0 .25rem; line-height: 1.15; }
             .cs-hero p.lead { margin: 0 auto 1.5rem; padding: 0 .25rem; }
             .cs-form      { padding: 5px; max-width: 100%; }
             .cs-form input  { font-size: 16px; /* prevents iOS zoom-on-focus */ padding: .625rem .75rem; }
@@ -613,7 +618,7 @@
             .cs-hero        { padding: 1.5rem 1rem 2rem; }
             .cs-hero h1     { font-size: 2rem; }
             .cs-hero p.lead { font-size: 0.9375rem; }
-            .cs-progress    { margin: .5rem auto 1.25rem; max-width: 280px; }
+            .cs-progress    { margin: 0 auto 1.5rem; max-width: 280px; }
             .cs-progress-label { font-size: 0.625rem; letter-spacing: 0.18em; }
             .cs-lockup .brand-lockup-stack img,
             .cs-lockup img { height: 48px !important; }
