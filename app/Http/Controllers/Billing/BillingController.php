@@ -333,13 +333,20 @@ class BillingController extends Controller
             // for unused old + prorated new for remaining cycle) AND the
             // regular subscription charge that fires at the next renewal.
             // swapAndInvoice() only bills the proration delta today; the
-            // regular renewal happens on its normal cycle. Showing
-            // non-proration lines in the modal made the "today" total look
-            // way bigger than what actually gets charged.
+            // regular renewal happens on its normal cycle.
+            //
+            // Stripe API 2024-10-28+ moved `proration` into a nested
+            // parent object. Old API: $line->proration (deprecated).
+            // New API: $line->parent->subscription_item_details->proration
+            //      OR  $line->parent->invoice_item_details->proration
             $lines = [];
             $prorationTotal = 0;
             foreach ($preview->lines->data as $line) {
-                if (! ($line->proration ?? false)) {
+                $isProration = (bool) (
+                    ($line->parent?->subscription_item_details?->proration ?? false)
+                    || ($line->parent?->invoice_item_details?->proration ?? false)
+                );
+                if (! $isProration) {
                     continue;
                 }
                 $lines[] = [
