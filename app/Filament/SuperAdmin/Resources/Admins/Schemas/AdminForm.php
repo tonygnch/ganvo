@@ -3,11 +3,15 @@
 namespace App\Filament\SuperAdmin\Resources\Admins\Schemas;
 
 use App\Services\RoleMatrix;
+use Filament\Forms\Components\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
 class AdminForm
@@ -30,7 +34,9 @@ class AdminForm
 
                         // Password is required on create, optional on edit
                         // (leaving blank keeps the current password). The
-                        // hashing happens via the cast on User::password.
+                        // hashing happens via dehydrateStateUsing, since the
+                        // User model's password cast already handles hashed
+                        // values transparently.
                         TextInput::make('password')
                             ->password()
                             ->revealable()
@@ -40,7 +46,40 @@ class AdminForm
                             ->dehydrateStateUsing(fn (?string $state) => filled($state) ? Hash::make($state) : null)
                             ->dehydrated(fn (?string $state) => filled($state))
                             ->helperText('Minimum 8 characters. Leave blank when editing to keep current.')
-                            ->columnSpanFull(),
+                            ->columnSpanFull()
+                            // Strong-password generator. Fills the field
+                            // (still masked, reveal with the eye icon to
+                            // copy) and shows a notification with the
+                            // plain text so it can be copied directly
+                            // from there too — the SA needs to share it
+                            // out-of-band with the new admin.
+                            ->suffixAction(
+                                Action::make('generatePassword')
+                                    ->icon(Heroicon::OutlinedSparkles)
+                                    ->tooltip('Generate a strong random password')
+                                    ->color('primary')
+                                    ->action(function ($set) {
+                                        // 16 chars, letters + numbers, no
+                                        // symbols — easier to share via
+                                        // chat/email without escaping issues,
+                                        // still ~95 bits of entropy.
+                                        $password = Str::password(
+                                            length: 16,
+                                            letters: true,
+                                            numbers: true,
+                                            symbols: false,
+                                            spaces: false,
+                                        );
+                                        $set('password', $password);
+
+                                        Notification::make()
+                                            ->success()
+                                            ->title('Password generated')
+                                            ->body("Copy and share with the new admin:\n\n{$password}")
+                                            ->persistent()
+                                            ->send();
+                                    })
+                            ),
                     ]),
 
                 Section::make('Access')
