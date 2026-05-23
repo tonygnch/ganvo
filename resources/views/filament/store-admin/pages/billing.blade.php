@@ -148,7 +148,23 @@
                             {{ __('billing.unavailable') }}
                         </button>
                     @else
-                        <form method="post" action="{{ route('billing.checkout') }}" style="margin-top: auto;">
+                        {{-- Already-subscribed merchants change plans via /billing/swap
+                             (Stripe proration), first-time subscribers go through
+                             /billing/checkout (Stripe Checkout creates the
+                             subscription). Free-plan downgrade routes through
+                             checkout, which detects + cancels the existing sub.
+                             onsubmit confirm shows the proration warning so the
+                             merchant knows they'll be charged/credited the
+                             prorated difference today. --}}
+                        @php
+                            $isSwap = $tenant->platformSubscribed() && ! $plan->isFree();
+                            $action = $isSwap ? route('billing.swap') : route('billing.checkout');
+                            $confirmMessage = $isSwap ? __('billing.swap_warning') : null;
+                        @endphp
+                        <form method="post"
+                              action="{{ $action }}"
+                              style="margin-top: auto;"
+                              @if ($confirmMessage) onsubmit="return confirm({{ json_encode($confirmMessage) }})" @endif>
                             @csrf
                             <input type="hidden" name="plan_slug" value="{{ $plan->slug }}">
                             <input type="hidden" name="period" value="{{ $period }}">

@@ -141,6 +141,9 @@ Route::domain($centralDomain)->group(function () {
     Route::middleware('auth')->group(function () {
         Route::post('/billing/checkout', [BillingController::class, 'checkout'])->name('billing.checkout');
         Route::get('/billing/checkout/success', [BillingController::class, 'checkoutSuccess'])->name('billing.checkout.success');
+        // Swap = change plan/period on an EXISTING subscription with proration.
+        // Stripe handles credit-for-unused + charge-for-new automatically.
+        Route::post('/billing/swap', [BillingController::class, 'swap'])->name('billing.swap');
         Route::post('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
         Route::get('/billing', [BillingController::class, 'show'])->name('billing.show');
     });
