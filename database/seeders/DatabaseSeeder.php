@@ -283,6 +283,27 @@ class DatabaseSeeder extends Seeder
         $product->categories()->syncWithoutDetaching([$catFeatured->id, $catWidgets->id]);
         $premium->categories()->syncWithoutDetaching([$catFeatured->id, $catBundles->id]);
 
+        // Demo gallery extras so the product page shows the thumbnail
+        // strip out of the box without the merchant having to upload
+        // anything. Idempotent via firstOrCreate(path) — re-running
+        // the seeder doesn't dupe.
+        $widgetAlt = $this->writeSampleImage(
+            'products/gallery/widget-alt.svg',
+            $this->sampleSvg('#34d399', '#047857', 'ANGLE')
+        );
+        $widgetClose = $this->writeSampleImage(
+            'products/gallery/widget-close.svg',
+            $this->sampleSvg('#a7f3d0', '#10b981', 'DETAIL')
+        );
+        \App\Models\ProductImage::firstOrCreate(
+            ['product_id' => $product->id, 'path' => $widgetAlt],
+            ['alt_text' => 'Starter Widget — angle view', 'sort_order' => 10]
+        );
+        \App\Models\ProductImage::firstOrCreate(
+            ['product_id' => $product->id, 'path' => $widgetClose],
+            ['alt_text' => 'Starter Widget — close-up', 'sort_order' => 20]
+        );
+
         // Seed a spread of orders across the last 14 days so the chart looks alive.
         if (Order::where('tenant_id', $tenant->id)->count() === 0) {
             $customers = [

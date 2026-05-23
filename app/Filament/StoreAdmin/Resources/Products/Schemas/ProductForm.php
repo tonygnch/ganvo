@@ -3,6 +3,7 @@
 namespace App\Filament\StoreAdmin\Resources\Products\Schemas;
 
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
@@ -57,15 +58,47 @@ class ProductForm
                             ->default(0),
                     ]),
 
-                Section::make('Image')
+                Section::make('Images')
+                    ->description('The primary image shows on cards, in the cart, and as the main image on the product page. Gallery extras appear as thumbnails next to it; the customer can click a thumb to swap it into the main slot.')
                     ->schema([
                         FileUpload::make('image_path')
-                            ->label('Product image')
+                            ->label('Primary image')
                             ->image()
                             ->disk('public')
                             ->directory('products')
                             ->maxSize(2048)
                             ->imageEditor()
+                            ->columnSpanFull(),
+
+                        // Gallery extras as a Repeater bound to the
+                        // gallery() hasMany relation. Each row is one
+                        // ProductImage. orderColumn auto-syncs the
+                        // repeater's drag order to the sort_order
+                        // column so the order in the editor matches
+                        // the storefront.
+                        Repeater::make('gallery')
+                            ->label('Gallery extras')
+                            ->relationship()
+                            ->orderColumn('sort_order')
+                            ->collapsed()
+                            ->itemLabel(fn (array $state): ?string => $state['alt_text'] ?? null)
+                            ->addActionLabel('Add image')
+                            ->reorderableWithDragAndDrop()
+                            ->defaultItems(0)
+                            ->schema([
+                                FileUpload::make('path')
+                                    ->label('Image')
+                                    ->image()
+                                    ->disk('public')
+                                    ->directory('products/gallery')
+                                    ->maxSize(2048)
+                                    ->imageEditor()
+                                    ->required(),
+                                TextInput::make('alt_text')
+                                    ->label('Alt text')
+                                    ->maxLength(160)
+                                    ->helperText('For screen readers + SEO. Optional but recommended.'),
+                            ])
                             ->columnSpanFull(),
                     ]),
 

@@ -140,11 +140,7 @@
 
         <div class="dish">
             <div class="dish-image">
-                @if ($product->image_path)
-                    <img src="{{ \Illuminate\Support\Facades\Storage::url($product->image_path) }}" alt="{{ $product->name }}">
-                @else
-                    <span class="placeholder">{{ __('site.storefront.product.no_image') }}</span>
-                @endif
+                @include('storefront.partials.product-gallery')
             </div>
 
             <div class="dish-info">

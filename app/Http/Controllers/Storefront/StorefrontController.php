@@ -39,7 +39,7 @@ class StorefrontController extends Controller
         $theme = $this->themeFor($store);
 
         $product = $tenant->products()
-            ->with('categories')
+            ->with(['categories', 'gallery'])
             ->where('slug', $slug)
             ->where('is_active', true)
             ->firstOrFail();

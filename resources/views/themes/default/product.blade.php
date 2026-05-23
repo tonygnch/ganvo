@@ -183,11 +183,7 @@
         <div class="product">
             <div class="product-gallery">
                 <div class="product-image">
-                    @if ($product->image_path)
-                        <img src="{{ \Illuminate\Support\Facades\Storage::url($product->image_path) }}" alt="{{ $product->name }}">
-                    @else
-                        {{ __('site.storefront.product.no_image') }}
-                    @endif
+                    @include('storefront.partials.product-gallery')
                 </div>
                 <span class="product-badge">{{ __('site.storefront.product.in_stock_badge') }}</span>
             </div>
