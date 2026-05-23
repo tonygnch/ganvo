@@ -8,6 +8,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class AdminForm
 {
@@ -51,13 +52,17 @@ class AdminForm
                             ->required()
                             ->native(false)
                             ->helperText(self::roleHelpText())
-                            // For editing, hydrate from the user's current platform role.
+                            // For editing, hydrate from the user's current
+                            // role (first non-store_admin role they have —
+                            // each admin only holds one platform role).
                             ->formatStateUsing(function ($state, $record) {
                                 if ($record) {
-                                    foreach (RoleMatrix::PLATFORM_ROLES as $r) {
-                                        if ($record->hasRole($r)) {
-                                            return $r;
-                                        }
+                                    $first = $record->roles()
+                                        ->where('name', '!=', 'store_admin')
+                                        ->orderBy('name')
+                                        ->first();
+                                    if ($first) {
+                                        return $first->name;
                                     }
                                 }
                                 return $state ?? RoleMatrix::SUPPORT_ADMIN;
@@ -71,27 +76,30 @@ class AdminForm
     }
 
     /**
-     * Build the Select options with the human-readable role label, falling
-     * back to the slug if the label map is incomplete.
+     * Build the Select options from roles in the DB. System roles get
+     * their friendly label from RoleMatrix; custom roles use their name
+     * humanized. store_admin is excluded — it's a tenant-scoped role
+     * that doesn't grant platform access.
      */
     private static function roleOptions(): array
     {
         $out = [];
-        foreach (RoleMatrix::PLATFORM_ROLES as $role) {
-            $out[$role] = RoleMatrix::ROLE_LABELS[$role] ?? $role;
+        foreach (Role::query()->where('name', '!=', 'store_admin')->orderBy('name')->get() as $role) {
+            $out[$role->name] = RoleMatrix::ROLE_LABELS[$role->name] ?? \Str::headline($role->name);
         }
         return $out;
     }
 
-    /** Inline summary of what each role does, rendered below the Select. */
+    /** Inline summary of what the system roles do; custom roles aren't documented here. */
     private static function roleHelpText(): string
     {
         $parts = [];
-        foreach (RoleMatrix::PLATFORM_ROLES as $role) {
+        foreach (RoleMatrix::SYSTEM_ROLES as $role) {
             $label = RoleMatrix::ROLE_LABELS[$role] ?? $role;
             $desc = RoleMatrix::ROLE_DESCRIPTIONS[$role] ?? '';
             $parts[] = "{$label} — {$desc}";
         }
+        $parts[] = 'Custom roles use whatever permissions you assigned to them in SuperAdmin → System → Roles.';
         return implode("\n", $parts);
     }
 }

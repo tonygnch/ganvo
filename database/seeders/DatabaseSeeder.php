@@ -20,13 +20,39 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Platform sub-roles. Source of truth for which role can see what
-        // lives in App\Services\RoleMatrix — these names must match
-        // RoleMatrix's constants.
-        $superAdminRole = Role::firstOrCreate(['name' => \App\Services\RoleMatrix::SUPER_ADMIN]);
-        Role::firstOrCreate(['name' => \App\Services\RoleMatrix::BILLING_ADMIN]);
-        Role::firstOrCreate(['name' => \App\Services\RoleMatrix::MARKETING_ADMIN]);
-        Role::firstOrCreate(['name' => \App\Services\RoleMatrix::SUPPORT_ADMIN]);
+        // Platform sub-roles + their permissions. The 4 system roles and
+        // every section permission live in App\Services\RoleMatrix.
+        //
+        // Idempotency: firstOrCreate on Role + Permission, then
+        // syncPermissionsWithoutDetaching on each system role so a re-run
+        // adds any newly-introduced permissions without wiping ones the
+        // operator may have toggled via the Roles UI.
+        $matrix = \App\Services\RoleMatrix::class;
+
+        // 1. Create every permission in the catalog.
+        $allPermissions = array_keys($matrix::permissionCatalog());
+        foreach ($allPermissions as $perm) {
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => $perm]);
+        }
+
+        // 2. Create system roles.
+        $superAdminRole = Role::firstOrCreate(['name' => $matrix::SUPER_ADMIN]);
+        Role::firstOrCreate(['name' => $matrix::BILLING_ADMIN]);
+        Role::firstOrCreate(['name' => $matrix::MARKETING_ADMIN]);
+        Role::firstOrCreate(['name' => $matrix::SUPPORT_ADMIN]);
+
+        // 3. super_admin: ALL permissions (always — including any added later).
+        $superAdminRole->syncPermissions($allPermissions);
+
+        // 4. Other system roles: defaults from RoleMatrix. syncPermissions
+        //    fully replaces — only run if the role has NO permissions yet,
+        //    so we don't undo operator customizations on re-seed.
+        foreach ($matrix::defaultRolePermissions() as $roleName => $perms) {
+            $role = Role::where('name', $roleName)->first();
+            if ($role && $role->permissions()->count() === 0) {
+                $role->syncPermissions($perms);
+            }
+        }
 
         $storeAdminRole = Role::firstOrCreate(['name' => 'store_admin']);
 

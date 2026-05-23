@@ -30,12 +30,11 @@ class AdminsTable
                     ->label('Role')
                     ->badge()
                     ->state(function (User $r) {
-                        foreach (RoleMatrix::PLATFORM_ROLES as $role) {
-                            if ($r->hasRole($role)) {
-                                return RoleMatrix::ROLE_LABELS[$role] ?? $role;
-                            }
-                        }
-                        return '—';
+                        // Display the user's first non-store_admin role —
+                        // each platform admin holds exactly one.
+                        $name = $r->roles->where('name', '!=', 'store_admin')->pluck('name')->first();
+                        if (! $name) return '—';
+                        return RoleMatrix::ROLE_LABELS[$name] ?? \Str::headline($name);
                     })
                     ->color(function (User $r) {
                         return match (true) {
@@ -43,7 +42,7 @@ class AdminsTable
                             $r->hasRole(RoleMatrix::BILLING_ADMIN)   => 'warning',
                             $r->hasRole(RoleMatrix::MARKETING_ADMIN) => 'info',
                             $r->hasRole(RoleMatrix::SUPPORT_ADMIN)   => 'success',
-                            default => 'gray',
+                            default => 'gray', // custom roles
                         };
                     }),
                 TextColumn::make('created_at')
@@ -55,8 +54,11 @@ class AdminsTable
             ->filters([
                 SelectFilter::make('role')
                     ->label('Role')
-                    ->options(collect(RoleMatrix::PLATFORM_ROLES)
-                        ->mapWithKeys(fn ($r) => [$r => RoleMatrix::ROLE_LABELS[$r] ?? $r])
+                    ->options(fn () => \Spatie\Permission\Models\Role::query()
+                        ->where('name', '!=', 'store_admin')
+                        ->orderBy('name')
+                        ->get()
+                        ->mapWithKeys(fn ($r) => [$r->name => RoleMatrix::ROLE_LABELS[$r->name] ?? \Str::headline($r->name)])
                         ->all())
                     ->query(function ($query, array $data) {
                         if (! filled($data['value'] ?? null)) {

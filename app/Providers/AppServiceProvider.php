@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use App\Services\RoleMatrix;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,6 +32,18 @@ class AppServiceProvider extends ServiceProvider
                 \$displayRate ?? 1.0,
                 \$displayCurrency ?? (isset(\$store) ? \$store->currency : 'EUR')
             ); ?>";
+        });
+
+        // super_admin god-mode. Runs before any other gate / policy check,
+        // so super admins implicitly pass every $user->can() lookup —
+        // including permissions that get added to the catalog later. Other
+        // roles fall through to the normal permission check (which Spatie
+        // handles via the HasRoles trait on User).
+        Gate::before(function (User $user, string $ability) {
+            if ($user->hasRole(RoleMatrix::SUPER_ADMIN)) {
+                return true;
+            }
+            return null; // null = "I don't decide" — let Spatie answer.
         });
     }
 }

@@ -80,14 +80,16 @@ class AdminResource extends Resource
     }
 
     /**
-     * Scope the resource to platform admins only — exclude store_admins
-     * and tenant-scoped users entirely so the list stays focused on the
-     * people who actually have panel access.
+     * Scope the resource to platform admins only. Any user who is NOT
+     * tenant-scoped and has at least one role other than store_admin is
+     * considered a platform admin — this lets custom roles created via
+     * the Roles UI show up here automatically without us needing to
+     * maintain an allowlist.
      */
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
             ->whereNull('tenant_id')
-            ->whereHas('roles', fn (Builder $q) => $q->whereIn('name', RoleMatrix::PLATFORM_ROLES));
+            ->whereHas('roles', fn (Builder $q) => $q->where('name', '!=', 'store_admin'));
     }
 }
