@@ -377,7 +377,8 @@
                 @php
                     $subtotal = $total_cents;
                     $shipping = $subtotal >= 5000 ? 0 : 500;
-                    $grand = $subtotal + $shipping;
+                    $discountCents = $discount_cents ?? 0;
+                    $grand = max(0, $subtotal + $shipping - $discountCents);
                 @endphp
                 <aside class="summary">
                     <h2>{{ __('site.cart.summary') }}</h2>
@@ -392,6 +393,15 @@
                     @if ($shipping > 0)
                         <div class="summary-hint">{{ __('site.cart.free_shipping_at') }}</div>
                     @endif
+                    @if ($discount && $discountCents > 0)
+                        <div class="summary-row discount">
+                            <span class="label">{{ $discount->name }}</span>
+                            <span class="num">−@money($discountCents)</span>
+                        </div>
+                    @endif
+
+                    @include('storefront.partials.discount-form')
+
                     <div class="summary-row total">
                         <span class="label">{{ __('site.cart.total') }}</span>
                         <span class="num">@money($grand)</span>

@@ -297,7 +297,10 @@
             <h3>{{ __('site.order.items_ordered') }}</h3>
             @php
                 $itemsTotal = $order->items->sum('subtotal_cents');
-                $shipping = max(0, $order->total_cents - $itemsTotal);
+                $discountAmount = (int) ($order->discount_amount_cents ?? 0);
+                // total = items + shipping − discount, so:
+                //   shipping = total + discount − items
+                $shipping = max(0, $order->total_cents + $discountAmount - $itemsTotal);
             @endphp
             @foreach ($order->items as $item)
                 <div class="item-line">
@@ -311,6 +314,9 @@
             <div class="totals">
                 <div class="row"><span>{{ __('site.order.subtotal') }}</span><span class="num">{{ \App\Services\Money::format($itemsTotal, $order->currency) }}</span></div>
                 <div class="row"><span>{{ __('site.order.shipping_label') }}</span><span class="num">{{ $shipping === 0 ? __('site.common.free') : \App\Services\Money::format($shipping, $order->currency) }}</span></div>
+                @if ($discountAmount > 0)
+                    <div class="row discount"><span>{{ $order->discount_name ?: __('site.order.discount') }}@if($order->discount_code) <code class="discount-code">({{ $order->discount_code }})</code>@endif</span><span class="num">−{{ \App\Services\Money::format($discountAmount, $order->currency) }}</span></div>
+                @endif
                 <div class="row grand"><span class="label">{{ __('site.order.total') }}</span><span class="num">{{ \App\Services\Money::format($order->total_cents, $order->currency) }}</span></div>
                 @if ($order->display_currency && $order->display_currency !== $order->currency && $order->display_total_cents)
                     <div class="row" style="margin-top: .5rem; font-size: 0.8125rem; opacity: .8;">

@@ -162,6 +162,11 @@ $storefrontRoutes = function () {
 
     Route::get('/cart', [CartController::class, 'show']);
     Route::post('/cart/add/{slug}', [CartController::class, 'add']);
+    // Discount code apply (POST) + clear (DELETE). Routed under
+    // /cart/discount so the route constraints below for line IDs don't
+    // accidentally swallow the literal "discount" segment.
+    Route::post('/cart/discount', [CartController::class, 'applyDiscount']);
+    Route::delete('/cart/discount', [CartController::class, 'removeDiscount']);
     // Cart line ids are "{productId}:{variantId|0}" — colon-delimited so
     // we can address variant-specific lines distinctly. Constrain to the
     // expected shape so stray characters can't muck about with sessions.

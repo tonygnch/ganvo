@@ -22,13 +22,61 @@ class CartController extends Controller
 
         $view = view()->exists("themes.{$theme}.cart") ? "themes.{$theme}.cart" : 'storefront.cart';
 
+        // Pre-compute discount context for the view. Shipping uses the
+        // cart's default (no address yet) — checkout recomputes with the
+        // real shipping cost. Auto-discounts apply silently here too;
+        // only code-applied ones have an `applied_code` value.
+        $shipping = $cart->defaultShippingCents();
+        $discount = $cart->appliedDiscount($shipping);
+        $discountCents = $cart->discountAmountCents($shipping);
+
         return view($view, [
             'tenant' => $tenant,
             'store' => $store,
             'theme' => $theme,
             'items' => $cart->items(),
             'total_cents' => $cart->totalCents(),
+            'discount' => $discount,
+            'discount_cents' => $discountCents,
+            'applied_code' => $cart->appliedCode(),
         ]);
+    }
+
+    /**
+     * Apply a discount code (or clear via empty input). Validates that
+     * the code resolves to a usable discount for this cart's subtotal —
+     * surfaces a friendly flash either way.
+     */
+    public function applyDiscount(Request $request): RedirectResponse
+    {
+        $code = trim((string) $request->input('code', ''));
+        $cart = Cart::forCurrent();
+
+        if ($code === '') {
+            $cart->removeDiscount();
+            return redirect('/cart')->with('cart.flash', __('site.cart.discount_removed'));
+        }
+
+        $cart->applyCode($code);
+        // Resolve immediately so we can tell the customer if the code
+        // they typed didn't take. We re-resolve rather than trust the
+        // session because applyCode just stores; resolution happens on
+        // read.
+        $resolved = $cart->appliedDiscount();
+        if (! $resolved || strtoupper($code) !== ($resolved->code ?? '')) {
+            // Stored their input so they can see what they typed when
+            // they get back to the cart, but flag the failure.
+            $cart->removeDiscount();
+            return redirect('/cart')->with('cart.flash', __('site.cart.discount_invalid'));
+        }
+
+        return redirect('/cart')->with('cart.flash', __('site.cart.discount_applied', ['name' => $resolved->name]));
+    }
+
+    public function removeDiscount(Request $request): RedirectResponse
+    {
+        Cart::forCurrent()->removeDiscount();
+        return redirect('/cart')->with('cart.flash', __('site.cart.discount_removed'));
     }
 
     public function add(Request $request): RedirectResponse

@@ -2,7 +2,8 @@
     $title = __('site.cart.title');
     $subtotal = $total_cents;
     $shipping = $subtotal >= 5000 ? 0 : 500;
-    $grand = $subtotal + $shipping;
+    $discountCents = $discount_cents ?? 0;
+    $grand = max(0, $subtotal + $shipping - $discountCents);
 @endphp
 @extends('themes.tech.layout')
 
@@ -242,6 +243,15 @@
                         <span class="num">@if($shipping === 0){{ __('site.common.free') }}@else @money($shipping) @endif</span>
                     </div>
                     @if ($shipping > 0)<p class="summary-hint">{{ __('site.cart.free_shipping_at') }}</p>@endif
+                    @if ($discount && $discountCents > 0)
+                        <div class="summary-row discount">
+                            <span>{{ $discount->name }}</span>
+                            <span class="num">−@money($discountCents)</span>
+                        </div>
+                    @endif
+
+                    @include('storefront.partials.discount-form')
+
                     <div class="summary-row total">
                         <span class="label">{{ __('site.cart.total') }}</span>
                         <span class="num">@money($grand)</span>

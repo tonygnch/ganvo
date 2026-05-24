@@ -39,6 +39,15 @@ class OrderPlaced extends Notification
             ]));
         }
 
+        // Discount snapshot — show the saved amount + code (if any).
+        if ($order->discount_amount_cents > 0) {
+            $mail->line(__('site.email.placed_line_discount', [
+                'name' => $order->discount_name ?: __('site.order.discount'),
+                'code' => $order->discount_code ? ' (' . $order->discount_code . ')' : '',
+                'amount' => number_format($order->discount_amount_cents / 100, 2),
+            ]));
+        }
+
         return $mail
             ->action(__('site.email.placed_action'), $orderUrl)
             ->line(__('site.email.placed_outro'));

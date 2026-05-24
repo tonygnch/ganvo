@@ -222,6 +222,13 @@ return [
         'perk_shipping' => '⌁ Безплатна доставка над $50',
         'perk_returns' => '⟲ 30 дни връщане',
         'perk_fast' => '⚡ Доставка за 1–2 дни',
+        // Поле за промокод + флашове
+        'discount_placeholder' => 'Промокод',
+        'discount_apply'       => 'Приложи',
+        'discount_remove'      => 'Премахни',
+        'discount_applied'     => ':name беше приложен в кошницата.',
+        'discount_invalid'     => 'Този код не е валиден за тази кошница.',
+        'discount_removed'     => 'Отстъпката е премахната.',
     ],
 
     'checkout' => [
@@ -274,6 +281,7 @@ return [
         'subtotal' => 'Междинна сума',
         'shipping_label' => 'Доставка',
         'total' => 'Общо',
+        'discount' => 'Отстъпка',
         'you_saw' => 'Ти видя',
         'need_help' => 'Нужда от помощ?',
     ],
@@ -324,6 +332,7 @@ return [
         'placed_line_order' => '**Номер на поръчка:** :number',
         'placed_line_total' => '**Общо:** :amount :currency',
         'placed_line_item' => '• :name × :qty — :amount',
+        'placed_line_discount' => 'Приложена отстъпка: :name:code — −:amount',
         'placed_action' => 'Виж поръчката',
         'placed_outro' => 'Ще ти пишем отново, когато бъде изпратена.',
 

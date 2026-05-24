@@ -60,6 +60,7 @@ class Cart
     public function clear(): void
     {
         Session::forget($this->key());
+        Session::forget($this->discountKey());
     }
 
     /**
@@ -139,7 +140,18 @@ class Cart
         return $rows->values();
     }
 
+    /**
+     * Sum of line subtotals (price × qty) — does NOT include discount
+     * or shipping. Kept as `totalCents()` for backward compatibility
+     * with views/controllers that pre-date the discount engine.
+     * subtotalCents() is the canonical name going forward.
+     */
     public function totalCents(): int
+    {
+        return $this->subtotalCents();
+    }
+
+    public function subtotalCents(): int
     {
         return $this->items()->sum('subtotal_cents');
     }
@@ -152,6 +164,71 @@ class Cart
     public function isEmpty(): bool
     {
         return $this->itemCount() === 0;
+    }
+
+    /* -----------------------------------------------------------------
+     | Discounts
+     |
+     | One discount applies at a time (manual code wins, else the best
+     | auto). Code is stored in session keyed per tenant so the customer
+     | can navigate around without losing it. Resolution + amount-off
+     | computation lives in DiscountEngine — Cart just owns the session
+     | bit + shipping context.
+     ------------------------------------------------------------------*/
+
+    /** Default shipping cents the cart assumes when no explicit value
+     *  is passed (e.g. when shown on the cart page before checkout).
+     *  Matches the rule the checkout uses: free over €50, else 500c. */
+    public function defaultShippingCents(): int
+    {
+        return $this->subtotalCents() >= 5000 ? 0 : 500;
+    }
+
+    /** Set the manually-entered discount code. Pass null/'' to clear. */
+    public function applyCode(?string $code): void
+    {
+        $code = $code ? strtoupper(trim($code)) : null;
+        if ($code) {
+            Session::put($this->discountKey(), $code);
+        } else {
+            Session::forget($this->discountKey());
+        }
+    }
+
+    public function appliedCode(): ?string
+    {
+        return Session::get($this->discountKey());
+    }
+
+    public function removeDiscount(): void
+    {
+        Session::forget($this->discountKey());
+    }
+
+    /**
+     * Resolve which discount currently applies to this cart given the
+     * caller-provided shipping (defaults to {@see defaultShippingCents()}).
+     * Returns null when nothing applies.
+     */
+    public function appliedDiscount(?int $shippingCents = null): ?\App\Models\Discount
+    {
+        return \App\Services\DiscountEngine::forCurrent()->resolve(
+            $this->appliedCode(),
+            $this->subtotalCents(),
+            $shippingCents ?? $this->defaultShippingCents()
+        );
+    }
+
+    public function discountAmountCents(?int $shippingCents = null): int
+    {
+        $d = $this->appliedDiscount($shippingCents);
+        if (! $d) {
+            return 0;
+        }
+        return $d->amountOff(
+            $this->subtotalCents(),
+            $shippingCents ?? $this->defaultShippingCents()
+        );
     }
 
     /**
@@ -223,5 +300,17 @@ class Cart
     private function key(): string
     {
         return "cart.tenant_{$this->tenant->id}";
+    }
+
+    /**
+     * Discount session key. Lives at a SIBLING path to {@see key()} —
+     * not as a nested child — because Laravel's Session::put uses dot
+     * notation for Arr::set, so "cart.tenant_1.discount_code" would
+     * write into the cart items array and corrupt array_sum() / array
+     * iteration over line keys.
+     */
+    private function discountKey(): string
+    {
+        return "cart_discount.tenant_{$this->tenant->id}";
     }
 }

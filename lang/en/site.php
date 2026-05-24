@@ -223,6 +223,13 @@ return [
         'perk_shipping' => '⌁ Free shipping over $50',
         'perk_returns' => '⟲ 30-day returns',
         'perk_fast' => '⚡ Ships in 1–2 days',
+        // Discount-code input + flashes
+        'discount_placeholder' => 'Discount code',
+        'discount_apply'       => 'Apply',
+        'discount_remove'      => 'Remove',
+        'discount_applied'     => ':name applied to your cart.',
+        'discount_invalid'     => "That code isn't valid for this cart.",
+        'discount_removed'     => 'Discount removed.',
     ],
 
     'checkout' => [
@@ -275,6 +282,7 @@ return [
         'subtotal' => 'Subtotal',
         'shipping_label' => 'Shipping',
         'total' => 'Total',
+        'discount' => 'Discount',
         'you_saw' => 'You saw',
         'need_help' => 'Need help?',
     ],
@@ -325,6 +333,7 @@ return [
         'placed_line_order' => '**Order number:** :number',
         'placed_line_total' => '**Total:** :amount :currency',
         'placed_line_item' => '• :name × :qty — :amount',
+        'placed_line_discount' => 'Discount applied: :name:code — −:amount',
         'placed_action' => 'View order',
         'placed_outro' => "We'll email you again when it ships.",
 

@@ -1,8 +1,9 @@
 @php
     $title = __('site.checkout.title');
     $subtotal = $total_cents;
-    $shipping = $subtotal >= 5000 ? 0 : 500;
-    $grand = $subtotal + $shipping;
+    $shipping = $shipping_cents ?? ($subtotal >= 5000 ? 0 : 500);
+    $discountCents = $discount_cents ?? 0;
+    $grand = max(0, $subtotal + $shipping - $discountCents);
     $defaultAddress = $customer?->default_shipping_address ?? [];
 @endphp
 @extends('themes.gallery.layout')
@@ -333,6 +334,12 @@
                         <span>{{ __('site.cart.shipping') }}</span>
                         <span class="num">@if($shipping === 0){{ __('site.common.free') }}@else @money($shipping) @endif</span>
                     </div>
+                    @if (! empty($discount) && $discountCents > 0)
+                        <div class="summary-row discount">
+                            <span>{{ $discount->name }}</span>
+                            <span class="num">−@money($discountCents)</span>
+                        </div>
+                    @endif
                     <div class="summary-row total">
                         <span class="label">{{ __('site.cart.total') }}</span>
                         <span class="num">@money($grand)</span>

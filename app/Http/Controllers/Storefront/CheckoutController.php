@@ -40,12 +40,22 @@ class CheckoutController extends Controller
 
         $view = view()->exists("themes.{$theme}.checkout") ? "themes.{$theme}.checkout" : 'storefront.checkout';
 
+        // Re-resolve the discount against the real shipping cost the
+        // checkout flow computes (the cart page uses its own default).
+        $subtotal = $cart->subtotalCents();
+        $shipping = $subtotal >= 5000 ? 0 : 500;
+        $discount = $cart->appliedDiscount($shipping);
+        $discountCents = $cart->discountAmountCents($shipping);
+
         return view($view, [
             'tenant' => $tenant,
             'store' => $store,
             'theme' => $theme,
             'items' => $cart->items(),
             'total_cents' => $cart->totalCents(),
+            'discount' => $discount,
+            'discount_cents' => $discountCents,
+            'shipping_cents' => $shipping,
             'customer' => $customer,
         ]);
     }
@@ -75,9 +85,15 @@ class CheckoutController extends Controller
         $customer = Auth::guard('customer')->user();
         $store = $tenant->store;
         $items = $cart->items();
-        $subtotal = $cart->totalCents();
+        $subtotal = $cart->subtotalCents();
         $shipping = $subtotal >= 5000 ? 0 : 500;
-        $grandTotal = $subtotal + $shipping;
+
+        // Resolve discount at THIS moment (re-runs validity + minimum
+        // checks against the live cart) — never trust a stale session
+        // amount.
+        $discount = $cart->appliedDiscount($shipping);
+        $discountAmount = $cart->discountAmountCents($shipping);
+        $grandTotal = max(0, $subtotal + $shipping - $discountAmount);
 
         // Capture what the customer was viewing prices in at this moment, so the
         // order receipt forever shows the same number — even if FX rates move.
@@ -85,7 +101,7 @@ class CheckoutController extends Controller
         $displayRate = $cart->displayRate();
         $displayTotal = \App\Services\Money::convert($grandTotal, $displayRate);
 
-        $order = DB::transaction(function () use ($tenant, $store, $customer, $items, $data, $grandTotal, $displayCurrency, $displayTotal) {
+        $order = DB::transaction(function () use ($tenant, $store, $customer, $items, $data, $grandTotal, $displayCurrency, $displayTotal, $discount, $discountAmount) {
             $order = Order::create([
                 'tenant_id' => $tenant->id,
                 'customer_id' => $customer?->id,
@@ -96,6 +112,13 @@ class CheckoutController extends Controller
                 'currency' => strtoupper($store->currency ?? 'EUR'),
                 'display_currency' => $displayCurrency,
                 'display_total_cents' => $displayTotal,
+                // Snapshot discount info — name + code + amount so the
+                // receipt stays accurate even after the discount is
+                // renamed or deleted. FK kept too for analytics.
+                'discount_id' => $discount?->id,
+                'discount_code' => $discount?->code,
+                'discount_name' => $discount?->name,
+                'discount_amount_cents' => $discountAmount,
                 'status' => 'paid', // stub payment — always succeeds
                 'shipping_address' => [
                     'line' => $data['address_line'],
@@ -105,6 +128,12 @@ class CheckoutController extends Controller
                 ],
                 'paid_at' => now(),
             ]);
+
+            // Bump usage counter so usage_limit caps work. Atomic
+            // increment so concurrent checkouts don't double-decrement.
+            if ($discount) {
+                $discount->increment('times_used');
+            }
 
             foreach ($items as $row) {
                 OrderItem::create([

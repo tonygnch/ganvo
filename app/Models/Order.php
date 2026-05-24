@@ -32,6 +32,13 @@ class Order extends Model
         'currency',
         'display_currency',
         'display_total_cents',
+        // Snapshot of any applied discount — kept on the order so the
+        // receipt + admin views read accurately even if the discount
+        // is later renamed / deleted.
+        'discount_id',
+        'discount_code',
+        'discount_name',
+        'discount_amount_cents',
         'status',
         'carrier',
         'tracking_number',
