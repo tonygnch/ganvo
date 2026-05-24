@@ -281,10 +281,33 @@ class WizardController extends Controller
             $store->logo_path = $logo;
         }
 
-        $products = $tenant->products()->where('is_active', true)->take(6)->get();
-        if ($products->isEmpty()) {
-            $products = $this->sampleProducts();
+        $productsCollection = $tenant->products()->where('is_active', true)->take(6)->get();
+        if ($productsCollection->isEmpty()) {
+            $productsCollection = $this->sampleProducts();
         }
+
+        // The theme index views were upgraded in Phase 3 to expect a
+        // paginator (they call ->currentPage(), ->hasPages(), etc.) and
+        // a filters array. The preview shows a single snapshot, so wrap
+        // the sample collection in a one-page paginator and synthesize
+        // the rest of the data shape the views read.
+        $products = new \Illuminate\Pagination\LengthAwarePaginator(
+            $productsCollection,
+            $productsCollection->count(),
+            12,
+            1,
+            ['path' => $request->url()]
+        );
+        $filters = [
+            'q' => null,
+            'sort' => 'newest',
+            'category' => null,
+            'min_price' => null,
+            'max_price' => null,
+            'in_stock' => false,
+        ];
+        $categories = collect();
+        $featuredCollections = collect();
 
         // Bind the tenant so Cart::forCurrent() (referenced by the layout)
         // resolves cleanly to an empty cart for this merchant.
@@ -296,7 +319,9 @@ class WizardController extends Controller
         View::share('displayRate', 1.0);
         View::share('baseCurrency', $base);
 
-        return view("themes.{$theme}.index", compact('tenant', 'store', 'products'));
+        return view("themes.{$theme}.index", compact(
+            'tenant', 'store', 'products', 'filters', 'categories', 'featuredCollections'
+        ));
     }
 
     // ---------------- Step 4: Customize ----------------
