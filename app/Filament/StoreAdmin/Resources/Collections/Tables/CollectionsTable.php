@@ -28,7 +28,11 @@ class CollectionsTable
                 TextColumn::make('title')
                     ->searchable()
                     ->weight('bold')
-                    ->description(fn ($r) => '/collections/' . $r->slug),
+                    // Null-guard: Filament occasionally calls the
+                    // description closure with no record (column-header
+                    // resolution paths). $r? lets that fall through
+                    // cleanly instead of throwing.
+                    ->description(fn ($r) => $r?->slug ? '/collections/' . $r->slug : null),
                 TextColumn::make('products_count')
                     ->label('Products')
                     ->counts('products')
