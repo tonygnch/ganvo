@@ -731,7 +731,11 @@
         .pricing-toggle input { position: absolute; opacity: 0; pointer-events: none; }
         .pricing-toggle label:has(input:checked) {
             background: var(--text);
-            color: white;
+            /* Pair foreground with the surface color, not a hard-coded
+               white — in dark theme --text is near-white, so white text
+               on a white pill becomes invisible. --bg-elevated inverts
+               cleanly with --text on both themes. */
+            color: var(--bg-elevated);
             box-shadow: 0 2px 8px rgba(0,0,0,.15);
         }
         .pricing-toggle-savings {
@@ -744,8 +748,9 @@
             color: #15803d;
         }
         .pricing-toggle label:has(input:checked) .pricing-toggle-savings {
-            background: rgba(255,255,255,0.2);
-            color: #fff;
+            /* Same trick — invert against the now-flipped pill bg. */
+            background: color-mix(in srgb, var(--bg-elevated) 25%, transparent);
+            color: var(--bg-elevated);
         }
 
         /* Each price card has both period blocks rendered; toggle swaps visibility */
