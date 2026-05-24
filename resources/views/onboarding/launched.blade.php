@@ -1,4 +1,4 @@
-@php $title = __('site.onboarding.launched.title'); @endphp
+@php $title = __('site.onboarding.launched.title', ['name' => $tenant->name]); @endphp
 @extends('onboarding.layout')
 
 @section('content')
