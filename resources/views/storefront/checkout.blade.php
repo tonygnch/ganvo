@@ -304,6 +304,10 @@
                             <label class="field-label" for="customer_name">{{ __('site.checkout.full_name') }}</label>
                             <input class="field-input" type="text" name="customer_name" id="customer_name" value="{{ old('customer_name', $customer?->name) }}" required>
                         </div>
+                        <div class="field">
+                            <label class="field-label" for="customer_phone">{{ __('site.checkout.phone') }} <small style="color:var(--text-soft,#a8a29e);font-weight:400">({{ __('site.common.optional') }})</small></label>
+                            <input class="field-input" type="tel" name="customer_phone" id="customer_phone" value="{{ old('customer_phone', $customer?->phone) }}">
+                        </div>
                     </div>
 
                     <div class="card-block">
@@ -311,6 +315,10 @@
                         <div class="field">
                             <label class="field-label" for="address_line">{{ __('site.checkout.street') }}</label>
                             <input class="field-input" type="text" name="address_line" id="address_line" value="{{ old('address_line', $defaultAddress['line'] ?? '') }}" required>
+                        </div>
+                        <div class="field">
+                            <label class="field-label" for="address_region">{{ __('site.checkout.region') }} <small style="color:var(--text-soft,#a8a29e);font-weight:400">({{ __('site.common.optional') }})</small></label>
+                            <input class="field-input" type="text" name="address_region" id="address_region" value="{{ old('address_region', $defaultAddress['region'] ?? '') }}">
                         </div>
                         <div class="fields-row">
                             <div class="field">
@@ -324,12 +332,27 @@
                         </div>
                         <div class="field">
                             <label class="field-label" for="country">{{ __('site.checkout.country') }}</label>
-                            <input class="field-input" type="text" name="country" id="country" maxlength="2" value="{{ old('country', $defaultAddress['country'] ?? 'US') }}" required>
+                            <select class="field-input" name="country" id="country" required>
+                                @php $selectedCountry = old('country', $defaultAddress['country'] ?? 'BG'); @endphp
+                                @foreach ($countries as $code => $name)
+                                    <option value="{{ $code }}" @selected($selectedCountry === $code)>{{ $name }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
 
                     <div class="card-block">
-                        <h2 class="section-title"><span class="step">3</span> {{ __('site.checkout.sec_payment') }}</h2>
+                        <h2 class="section-title"><span class="step">3</span> {{ __('site.checkout.sec_shipping_method') }}</h2>
+                        @include('storefront.partials.shipping-methods')
+                    </div>
+
+                    <div class="card-block">
+                        <h2 class="section-title"><span class="step">4</span> {{ __('site.checkout.sec_extras') }}</h2>
+                        @include('storefront.partials.checkout-extras')
+                    </div>
+
+                    <div class="card-block">
+                        <h2 class="section-title"><span class="step">5</span> {{ __('site.checkout.sec_payment') }}</h2>
                         <div class="stub-notice">
                             <span class="icon">!</span>
                             <div>
@@ -374,9 +397,9 @@
                         <span>{{ __('site.cart.subtotal') }}</span>
                         <span class="num">@money($subtotal)</span>
                     </div>
-                    <div class="summary-row {{ $shipping === 0 ? 'free' : '' }}">
+                    <div class="summary-row {{ $shipping === 0 ? 'free' : '' }}" data-sm-shipping-row>
                         <span>{{ __('site.cart.shipping') }}</span>
-                        <span class="num">@if($shipping === 0){{ __('site.common.free') }}@else @money($shipping) @endif</span>
+                        <span class="num" data-sm-shipping>@if($shipping === 0){{ __('site.common.free') }}@else @money($shipping) @endif</span>
                     </div>
                     @if (! empty($discount) && $discountCents > 0)
                         <div class="summary-row discount">
@@ -386,13 +409,13 @@
                     @endif
                     <div class="summary-row total">
                         <span class="label">{{ __('site.cart.total') }}</span>
-                        <span class="num">@money($grand)</span>
+                        <span class="num" data-sm-grand>@money($grand)</span>
                     </div>
 
                     <button type="submit" class="pay-btn">
                         {{ __('site.checkout.pay_now') }}
                         <span aria-hidden="true">·</span>
-                        <span>@money($grand)</span>
+                        <span data-sm-grand>@money($grand)</span>
                     </button>
                     @if ($displayCurrency !== $baseCurrency)
                         <div class="secure-line">{{ __('site.checkout.charged_in', ['amount' => \App\Services\Money::format($grand, $baseCurrency)]) }}</div>

@@ -290,6 +290,56 @@ class StoreSettings extends Page implements HasForms
                         Toggle::make('signup_marketing_optin_required')->label('Required (must check to sign up)')->helperText('Useful for double opt-in flows; less common.')->columnSpan(1),
                     ]),
 
+                Section::make('Shipping methods')
+                    ->description('Set the shipping options customers can choose at checkout. The first row is pre-selected. Leave the list empty to use the built-in Standard (free over €50) + Express (€15) defaults.')
+                    ->collapsed()
+                    ->schema([
+                        Repeater::make('shipping_methods')
+                            ->label('')
+                            ->addActionLabel('Add shipping method')
+                            ->reorderableWithDragAndDrop()
+                            ->collapsed()
+                            ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
+                            ->defaultItems(0)
+                            ->columns(2)
+                            ->schema([
+                                \Filament\Forms\Components\TextInput::make('label')
+                                    ->label('Display label')
+                                    ->required()
+                                    ->maxLength(120)
+                                    ->placeholder('Standard shipping')
+                                    ->columnSpan(2),
+                                \Filament\Forms\Components\TextInput::make('description')
+                                    ->label('Subtitle')
+                                    ->maxLength(160)
+                                    ->placeholder('3–5 business days')
+                                    ->columnSpan(2),
+                                \Filament\Forms\Components\TextInput::make('price_cents')
+                                    ->label('Price')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->step('0.01')
+                                    ->prefix(fn () => \App\Services\Money::symbol(
+                                        auth()->user()?->tenant?->store?->currency ?? 'EUR'
+                                    ))
+                                    ->formatStateUsing(fn ($state) => $state !== null ? number_format((int) $state / 100, 2, '.', '') : '0.00')
+                                    ->dehydrateStateUsing(fn ($state) => (int) round(((float) $state) * 100))
+                                    ->required(),
+                                \Filament\Forms\Components\TextInput::make('free_threshold_cents')
+                                    ->label('Free over')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->step('0.01')
+                                    ->nullable()
+                                    ->prefix(fn () => \App\Services\Money::symbol(
+                                        auth()->user()?->tenant?->store?->currency ?? 'EUR'
+                                    ))
+                                    ->formatStateUsing(fn ($state) => ($state === null || $state === '') ? null : number_format((int) $state / 100, 2, '.', ''))
+                                    ->dehydrateStateUsing(fn ($state) => ($state === null || $state === '') ? null : (int) round(((float) $state) * 100))
+                                    ->helperText('Subtotal threshold above which this method is free. Leave blank to always charge the price.'),
+                            ]),
+                    ]),
+
                 Section::make('Visibility')
                     ->schema([
                         Toggle::make('is_live')

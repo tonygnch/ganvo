@@ -28,6 +28,10 @@ class Order extends Model
         'order_number',
         'customer_email',
         'customer_name',
+        'customer_phone',
+        'marketing_opt_in',
+        'shipping_method_label',
+        'shipping_cents',
         'total_cents',
         'currency',
         'display_currency',
@@ -54,6 +58,8 @@ class Order extends Model
 
     protected $casts = [
         'shipping_address' => 'array',
+        'marketing_opt_in' => 'boolean',
+        'shipping_cents' => 'integer',
         'paid_at' => 'datetime',
         'shipped_at' => 'datetime',
         'cancelled_at' => 'datetime',

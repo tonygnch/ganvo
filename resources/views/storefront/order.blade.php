@@ -298,9 +298,13 @@
             @php
                 $itemsTotal = $order->items->sum('subtotal_cents');
                 $discountAmount = (int) ($order->discount_amount_cents ?? 0);
-                // total = items + shipping − discount, so:
-                //   shipping = total + discount − items
-                $shipping = max(0, $order->total_cents + $discountAmount - $itemsTotal);
+                // Prefer the snapshotted shipping_cents (set on orders
+                // placed after the better-checkout slice) — fall back to
+                // derived shipping = total + discount − items for legacy
+                // orders that pre-date the column.
+                $shipping = $order->shipping_cents !== null && $order->shipping_cents > 0
+                    ? (int) $order->shipping_cents
+                    : max(0, $order->total_cents + $discountAmount - $itemsTotal);
             @endphp
             @foreach ($order->items as $item)
                 <div class="item-line">
@@ -313,7 +317,7 @@
             @endforeach
             <div class="totals">
                 <div class="row"><span>{{ __('site.order.subtotal') }}</span><span class="num">{{ \App\Services\Money::format($itemsTotal, $order->currency) }}</span></div>
-                <div class="row"><span>{{ __('site.order.shipping_label') }}</span><span class="num">{{ $shipping === 0 ? __('site.common.free') : \App\Services\Money::format($shipping, $order->currency) }}</span></div>
+                <div class="row"><span>{{ __('site.order.shipping_label') }}@if($order->shipping_method_label) <span style="opacity:.6">· {{ $order->shipping_method_label }}</span>@endif</span><span class="num">{{ $shipping === 0 ? __('site.common.free') : \App\Services\Money::format($shipping, $order->currency) }}</span></div>
                 @if ($discountAmount > 0)
                     <div class="row discount"><span>{{ $order->discount_name ?: __('site.order.discount') }}@if($order->discount_code) <code class="discount-code">({{ $order->discount_code }})</code>@endif</span><span class="num">−{{ \App\Services\Money::format($discountAmount, $order->currency) }}</span></div>
                 @endif

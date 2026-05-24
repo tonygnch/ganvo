@@ -36,6 +36,7 @@ class Store extends Model
         'nav_menu',
         'hero_banner',
         'signup_fields',
+        'shipping_methods',
         'is_live',
         'checkout_mode',
         'allow_registration',
@@ -49,6 +50,7 @@ class Store extends Model
         'nav_menu' => 'array',
         'hero_banner' => 'array',
         'signup_fields' => 'array',
+        'shipping_methods' => 'array',
         'is_live' => 'boolean',
         'custom_domain_verified_at' => 'datetime',
         'allow_registration' => 'boolean',
@@ -248,5 +250,102 @@ class Store extends Model
             $out[$field] = compact('enabled', 'required');
         }
         return $out;
+    }
+
+    /**
+     * Normalized list of shipping methods the customer picks from at
+     * checkout. Falls back to a built-in Standard + Express pair when
+     * the operator hasn't customized — keeps new stores functional
+     * out of the box without forcing an admin tour first.
+     *
+     * Each entry: id (slug), label, description, price_cents,
+     * free_threshold_cents (nullable). `id` is what the checkout form
+     * submits; the controller validates against this list and snapshots
+     * the label + computed cost onto the Order.
+     *
+     * @return array<int, array{id: string, label: string, description: string, price_cents: int, free_threshold_cents: ?int}>
+     */
+    public function shippingMethods(): array
+    {
+        $stored = (array) ($this->shipping_methods ?? []);
+        if (empty($stored)) {
+            // Sensible defaults — Standard is free over €50 (matches the
+            // old hard-coded threshold) and Express is a flat €15.
+            return [
+                [
+                    'id' => 'standard',
+                    'label' => 'Standard shipping',
+                    'description' => '3–5 business days',
+                    'price_cents' => 500,
+                    'free_threshold_cents' => 5000,
+                ],
+                [
+                    'id' => 'express',
+                    'label' => 'Express shipping',
+                    'description' => '1–2 business days',
+                    'price_cents' => 1500,
+                    'free_threshold_cents' => null,
+                ],
+            ];
+        }
+        $out = [];
+        foreach ($stored as $i => $row) {
+            $row = (array) $row;
+            $label = trim((string) ($row['label'] ?? ''));
+            if ($label === '') {
+                continue; // skip half-saved rows
+            }
+            $idRaw = trim((string) ($row['id'] ?? $label));
+            $out[] = [
+                'id' => Str::slug($idRaw) ?: 'method-' . $i,
+                'label' => $label,
+                'description' => trim((string) ($row['description'] ?? '')),
+                'price_cents' => max(0, (int) ($row['price_cents'] ?? 0)),
+                'free_threshold_cents' => isset($row['free_threshold_cents']) && $row['free_threshold_cents'] !== ''
+                    ? (int) $row['free_threshold_cents']
+                    : null,
+            ];
+        }
+        // Defensive: if every row was empty, fall back to defaults
+        // rather than render a checkout with no shipping options.
+        return $out ?: $this->forceDefaultShippingMethods();
+    }
+
+    /** @internal used by shippingMethods() when stored config is empty. */
+    private function forceDefaultShippingMethods(): array
+    {
+        $original = $this->shipping_methods;
+        $this->shipping_methods = null;
+        $defaults = $this->shippingMethods();
+        $this->shipping_methods = $original;
+        return $defaults;
+    }
+
+    /**
+     * Resolve a shipping method by id against the current subtotal.
+     * Returns null when the id doesn't match any configured method.
+     *
+     * @return ?array{id: string, label: string, description: string, price_cents: int, cost_cents: int}
+     */
+    public function resolveShippingMethod(string $id, int $subtotalCents): ?array
+    {
+        foreach ($this->shippingMethods() as $m) {
+            if ($m['id'] !== $id) {
+                continue;
+            }
+            // Apply free-over-threshold rule when set.
+            $cost = $m['price_cents'];
+            if ($m['free_threshold_cents'] !== null && $subtotalCents >= $m['free_threshold_cents']) {
+                $cost = 0;
+            }
+            return [
+                'id' => $m['id'],
+                'label' => $m['label'],
+                'description' => $m['description'],
+                'price_cents' => $m['price_cents'],
+                'cost_cents' => $cost,
+            ];
+        }
+        return null;
     }
 }
