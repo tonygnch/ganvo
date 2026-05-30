@@ -26,11 +26,21 @@
             Drop a node onto another to make it a child; drop into the top-level list to make it a root.
         </div>
 
-        <ul class="ct-list ct-root" data-ct-root data-parent-id="">
-            @foreach ($tree as $node)
-                @include('filament.store-admin.resources.categories._tree-node', ['node' => $node])
-            @endforeach
-        </ul>
+        {{-- wire:ignore is the critical bit: once Livewire mounts this
+             subtree, it stops touching it. SortableJS's binding survives
+             across reorder round-trips because no morph happens.
+
+             The server-side $tree state still updates after each reorder
+             (so a hard refresh shows the persisted order), but the live
+             DOM is owned by the user's drag operations, not Livewire's
+             diff. --}}
+        <div wire:ignore>
+            <ul class="ct-list ct-root" data-ct-root data-parent-id="">
+                @foreach ($tree as $node)
+                    @include('filament.store-admin.resources.categories._tree-node', ['node' => $node])
+                @endforeach
+            </ul>
+        </div>
     @endif
 
     <style>
