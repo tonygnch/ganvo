@@ -24,12 +24,19 @@ class OrderShipped extends Notification
         $storeUrl = 'http://' . $tenant->slug . '.' . config('ganvo.central_domain');
         $orderUrl = $storeUrl . '/orders/' . $order->order_number;
 
+        // Carrier slug → display label. Mirror the StoreAdmin
+        // ViewOrder list so admin + email stay in sync.
         $carrierLabel = match ($order->carrier) {
-            'usps' => 'USPS',
-            'ups' => 'UPS',
-            'fedex' => 'FedEx',
-            'dhl' => 'DHL',
-            default => ucfirst((string) $order->carrier),
+            'dpd'    => 'DPD',
+            'gls'    => 'GLS',
+            'dhl'    => 'DHL',
+            'postnl' => 'PostNL',
+            'econt'  => 'Econt',
+            'speedy' => 'Speedy',
+            'ups'    => 'UPS',
+            'usps'   => 'USPS',
+            'fedex'  => 'FedEx',
+            default  => ucfirst((string) $order->carrier),
         };
 
         $mail = (new MailMessage)

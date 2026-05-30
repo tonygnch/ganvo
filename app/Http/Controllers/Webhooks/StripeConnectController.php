@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\Tenant;
 use App\Notifications\OrderPlaced;
+use App\Notifications\OrderRefunded;
 use App\Services\Payments\StripeConnectService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -69,6 +70,7 @@ class StripeConnectController extends Controller
                 'account.application.deauthorized'   => $this->handleAccountDeauthorized($event),
                 'payment_intent.succeeded'           => $this->handlePaymentIntentSucceeded($event),
                 'payment_intent.payment_failed'      => $this->handlePaymentIntentFailed($event),
+                'charge.refunded'                    => $this->handleChargeRefunded($event),
                 default                              => null, // ignore others gracefully
             };
         } catch (\Throwable $e) {
@@ -198,5 +200,60 @@ class StripeConnectController extends Controller
             return;
         }
         $order->update(['status' => 'failed']);
+    }
+
+    /**
+     * Stripe says the charge was refunded (full or partial). Mirror
+     * cumulative refund state onto the Order + reduce the platform
+     * fee snapshot proportional to the amount that came back.
+     *
+     * Idempotent: the cumulative amounts come straight from Stripe's
+     * event, so re-processing the same event is a no-op write.
+     *
+     * Side-effect: send OrderRefunded notification ONCE per refund
+     * event. Stripe issues a separate charge.refunded event per
+     * Refund record, so a 3-part partial refund yields 3 emails.
+     */
+    private function handleChargeRefunded(\Stripe\Event $event): void
+    {
+        $charge = $event->data->object;
+        $order = Order::where('stripe_charge_id', $charge->id)->first();
+        if (! $order) {
+            return;
+        }
+
+        // Stripe's `amount_refunded` is cumulative (sum of all refunds
+        // against this charge). The delta is what was refunded in THIS
+        // event.
+        $previousRefund = (int) $order->refund_amount_cents;
+        $totalRefunded = (int) ($charge->amount_refunded ?? 0);
+        $delta = max(0, $totalRefunded - $previousRefund);
+
+        if ($delta <= 0) {
+            return; // already accounted for — Stripe redelivery
+        }
+
+        // Application fee reverses proportionally. We don't compute it
+        // ourselves — Stripe's `application_fee_amount` on the latest
+        // Refund record carries the exact figure, but to keep this
+        // handler self-contained we recompute the final platform fee
+        // from the original charge's app fee scaled by the un-refunded
+        // share.
+        $originalFee = (int) ($charge->application_fee_amount ?? 0);
+        $unrefundedShare = max(0, (int) $order->total_cents - $totalRefunded);
+        $newFee = $order->total_cents > 0
+            ? (int) round($originalFee * ($unrefundedShare / $order->total_cents))
+            : 0;
+
+        $fullyRefunded = $totalRefunded >= (int) $order->total_cents;
+        $order->update([
+            'refund_amount_cents' => $totalRefunded,
+            'platform_fee_cents' => $newFee,
+            'status' => $fullyRefunded ? Order::STATUS_REFUNDED : $order->status,
+            'refunded_at' => $fullyRefunded ? ($order->refunded_at ?? now()) : $order->refunded_at,
+        ]);
+
+        Notification::route('mail', $order->customer_email)
+            ->notify(new OrderRefunded($order->fresh(), $delta));
     }
 }

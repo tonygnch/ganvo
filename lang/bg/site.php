@@ -352,6 +352,13 @@ return [
         'shipped_tracking' => '**Номер за проследяване:** :number',
         'shipped_track_action' => 'Проследи пратката',
         'shipped_view_action' => 'Виж поръчката',
+
+        'refunded_subject'  => 'Възстановена сума за поръчка :number — :tenant',
+        'refunded_greeting' => 'Здравей :name,',
+        'refunded_full'     => 'Издадохме пълно възстановяване в размер на **:amount** за поръчката ти от :tenant.',
+        'refunded_partial'  => 'Издадохме частично възстановяване в размер на **:amount** за поръчката ти от :tenant.',
+        'refunded_eta'      => 'В зависимост от банката ти, средствата може да отнемат до 5–10 работни дни, за да се върнат в сметката.',
+        'refunded_view_action' => 'Виж поръчката',
     ],
 
     'statuses' => [

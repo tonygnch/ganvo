@@ -8,6 +8,7 @@ use Stripe\Account;
 use Stripe\AccountLink;
 use Stripe\Exception\ApiErrorException;
 use Stripe\PaymentIntent;
+use Stripe\Refund;
 use Stripe\StripeClient;
 
 /**
@@ -290,6 +291,55 @@ class StripeConnectService
     {
         $domain = config('ganvo.central_domain');
         return $tenant->slug . '.' . $domain;
+    }
+
+    /**
+     * Refund a charge on a connected account. Pass null for $amountCents
+     * to do a full refund. Always sets:
+     *
+     *   reverse_transfer       → debits the merchant's connected balance
+     *                            (otherwise the merchant keeps the funds
+     *                            and Ganvo eats the cost of the refund)
+     *   refund_application_fee → returns Ganvo's platform fee proportional
+     *                            to the refund amount, so a 50% refund
+     *                            takes 50% of the platform fee back too
+     *
+     * Idempotent in practice: Stripe allows multiple partial refunds
+     * against the same charge up to the total. Caller (the merchant
+     * Filament action) is responsible for guarding against over-refund.
+     *
+     * @throws ApiErrorException on Stripe API failures (over-refund,
+     *                           expired charge, etc.)
+     */
+    public function refundCharge(Order $order, ?int $amountCents = null): Refund
+    {
+        if (! $order->isStripePayment()) {
+            throw new \RuntimeException('Order has no Stripe charge to refund.');
+        }
+        $tenant = $order->tenant;
+        if (! $tenant?->hasConnect()) {
+            throw new \RuntimeException('Tenant has no Connect account.');
+        }
+
+        $params = [
+            'charge' => $order->stripe_charge_id,
+            'reverse_transfer' => true,
+            'refund_application_fee' => true,
+            // Carry the order id back so the charge.refunded webhook
+            // can find the right Order without a database scan.
+            'metadata' => [
+                'ganvo_order_id' => (string) $order->id,
+                'ganvo_order_number' => (string) $order->order_number,
+            ],
+        ];
+        if ($amountCents !== null) {
+            $params['amount'] = (int) $amountCents;
+        }
+
+        return $this->stripe->refunds->create(
+            $params,
+            ['stripe_account' => $tenant->stripe_account_id],
+        );
     }
 
     /**

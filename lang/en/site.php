@@ -353,6 +353,13 @@ return [
         'shipped_tracking' => '**Tracking number:** :number',
         'shipped_track_action' => 'Track shipment',
         'shipped_view_action' => 'View order',
+
+        'refunded_subject'  => 'Refund issued for order :number — :tenant',
+        'refunded_greeting' => 'Hi :name,',
+        'refunded_full'     => 'We\'ve issued a full refund of **:amount** for your order from :tenant.',
+        'refunded_partial'  => 'We\'ve issued a partial refund of **:amount** for your order from :tenant.',
+        'refunded_eta'      => 'Depending on your bank, the funds may take up to 5–10 business days to appear back in your account.',
+        'refunded_view_action' => 'View order',
     ],
 
     'statuses' => [
