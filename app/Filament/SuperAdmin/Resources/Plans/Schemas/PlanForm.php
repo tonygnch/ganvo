@@ -89,6 +89,19 @@ class PlanForm
                             ->helperText('From Stripe → Products → Price (recurring, yearly).'),
                     ]),
 
+                Section::make('Storefront platform fee')
+                    ->description('Default Stripe Connect platform fee tenants on this plan pay per storefront transaction. Stored as basis points (100 = 1%). A specific tenant can override this on their record. Defaults to 0 — no fee charged. We\'ll tune per plan later.')
+                    ->schema([
+                        TextInput::make('platform_fee_bps')
+                            ->label('Platform fee (basis points)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(5000)
+                            ->default(0)
+                            ->suffix('bps')
+                            ->helperText('1% = 100 bps. 250 = 2.5%. Capped at 5000 (50%) defensively. 0 means no fee on transactions for tenants on this plan.'),
+                    ]),
+
                 Section::make('Visibility & order')
                     ->columns(3)
                     ->schema([

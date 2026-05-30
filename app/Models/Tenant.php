@@ -40,8 +40,14 @@ class Tenant extends Model
         'contact_phone',
         'subscription_plan',
         'billing_period',
-        'stripe_account_id',
-        'stripe_id',
+        'stripe_account_id',                    // Connect account id (acct_…)
+        'stripe_connect_account_type',          // 'express' | 'standard' | null
+        'stripe_connect_charges_enabled',
+        'stripe_connect_payouts_enabled',
+        'stripe_connect_details_submitted',
+        'stripe_connect_disabled_reason',
+        'platform_fee_bps',
+        'stripe_id',                            // Cashier subscription customer id
         'pm_type',
         'pm_last_four',
         'trial_ends_at',
@@ -55,6 +61,10 @@ class Tenant extends Model
         'onboarding_progress' => 'array',
         'onboarded_at' => 'datetime',
         'trial_ends_at' => 'datetime',
+        'stripe_connect_charges_enabled' => 'boolean',
+        'stripe_connect_payouts_enabled' => 'boolean',
+        'stripe_connect_details_submitted' => 'boolean',
+        'platform_fee_bps' => 'integer',
     ];
 
     // The wizard step sequence — order matters; advance() walks this list.
@@ -71,6 +81,56 @@ class Tenant extends Model
     public function isOnboarded(): bool
     {
         return $this->onboarding_step === 'done';
+    }
+
+    /* -----------------------------------------------------------------
+     | Stripe Connect helpers
+     |
+     | `stripe_account_id` is the Connect account id (acct_…) when set.
+     | `canAcceptRealPayments()` is the single gate the storefront
+     | checks before swapping out of stub mode. Anything below is
+     | derived state from columns synced by the account.updated webhook
+     | + explicit syncFromStripe() pulls.
+     ------------------------------------------------------------------*/
+
+    /** True when a Connect account exists (regardless of status). */
+    public function hasConnect(): bool
+    {
+        return ! empty($this->stripe_account_id);
+    }
+
+    /**
+     * The one bit the checkout flow checks: connected, charges_enabled,
+     * and details fully submitted. Stripe can revoke charges_enabled
+     * mid-flight (compliance issues, restricted countries) — when that
+     * happens, the storefront falls back to stub mode automatically.
+     */
+    public function canAcceptRealPayments(): bool
+    {
+        return $this->hasConnect()
+            && (bool) $this->stripe_connect_charges_enabled
+            && (bool) $this->stripe_connect_details_submitted;
+    }
+
+    /**
+     * Effective platform fee in basis points (1% = 100). Resolution:
+     *   1. Tenant-level override (operator-set or support-set).
+     *   2. Plan-level default.
+     *   3. 0 (no fee) — the safe default while we tune pricing.
+     *
+     * Clamped to [0, 5000] (50%) so a mis-set value can't accidentally
+     * eat every transaction.
+     */
+    public function effectiveFeeBps(): int
+    {
+        $bps = $this->platform_fee_bps;
+        if ($bps === null) {
+            $plan = $this->subscription_plan
+                ? \App\Models\Plan::where('slug', $this->subscription_plan)->first()
+                : null;
+            $bps = (int) ($plan?->platform_fee_bps ?? 0);
+        }
+        return max(0, min(5000, (int) $bps));
     }
 
     /** Move the tenant to the next step in the wizard. No-op when already done. */

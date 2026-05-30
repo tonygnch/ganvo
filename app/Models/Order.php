@@ -44,11 +44,20 @@ class Order extends Model
         'discount_name',
         'discount_amount_cents',
         'status',
+        // 'stub' = legacy/demo (auto-paid) / 'stripe' = real Connect
+        // PaymentIntent. Lets the system run both modes side-by-side
+        // during rollout + indefinitely for tenants without Connect.
+        'payment_method',
         'carrier',
         'tracking_number',
         'tracking_url',
         'notes',
         'stripe_payment_intent_id',
+        'stripe_charge_id',
+        'stripe_application_fee_id',
+        // Snapshot of the platform fee collected at order time.
+        // Stays accurate even if the rate changes later.
+        'platform_fee_cents',
         'shipping_address',
         'paid_at',
         'shipped_at',

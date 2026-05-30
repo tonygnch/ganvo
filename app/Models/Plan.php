@@ -36,6 +36,10 @@ class Plan extends Model
         'discount_label',
         'discount_starts_at',
         'discount_ends_at',
+        // Default Stripe Connect platform fee tenants on this plan
+        // pay on every transaction (basis points, 1% = 100).
+        // Defaults to 0 — we'll tune per plan later.
+        'platform_fee_bps',
     ];
 
     protected $casts = [
@@ -45,6 +49,7 @@ class Plan extends Model
         'is_active' => 'boolean',
         'discount_starts_at' => 'datetime',
         'discount_ends_at' => 'datetime',
+        'platform_fee_bps' => 'integer',
     ];
 
     /**
