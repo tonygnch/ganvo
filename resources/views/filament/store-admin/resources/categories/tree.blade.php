@@ -72,7 +72,12 @@
             -webkit-backdrop-filter: blur(8px);
         }
         .dark .ct-toolbar { background: rgba(17,24,39,.85); border-color: rgba(255,255,255,.08); }
-        .ct-toolbar .ct-help {
+        .ct-toolbar .ct-help,
+        .dark .ct-toolbar .ct-help {
+            /* Strip the standalone .ct-help chrome when it's nested
+               inside the toolbar — both light + dark variants need the
+               override since '.dark .ct-help' otherwise wins on
+               specificity-tie-by-declaration-order. */
             flex: 1;
             min-width: 0;
             margin: 0;
