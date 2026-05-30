@@ -336,7 +336,6 @@ class StripeConnectService
 
         $params = [
             'charge' => $order->stripe_charge_id,
-            'refund_application_fee' => true,
             // Carry the order id back so the charge.refunded webhook
             // can find the right Order without a database scan.
             'metadata' => [
@@ -344,6 +343,18 @@ class StripeConnectService
                 'ganvo_order_number' => (string) $order->order_number,
             ],
         ];
+
+        // Only ask Stripe to reverse the platform fee when there was
+        // actually one charged. Tenants on `platform_fee_bps = 0`
+        // (the safe default until pricing is set) had no
+        // application_fee_amount on the PaymentIntent, so no
+        // ApplicationFee object exists — Stripe errors with
+        // "Attempting to refund_application_fee … but it has no
+        // application fee" if we ask for the reversal anyway.
+        if ((int) $order->platform_fee_cents > 0) {
+            $params['refund_application_fee'] = true;
+        }
+
         if ($amountCents !== null) {
             $params['amount'] = (int) $amountCents;
         }
