@@ -19,6 +19,15 @@ use Illuminate\Support\Facades\Route;
 
 $centralDomain = config('ganvo.central_domain');
 
+// Stripe Connect webhook — REGISTERED OUTSIDE the central-domain
+// group so it resolves no matter which host Stripe hits. In prod
+// Stripe always posts to the central domain (https://ganvo.bg/…),
+// but the Stripe CLI in dev forwards to whatever URL you point it
+// at — including tenant subdomains. Signature verification + CSRF
+// exemption are in the controller / bootstrap; host doesn't matter.
+Route::post('/webhooks/stripe/connect', [\App\Http\Controllers\Webhooks\StripeConnectController::class, 'handle'])
+    ->name('webhooks.stripe.connect');
+
 Route::domain($centralDomain)->group(function () {
     Route::get('/', function (\Illuminate\Http\Request $request) {
         // Coming-soon gate. When config('ganvo.coming_soon.enabled') is true,
@@ -82,14 +91,6 @@ Route::domain($centralDomain)->group(function () {
     Route::post('/stop-impersonating', [ImpersonateController::class, 'stop'])
         ->middleware('auth')
         ->name('impersonate.stop');
-
-    // Stripe Connect webhook — fires for storefront PaymentIntent
-    // events (payment_intent.succeeded / failed) + account state
-    // changes (account.updated / deauthorized). Separate from
-    // Cashier's subscription webhook; uses its own signing secret.
-    // CSRF exemption configured in bootstrap/app.php.
-    Route::post('/webhooks/stripe/connect', [\App\Http\Controllers\Webhooks\StripeConnectController::class, 'handle'])
-        ->name('webhooks.stripe.connect');
 
     // ---- Merchant onboarding ----
     // Signup + login live here (not on tenant subdomains). The wizard owns
