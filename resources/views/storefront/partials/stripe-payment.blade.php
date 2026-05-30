@@ -173,23 +173,79 @@
                 });
             });
 
+            function resetButton(submitBtn, label) {
+                if (! submitBtn) return;
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = label || 'Pay now';
+            }
+
             function confirm() {
                 clearError();
                 var submitBtn = form.querySelector('button[type="submit"]');
-                if (submitBtn) { submitBtn.disabled = true; submitBtn.innerHTML = 'Confirming payment…'; }
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = 'Confirming payment…';
+                }
 
+                // `redirect: 'if_required'` means: only navigate away
+                // when 3DS / off-session auth is actually needed. For
+                // succeeded charges (most common), the promise resolves
+                // synchronously with the PI object and we redirect to
+                // the order page ourselves. Stops the "stuck on
+                // Confirming…" bug where Stripe returns success but
+                // never navigates.
                 stripe.confirmPayment({
                     elements: elements,
                     clientSecret: clientSecret,
                     confirmParams: { return_url: returnUrl },
+                    redirect: 'if_required',
                 }).then(function (result) {
-                    // If we got here without a redirect, an error
-                    // happened. Stripe routes successful payments
-                    // (incl. 3DS chains) through the return_url.
-                    if (result.error) {
-                        showError(result.error.message || 'Payment failed.');
-                        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = 'Pay now'; }
+                    if (! result) {
+                        // Defensive: Stripe.js sometimes resolves with
+                        // undefined when something weird happens at the
+                        // browser layer. Treat as a recoverable error.
+                        showError('Payment status unknown — please try again.');
+                        resetButton(submitBtn, 'Pay now');
+                        return;
                     }
+
+                    if (result.error) {
+                        // Card declined / validation / etc. Stripe gives
+                        // us a user-friendly message most of the time.
+                        showError(result.error.message || 'Payment failed. Please check your card and try again.');
+                        resetButton(submitBtn, 'Try again');
+                        return;
+                    }
+
+                    var pi = result.paymentIntent;
+                    if (! pi) {
+                        showError('No payment intent returned. Please try again.');
+                        resetButton(submitBtn, 'Try again');
+                        return;
+                    }
+
+                    if (pi.status === 'succeeded' || pi.status === 'processing') {
+                        // Hard navigate so the order page loads fresh
+                        // + the webhook race-recovery kicks in.
+                        window.location.href = returnUrl;
+                        return;
+                    }
+
+                    if (pi.status === 'requires_action' || pi.status === 'requires_confirmation') {
+                        // Stripe is mid-flight (3DS modal, etc.) — when
+                        // it's done it'll navigate via return_url, so
+                        // leave the button disabled here.
+                        return;
+                    }
+
+                    // Anything else (requires_payment_method, canceled)
+                    // → surface + let them retry.
+                    showError('Payment was not completed (status: ' + pi.status + '). Please try again.');
+                    resetButton(submitBtn, 'Try again');
+                }).catch(function (e) {
+                    // Network error / Stripe.js internal failure / etc.
+                    showError((e && e.message) ? e.message : 'Something went wrong while contacting your bank. Please try again.');
+                    resetButton(submitBtn, 'Try again');
                 });
             }
         }
