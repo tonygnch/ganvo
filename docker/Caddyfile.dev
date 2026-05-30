@@ -1,0 +1,35 @@
+# Dev-only HTTPS reverse proxy. Caddy listens on :443 and forwards
+# traffic to the app container on :8000. The Apple Pay / Google Pay
+# wallet buttons require HTTPS to render in Safari + the storefront
+# domain must be registered with Stripe (handled automatically by
+# StripeConnectService::registerPaymentMethodDomain).
+#
+# Certificates come from mkcert on the host (see docker/HTTPS-DEV.md).
+# We don't use Caddy's `tls internal` because Safari rejects Caddy's
+# self-signed cert unless its root CA is trusted — mkcert handles
+# the macOS keychain integration in one step.
+{
+    auto_https off
+    admin off
+    # Quiet Caddy down — dev sees a lot of noise otherwise.
+    log {
+        format console
+        level WARN
+    }
+}
+
+# Matches every tenant subdomain plus the central domain. The same
+# certificate (a wildcard from mkcert) covers all of them.
+*.ganvo.lvh.me, ganvo.lvh.me {
+    tls /etc/caddy/certs/ganvo.lvh.me.crt /etc/caddy/certs/ganvo.lvh.me.key
+
+    # Inside the Docker network, the app container is reachable as
+    # `app` on its own port 8000 (it's not the host-published one).
+    # The reverse_proxy directive sets X-Forwarded-* headers
+    # automatically — Laravel reads them via the TrustProxies
+    # middleware (already wired) so url() generates https:// links.
+    reverse_proxy app:8000 {
+        header_up Host {host}
+        header_up X-Forwarded-Proto https
+    }
+}

@@ -57,5 +57,42 @@ services:
       retries: 10
     restart: unless-stopped
 
+  # Local HTTPS reverse proxy. Opt-in via the `https` profile so a
+  # plain `docker compose up` doesn't pull Caddy + bind :443. Useful
+  # for testing Apple Pay / Google Pay buttons at the storefront
+  # checkout (Stripe.js will only render wallet buttons on HTTPS) +
+  # for sanity-checking link generation under https://.
+  #
+  #   One-time setup (see docker/HTTPS-DEV.md):
+  #     1. brew install mkcert nss
+  #     2. mkcert -install
+  #     3. mkcert -cert-file docker/certs/ganvo.lvh.me.crt \
+  #               -key-file  docker/certs/ganvo.lvh.me.key \
+  #               '*.ganvo.lvh.me' 'ganvo.lvh.me'
+  #
+  #   Start:
+  #     docker compose --profile https up -d
+  #
+  #   Then browse to https://acme.ganvo.lvh.me/ (etc).
+  #
+  # Stop the HTTPS proxy (keep app running):
+  #     docker compose --profile https stop https
+  https:
+    image: caddy:2-alpine
+    container_name: ganvo-https
+    profiles: [https]
+    ports:
+      - "443:443"
+    volumes:
+      - ./docker/Caddyfile.dev:/etc/caddy/Caddyfile:ro
+      - ./docker/certs:/etc/caddy/certs:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - app
+    restart: unless-stopped
+
 volumes:
   mysql-data:
+  caddy-data:
+  caddy-config:
