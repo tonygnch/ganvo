@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Notifications\OrderRefunded;
 use App\Notifications\OrderShipped;
 use App\Services\Payments\StripeConnectService;
+use App\Services\Shipping\CarrierRegistry;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -25,22 +26,9 @@ class ViewOrder extends ViewRecord
 {
     protected static string $resource = OrderResource::class;
 
-    /** Carrier slug → display label. Used by both the form select + email. */
-    private const CARRIERS = [
-        // EU + BG-relevant carriers first since most early merchants are EU.
-        'dpd'       => 'DPD',
-        'gls'       => 'GLS',
-        'dhl'       => 'DHL',
-        'postnl'    => 'PostNL',
-        'econt'     => 'Econt',
-        'speedy'    => 'Speedy',
-        // North America
-        'ups'       => 'UPS',
-        'usps'      => 'USPS',
-        'fedex'     => 'FedEx',
-        // Catch-all
-        'other'     => 'Other',
-    ];
+    // Carrier metadata lives in App\Services\Shipping\CarrierRegistry
+    // so admin + email + storefront all read from the same source.
+    // Add carriers there and they appear here automatically.
 
     public function infolist(Schema $schema): Schema
     {
@@ -93,7 +81,7 @@ class ViewOrder extends ViewRecord
                 ->schema([
                     TextEntry::make('carrier')
                         ->placeholder('—')
-                        ->formatStateUsing(fn (?string $state) => self::CARRIERS[$state] ?? $state),
+                        ->formatStateUsing(fn (?string $state) => CarrierRegistry::label($state)),
                     TextEntry::make('tracking_number')->placeholder('—')->copyable(),
                     TextEntry::make('tracking_url')
                         ->placeholder('—')
@@ -173,7 +161,7 @@ class ViewOrder extends ViewRecord
                 ->visible(fn () => $this->record->isShippable())
                 ->schema([
                     Select::make('carrier')
-                        ->options(self::CARRIERS)
+                        ->options(CarrierRegistry::options())
                         ->required()
                         ->searchable(),
                     TextInput::make('tracking_number')
@@ -181,16 +169,23 @@ class ViewOrder extends ViewRecord
                         ->maxLength(255),
                     TextInput::make('tracking_url')
                         ->url()
-                        ->placeholder('https://...')
+                        ->placeholder('Auto-generated from carrier + tracking number')
                         ->maxLength(500)
-                        ->helperText('Optional. Paste the carrier\'s tracking page URL.'),
+                        ->helperText('Optional — leave blank to use the carrier\'s standard tracking page (DHL, Econt, Speedy, etc.). Override here if the carrier gave you a custom URL.'),
                 ])
                 ->action(function (array $data) {
+                    // Auto-generate the URL from the registry when the
+                    // operator didn't paste one. Falls back to null for
+                    // carriers without a public tracking page (e.g. "Other").
+                    $url = filled($data['tracking_url'] ?? null)
+                        ? $data['tracking_url']
+                        : CarrierRegistry::trackingUrlFor($data['carrier'], $data['tracking_number']);
+
                     $this->record->update([
                         'status' => Order::STATUS_SHIPPED,
                         'carrier' => $data['carrier'],
                         'tracking_number' => $data['tracking_number'],
-                        'tracking_url' => $data['tracking_url'] ?? null,
+                        'tracking_url' => $url,
                         'shipped_at' => now(),
                     ]);
 
@@ -218,15 +213,21 @@ class ViewOrder extends ViewRecord
                     'tracking_url' => $this->record->tracking_url,
                 ])
                 ->schema([
-                    Select::make('carrier')->options(self::CARRIERS)->required()->searchable(),
+                    Select::make('carrier')->options(CarrierRegistry::options())->required()->searchable(),
                     TextInput::make('tracking_number')->required()->maxLength(255),
-                    TextInput::make('tracking_url')->url()->maxLength(500),
+                    TextInput::make('tracking_url')
+                        ->url()
+                        ->maxLength(500)
+                        ->helperText('Leave blank to regenerate from carrier + tracking number.'),
                 ])
                 ->action(function (array $data) {
+                    $url = filled($data['tracking_url'] ?? null)
+                        ? $data['tracking_url']
+                        : CarrierRegistry::trackingUrlFor($data['carrier'], $data['tracking_number']);
                     $this->record->update([
                         'carrier' => $data['carrier'],
                         'tracking_number' => $data['tracking_number'],
-                        'tracking_url' => $data['tracking_url'] ?? null,
+                        'tracking_url' => $url,
                     ]);
                     Notification::make()->success()->title('Tracking updated')->send();
                 }),

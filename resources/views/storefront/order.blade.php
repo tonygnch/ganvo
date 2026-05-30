@@ -271,10 +271,12 @@
 
         @if ($isShipped && $order->tracking_number)
             @php
-                $carrierLabel = match ($order->carrier) {
-                    'usps' => 'USPS', 'ups' => 'UPS', 'fedex' => 'FedEx', 'dhl' => 'DHL',
-                    default => ucfirst((string) $order->carrier),
-                };
+                $carrierLabel = \App\Services\Shipping\CarrierRegistry::label($order->carrier);
+                // Fall back to the registry's URL template when the
+                // stored tracking_url is empty — covers legacy orders +
+                // any case where the operator skipped the URL field.
+                $trackingHref = $order->tracking_url
+                    ?: \App\Services\Shipping\CarrierRegistry::trackingUrlFor($order->carrier, $order->tracking_number);
             @endphp
             <div class="ship-banner">
                 <div class="icon">↗</div>
@@ -282,8 +284,8 @@
                     <h3>{{ __('site.order.shipped_via', ['carrier' => $carrierLabel]) }}</h3>
                     <div class="meta">{!! __('site.order.tracking_meta', ['code' => '<code>' . e($order->tracking_number) . '</code>', 'ago' => $order->shipped_at->diffForHumans()]) !!}</div>
                 </div>
-                @if ($order->tracking_url)
-                    <a href="{{ $order->tracking_url }}" target="_blank" rel="noopener" class="track-link">{{ __('site.order.track_shipment') }}</a>
+                @if ($trackingHref)
+                    <a href="{{ $trackingHref }}" target="_blank" rel="noopener" class="track-link">{{ __('site.order.track_shipment') }}</a>
                 @endif
             </div>
         @endif
