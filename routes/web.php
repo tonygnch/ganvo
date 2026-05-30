@@ -140,6 +140,23 @@ Route::domain($centralDomain)->group(function () {
         // Categories drag-tree persistence — see CategoryTreeController.
         Route::post('/store/categories/reorder', [\App\Http\Controllers\StoreAdmin\CategoryTreeController::class, 'reorder'])
             ->name('store.categories.reorder');
+
+        // Stripe Connect onboarding + management — backs the Payments
+        // Filament page. The page just renders status; these endpoints
+        // do the actions (start onboarding, return from Stripe, open
+        // the Express dashboard, disconnect, manual sync).
+        Route::post('/store/payments/connect/express', [\App\Http\Controllers\StoreAdmin\PaymentsController::class, 'startExpressOnboarding'])
+            ->name('store.payments.connect.express');
+        Route::get('/store/payments/return', [\App\Http\Controllers\StoreAdmin\PaymentsController::class, 'handleReturn'])
+            ->name('store.payments.return');
+        Route::get('/store/payments/refresh', [\App\Http\Controllers\StoreAdmin\PaymentsController::class, 'handleRefresh'])
+            ->name('store.payments.refresh');
+        Route::post('/store/payments/dashboard', [\App\Http\Controllers\StoreAdmin\PaymentsController::class, 'openDashboard'])
+            ->name('store.payments.dashboard');
+        Route::post('/store/payments/sync', [\App\Http\Controllers\StoreAdmin\PaymentsController::class, 'syncStatus'])
+            ->name('store.payments.sync');
+        Route::post('/store/payments/disconnect', [\App\Http\Controllers\StoreAdmin\PaymentsController::class, 'disconnect'])
+            ->name('store.payments.disconnect');
     });
 
     // ---- Platform billing (Stripe Checkout + Customer Portal) ----
