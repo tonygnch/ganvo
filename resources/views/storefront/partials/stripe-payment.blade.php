@@ -59,6 +59,14 @@
         color: #991b1b;
         font-size: .875rem;
     }
+    /* Hide the error box when it's hidden via attribute OR empty.
+       Theme CSS sometimes overrides the [hidden] attribute with a
+       display:flex on the parent, leaving the empty box visible as a
+       thin red border line at the bottom of the payment section. The
+       :empty match catches that case + protects against any "show but
+       no message" code path. !important so it wins over theme cascade. */
+    .sp-pay-error[hidden],
+    .sp-pay-error:empty { display: none !important; }
 </style>
 
 <script src="https://js.stripe.com/v3/" defer></script>
