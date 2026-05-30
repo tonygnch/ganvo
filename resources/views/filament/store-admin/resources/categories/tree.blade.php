@@ -69,7 +69,15 @@
             border: 1px solid rgba(0,0,0,.08);
             border-radius: 8px;
             transition: border-color .12s ease, background-color .12s ease;
+            /* Drag from the handle, not text — kill native text-
+               selection so misclicks on the row don't drop you into a
+               selection state instead of a drag attempt. */
+            user-select: none;
+            -webkit-user-select: none;
         }
+        /* But keep the slug + name copy-friendly when there's an
+           actual selection intent (the operator double-clicks). */
+        .ct-row .ct-name, .ct-row .ct-slug { user-select: text; -webkit-user-select: text; }
         .ct-row:hover { border-color: rgba(0,0,0,.2); }
         .dark .ct-row { background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.08); }
         .dark .ct-row:hover { border-color: rgba(255,255,255,.2); }
@@ -172,70 +180,81 @@
         }
     </style>
 
-    @push('scripts')
-        <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"
-                crossorigin="anonymous"
-                defer></script>
-        <script>
-            (function () {
-                // Lazy-init: SortableJS may load after our script (defer),
-                // so poll briefly until it's there. Beats a sync include.
-                function init() {
-                    if (typeof Sortable === 'undefined') return setTimeout(init, 50);
-                    var component = @this; // Filament/Livewire page instance
+    {{-- NB: Filament v5 doesn't expose an @stack('scripts'), so we
+         load SortableJS + bind inline right here. Without this the
+         drag binding never attaches and the browser falls back to
+         selecting text on mousedown. --}}
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js" crossorigin="anonymous"></script>
+    <script>
+        (function () {
+            // Lazy-init: SortableJS may load after our script, so poll
+            // briefly until it's there. Beats a sync include.
+            function init() {
+                if (typeof Sortable === 'undefined') return setTimeout(init, 50);
+                var component = @this; // Filament/Livewire page instance
 
-                    function walk() {
-                        // Collect every node in DOM order, tagging each with
-                        // its parent_id (from the enclosing <ul>) and
-                        // sort_order (its index among siblings).
-                        var payload = [];
-                        document.querySelectorAll('[data-ct-root] .ct-list').forEach(function (ul) {
-                            var parentId = ul.getAttribute('data-parent-id') || null;
-                            var idx = 0;
-                            ul.querySelectorAll(':scope > li[data-id]').forEach(function (li) {
-                                payload.push({
-                                    id: parseInt(li.getAttribute('data-id'), 10),
-                                    parent_id: parentId ? parseInt(parentId, 10) : null,
-                                    sort_order: idx++,
-                                });
+                function walk() {
+                    // Collect every node in DOM order, tagging each with
+                    // its parent_id (from the enclosing <ul>) and
+                    // sort_order (its index among siblings).
+                    var payload = [];
+                    document.querySelectorAll('[data-ct-root], [data-ct-root] .ct-list').forEach(function (ul) {
+                        if (! ul.matches('.ct-list')) return;
+                        var parentId = ul.getAttribute('data-parent-id') || null;
+                        var idx = 0;
+                        ul.querySelectorAll(':scope > li[data-id]').forEach(function (li) {
+                            payload.push({
+                                id: parseInt(li.getAttribute('data-id'), 10),
+                                parent_id: parentId ? parseInt(parentId, 10) : null,
+                                sort_order: idx++,
                             });
                         });
-                        return payload;
-                    }
-
-                    function persist() {
-                        component.call('reorder', walk());
-                    }
-
-                    function bindAll() {
-                        document.querySelectorAll('[data-ct-root] .ct-list').forEach(function (ul) {
-                            if (ul.__ctBound) return;
-                            ul.__ctBound = true;
-                            Sortable.create(ul, {
-                                group: 'ct-shared',
-                                handle: '.ct-handle',
-                                draggable: 'li[data-id]',
-                                animation: 140,
-                                fallbackOnBody: true,
-                                swapThreshold: 0.55,
-                                emptyInsertThreshold: 12,
-                                onEnd: persist,
-                            });
-                        });
-                    }
-
-                    bindAll();
-
-                    // Re-bind after Livewire morphs the DOM (after a reorder
-                    // refresh) — Livewire fires 'morph.updated' per element
-                    // it patches, but we just listen for the page-wide event.
-                    if (window.Livewire) {
-                        window.Livewire.hook('morph.updated', bindAll);
-                    }
+                    });
+                    return payload;
                 }
+
+                function persist() {
+                    component.call('reorder', walk());
+                }
+
+                function bindAll() {
+                    document.querySelectorAll('.ct-list').forEach(function (ul) {
+                        if (ul.__ctBound) return;
+                        ul.__ctBound = true;
+                        Sortable.create(ul, {
+                            group: 'ct-shared',
+                            handle: '.ct-handle',
+                            draggable: 'li[data-id]',
+                            animation: 140,
+                            fallbackOnBody: true,
+                            swapThreshold: 0.55,
+                            emptyInsertThreshold: 12,
+                            // Prevent browser native drag/text-select
+                            // from racing SortableJS at mousedown.
+                            forceFallback: false,
+                            preventOnFilter: true,
+                            onEnd: persist,
+                        });
+                    });
+                }
+
+                bindAll();
+
+                // Re-bind after Livewire morphs the DOM (after a reorder
+                // refresh) — Livewire v3 fires hooks via global API.
+                if (window.Livewire && typeof window.Livewire.hook === 'function') {
+                    window.Livewire.hook('morph.updated', bindAll);
+                    window.Livewire.hook('commit', function (data) {
+                        // Belt-and-braces: re-bind after any commit completes.
+                        if (data && data.succeed) data.succeed(function () { setTimeout(bindAll, 0); });
+                    });
+                }
+            }
+            if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);
-                if (document.readyState !== 'loading') init();
-            })();
-        </script>
-    @endpush
+            } else {
+                init();
+            }
+        })();
+    </script>
 </x-filament-panels::page>
