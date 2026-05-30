@@ -74,19 +74,55 @@
         .dark .ct-row { background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.08); }
         .dark .ct-row:hover { border-color: rgba(255,255,255,.2); }
 
+        /* The drag handle is a chunky, obvious button-sized hit target
+           (~32×32) so it's easy to grab with mouse or trackpad. The
+           character is bigger + bolder; the box gets a soft hover so
+           there's a clear "grab me" affordance. touch-action:none
+           keeps the browser from scrolling instead of dragging on
+           touch devices. */
         .ct-handle {
             cursor: grab;
             user-select: none;
-            color: rgba(0,0,0,.4);
-            font-size: 1rem;
+            -webkit-user-select: none;
+            touch-action: none;
+            color: rgba(0,0,0,.55);
+            font-size: 1.25rem;
             line-height: 1;
-            padding: 0 .125rem;
+            font-weight: 700;
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            border: 1px solid transparent;
             font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            flex-shrink: 0;
+            transition: background-color .12s ease, border-color .12s ease, color .12s ease;
         }
-        .ct-handle:active { cursor: grabbing; }
-        .dark .ct-handle { color: rgba(255,255,255,.4); }
-        .ct-handle-inline { padding: 0 .25rem; border: 1px solid rgba(0,0,0,.12); border-radius: 4px; font-size: .75rem; }
+        .ct-handle:hover {
+            background: rgba(0,0,0,.06);
+            border-color: rgba(0,0,0,.12);
+            color: rgba(0,0,0,.85);
+        }
+        .ct-handle:active { cursor: grabbing; background: rgba(0,0,0,.1); }
+        .dark .ct-handle { color: rgba(255,255,255,.55); }
+        .dark .ct-handle:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.15); color: rgba(255,255,255,.95); }
+        .dark .ct-handle:active { background: rgba(255,255,255,.12); }
+        /* Inline-in-text variant used by the help banner — small, no
+           hover/touch behavior since it's not interactive there. */
+        .ct-handle-inline {
+            cursor: default;
+            width: auto; height: auto;
+            font-size: .75rem;
+            padding: 1px 6px;
+            border: 1px solid rgba(0,0,0,.12);
+            color: inherit;
+            background: transparent;
+        }
+        .ct-handle-inline:hover { background: transparent; border-color: rgba(0,0,0,.12); color: inherit; }
         .dark .ct-handle-inline { border-color: rgba(255,255,255,.15); }
+        .dark .ct-handle-inline:hover { background: transparent; border-color: rgba(255,255,255,.15); color: inherit; }
 
         .ct-name { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ct-slug { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .75rem; color: rgba(0,0,0,.45); }
