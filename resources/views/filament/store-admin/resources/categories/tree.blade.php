@@ -21,9 +21,20 @@
             <p style="margin: 0; font-size: .9375rem;">Add your first category to start organizing your catalog.</p>
         </div>
     @else
-        <div class="ct-help">
-            Drag the <span class="ct-handle ct-handle-inline" aria-hidden="true">⋮⋮</span> handle to reorder.
-            Drop a node onto another to make it a child; drop into the top-level list to make it a root.
+        {{-- Sticky action bar. Save/Discard light up when the operator
+             has dragged something (= unsaved changes). On clean state
+             both buttons are disabled to make the "nothing to save"
+             state visually obvious. --}}
+        <div class="ct-toolbar" data-ct-toolbar>
+            <div class="ct-help">
+                Drag the <span class="ct-handle ct-handle-inline" aria-hidden="true">⋮⋮</span> handle to reorder.
+                Drop into another node to nest it; drop into the top list to make it a root.
+            </div>
+            <div class="ct-toolbar-actions">
+                <span class="ct-dirty-flag" data-ct-dirty-flag hidden>Unsaved changes</span>
+                <button type="button" class="ct-btn-secondary" data-ct-discard disabled>Discard</button>
+                <button type="button" class="ct-btn-primary" data-ct-save disabled>Save changes</button>
+            </div>
         </div>
 
         {{-- wire:ignore is the critical bit: once Livewire mounts this
@@ -44,6 +55,64 @@
     @endif
 
     <style>
+        .ct-toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding: .75rem 1rem;
+            margin: 0 0 1rem;
+            border: 1px solid rgba(0,0,0,.08);
+            border-radius: 10px;
+            background: rgba(255,255,255,.92);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .dark .ct-toolbar { background: rgba(17,24,39,.85); border-color: rgba(255,255,255,.08); }
+        .ct-toolbar .ct-help {
+            flex: 1;
+            min-width: 0;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            background: transparent;
+        }
+        .ct-toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            flex-shrink: 0;
+        }
+        .ct-dirty-flag {
+            font-size: .75rem;
+            font-weight: 600;
+            padding: .2rem .5rem;
+            border-radius: 999px;
+            background: rgba(245, 158, 11, .18);
+            color: #b45309;
+        }
+        .dark .ct-dirty-flag { background: rgba(245, 158, 11, .22); color: #fde68a; }
+
+        .ct-btn-primary, .ct-btn-secondary {
+            font-size: .8125rem;
+            font-weight: 600;
+            padding: .4rem .9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: background-color .12s ease, border-color .12s ease, color .12s ease, opacity .12s ease;
+        }
+        .ct-btn-primary { background: rgb(var(--primary-600, 79 70 229)); color: white; }
+        .ct-btn-primary:hover:not(:disabled) { background: rgb(var(--primary-700, 67 56 202)); }
+        .ct-btn-secondary { background: transparent; color: rgba(0,0,0,.7); border-color: rgba(0,0,0,.15); }
+        .ct-btn-secondary:hover:not(:disabled) { background: rgba(0,0,0,.06); color: rgba(0,0,0,.9); }
+        .dark .ct-btn-secondary { color: rgba(255,255,255,.75); border-color: rgba(255,255,255,.18); }
+        .dark .ct-btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,.08); color: rgba(255,255,255,.95); }
+        .ct-btn-primary:disabled, .ct-btn-secondary:disabled { opacity: .45; cursor: not-allowed; }
+
         .ct-help {
             font-size: .875rem;
             color: rgba(0,0,0,.6);
@@ -249,8 +318,24 @@
                     }, 1600);
                 }
 
-                function persist() {
+                // Dirty-state tracking. A drop just marks the tree as
+                // dirty + lights up the toolbar buttons; persistence
+                // only happens when the operator clicks "Save changes".
+                var saveBtn = document.querySelector('[data-ct-save]');
+                var discardBtn = document.querySelector('[data-ct-discard]');
+                var dirtyFlag = document.querySelector('[data-ct-dirty-flag]');
+
+                function setDirty(flag) {
+                    if (saveBtn) saveBtn.disabled = ! flag;
+                    if (discardBtn) discardBtn.disabled = ! flag;
+                    if (dirtyFlag) dirtyFlag.hidden = ! flag;
+                }
+
+                function save() {
+                    if (saveBtn && saveBtn.disabled) return;
                     var nodes = walk();
+                    // Optimistic UI: block double-click while in-flight.
+                    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
                     fetch(REORDER_URL, {
                         method: 'POST',
                         credentials: 'same-origin',
@@ -262,19 +347,43 @@
                         },
                         body: JSON.stringify({ nodes: nodes }),
                     }).then(function (res) {
-                        return res.json().then(function (body) {
-                            return { res: res, body: body };
-                        });
+                        return res.json().then(function (body) { return { res: res, body: body }; });
                     }).then(function (r) {
+                        if (saveBtn) saveBtn.textContent = 'Save changes';
                         if (r.res.ok && r.body && r.body.ok) {
                             flash('Tree saved', true);
+                            setDirty(false);
                         } else {
                             flash((r.body && r.body.message) || 'Could not save', false);
+                            // Re-enable so the operator can retry.
+                            setDirty(true);
                         }
                     }).catch(function () {
+                        if (saveBtn) saveBtn.textContent = 'Save changes';
                         flash('Network error — try again', false);
+                        setDirty(true);
                     });
                 }
+
+                function discard() {
+                    // Cheapest correct revert: reload, server re-renders
+                    // the persisted state. No diffing-rollback gymnastics.
+                    if (! window.confirm('Discard your unsaved changes?')) return;
+                    window.location.reload();
+                }
+
+                if (saveBtn) saveBtn.addEventListener('click', save);
+                if (discardBtn) discardBtn.addEventListener('click', discard);
+
+                // Warn on accidental navigation away with pending changes.
+                window.addEventListener('beforeunload', function (e) {
+                    if (saveBtn && ! saveBtn.disabled) {
+                        // Modern browsers ignore custom messages; just
+                        // setting returnValue triggers the native prompt.
+                        e.preventDefault();
+                        e.returnValue = '';
+                    }
+                });
 
                 document.querySelectorAll('.ct-list').forEach(function (ul) {
                     if (Sortable.get(ul)) return;
@@ -287,7 +396,7 @@
                         swapThreshold: 0.55,
                         emptyInsertThreshold: 12,
                         preventOnFilter: true,
-                        onEnd: persist,
+                        onEnd: function () { setDirty(true); },
                     });
                 });
             }
