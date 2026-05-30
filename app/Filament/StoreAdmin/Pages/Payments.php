@@ -58,7 +58,54 @@ class Payments extends Page
             'status' => $this->status($tenant),
             'feeRate' => PlatformFee::formatRate($tenant),
             'feeBps' => PlatformFee::bpsFor($tenant),
+            // Apple Pay / Google Pay / Link domain status — surfaced so
+            // the operator can see at a glance whether the wallet
+            // buttons will actually render at checkout.
+            'walletStatus' => $this->walletStatus($tenant),
         ];
+    }
+
+    /**
+     * Look up the PaymentMethodDomain entries Stripe has on file for
+     * this tenant + summarize each wallet's verification status.
+     * Returns an array shaped for the view:
+     *   ['domain' => 'test-stripe…', 'apple_pay' => 'active', …]
+     *
+     * Returns null when no Connect or no domain registered yet.
+     */
+    private function walletStatus(\App\Models\Tenant $tenant): ?array
+    {
+        if (! $tenant->canAcceptRealPayments()) {
+            return null;
+        }
+        try {
+            $client = new \Stripe\StripeClient(config('cashier.secret'));
+            $domains = $client->paymentMethodDomains->all(
+                [],
+                ['stripe_account' => $tenant->stripe_account_id],
+            );
+            if (empty($domains->data)) {
+                return ['domain' => null];
+            }
+            // First entry is the one we created; if multiple, prefer
+            // the one matching the storefront slug.
+            $expected = $tenant->slug . '.' . config('ganvo.central_domain');
+            $picked = null;
+            foreach ($domains->data as $d) {
+                if ($d->domain_name === $expected) { $picked = $d; break; }
+            }
+            $picked ??= $domains->data[0];
+            return [
+                'domain' => $picked->domain_name,
+                'apple_pay' => $picked->apple_pay?->status,
+                'google_pay' => $picked->google_pay?->status,
+                'link' => $picked->link?->status,
+                'apple_pay_error' => $picked->apple_pay?->status_details?->error_message,
+            ];
+        } catch (\Throwable) {
+            // Soft-fail: don't break the whole page if Stripe is down.
+            return null;
+        }
     }
 
     private function tenant(): Tenant

@@ -293,6 +293,79 @@
         </div>
     </div>
 
+    {{-- ============ Wallets (Apple Pay / Google Pay / Link) ============ --}}
+    @if ($walletStatus !== null)
+        <div class="pay-card">
+            <div class="pay-card-head">
+                <h3>Wallet buttons</h3>
+                @php
+                    $allActive = (
+                        ($walletStatus['apple_pay'] ?? null) === 'active'
+                        && ($walletStatus['google_pay'] ?? null) === 'active'
+                    );
+                @endphp
+                @if (! empty($walletStatus['domain']))
+                    <span class="pay-badge"
+                          style="background: {{ $allActive ? 'rgba(16,185,129,.15)' : 'rgba(245,158,11,.15)' }};
+                                 color: {{ $allActive ? '#047857' : '#b45309' }};">
+                        {{ $allActive ? 'Active' : 'Needs verification' }}
+                    </span>
+                @else
+                    <span class="pay-badge" style="background: rgba(107,114,128,.12); color: #6b7280;">
+                        Not registered
+                    </span>
+                @endif
+            </div>
+
+            @if (empty($walletStatus['domain']))
+                <p>
+                    Apple Pay, Google Pay and Link don't appear at checkout yet — the storefront domain hasn't been registered with Stripe.
+                    Click <em>Register now</em> below to verify. Stripe usually validates within 30 seconds.
+                </p>
+            @else
+                <p>
+                    Apple Pay (Safari), Google Pay (Chrome) and Link buttons surface at checkout when the customer's browser supports them. The storefront domain is registered with Stripe as <code style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.8125rem; background:var(--pay-code-bg); padding:.125rem .375rem; border-radius:4px;">{{ $walletStatus['domain'] }}</code>.
+                </p>
+
+                <div class="pay-grid">
+                    @foreach (['apple_pay' => 'Apple Pay', 'google_pay' => 'Google Pay', 'link' => 'Link'] as $key => $label)
+                        @php $status = $walletStatus[$key] ?? null; @endphp
+                        <div>
+                            <p class="pay-meta-label">{{ $label }}</p>
+                            <p class="pay-meta-value">
+                                @if ($status === 'active')
+                                    <span style="color:#047857;">✓ Active</span>
+                                @elseif ($status === 'inactive')
+                                    <span style="color:#b91c1c;">✗ Inactive</span>
+                                @else
+                                    <span style="color:var(--pay-text-soft);">{{ $status ?? '—' }}</span>
+                                @endif
+                            </p>
+                        </div>
+                    @endforeach
+                </div>
+
+                @if (! empty($walletStatus['apple_pay_error']))
+                    <div class="pay-warning" style="margin-top:.875rem;">
+                        <div><strong>Apple Pay:</strong> {{ $walletStatus['apple_pay_error'] }}</div>
+                    </div>
+                @endif
+            @endif
+
+            <div class="pay-actions">
+                <form method="post" action="{{ route('store.payments.wallets.register') }}">
+                    @csrf
+                    <button type="submit" class="pay-btn pay-btn-primary">
+                        {{ empty($walletStatus['domain']) ? 'Register now' : 'Re-verify' }}
+                    </button>
+                </form>
+                <p style="margin:0; align-self:center; color:var(--pay-text-soft); font-size:.8125rem;">
+                    Apple Pay needs HTTPS + a card in your device's Wallet to actually render.
+                </p>
+            </div>
+        </div>
+    @endif
+
     {{-- ============ Platform fee summary ============ --}}
     <div class="pay-card">
         <div class="pay-card-head">

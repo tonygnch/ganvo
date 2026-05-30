@@ -166,6 +166,11 @@ Route::domain($centralDomain)->group(function () {
             ->name('store.payments.sync');
         Route::post('/store/payments/disconnect', [\App\Http\Controllers\StoreAdmin\PaymentsController::class, 'disconnect'])
             ->name('store.payments.disconnect');
+        // Re-register the storefront domain with Stripe so Apple Pay /
+        // Google Pay / Link appear in the Payment Element. Idempotent;
+        // safe to call any time the operator wants to verify status.
+        Route::post('/store/payments/wallets/register', [\App\Http\Controllers\StoreAdmin\PaymentsController::class, 'registerWalletDomain'])
+            ->name('store.payments.wallets.register');
     });
 
     // ---- Platform billing (Stripe Checkout + Customer Portal) ----

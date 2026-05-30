@@ -169,4 +169,29 @@ class PaymentsController extends Controller
 
         return redirect('/store/payments');
     }
+
+    /**
+     * POST /store/payments/wallets/register
+     *
+     * Re-runs the PaymentMethodDomain registration with Stripe — useful
+     * when a merchant connected before HTTPS was set up, or any time
+     * Stripe says the domain is `inactive` and the operator wants to
+     * re-verify (e.g. after fixing a DNS or cert issue).
+     */
+    public function registerWalletDomain(Request $request): RedirectResponse
+    {
+        $tenant = Auth::user()?->tenant;
+        if (! $tenant?->canAcceptRealPayments()) {
+            return redirect('/store/payments');
+        }
+        try {
+            $this->connect->registerPaymentMethodDomain($tenant);
+        } catch (ApiErrorException $e) {
+            return redirect('/store/payments')->with('flash', [
+                'type' => 'error',
+                'message' => 'Stripe error: ' . $e->getMessage(),
+            ]);
+        }
+        return redirect('/store/payments');
+    }
 }
