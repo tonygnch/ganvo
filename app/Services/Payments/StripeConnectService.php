@@ -295,14 +295,27 @@ class StripeConnectService
 
     /**
      * Refund a charge on a connected account. Pass null for $amountCents
-     * to do a full refund. Always sets:
+     * to do a full refund.
      *
-     *   reverse_transfer       → debits the merchant's connected balance
-     *                            (otherwise the merchant keeps the funds
-     *                            and Ganvo eats the cost of the refund)
-     *   refund_application_fee → returns Ganvo's platform fee proportional
-     *                            to the refund amount, so a 50% refund
-     *                            takes 50% of the platform fee back too
+     * We use *direct charges* — PaymentIntents are created with the
+     * `stripe_account` header, so the money lands in the merchant's
+     * Connect balance from the start. There's no Transfer object to
+     * reverse (that's only for *destination charges* where the platform
+     * creates the charge + transfers separately). Setting
+     * `reverse_transfer: true` on a direct-charge refund makes Stripe
+     * reject it with "Cannot reverse transfer … does not have an
+     * associated transfer". For direct charges Stripe automatically
+     * debits the connected account balance when the refund processes
+     * — nothing extra needed from us.
+     *
+     * What we DO set:
+     *   refund_application_fee → returns Ganvo's platform fee
+     *                            proportional to the refund amount,
+     *                            so a 50% refund takes 50% of the
+     *                            platform fee back too. Works on
+     *                            direct charges because the
+     *                            ApplicationFee object lives at the
+     *                            platform.
      *
      * Idempotent in practice: Stripe allows multiple partial refunds
      * against the same charge up to the total. Caller (the merchant
@@ -323,7 +336,6 @@ class StripeConnectService
 
         $params = [
             'charge' => $order->stripe_charge_id,
-            'reverse_transfer' => true,
             'refund_application_fee' => true,
             // Carry the order id back so the charge.refunded webhook
             // can find the right Order without a database scan.
