@@ -194,10 +194,13 @@ class StripeConnectService
         $params = [
             'amount' => (int) $order->total_cents,
             'currency' => strtolower($order->currency ?: 'eur'),
-            // Auto payment methods = let Stripe pick the right
-            // surface (card, Apple Pay, Google Pay, SEPA, etc.)
-            // based on customer + region.
-            'automatic_payment_methods' => ['enabled' => true],
+            // Lock the PaymentIntent to card-based methods. Apple Pay
+            // and Google Pay both ride on the 'card' payment_method_type
+            // (they tokenize through a card), so they remain available
+            // via the Payment Element's wallets config — but SEPA,
+            // iDEAL, Klarna, BLIK, etc. all disappear. Link is its own
+            // type ('link') and gets excluded by omission.
+            'payment_method_types' => ['card'],
             // Receipt email surfaces nicely in the Stripe dashboard
             // + can power the auto-receipt feature if enabled.
             'receipt_email' => $order->customer_email,

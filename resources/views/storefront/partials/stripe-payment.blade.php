@@ -156,14 +156,18 @@
                         clientSecret: clientSecret,
                         appearance: { theme: 'stripe' },
                     });
-                    // Surface Apple Pay / Google Pay / Link buttons at
-                    // the top of the Payment Element when the customer's
-                    // browser supports them + Stripe has the storefront
-                    // domain verified. 'auto' = Stripe decides per-render.
+                    // Surface ONLY Apple Pay at the top of the Payment
+                    // Element. 'auto' = Stripe shows it when the customer
+                    // is on Safari + has a card in Wallet + the domain
+                    // is verified. Google Pay is explicitly 'never' so
+                    // the Pay button doesn't appear on Chrome.
+                    // (Card + Apple Pay only is the merchant's choice;
+                    // any of the other wallets are easy to re-enable
+                    // later by flipping 'never' → 'auto'.)
                     paymentElement = elements.create('payment', {
                         wallets: {
                             applePay: 'auto',
-                            googlePay: 'auto',
+                            googlePay: 'never',
                         },
                     });
                     paymentElement.mount('#sp-payment-element');
