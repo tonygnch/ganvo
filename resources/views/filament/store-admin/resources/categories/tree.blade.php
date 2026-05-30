@@ -219,8 +219,11 @@
 
                 function bindAll() {
                     document.querySelectorAll('.ct-list').forEach(function (ul) {
-                        if (ul.__ctBound) return;
-                        ul.__ctBound = true;
+                        // Skip lists that already have a Sortable
+                        // instance — calling .create() again would
+                        // stack a second instance on the same element.
+                        // Sortable.get() is the canonical way to test.
+                        if (Sortable.get(ul)) return;
                         Sortable.create(ul, {
                             group: 'ct-shared',
                             handle: '.ct-handle',
@@ -229,8 +232,6 @@
                             fallbackOnBody: true,
                             swapThreshold: 0.55,
                             emptyInsertThreshold: 12,
-                            // Prevent browser native drag/text-select
-                            // from racing SortableJS at mousedown.
                             forceFallback: false,
                             preventOnFilter: true,
                             onEnd: persist,
@@ -240,15 +241,55 @@
 
                 bindAll();
 
-                // Re-bind after Livewire morphs the DOM (after a reorder
-                // refresh) — Livewire v3 fires hooks via global API.
+                // Livewire re-renders the page after every reorder, and
+                // that DOM morph can REPLACE the <ul> nodes — the new
+                // ones don't carry our old Sortable instance, so drags
+                // after the first stop working. Re-bind aggressively:
+                //
+                //   1. Livewire's commit hook (fires when a Livewire
+                //      action returns + DOM is updated).
+                //   2. A MutationObserver as ultimate safety net — any
+                //      time a new .ct-list shows up anywhere in the
+                //      page, we bind it.
                 if (window.Livewire && typeof window.Livewire.hook === 'function') {
-                    window.Livewire.hook('morph.updated', bindAll);
-                    window.Livewire.hook('commit', function (data) {
-                        // Belt-and-braces: re-bind after any commit completes.
-                        if (data && data.succeed) data.succeed(function () { setTimeout(bindAll, 0); });
+                    window.Livewire.hook('commit', function (payload) {
+                        var succeed = payload && payload.succeed;
+                        if (typeof succeed === 'function') {
+                            // .succeed registers a callback to run after
+                            // the morph has applied to the DOM.
+                            succeed(function () { bindAll(); });
+                        } else {
+                            // Older API shape — still try.
+                            setTimeout(bindAll, 0);
+                        }
                     });
+                    // morph.updated also covers element replacements
+                    // mid-commit (Livewire fires both per-element and
+                    // per-commit hooks; defense in depth).
+                    window.Livewire.hook('morph.updated', function () { bindAll(); });
                 }
+
+                // Catch-all: observe the page root for any added
+                // .ct-list nodes (covers Livewire morphs we missed,
+                // future Alpine/Filament re-renders, anything else).
+                var rootEl = document.querySelector('[data-ct-root]')?.parentNode || document.body;
+                var observer = new MutationObserver(function (mutations) {
+                    var needsBind = false;
+                    for (var i = 0; i < mutations.length; i++) {
+                        var added = mutations[i].addedNodes;
+                        for (var j = 0; j < added.length; j++) {
+                            var n = added[j];
+                            if (n.nodeType !== 1) continue;
+                            if (n.matches && (n.matches('.ct-list') || n.querySelector('.ct-list'))) {
+                                needsBind = true;
+                                break;
+                            }
+                        }
+                        if (needsBind) break;
+                    }
+                    if (needsBind) bindAll();
+                });
+                observer.observe(rootEl, { childList: true, subtree: true });
             }
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);

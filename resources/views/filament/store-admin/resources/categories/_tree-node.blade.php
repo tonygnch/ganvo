@@ -1,5 +1,9 @@
-{{-- One row of the tree + the children's <ul> when present. Recursive. --}}
-<li data-id="{{ $node['id'] }}">
+{{-- One row of the tree + the children's <ul> when present. Recursive.
+     wire:key is critical: it tells Livewire to track this <li> by id
+     across morphs, so after a reorder the same DOM nodes survive
+     instead of being replaced — which would strip our Sortable binding
+     and break subsequent drags. --}}
+<li data-id="{{ $node['id'] }}" wire:key="ct-node-{{ $node['id'] }}">
     <div class="ct-row">
         <span class="ct-handle" aria-hidden="true" title="Drag to move">⋮⋮</span>
         <span class="ct-name">{{ $node['name'] }}</span>
