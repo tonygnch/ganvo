@@ -191,26 +191,34 @@ class StripeConnectService
 
         $feeCents = PlatformFee::compute($tenant, (int) $order->total_cents);
 
-        return $this->stripe->paymentIntents->create(
-            [
-                'amount' => (int) $order->total_cents,
-                'currency' => strtolower($order->currency ?: 'eur'),
-                // Auto payment methods = let Stripe pick the right
-                // surface (card, Apple Pay, Google Pay, SEPA, etc.)
-                // based on customer + region.
-                'automatic_payment_methods' => ['enabled' => true],
-                'application_fee_amount' => $feeCents > 0 ? $feeCents : null,
-                // Receipt email surfaces nicely in the Stripe dashboard
-                // + can power the auto-receipt feature if enabled.
-                'receipt_email' => $order->customer_email,
-                // Metadata is the breadcrumb trail the webhook handler
-                // uses to find the Order without a Stripe-side lookup.
-                'metadata' => [
-                    'ganvo_order_id' => (string) $order->id,
-                    'ganvo_order_number' => (string) $order->order_number,
-                    'ganvo_tenant_id' => (string) $tenant->id,
-                ],
+        $params = [
+            'amount' => (int) $order->total_cents,
+            'currency' => strtolower($order->currency ?: 'eur'),
+            // Auto payment methods = let Stripe pick the right
+            // surface (card, Apple Pay, Google Pay, SEPA, etc.)
+            // based on customer + region.
+            'automatic_payment_methods' => ['enabled' => true],
+            // Receipt email surfaces nicely in the Stripe dashboard
+            // + can power the auto-receipt feature if enabled.
+            'receipt_email' => $order->customer_email,
+            // Metadata is the breadcrumb trail the webhook handler
+            // uses to find the Order without a Stripe-side lookup.
+            'metadata' => [
+                'ganvo_order_id' => (string) $order->id,
+                'ganvo_order_number' => (string) $order->order_number,
+                'ganvo_tenant_id' => (string) $tenant->id,
             ],
+        ];
+
+        // Only include application_fee_amount when there's actually a
+        // fee — Stripe rejects null/0 with a generic "Invalid integer:"
+        // error and refuses the whole PI when the key is set but empty.
+        if ($feeCents > 0) {
+            $params['application_fee_amount'] = $feeCents;
+        }
+
+        return $this->stripe->paymentIntents->create(
+            $params,
             // ── Crucial: when this option is set, the PI is created
             //    on the connected account, not on Ganvo's platform
             //    account. The money lands in the merchant's balance.

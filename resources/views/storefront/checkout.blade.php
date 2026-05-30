@@ -424,7 +424,7 @@
                     @if ($displayCurrency !== $baseCurrency)
                         <div class="secure-line">{{ __('site.checkout.charged_in', ['amount' => \App\Services\Money::format($grand, $baseCurrency)]) }}</div>
                     @endif
-                    <div class="secure-line">{{ __('site.checkout.secure') }}</div>
+                    <div class="secure-line">{{ ($payment_mode ?? 'stub') === 'stripe' ? __('site.checkout.secure_stripe') : __('site.checkout.secure') }}</div>
                 </aside>
             </div>
         </form>

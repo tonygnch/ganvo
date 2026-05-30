@@ -263,6 +263,7 @@ return [
         'summary' => 'Order summary',
         'pay_now' => 'Place order',
         'secure' => '🔒 Stub payment · no real charge',
+        'secure_stripe' => '🔒 Secure payment by Stripe',
         'charged_in' => "You'll be charged :amount.",
     ],
 
