@@ -214,21 +214,36 @@
                     showManualFallback('Still working on it.');
                 }, 15000);
 
-                console.log('[stripe-payment] calling stripe.confirmPayment', { returnUrl: returnUrl });
+                console.log('[stripe-payment] calling elements.submit() then stripe.confirmPayment', { returnUrl: returnUrl });
 
-                // `redirect: 'if_required'` means: only navigate away
-                // when 3DS / off-session auth is actually needed. For
-                // succeeded charges (most common), the promise resolves
-                // synchronously with the PI object and we redirect to
-                // the order page ourselves. Stops the "stuck on
-                // Confirming…" bug where Stripe returns success but
-                // never navigates.
-                stripe.confirmPayment({
-                    elements: elements,
-                    clientSecret: clientSecret,
-                    confirmParams: { return_url: returnUrl },
-                    redirect: 'if_required',
+                // Newer Stripe.js requires elements.submit() FIRST — it
+                // locks the Payment Element's collected data + runs
+                // client-side validation. Without it confirmPayment
+                // throws "elements.submit() must be called before
+                // stripe.confirmPayment()". Chain it into confirmPayment
+                // so a validation error short-circuits before we hit
+                // the network.
+                elements.submit().then(function (submitResult) {
+                    if (submitResult && submitResult.error) {
+                        clearTimeout(stuckTimer);
+                        console.warn('[stripe-payment] elements.submit error', submitResult.error);
+                        showError(submitResult.error.message || 'Please check your card details.');
+                        resetButton(submitBtn, 'Try again');
+                        return null; // skip confirmPayment
+                    }
+                    // `redirect: 'if_required'` only navigates when
+                    // 3DS / off-session auth is needed. For succeeded
+                    // charges the promise resolves synchronously and
+                    // we redirect ourselves.
+                    return stripe.confirmPayment({
+                        elements: elements,
+                        clientSecret: clientSecret,
+                        confirmParams: { return_url: returnUrl },
+                        redirect: 'if_required',
+                    });
                 }).then(function (result) {
+                    if (result === null) return; // elements.submit() errored
+
                     clearTimeout(stuckTimer);
                     console.log('[stripe-payment] confirmPayment resolved', result);
 
