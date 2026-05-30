@@ -70,6 +70,15 @@ class PaymentsController extends Controller
 
         try {
             $this->connect->syncFromStripe($tenant);
+            $tenant->refresh();
+            // Register the storefront domain with Stripe so Apple Pay /
+            // Google Pay show up at checkout. Idempotent — Stripe just
+            // re-validates if the domain is already registered.
+            // Soft-fail: a Stripe outage here shouldn't block onboarding.
+            if ($tenant->canAcceptRealPayments()) {
+                try { $this->connect->registerPaymentMethodDomain($tenant); }
+                catch (ApiErrorException) { /* will retry on next sync */ }
+            }
         } catch (ApiErrorException $e) {
             // Soft-fail: the redirect still happens; the page will
             // surface the stale state + offer a "Refresh status" button.

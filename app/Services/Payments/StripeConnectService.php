@@ -242,6 +242,54 @@ class StripeConnectService
     }
 
     /**
+     * Register the tenant's storefront domain with Stripe so Apple Pay
+     * (and other wallets that need a verified domain) shows up at
+     * checkout. Idempotent: calling it for an already-registered
+     * domain returns the existing record + re-runs Stripe's
+     * background validation.
+     *
+     * Returns the host that was registered (or attempted) so the
+     * caller can surface it; null if the tenant has no Connect.
+     *
+     * @throws ApiErrorException on Stripe API failures
+     */
+    public function registerPaymentMethodDomain(Tenant $tenant): ?string
+    {
+        if (! $tenant->canAcceptRealPayments()) {
+            return null;
+        }
+        $host = $this->storefrontHost($tenant);
+
+        // Stripe's PaymentMethodDomain API is scoped to the connected
+        // account — so we pass stripe_account just like the PI calls.
+        // The "validate" param tells Stripe to re-run the Apple Pay /
+        // Link / Google Pay validation passes on the spot.
+        $this->stripe->paymentMethodDomains->create(
+            [
+                'domain_name' => $host,
+                // Enable validation for the wallets we care about. They
+                // each have their own status flag (apple_pay, link,
+                // google_pay, paypal); merchants don't need to opt-in
+                // per-wallet — Stripe handles the moving parts.
+                'enabled' => true,
+            ],
+            ['stripe_account' => $tenant->stripe_account_id],
+        );
+
+        return $host;
+    }
+
+    /**
+     * Bare storefront host (no scheme, no port) used by
+     * registerPaymentMethodDomain. Apple/Stripe want just the hostname.
+     */
+    private function storefrontHost(Tenant $tenant): string
+    {
+        $domain = config('ganvo.central_domain');
+        return $tenant->slug . '.' . $domain;
+    }
+
+    /**
      * Disconnect a tenant from their Connect account. Used for support
      * cases ("merchant wants to start fresh") + automatically when
      * Stripe sends account.application.deauthorized.

@@ -98,12 +98,26 @@ class StripeConnectController extends Controller
         if (! $tenant) {
             return; // not one of ours — ignore
         }
+        $wasReady = $tenant->canAcceptRealPayments();
         $tenant->update([
             'stripe_connect_charges_enabled' => (bool) ($account->charges_enabled ?? false),
             'stripe_connect_payouts_enabled' => (bool) ($account->payouts_enabled ?? false),
             'stripe_connect_details_submitted' => (bool) ($account->details_submitted ?? false),
             'stripe_connect_disabled_reason' => $account->requirements?->disabled_reason ?? null,
         ]);
+
+        // Edge-triggered: the moment a tenant becomes able to accept
+        // real payments, register their storefront domain with Stripe
+        // so Apple Pay / Google Pay show on checkout. Idempotent —
+        // Stripe re-validates if already registered.
+        $isReady = $tenant->fresh()->canAcceptRealPayments();
+        if (! $wasReady && $isReady) {
+            try {
+                $this->connect->registerPaymentMethodDomain($tenant);
+            } catch (\Throwable) {
+                // Soft-fail: the operator can hit "Refresh status" to retry.
+            }
+        }
     }
 
     /**

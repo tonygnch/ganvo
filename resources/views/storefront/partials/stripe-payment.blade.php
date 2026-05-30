@@ -152,8 +152,20 @@
                     // Mount the Payment Element now that we have a
                     // client_secret. The Element renders its own card
                     // input + handles future Apple Pay / Google Pay etc.
-                    elements = stripe.elements({ clientSecret: clientSecret, appearance: { theme: 'stripe' } });
-                    paymentElement = elements.create('payment');
+                    elements = stripe.elements({
+                        clientSecret: clientSecret,
+                        appearance: { theme: 'stripe' },
+                    });
+                    // Surface Apple Pay / Google Pay / Link buttons at
+                    // the top of the Payment Element when the customer's
+                    // browser supports them + Stripe has the storefront
+                    // domain verified. 'auto' = Stripe decides per-render.
+                    paymentElement = elements.create('payment', {
+                        wallets: {
+                            applePay: 'auto',
+                            googlePay: 'auto',
+                        },
+                    });
                     paymentElement.mount('#sp-payment-element');
                     mountTarget.setAttribute('data-mounted', '1');
 
