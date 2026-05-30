@@ -179,6 +179,24 @@
                 submitBtn.innerHTML = label || 'Pay now';
             }
 
+            // Manual escape hatch: if Stripe.js misbehaves, surface a
+            // visible "View your order →" link so the customer can
+            // navigate themselves. The order page reconciles the PI
+            // state from Stripe directly on load, so they're not
+            // stuck even if the JS hangs.
+            function showManualFallback(message) {
+                var box = document.createElement('div');
+                box.className = 'sp-pay-info';
+                box.style.marginTop = '.5rem';
+                box.innerHTML =
+                    (message || 'Taking longer than expected.') +
+                    ' <a href="' + returnUrl + '" style="color:inherit;font-weight:700;text-decoration:underline">' +
+                    'View your order →</a>';
+                if (errorEl && errorEl.parentNode) {
+                    errorEl.parentNode.insertBefore(box, errorEl.nextSibling);
+                }
+            }
+
             function confirm() {
                 clearError();
                 var submitBtn = form.querySelector('button[type="submit"]');
@@ -186,6 +204,17 @@
                     submitBtn.disabled = true;
                     submitBtn.innerHTML = 'Confirming payment…';
                 }
+
+                // Safety-net timeout: if neither the Stripe promise
+                // resolves nor a redirect happens within 15s, surface
+                // a manual "View your order" link so the customer
+                // isn't stranded staring at "Confirming payment…".
+                var stuckTimer = setTimeout(function () {
+                    console.warn('[stripe-payment] confirm hung for 15s — showing manual fallback');
+                    showManualFallback('Still working on it.');
+                }, 15000);
+
+                console.log('[stripe-payment] calling stripe.confirmPayment', { returnUrl: returnUrl });
 
                 // `redirect: 'if_required'` means: only navigate away
                 // when 3DS / off-session auth is actually needed. For
@@ -200,18 +229,17 @@
                     confirmParams: { return_url: returnUrl },
                     redirect: 'if_required',
                 }).then(function (result) {
+                    clearTimeout(stuckTimer);
+                    console.log('[stripe-payment] confirmPayment resolved', result);
+
                     if (! result) {
-                        // Defensive: Stripe.js sometimes resolves with
-                        // undefined when something weird happens at the
-                        // browser layer. Treat as a recoverable error.
                         showError('Payment status unknown — please try again.');
                         resetButton(submitBtn, 'Pay now');
+                        showManualFallback();
                         return;
                     }
 
                     if (result.error) {
-                        // Card declined / validation / etc. Stripe gives
-                        // us a user-friendly message most of the time.
                         showError(result.error.message || 'Payment failed. Please check your card and try again.');
                         resetButton(submitBtn, 'Try again');
                         return;
@@ -221,13 +249,18 @@
                     if (! pi) {
                         showError('No payment intent returned. Please try again.');
                         resetButton(submitBtn, 'Try again');
+                        showManualFallback();
                         return;
                     }
 
+                    console.log('[stripe-payment] PI status:', pi.status);
+
                     if (pi.status === 'succeeded' || pi.status === 'processing') {
-                        // Hard navigate so the order page loads fresh
-                        // + the webhook race-recovery kicks in.
+                        console.log('[stripe-payment] navigating to', returnUrl);
                         window.location.href = returnUrl;
+                        // Belt + braces — if navigation doesn't happen
+                        // for any reason, show the manual link after 2s.
+                        setTimeout(function () { showManualFallback('Payment confirmed!'); }, 2000);
                         return;
                     }
 
@@ -238,14 +271,14 @@
                         return;
                     }
 
-                    // Anything else (requires_payment_method, canceled)
-                    // → surface + let them retry.
                     showError('Payment was not completed (status: ' + pi.status + '). Please try again.');
                     resetButton(submitBtn, 'Try again');
                 }).catch(function (e) {
-                    // Network error / Stripe.js internal failure / etc.
+                    clearTimeout(stuckTimer);
+                    console.error('[stripe-payment] confirmPayment threw', e);
                     showError((e && e.message) ? e.message : 'Something went wrong while contacting your bank. Please try again.');
                     resetButton(submitBtn, 'Try again');
+                    showManualFallback();
                 });
             }
         }
