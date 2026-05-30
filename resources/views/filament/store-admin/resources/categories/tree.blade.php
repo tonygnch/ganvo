@@ -190,26 +190,31 @@
         }
     </style>
 
-    {{-- NB: Filament v5 doesn't expose an @stack('scripts'), so we
-         load SortableJS + bind inline right here. Without this the
-         drag binding never attaches and the browser falls back to
-         selecting text on mousedown. --}}
+    {{-- The tree is wrapped in wire:ignore (see above) so Livewire
+         never touches it after mount. Persistence is a plain fetch()
+         to /store/categories/reorder — no Livewire round-trip, no DOM
+         morph, no rebinding gymnastics. SortableJS binds once and
+         stays bound through any number of drags. --}}
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js" crossorigin="anonymous"></script>
     <script>
         (function () {
-            // Lazy-init: SortableJS may load after our script, so poll
-            // briefly until it's there. Beats a sync include.
+            var REORDER_URL = @json(route('store.categories.reorder'));
+            // CSRF token — Laravel injects a <meta name="csrf-token"> by
+            // default; Filament includes it too. Fall back to scanning
+            // any input[name=_token] just in case.
+            function csrfToken() {
+                var meta = document.querySelector('meta[name="csrf-token"]');
+                if (meta) return meta.getAttribute('content');
+                var input = document.querySelector('input[name="_token"]');
+                return input ? input.value : '';
+            }
+
             function init() {
                 if (typeof Sortable === 'undefined') return setTimeout(init, 50);
-                var component = @this; // Filament/Livewire page instance
 
                 function walk() {
-                    // Collect every node in DOM order, tagging each with
-                    // its parent_id (from the enclosing <ul>) and
-                    // sort_order (its index among siblings).
                     var payload = [];
-                    document.querySelectorAll('[data-ct-root], [data-ct-root] .ct-list').forEach(function (ul) {
-                        if (! ul.matches('.ct-list')) return;
+                    document.querySelectorAll('.ct-list').forEach(function (ul) {
                         var parentId = ul.getAttribute('data-parent-id') || null;
                         var idx = 0;
                         ul.querySelectorAll(':scope > li[data-id]').forEach(function (li) {
@@ -223,83 +228,69 @@
                     return payload;
                 }
 
+                function flash(message, ok) {
+                    // Lightweight transient toast; no Livewire involved
+                    // so it can't break our DOM ownership.
+                    var n = document.createElement('div');
+                    n.textContent = message;
+                    n.style.cssText = [
+                        'position:fixed', 'top:1rem', 'right:1rem', 'z-index:9999',
+                        'padding:.625rem 1rem', 'border-radius:8px',
+                        'font-size:.875rem', 'font-weight:600',
+                        'box-shadow:0 8px 24px -8px rgba(0,0,0,.25)',
+                        'background:' + (ok ? '#16a34a' : '#dc2626'),
+                        'color:white', 'opacity:0', 'transition:opacity .2s ease',
+                    ].join(';');
+                    document.body.appendChild(n);
+                    requestAnimationFrame(function () { n.style.opacity = '1'; });
+                    setTimeout(function () {
+                        n.style.opacity = '0';
+                        setTimeout(function () { n.remove(); }, 250);
+                    }, 1600);
+                }
+
                 function persist() {
-                    component.call('reorder', walk());
-                }
-
-                function bindAll() {
-                    document.querySelectorAll('.ct-list').forEach(function (ul) {
-                        // Skip lists that already have a Sortable
-                        // instance — calling .create() again would
-                        // stack a second instance on the same element.
-                        // Sortable.get() is the canonical way to test.
-                        if (Sortable.get(ul)) return;
-                        Sortable.create(ul, {
-                            group: 'ct-shared',
-                            handle: '.ct-handle',
-                            draggable: 'li[data-id]',
-                            animation: 140,
-                            fallbackOnBody: true,
-                            swapThreshold: 0.55,
-                            emptyInsertThreshold: 12,
-                            forceFallback: false,
-                            preventOnFilter: true,
-                            onEnd: persist,
+                    var nodes = walk();
+                    fetch(REORDER_URL, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken(),
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: JSON.stringify({ nodes: nodes }),
+                    }).then(function (res) {
+                        return res.json().then(function (body) {
+                            return { res: res, body: body };
                         });
-                    });
-                }
-
-                bindAll();
-
-                // Livewire re-renders the page after every reorder, and
-                // that DOM morph can REPLACE the <ul> nodes — the new
-                // ones don't carry our old Sortable instance, so drags
-                // after the first stop working. Re-bind aggressively:
-                //
-                //   1. Livewire's commit hook (fires when a Livewire
-                //      action returns + DOM is updated).
-                //   2. A MutationObserver as ultimate safety net — any
-                //      time a new .ct-list shows up anywhere in the
-                //      page, we bind it.
-                if (window.Livewire && typeof window.Livewire.hook === 'function') {
-                    window.Livewire.hook('commit', function (payload) {
-                        var succeed = payload && payload.succeed;
-                        if (typeof succeed === 'function') {
-                            // .succeed registers a callback to run after
-                            // the morph has applied to the DOM.
-                            succeed(function () { bindAll(); });
+                    }).then(function (r) {
+                        if (r.res.ok && r.body && r.body.ok) {
+                            flash('Tree saved', true);
                         } else {
-                            // Older API shape — still try.
-                            setTimeout(bindAll, 0);
+                            flash((r.body && r.body.message) || 'Could not save', false);
                         }
+                    }).catch(function () {
+                        flash('Network error — try again', false);
                     });
-                    // morph.updated also covers element replacements
-                    // mid-commit (Livewire fires both per-element and
-                    // per-commit hooks; defense in depth).
-                    window.Livewire.hook('morph.updated', function () { bindAll(); });
                 }
 
-                // Catch-all: observe the page root for any added
-                // .ct-list nodes (covers Livewire morphs we missed,
-                // future Alpine/Filament re-renders, anything else).
-                var rootEl = document.querySelector('[data-ct-root]')?.parentNode || document.body;
-                var observer = new MutationObserver(function (mutations) {
-                    var needsBind = false;
-                    for (var i = 0; i < mutations.length; i++) {
-                        var added = mutations[i].addedNodes;
-                        for (var j = 0; j < added.length; j++) {
-                            var n = added[j];
-                            if (n.nodeType !== 1) continue;
-                            if (n.matches && (n.matches('.ct-list') || n.querySelector('.ct-list'))) {
-                                needsBind = true;
-                                break;
-                            }
-                        }
-                        if (needsBind) break;
-                    }
-                    if (needsBind) bindAll();
+                document.querySelectorAll('.ct-list').forEach(function (ul) {
+                    if (Sortable.get(ul)) return;
+                    Sortable.create(ul, {
+                        group: 'ct-shared',
+                        handle: '.ct-handle',
+                        draggable: 'li[data-id]',
+                        animation: 140,
+                        fallbackOnBody: true,
+                        swapThreshold: 0.55,
+                        emptyInsertThreshold: 12,
+                        preventOnFilter: true,
+                        onEnd: persist,
+                    });
                 });
-                observer.observe(rootEl, { childList: true, subtree: true });
+            }
             }
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', init);

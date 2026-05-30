@@ -135,6 +135,13 @@ Route::domain($centralDomain)->group(function () {
     // Backwards-compat: legacy /store/register links should land on the wizard.
     Route::redirect('/store/register', '/onboarding/signup');
 
+    // ---- StoreAdmin AJAX endpoints (Filament pages call these directly) ----
+    Route::middleware('auth')->group(function () {
+        // Categories drag-tree persistence — see CategoryTreeController.
+        Route::post('/store/categories/reorder', [\App\Http\Controllers\StoreAdmin\CategoryTreeController::class, 'reorder'])
+            ->name('store.categories.reorder');
+    });
+
     // ---- Platform billing (Stripe Checkout + Customer Portal) ----
     // These routes are auth-only and operate on the authenticated merchant's
     // tenant. Filament's StoreAdmin Billing page redirects into them.
