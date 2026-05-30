@@ -83,6 +83,14 @@ Route::domain($centralDomain)->group(function () {
         ->middleware('auth')
         ->name('impersonate.stop');
 
+    // Stripe Connect webhook — fires for storefront PaymentIntent
+    // events (payment_intent.succeeded / failed) + account state
+    // changes (account.updated / deauthorized). Separate from
+    // Cashier's subscription webhook; uses its own signing secret.
+    // CSRF exemption configured in bootstrap/app.php.
+    Route::post('/webhooks/stripe/connect', [\App\Http\Controllers\Webhooks\StripeConnectController::class, 'handle'])
+        ->name('webhooks.stripe.connect');
+
     // ---- Merchant onboarding ----
     // Signup + login live here (not on tenant subdomains). The wizard owns
     // merchant signup end-to-end — Filament's ->registration() is disabled.

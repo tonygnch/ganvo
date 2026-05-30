@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'stripe' => [
+        // Stripe Connect webhook signing secret — DIFFERENT from
+        // Cashier's STRIPE_WEBHOOK_SECRET (which is for platform-level
+        // subscription events). Stripe issues one per endpoint.
+        'connect_webhook_secret' => env('STRIPE_CONNECT_WEBHOOK_SECRET'),
+    ],
+
 ];

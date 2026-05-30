@@ -353,13 +353,17 @@
 
                     <div class="card-block">
                         <h2 class="section-title"><span class="step">5</span> {{ __('site.checkout.sec_payment') }}</h2>
-                        <div class="stub-notice">
-                            <span class="icon">!</span>
-                            <div>
-                                <strong>{{ __('site.checkout.stub_title') }}</strong>
-                                {!! __('site.checkout.stub_body', ['action' => '<em>' . __('site.checkout.action_place_order') . '</em>']) !!}
+                        @if (($payment_mode ?? 'stub') === 'stripe')
+                            @include('storefront.partials.stripe-payment')
+                        @else
+                            <div class="stub-notice">
+                                <span class="icon">!</span>
+                                <div>
+                                    <strong>{{ __('site.checkout.stub_title') }}</strong>
+                                    {!! __('site.checkout.stub_body', ['action' => '<em>' . __('site.checkout.action_place_order') . '</em>']) !!}
+                                </div>
                             </div>
-                        </div>
+                        @endif
                     </div>
                 </div>
 

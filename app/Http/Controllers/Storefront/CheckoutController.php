@@ -8,7 +8,9 @@ use App\Models\OrderItem;
 use App\Notifications\OrderPlaced;
 use App\Services\Cart;
 use App\Services\Countries;
+use App\Services\Payments\StripeConnectService;
 use App\Themes\ThemeRegistry;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +19,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Stripe\Exception\ApiErrorException;
 
 class CheckoutController extends Controller
 {
@@ -42,9 +45,6 @@ class CheckoutController extends Controller
 
         $view = view()->exists("themes.{$theme}.checkout") ? "themes.{$theme}.checkout" : 'storefront.checkout';
 
-        // Shipping methods the operator has set up (or built-in defaults).
-        // First method is pre-selected so the totals row has a number
-        // to render without forcing a JS choice up front.
         $shippingMethods = $store->shippingMethods();
         $subtotal = $cart->subtotalCents();
         $defaultMethodId = $shippingMethods[0]['id'] ?? null;
@@ -53,10 +53,13 @@ class CheckoutController extends Controller
             : null;
         $shipping = $shippingResolved['cost_cents'] ?? 0;
 
-        // Re-resolve the discount against the real shipping cost the
-        // checkout flow computes (the cart page uses its own default).
         $discount = $cart->appliedDiscount($shipping);
         $discountCents = $cart->discountAmountCents($shipping);
+
+        // Stripe-mode flag drives both the form behavior + the
+        // Stripe.js include in the view. Stays false for tenants in
+        // stub mode (the default until they complete Connect onboarding).
+        $paymentMode = $tenant->canAcceptRealPayments() ? 'stripe' : 'stub';
 
         return view($view, [
             'tenant' => $tenant,
@@ -69,9 +72,6 @@ class CheckoutController extends Controller
             'shipping_cents' => $shipping,
             'shipping_methods' => $shippingMethods,
             'shipping_methods_for_subtotal' => array_map(
-                // Pre-compute each method's cost given the current
-                // subtotal so the radio labels can show the actual €
-                // (incl. "FREE" when the threshold is met).
                 fn (array $m) => $m + [
                     'cost_cents' => ($m['free_threshold_cents'] !== null && $subtotal >= $m['free_threshold_cents'])
                         ? 0
@@ -82,72 +82,74 @@ class CheckoutController extends Controller
             'default_shipping_method_id' => $defaultMethodId,
             'countries' => Countries::all(),
             'customer' => $customer,
+            // Stripe context — only set when payment_mode = 'stripe'.
+            // The view checks $payment_mode to decide whether to mount
+            // the Payment Element + JS confirm flow.
+            'payment_mode' => $paymentMode,
+            'stripe_publishable_key' => $paymentMode === 'stripe' ? config('cashier.key') : null,
+            'stripe_account_id' => $paymentMode === 'stripe' ? $tenant->stripe_account_id : null,
         ]);
     }
 
-    public function process(Request $request): RedirectResponse
+    /**
+     * POST /checkout
+     *
+     * Branches on the tenant's payment mode:
+     *
+     *   STUB MODE (canAcceptRealPayments == false):
+     *     Same as before — validate form, create paid Order in one
+     *     transaction, send email, HTTP redirect to /orders/{number}.
+     *
+     *   STRIPE MODE (canAcceptRealPayments == true):
+     *     Validate form, create a PENDING Order (status='pending',
+     *     payment_method='stripe'), create a PaymentIntent on the
+     *     connected account, return JSON the JS uses to drive the
+     *     Payment Element confirmation. The webhook finalizes the
+     *     order once Stripe says the charge succeeded.
+     */
+    public function process(Request $request): RedirectResponse|JsonResponse
     {
         $cart = Cart::forCurrent();
         if ($cart->isEmpty()) {
-            return redirect('/cart');
+            return $this->jsonOrRedirect($request, ['error' => 'empty_cart'], '/cart', 410);
         }
 
         $tenant = app('current_tenant');
         $store = $tenant->store;
         if ($store->requiresAccountCheckout() && ! Auth::guard('customer')->check()) {
-            return redirect('/account/login');
+            return $this->jsonOrRedirect($request, ['error' => 'login_required'], '/account/login', 401);
         }
 
-        // Allow-list of method ids the store currently offers — drives
-        // the validation rule below so customers can't post arbitrary
-        // method names.
-        $methodIds = array_column($store->shippingMethods(), 'id');
-
-        $data = $request->validate([
-            'customer_email'    => ['required', 'email', 'max:255'],
-            'customer_name'     => ['required', 'string', 'max:255'],
-            'customer_phone'    => ['nullable', 'string', 'max:60'],
-            'address_line'      => ['required', 'string', 'max:255'],
-            'address_region'    => ['nullable', 'string', 'max:120'],
-            'city'              => ['required', 'string', 'max:120'],
-            'postal_code'       => ['required', 'string', 'max:30'],
-            'country'           => ['required', 'string', 'size:2', Rule::in(array_keys(Countries::LIST))],
-            'shipping_method'   => ['required', 'string', Rule::in($methodIds)],
-            'notes'             => ['nullable', 'string', 'max:2000'],
-            'marketing_opt_in'  => ['nullable', 'boolean'],
-        ]);
+        $data = $this->validatePayload($request, $store);
 
         $customer = Auth::guard('customer')->user();
         $items = $cart->items();
         $subtotal = $cart->subtotalCents();
 
-        // Resolve the picked shipping method against THIS cart — applies
-        // the free-over-threshold rule + falls back to the first method
-        // if (somehow) the picked one disappeared between page load and
-        // submit. validateOrThrow above usually catches that case but
-        // belt+braces.
+        $methodIds = array_column($store->shippingMethods(), 'id');
         $resolved = $store->resolveShippingMethod($data['shipping_method'], $subtotal)
             ?? $store->resolveShippingMethod($methodIds[0] ?? '', $subtotal);
         $shipping = $resolved['cost_cents'] ?? 0;
         $shippingLabel = $resolved['label'] ?? null;
 
-        // Discount resolved at order-placement time so we never trust a
-        // stale session amount.
         $discount = $cart->appliedDiscount($shipping);
         $discountAmount = $cart->discountAmountCents($shipping);
         $grandTotal = max(0, $subtotal + $shipping - $discountAmount);
 
-        // Capture what the customer was viewing prices in at this moment, so the
-        // order receipt forever shows the same number — even if FX rates move.
         $displayCurrency = $cart->displayCurrency();
         $displayRate = $cart->displayRate();
         $displayTotal = \App\Services\Money::convert($grandTotal, $displayRate);
+
+        // The same Order build in both modes — only `status` +
+        // `payment_method` differ.
+        $isStripe = $tenant->canAcceptRealPayments();
 
         $order = DB::transaction(function () use (
             $tenant, $store, $customer, $items, $data,
             $grandTotal, $displayCurrency, $displayTotal,
             $discount, $discountAmount,
-            $shipping, $shippingLabel
+            $shipping, $shippingLabel,
+            $isStripe
         ) {
             $order = Order::create([
                 'tenant_id' => $tenant->id,
@@ -161,17 +163,16 @@ class CheckoutController extends Controller
                 'currency' => strtoupper($store->currency ?? 'EUR'),
                 'display_currency' => $displayCurrency,
                 'display_total_cents' => $displayTotal,
-                // Snapshot the chosen shipping method's display label +
-                // computed cost. Label stays readable even if the
-                // operator later renames the method.
                 'shipping_method_label' => $shippingLabel,
                 'shipping_cents' => $shipping,
-                // Discount snapshot.
                 'discount_id' => $discount?->id,
                 'discount_code' => $discount?->code,
                 'discount_name' => $discount?->name,
                 'discount_amount_cents' => $discountAmount,
-                'status' => 'paid', // stub payment — always succeeds
+                // Branch: stub orders are paid instantly; stripe orders
+                // wait for the webhook to flip them to 'paid'.
+                'status' => $isStripe ? 'pending' : 'paid',
+                'payment_method' => $isStripe ? 'stripe' : 'stub',
                 'shipping_address' => [
                     'line' => $data['address_line'],
                     'region' => $data['address_region'] ?? null,
@@ -180,7 +181,9 @@ class CheckoutController extends Controller
                     'country' => $data['country'],
                 ],
                 'notes' => $data['notes'] ?? null,
-                'paid_at' => now(),
+                // Only stamp paid_at in stub mode — the webhook does
+                // it for stripe orders.
+                'paid_at' => $isStripe ? null : now(),
             ]);
 
             if ($discount) {
@@ -200,11 +203,6 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            // Remember the address + phone + opt-in on the customer for
-            // next time. Marketing opt-in is stored as a timestamp on
-            // Customer (marketing_optin_at) — set on first opt-in and
-            // left set even if the customer later unchecks it on a
-            // subsequent order. Audit trail beats overwrite.
             if ($customer) {
                 $update = ['default_shipping_address' => $order->shipping_address];
                 if (! empty($data['customer_phone'])) {
@@ -219,11 +217,79 @@ class CheckoutController extends Controller
             return $order;
         });
 
-        $cart->clear();
+        if ($isStripe) {
+            // Stripe path: create the PaymentIntent on the connected
+            // account, attach the PI id to the Order, hand the
+            // client_secret back to JS. The cart STAYS until the
+            // webhook confirms success so an abandoned payment can be
+            // retried without losing the cart state.
+            try {
+                $intent = app(StripeConnectService::class)->createPaymentIntent($order, $tenant);
+            } catch (ApiErrorException $e) {
+                // Surface so JS can retry / show error.
+                $order->update(['status' => 'failed']);
+                return response()->json([
+                    'error' => 'stripe_error',
+                    'message' => $e->getMessage(),
+                ], 502);
+            }
 
+            $order->update(['stripe_payment_intent_id' => $intent->id]);
+
+            return response()->json([
+                'mode' => 'stripe',
+                'client_secret' => $intent->client_secret,
+                'publishable_key' => config('cashier.key'),
+                'stripe_account_id' => $tenant->stripe_account_id,
+                'return_url' => url('/orders/' . $order->order_number),
+                'order_number' => $order->order_number,
+            ]);
+        }
+
+        // Stub path: cart cleared + email sent inline. Email for
+        // stripe orders is sent from the webhook handler once the
+        // charge actually succeeds.
+        $cart->clear();
         Notification::route('mail', $order->customer_email)
             ->notify(new OrderPlaced($order->fresh('items')));
 
         return redirect('/orders/' . $order->order_number);
+    }
+
+    /**
+     * Validation rules shared by both stub + stripe paths so we don't
+     * drift over time.
+     *
+     * @return array<string, mixed>
+     */
+    private function validatePayload(Request $request, $store): array
+    {
+        $methodIds = array_column($store->shippingMethods(), 'id');
+
+        return $request->validate([
+            'customer_email'    => ['required', 'email', 'max:255'],
+            'customer_name'     => ['required', 'string', 'max:255'],
+            'customer_phone'    => ['nullable', 'string', 'max:60'],
+            'address_line'      => ['required', 'string', 'max:255'],
+            'address_region'    => ['nullable', 'string', 'max:120'],
+            'city'              => ['required', 'string', 'max:120'],
+            'postal_code'       => ['required', 'string', 'max:30'],
+            'country'           => ['required', 'string', 'size:2', Rule::in(array_keys(Countries::LIST))],
+            'shipping_method'   => ['required', 'string', Rule::in($methodIds)],
+            'notes'             => ['nullable', 'string', 'max:2000'],
+            'marketing_opt_in'  => ['nullable', 'boolean'],
+        ]);
+    }
+
+    /**
+     * Respond to error conditions before payment intent creation
+     * appropriately for the request type.
+     */
+    private function jsonOrRedirect(Request $request, array $body, string $redirectTo, int $status = 422): RedirectResponse|JsonResponse
+    {
+        if ($request->expectsJson() || $request->isXmlHttpRequest()) {
+            return response()->json($body, $status);
+        }
+        return redirect($redirectTo);
     }
 }

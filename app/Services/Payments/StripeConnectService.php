@@ -3,9 +3,11 @@
 namespace App\Services\Payments;
 
 use App\Models\Tenant;
+use App\Models\Order;
 use Stripe\Account;
 use Stripe\AccountLink;
 use Stripe\Exception\ApiErrorException;
+use Stripe\PaymentIntent;
 use Stripe\StripeClient;
 
 /**
@@ -165,6 +167,70 @@ class StripeConnectService
         ]);
 
         return $account;
+    }
+
+    /**
+     * Create a PaymentIntent on the tenant's connected Stripe account
+     * for the given Order. Money flow:
+     *   Customer  ── total_cents ──►  Merchant's Connect account
+     *                                       │
+     *                                       └── application_fee ──►  Ganvo
+     *
+     * Stripe handles the split automatically when we set
+     * application_fee_amount on a PI created on a connected account.
+     *
+     * @throws ApiErrorException
+     */
+    public function createPaymentIntent(Order $order, Tenant $tenant): PaymentIntent
+    {
+        if (! $tenant->canAcceptRealPayments()) {
+            throw new \RuntimeException(
+                'Tenant cannot accept real payments yet (Connect not ready).'
+            );
+        }
+
+        $feeCents = PlatformFee::compute($tenant, (int) $order->total_cents);
+
+        return $this->stripe->paymentIntents->create(
+            [
+                'amount' => (int) $order->total_cents,
+                'currency' => strtolower($order->currency ?: 'eur'),
+                // Auto payment methods = let Stripe pick the right
+                // surface (card, Apple Pay, Google Pay, SEPA, etc.)
+                // based on customer + region.
+                'automatic_payment_methods' => ['enabled' => true],
+                'application_fee_amount' => $feeCents > 0 ? $feeCents : null,
+                // Receipt email surfaces nicely in the Stripe dashboard
+                // + can power the auto-receipt feature if enabled.
+                'receipt_email' => $order->customer_email,
+                // Metadata is the breadcrumb trail the webhook handler
+                // uses to find the Order without a Stripe-side lookup.
+                'metadata' => [
+                    'ganvo_order_id' => (string) $order->id,
+                    'ganvo_order_number' => (string) $order->order_number,
+                    'ganvo_tenant_id' => (string) $tenant->id,
+                ],
+            ],
+            // ── Crucial: when this option is set, the PI is created
+            //    on the connected account, not on Ganvo's platform
+            //    account. The money lands in the merchant's balance.
+            ['stripe_account' => $tenant->stripe_account_id],
+        );
+    }
+
+    /**
+     * Refresh a PaymentIntent from Stripe — used by the order page
+     * when the customer lands on it before our webhook has fired.
+     *
+     * @throws ApiErrorException
+     */
+    public function retrievePaymentIntent(string $paymentIntentId, Tenant $tenant): PaymentIntent
+    {
+        return $this->stripe->paymentIntents->retrieve(
+            $paymentIntentId,
+            [],
+            ['stripe_account' => $tenant->stripe_account_id],
+        );
     }
 
     /**

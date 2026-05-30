@@ -15,6 +15,15 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SetLocale::class,
         ]);
 
+        // Stripe webhooks aren't browser sessions — they're server-to-
+        // server POSTs from Stripe's IPs that can't carry a CSRF token.
+        // Both endpoints below are signature-verified inside their
+        // controllers, so dropping CSRF here is safe.
+        $middleware->validateCsrfTokens(except: [
+            'stripe/webhook',          // Cashier (subscription) webhook
+            'webhooks/stripe/connect', // Connect (storefront PI) webhook
+        ]);
+
         // Unauthenticated requests inside the merchant area (e.g. /onboarding/*)
         // get bounced here. Filament panels handle their own login redirects.
         $middleware->redirectGuestsTo(fn () => url('/onboarding/login'));

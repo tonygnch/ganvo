@@ -221,8 +221,10 @@
                 $isShipped = $order->status === 'shipped';
                 $isCancelled = $order->status === 'cancelled';
                 $isRefunded = $order->status === 'refunded';
-                $iconClass = $isCancelled || $isRefunded ? 'danger' : ($isShipped ? 'info' : '');
-                $iconChar = $isCancelled ? '×' : ($isRefunded ? '↺' : '✓');
+                $isPending = $order->status === 'pending';
+                $isFailed = $order->status === 'failed';
+                $iconClass = ($isCancelled || $isRefunded || $isFailed) ? 'danger' : ($isShipped ? 'info' : '');
+                $iconChar = $isCancelled || $isFailed ? '×' : ($isRefunded ? '↺' : ($isPending ? '⏳' : '✓'));
             @endphp
             <div class="success-icon {{ $iconClass }}">
                 <span style="font-size: 1.875rem; font-weight: 700; line-height: 1;">{{ $iconChar }}</span>
@@ -234,6 +236,10 @@
                     {{ __('site.order.refunded_title') }}
                 @elseif ($isShipped)
                     {{ __('site.order.shipped_title') }}
+                @elseif ($isFailed)
+                    Payment failed
+                @elseif ($isPending)
+                    Processing your payment…
                 @else
                     {{ __('site.order.thanks_name', ['name' => explode(' ', $order->customer_name)[0]]) }}
                 @endif
@@ -245,11 +251,22 @@
                     {{ __('site.order.refunded_body') }}
                 @elseif ($isShipped)
                     {{ __('site.order.shipped_body') }}
+                @elseif ($isFailed)
+                    Your card was declined or the payment didn't complete. Head back to your cart to try again.
+                @elseif ($isPending)
+                    Your payment is being confirmed by your bank. This page will refresh automatically.
                 @else
                     {{ __('site.order.paid_body', ['email' => $order->customer_email]) }}
                 @endif
             </p>
             <span class="order-num">{{ $order->order_number }}</span>
+
+            @if ($isPending)
+                {{-- Auto-refresh every 4 seconds while pending — the
+                     webhook (or OrderController's reconcile pull on
+                     next render) flips status → paid. --}}
+                <meta http-equiv="refresh" content="4">
+            @endif
         </div>
 
         @if ($isShipped && $order->tracking_number)
