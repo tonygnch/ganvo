@@ -24,6 +24,7 @@
             --secondary: var(--soft);
             --text: var(--ink); --text-muted: var(--muted); --text-soft: var(--muted);
             --border: var(--line); --surface: var(--card);
+            --vp-radius: 8px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }

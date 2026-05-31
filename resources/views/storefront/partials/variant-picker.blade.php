@@ -56,53 +56,55 @@
     </div>
 
     <style>
+        /* Theme-variable-driven so every theme's option picker takes its OWN
+           palette + radius (no hardcoded colors). Each storefront layout
+           defines --accent / --border / --surface / --text and may set
+           --vp-radius + --vp-on-accent to tune the shape + selected fill.
+           Fallback chains keep it sane for any theme / the central pages. */
         .vp { margin: 0 0 1.5rem; }
         .vp-label {
             font-size: 0.6875rem;
-            letter-spacing: 0.18em;
+            letter-spacing: 0.16em;
             text-transform: uppercase;
-            color: rgba(0, 0, 0, .55);
+            color: var(--text-muted, var(--muted, rgba(0,0,0,.55)));
             margin: 0 0 .625rem;
             font-weight: 600;
         }
-        .vp-options {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: .5rem;
-        }
-        .vp-option {
-            position: relative;
-            display: block;
-            border: 1px solid rgba(0, 0, 0, .15);
-            border-radius: 10px;
-            padding: .75rem .875rem;
-            cursor: pointer;
-            background: white;
-            transition: border-color .15s ease, background-color .15s ease, transform .12s ease;
-        }
-        .vp-option:hover { border-color: rgba(0, 0, 0, .45); transform: translateY(-1px); }
+        .vp-options { display: flex; flex-wrap: wrap; gap: .5rem; }
+        .vp-option { position: relative; cursor: pointer; display: inline-block; }
         .vp-option input { position: absolute; opacity: 0; pointer-events: none; }
-        .vp-option:has(input:checked) {
-            border-color: #111;
-            background: #111;
-            color: white;
+        .vp-option-body {
+            display: inline-flex;
+            align-items: center;
+            gap: .45rem;
+            padding: .7rem 1.05rem;
+            border: 1.5px solid var(--border, var(--line, rgba(0,0,0,.15)));
+            border-radius: var(--vp-radius, 8px);
+            background: var(--surface, var(--card, #fff));
+            color: var(--text, var(--ink, var(--txt, #111)));
+            font-size: .875rem;
+            font-weight: 600;
+            transition: border-color .15s ease, color .15s ease, background-color .15s ease;
         }
-        .vp-option-body { display: flex; flex-direction: column; gap: .125rem; }
-        .vp-option-label { font-weight: 600; font-size: .9375rem; }
-        .vp-option-price { font-size: .8125rem; font-variant-numeric: tabular-nums; opacity: .9; }
-        .vp-option-meta {
-            font-size: 0.625rem;
-            text-transform: uppercase;
-            letter-spacing: .1em;
-            opacity: .75;
-            margin-top: .125rem;
+        .vp-option:hover .vp-option-body { border-color: var(--accent); }
+        /* Selected: themes that set --vp-on-accent get a FILLED accent chip
+           (e.g. Atelier ink); the rest get a clean accent outline. */
+        .vp-option input:checked + .vp-option-body {
+            border-color: var(--accent);
+            color: var(--vp-on-accent, var(--accent));
+            background: var(--vp-fill, transparent);
         }
-        .vp-option.vp-out {
-            opacity: .45;
+        .vp-option-label { line-height: 1; }
+        /* Per-variant price + stock are available but hidden by default —
+           the picker reads as a clean label chip (matching the source
+           designs); the selected variant's price still updates the main
+           price via the data-vp-price hook. */
+        .vp-option-price, .vp-option-meta { display: none; }
+        .vp-option.vp-out .vp-option-body {
+            opacity: .4;
             cursor: not-allowed;
-            background: rgba(0, 0, 0, .03);
+            text-decoration: line-through;
         }
-        .vp-option.vp-out:hover { transform: none; border-color: rgba(0, 0, 0, .15); }
     </style>
 
     @once

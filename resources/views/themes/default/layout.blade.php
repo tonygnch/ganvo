@@ -42,6 +42,11 @@
             --text: var(--ink);
             --text-muted: #4f4a40;
             --text-soft: var(--muted);
+
+            /* Variant picker: sharp, ink-filled selected chip (Atelier). */
+            --vp-radius: 2px;
+            --vp-fill: var(--accent);
+            --vp-on-accent: var(--paper);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }

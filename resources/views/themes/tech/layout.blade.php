@@ -39,6 +39,7 @@
             --text-muted: var(--muted);
             --text-soft: var(--faint);
             --border: var(--line);
+            --vp-radius: 6px;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
