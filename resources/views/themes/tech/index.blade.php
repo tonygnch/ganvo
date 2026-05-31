@@ -2,9 +2,6 @@
 
 @section('content')
     @php
-        // Filtered = customer narrowed the catalog; we then skip
-        // marketing chrome (collection strips) and surface results
-        // immediately.
         $isFiltered = ($filters['q'] ?? null)
             || ($filters['category'] ?? null)
             || ($filters['min_price'] ?? null) !== null
@@ -12,204 +9,169 @@
             || ($filters['in_stock'] ?? false)
             || (($filters['sort'] ?? 'newest') !== 'newest')
             || $products->currentPage() > 1;
+
+        $featured = $products->take(8);
+        $heroProduct = $featured->first();
+        $heroImg = $heroProduct && $heroProduct->image_path ? \Illuminate\Support\Facades\Storage::url($heroProduct->image_path) : null;
+        $trending = $featured->take(4);
+        $arrivals = $featured->slice(4, 4);
+        $csHero = $store->heroBanner();
+        $topCategories = ($categories ?? collect())->where('parent_id', null)->sortBy('sort_order')->take(4)->values();
     @endphp
+
     <style>
-        .tech-section { padding: 4rem 0 5rem; }
-        .tech-section-head {
-            display: flex;
-            align-items: baseline;
-            justify-content: space-between;
-            gap: 2rem;
-            margin: 0 0 2rem;
-            padding-bottom: 1.25rem;
-            border-bottom: 1px solid var(--hair);
+        .hero {
+            margin-top: 24px; border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
+            background: radial-gradient(120% 130% at 78% 8%, #1b2233 0, #0c0e14 60%); position: relative;
+            display: grid; grid-template-columns: 1.05fr .95fr; min-height: 540px;
         }
-        .tech-section-head h2 {
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-        }
-        .tech-section-head .meta {
-            font-family: var(--mono);
-            font-size: 0.75rem;
-            color: var(--text-soft);
-        }
-        .tech-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 1.5rem;
-        }
-        .tech-card {
-            background: var(--surface);
-            border: 1px solid var(--hair);
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
-            color: inherit;
-        }
-        .tech-card:hover {
-            border-color: var(--hair-strong);
-            transform: translateY(-2px);
-            box-shadow: 0 12px 24px -10px rgba(15, 23, 42, .15);
-        }
-        .tech-image {
-            position: relative;
-            aspect-ratio: 4 / 3;
-            background: var(--surface-2);
-            overflow: hidden;
-        }
-        .tech-image img {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            transition: transform .35s ease;
-        }
-        .tech-card:hover .tech-image img { transform: scale(1.05); }
-        .tech-image .placeholder {
-            position: absolute; inset: 0;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--text-soft);
-            font-family: var(--mono);
-            font-size: 0.6875rem;
-            letter-spacing: 0.16em;
-            text-transform: uppercase;
-        }
-        .tech-image .stock-badge {
-            position: absolute; top: .75rem; right: .75rem;
-            background: var(--surface);
-            border: 1px solid var(--hair);
-            color: var(--text);
-            font-family: var(--mono);
-            font-size: 0.6875rem;
-            font-weight: 600;
-            padding: .25rem .5rem;
-            border-radius: 4px;
-        }
-        .tech-image .stock-badge.low { background: var(--primary-soft); color: var(--primary-strong); border-color: color-mix(in srgb, var(--primary) 25%, transparent); }
+        .hero .cap { padding: 64px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 2; }
+        .hero .cap h1 { font-family: var(--archivo); font-weight: 800; font-size: clamp(44px,5.6vw,76px); line-height: .96; letter-spacing: -.03em; margin: 18px 0; }
+        .hero .cap p { color: var(--muted); font-size: 17px; max-width: 40ch; margin-bottom: 30px; }
+        .hero .cap .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+        .hero .visual { position: relative; }
+        .hero .visual .prod { position: absolute; inset: 30px 30px 0 0; border-radius: 12px 12px 0 0; overflow: hidden; background: linear-gradient(180deg,#262d3d,#0f121a); border: 1px solid var(--line); border-bottom: none; }
+        .hero .visual .prod img { width: 100%; height: 100%; object-fit: cover; }
+        .hero .visual .chip { position: absolute; left: 0; bottom: 40px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 18px; font-family: var(--mono); font-size: 12px; }
+        .hero .visual .chip b { color: var(--accent); }
 
-        .tech-body {
-            padding: 1.125rem 1.25rem 1.25rem;
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-        }
-        .tech-body h3 {
-            margin: 0 0 .375rem;
-            font-size: 1rem;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-            line-height: 1.3;
-        }
-        .tech-body .price {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text);
-            margin: 0 0 .875rem;
-            font-variant-numeric: tabular-nums;
-        }
-        .tech-specs {
-            margin: auto 0 0;
-            padding-top: .875rem;
-            border-top: 1px dashed var(--hair);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: .375rem .75rem;
-        }
-        .tech-specs dt {
-            font-family: var(--mono);
-            font-size: 0.625rem;
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
-            color: var(--text-soft);
-            margin: 0;
-        }
-        .tech-specs dd {
-            margin: 0;
-            font-family: var(--mono);
-            font-size: 0.75rem;
-            color: var(--text);
-            font-weight: 600;
-            text-align: right;
-        }
+        .strip { display: flex; justify-content: center; gap: 46px; flex-wrap: wrap; padding: 30px 0; color: var(--faint); font-family: var(--mono); font-size: 12px; letter-spacing: .05em; border-bottom: 1px solid var(--line); }
 
-        .tech-empty {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 4rem 1rem;
-            border: 1px dashed var(--hair);
-            border-radius: 12px;
-            color: var(--text-soft);
+        .banner { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 90px 0; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+        .banner .txt { padding: 56px; background: var(--surface); }
+        .banner .txt .tag { margin-bottom: 14px; display: block; }
+        .banner .txt h3 { font-family: var(--archivo); font-weight: 800; font-size: clamp(30px,3.6vw,46px); letter-spacing: -.02em; line-height: 1.02; margin-bottom: 16px; }
+        .banner .txt p { color: var(--muted); max-width: 42ch; margin-bottom: 26px; }
+        .banner .vis { position: relative; background: var(--surface2); overflow: hidden; min-height: 320px; }
+        .banner .vis img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+
+        .news { border: 1px solid var(--line); border-radius: 16px; padding: 50px; margin: 80px 0; text-align: center; background: radial-gradient(80% 120% at 50% 0,#161a24,#0c0e13); }
+        .news h3 { font-family: var(--archivo); font-weight: 800; font-size: clamp(26px,3.2vw,38px); letter-spacing: -.02em; }
+        .news p { color: var(--muted); margin: 12px 0 24px; }
+        .news form { display: flex; gap: 10px; max-width: 460px; margin: 0 auto; }
+        .news input { flex: 1; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; color: var(--txt); font-family: var(--mono); font-size: 13px; }
+        .news input:focus { outline: none; border-color: var(--accent); }
+
+        .cats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin: 40px 0; }
+        .cat { position: relative; height: 160px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface2); display: flex; align-items: flex-end; padding: 16px; }
+        .cat img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .55; }
+        .cat .lab { position: relative; font-family: var(--archivo); font-weight: 800; font-size: 18px; z-index: 1; }
+
+        .empty { border: 1px solid var(--line); border-radius: 12px; padding: 60px; text-align: center; color: var(--muted); font-family: var(--mono); font-size: 13px; }
+
+        @media (max-width: 1000px) {
+            .hero, .banner { grid-template-columns: 1fr; }
+            .hero .visual { min-height: 300px; }
+            .cats { grid-template-columns: 1fr 1fr; }
         }
+        @media (max-width: 720px) { .hero .cap { padding: 40px 28px; } }
     </style>
 
-    @php $csHero = $store->heroBanner(); @endphp
-
-    @if ($csHero['enabled'] && ($csHero['title'] !== '' || $csHero['subtitle'] !== '' || $csHero['image_path']))
-        <section class="custom-hero {{ $csHero['image_path'] ? 'with-image' : '' }}">
-            @if ($csHero['image_path'])
-                <div class="bg-img" style="background-image: url('{{ \Illuminate\Support\Facades\Storage::url($csHero['image_path']) }}');" aria-hidden="true"></div>
+    <main>
+        <div class="wrap">
+            @if (! $isFiltered)
+                <section class="hero">
+                    <div class="cap">
+                        <span class="tag rv">// {{ $csHero['title'] !== '' ? $csHero['title'] : __('site.storefront.hero.eyebrow', ['year' => date('Y')]) }}</span>
+                        <h1 class="rv">{{ $csHero['subtitle'] !== '' ? $csHero['subtitle'] : __('site.storefront.hero.headline', ['tenant' => $tenant->name]) }}</h1>
+                        <p class="rv">{{ __('site.storefront.hero.sub') }}</p>
+                        <div class="row rv">
+                            <a class="btn" href="#shop">{{ $csHero['cta_label'] !== '' ? $csHero['cta_label'] : __('site.storefront.hero.cta_primary') }}</a>
+                            <a class="btn ghost" href="#featured">{{ __('site.storefront.hero.cta_secondary') }}</a>
+                        </div>
+                    </div>
+                    <div class="visual rv">
+                        <div class="prod ph">
+                            @if ($heroImg)<img src="{{ $heroImg }}" alt="{{ $heroProduct->name }}">@else<span>product</span>@endif
+                        </div>
+                        @if ($heroProduct)
+                            <div class="chip">{{ $heroProduct->name }} · <b>@money($heroProduct->price_cents)</b></div>
+                        @endif
+                    </div>
+                </section>
             @endif
-            <div class="custom-hero-inner">
-                @if ($csHero['title'] !== '')<h2>{{ $csHero['title'] }}</h2>@endif
-                @if ($csHero['subtitle'] !== '')<p>{{ $csHero['subtitle'] }}</p>@endif
-                @if ($csHero['cta_label'] !== '' && $csHero['cta_url'] !== '')
-                    <a href="{{ $csHero['cta_url'] }}" class="cta">{{ $csHero['cta_label'] }}</a>
-                @endif
+        </div>
+
+        @if (! $isFiltered)
+            <div class="strip">
+                <span>// FAST-CHARGE</span><span>// USB-C</span><span>// BLUETOOTH 5.4</span><span>// IPX5</span><span>// 2Y WARRANTY</span>
             </div>
-        </section>
-    @endif
+        @endif
 
-    @if (! $isFiltered && (isset($featuredCollections) ? $featuredCollections->isNotEmpty() : false))
-        <section class="container tech-section">
-            @include('storefront.partials.collection-strips')
-        </section>
-    @endif
+        <div class="wrap">
+            @if (! $isFiltered && $trending->isNotEmpty())
+                <div class="sec-head rv" id="featured"><h2>{{ __('site.storefront.featured.h2') }}</h2><a href="#shop">{{ __('site.storefront.featured.browse_all') }} →</a></div>
+                <div class="pgrid">
+                    @foreach ($trending as $i => $product)
+                        @include('themes.tech._card', ['product' => $product, 'badge' => $i === 0 ? __('site.storefront.featured.badge') : null])
+                    @endforeach
+                </div>
+            @endif
 
-    <section class="container tech-section" id="shop">
-        <div class="tech-section-head">
-            <h2>{{ __('site.storefront.shop_all.h2') }}</h2>
-            <span class="meta">{{ method_exists($products, 'total') ? $products->total() : $products->count() }} {{ str()->plural('item', method_exists($products, 'total') ? $products->total() : $products->count()) }}</span>
-        </div>
-
-        @include('storefront.partials.catalog-controls')
-
-        <div class="tech-grid">
-            @forelse ($products as $product)
-                <a href="/products/{{ $product->slug }}" class="tech-card">
-                    <div class="tech-image">
-                        @if ($product->image_path)
-                            <img src="{{ \Illuminate\Support\Facades\Storage::url($product->image_path) }}" alt="{{ $product->name }}">
-                        @else
-                            <span class="placeholder">{{ __('site.storefront.product.no_image') }}</span>
-                        @endif
-                        @if ($product->stock_quantity > 0)
-                            <span class="stock-badge {{ $product->stock_quantity < 10 ? 'low' : '' }}">
-                                @if ($product->stock_quantity < 10)
-                                    {{ __('site.storefront.product.in_stock_low', ['count' => $product->stock_quantity]) }}
-                                @else
-                                    {{ __('site.storefront.product.in_stock_full') }}
-                                @endif
-                            </span>
+            @if (! $isFiltered)
+                <section class="banner">
+                    <div class="txt">
+                        <span class="tag">// {{ __('site.storefront.featured.eyebrow') }}</span>
+                        <h3 class="rv">{{ __('site.storefront.promo.h2_prefix', ['tenant' => $tenant->name]) }}</h3>
+                        <p class="rv">{{ __('site.storefront.promo.p') }}</p>
+                        <a class="btn rv" href="#shop">{{ __('site.storefront.promo.btn') }}</a>
+                    </div>
+                    <div class="vis">
+                        @if ($featured->skip(1)->first() && $featured->skip(1)->first()->image_path)
+                            <img src="{{ \Illuminate\Support\Facades\Storage::url($featured->skip(1)->first()->image_path) }}" alt="">
                         @endif
                     </div>
-                    <div class="tech-body">
-                        <h3>{{ $product->name }}</h3>
-                        <div class="price">@money($product->price_cents)</div>
-                        <dl class="tech-specs">
-                            <dt>SKU</dt>
-                            <dd>#{{ str_pad((string) $product->id, 4, '0', STR_PAD_LEFT) }}</dd>
-                            <dt>Stock</dt>
-                            <dd>{{ $product->stock_quantity }}</dd>
-                        </dl>
-                    </div>
-                </a>
-            @empty
-                <div class="tech-empty">{{ __('site.storefront.no_products') }}</div>
-            @endforelse
-        </div>
+                </section>
 
-        @include('storefront.partials.pagination')
-    </section>
+                @if ($topCategories->isNotEmpty())
+                    <div class="cats">
+                        @foreach ($topCategories as $cat)
+                            <a class="cat rv" href="/categories/{{ $cat->slug }}">
+                                @if ($cat->image_path)<img src="{{ \Illuminate\Support\Facades\Storage::url($cat->image_path) }}" alt="">@endif
+                                <span class="lab">{{ $cat->name }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if ($arrivals->isNotEmpty())
+                    <div class="sec-head rv"><h2>{{ __('site.storefront.featured.h2') }}</h2><a href="#shop">{{ __('site.storefront.featured.browse_all') }} →</a></div>
+                    <div class="pgrid">
+                        @foreach ($arrivals as $product)
+                            @include('themes.tech._card', ['product' => $product, 'badge' => null])
+                        @endforeach
+                    </div>
+                @endif
+            @endif
+
+            @if (! $isFiltered && (isset($featuredCollections) ? $featuredCollections->isNotEmpty() : false))
+                <section class="rv" style="margin-top:60px">@include('storefront.partials.collection-strips')</section>
+            @endif
+
+            <div class="sec-head rv" id="shop"><h2>{{ __('site.storefront.shop_all.h2') }}</h2></div>
+            @include('storefront.partials.catalog-controls')
+            @if ($products->isEmpty())
+                <div class="empty">{{ __('site.storefront.no_products') }}</div>
+            @else
+                <div class="pgrid">
+                    @foreach ($products as $product)
+                        @include('themes.tech._card', ['product' => $product, 'badge' => null])
+                    @endforeach
+                </div>
+                @include('storefront.partials.pagination')
+            @endif
+
+            @if (! $isFiltered)
+                <section class="news rv">
+                    <h3>{{ __('site.storefront.footer.subscribe') }}</h3>
+                    <p>{{ __('site.storefront.footer.tagline') }}</p>
+                    <form data-subscribed-label="{{ __('site.storefront.footer.subscribed') }}"
+                          onsubmit="event.preventDefault(); this.querySelector('input').value=''; this.querySelector('button').textContent=this.dataset.subscribedLabel;">
+                        <input type="email" placeholder="{{ __('site.storefront.footer.newsletter_placeholder') }}" required>
+                        <button type="submit" class="btn">{{ __('site.storefront.footer.subscribe') }}</button>
+                    </form>
+                </section>
+            @endif
+        </div>
+    </main>
 @endsection
