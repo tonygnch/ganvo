@@ -2,305 +2,122 @@
 
 @section('content')
     @php
-        // Only show marketing chrome (hero + quote band) on the unfiltered
-        // landing — once shoppers search/filter/paginate, jump them
-        // straight to results.
-        $isFiltered = ($filters['q'] ?? null)
-            || ($filters['category'] ?? null)
-            || ($filters['min_price'] ?? null) !== null
-            || ($filters['max_price'] ?? null) !== null
-            || ($filters['in_stock'] ?? false)
-            || (($filters['sort'] ?? 'newest') !== 'newest')
-            || $products->currentPage() > 1;
+        $isFiltered = ($filters['q'] ?? null) || ($filters['category'] ?? null) || ($filters['min_price'] ?? null) !== null || ($filters['max_price'] ?? null) !== null || ($filters['in_stock'] ?? false) || (($filters['sort'] ?? 'newest') !== 'newest') || $products->currentPage() > 1;
+        $featured = $products->take(8);
+        $heroProduct = $featured->first();
+        $heroImg = $heroProduct && $heroProduct->image_path ? \Illuminate\Support\Facades\Storage::url($heroProduct->image_path) : null;
+        $csHero = $store->heroBanner();
+        $topCategories = ($categories ?? collect())->where('parent_id', null)->sortBy('sort_order')->take(3)->values();
+        $ritualImg = $featured->skip(1)->first() && $featured->skip(1)->first()->image_path ? \Illuminate\Support\Facades\Storage::url($featured->skip(1)->first()->image_path) : null;
     @endphp
+
     <style>
-        /* -------- Editorial hero -------- */
-        .hero {
-            padding: 6rem 2rem 5rem;
-            text-align: center;
-            max-width: 880px;
-            margin: 0 auto;
-        }
-        .hero .eyebrow {
-            font-size: 0.6875rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin: 0 0 1.5rem;
-        }
-        .hero h1 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-weight: 400;
-            font-size: clamp(2.5rem, 5vw, 4.5rem);
-            line-height: 1.05;
-            letter-spacing: -0.01em;
-            margin: 0 0 1.5rem;
-            color: var(--text);
-        }
-        .hero h1 em {
-            font-style: italic;
-            color: var(--primary);
-        }
-        .hero .sub {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.25rem;
-            line-height: 1.5;
-            color: var(--text-muted);
-            font-style: italic;
-            max-width: 560px;
-            margin: 0 auto 2rem;
-        }
-        .hero .cta {
-            display: inline-block;
-            padding: .875rem 2rem;
-            border: 1px solid var(--text);
-            color: var(--text);
-            font-size: 0.7rem;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            transition: background-color .2s ease, color .2s ease;
-        }
-        .hero .cta:hover { background: var(--text); color: white; }
+        .hero { margin-top: 14px; border-radius: 34px; background: linear-gradient(120deg,#f6dccd,#f9eae0 55%,#f1d2c3); position: relative; overflow: hidden; padding: 90px 64px; min-height: 480px; display: flex; align-items: center; }
+        .hero .blob { position: absolute; border-radius: 50%; filter: blur(2px); }
+        .hero .b1 { width: 520px; height: 520px; background: rgba(231,170,142,.5); right: -120px; top: -120px; }
+        .hero .b2 { width: 300px; height: 300px; background: rgba(255,255,255,.5); right: 160px; bottom: -90px; }
+        .hero .cap { position: relative; z-index: 2; max-width: 560px; }
+        .hero .k { letter-spacing: .18em; text-transform: uppercase; font-size: 12px; color: var(--accent); font-weight: 700; }
+        .hero h1 { font-family: var(--display); font-size: clamp(46px,6vw,76px); line-height: 1.02; margin: 18px 0 20px; color: #5a3f35; }
+        .hero p { font-size: 17px; color: #7a5e54; max-width: 42ch; margin-bottom: 30px; }
+        .hero .pimg { position: absolute; right: 70px; bottom: 0; width: 300px; height: 430px; z-index: 2; border-radius: 24px 24px 0 0; overflow: hidden; }
+        .hero .pimg img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* -------- Section heading -------- */
-        .section { padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; }
-        .section-head {
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-        .section-head .eyebrow {
-            font-size: 0.6875rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin: 0 0 .75rem;
-        }
-        .section-head h2 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-weight: 500;
-            font-size: clamp(1.875rem, 3vw, 2.5rem);
-            margin: 0;
-            letter-spacing: -0.01em;
-        }
-        .section-head .hairline {
-            width: 40px;
-            height: 1px;
-            background: var(--text);
-            margin: 1.25rem auto 0;
-        }
+        .trust { display: flex; justify-content: center; gap: 50px; flex-wrap: wrap; padding: 34px 0; color: var(--muted); font-size: 13px; letter-spacing: .04em; }
+        .trust b { color: var(--ink); font-weight: 600; }
 
-        /* -------- Product grid -------- */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 3rem 2rem;
-        }
-        .card { display: block; color: inherit; }
-        .card-image {
-            position: relative;
-            aspect-ratio: 4 / 5;
-            background: var(--muted);
-            overflow: hidden;
-            margin-bottom: 1.25rem;
-        }
-        .card-image img {
-            width: 100%; height: 100%;
-            object-fit: cover;
-            transition: transform .7s cubic-bezier(.2,.7,.2,1), opacity .3s ease;
-        }
-        .card:hover .card-image img { transform: scale(1.04); }
-        .card-image .placeholder {
-            position: absolute; inset: 0;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--text-soft);
-            font-size: 0.6875rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            font-family: system-ui, sans-serif;
-        }
-        .card-body { text-align: center; padding: 0 .5rem; }
-        .card-body h3 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-weight: 500;
-            font-size: 1.25rem;
-            margin: 0 0 .375rem;
-            letter-spacing: 0.01em;
-            line-height: 1.3;
-            transition: color .2s ease;
-        }
-        .card:hover .card-body h3 { color: var(--primary); }
-        .card-body .price {
-            font-size: 0.8125rem;
-            color: var(--text-muted);
-            letter-spacing: 0.05em;
-        }
+        .ritual { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: center; margin: 100px 0; background: var(--blush); border-radius: 34px; padding: 56px; }
+        .ritual .img { height: 420px; border-radius: 24px; overflow: hidden; }
+        .ritual .img img { width: 100%; height: 100%; object-fit: cover; }
+        .ritual h3 { font-family: var(--display); font-size: clamp(32px,4vw,48px); line-height: 1.05; margin-bottom: 18px; }
+        .ritual p { color: #7a5e54; margin-bottom: 24px; }
 
-        .empty {
-            text-align: center;
-            padding: 6rem 0;
-            color: var(--text-soft);
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-size: 1.25rem;
-        }
+        .cats { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; margin: 60px 0; }
+        .cat { position: relative; height: 280px; border-radius: 24px; overflow: hidden; background: var(--blush); display: flex; align-items: flex-end; padding: 22px; }
+        .cat img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .cat .lab { position: relative; z-index: 1; font-family: var(--display); font-size: 24px; color: #fff; text-shadow: 0 2px 16px rgba(0,0,0,.35); }
 
-        /* -------- Editorial quote band -------- */
-        .quote-band {
-            padding: 6rem 2rem;
-            text-align: center;
-            border-top: 1px solid var(--hair);
-            border-bottom: 1px solid var(--hair);
-            background: var(--muted);
-            margin-top: 4rem;
-        }
-        .quote-band blockquote {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-weight: 400;
-            font-size: clamp(1.5rem, 3vw, 2.25rem);
-            line-height: 1.4;
-            max-width: 760px;
-            margin: 0 auto 1.5rem;
-            color: var(--text);
-        }
-        .quote-band cite {
-            font-size: 0.6875rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            font-style: normal;
-        }
+        .news { text-align: center; margin: 60px auto 100px; max-width: 560px; background: var(--card); border-radius: 30px; padding: 54px 40px; }
+        .news h3 { font-family: var(--display); font-size: 34px; }
+        .news p { color: var(--muted); margin: 12px 0 26px; }
+        .news form { display: flex; gap: 10px; }
+        .news input { flex: 1; border: 1.5px solid var(--line); border-radius: 99px; background: var(--bg); padding: 14px 20px; font-family: inherit; font-size: 15px; }
+        .news input:focus { outline: none; border-color: var(--accent); }
 
-        @media (max-width: 720px) {
-            .hero { padding: 3.5rem 1.25rem 3rem; }
-            .section { padding: 2.5rem 1.25rem; }
-            .section-head { margin-bottom: 2.5rem; }
-            .grid { grid-template-columns: repeat(2, 1fr); gap: 2rem 1rem; }
-        }
+        .empty { text-align: center; padding: 60px; color: var(--muted); }
 
-        /* -------- Merchant-configurable hero banner (sits above the editorial hero). -------- */
-        .custom-hero {
-            position: relative;
-            padding: 5rem 1.5rem;
-            text-align: center;
-            color: var(--text);
-            border-bottom: 1px solid var(--hair);
-            overflow: hidden;
-        }
-        .custom-hero.with-image { color: white; border-bottom: 0; }
-        .custom-hero .bg-img {
-            position: absolute; inset: 0;
-            background-size: cover;
-            background-position: center;
-        }
-        .custom-hero .bg-img::after {
-            content: ""; position: absolute; inset: 0;
-            background: linear-gradient(180deg, rgba(0,0,0,.25) 0%, rgba(0,0,0,.55) 100%);
-        }
-        .custom-hero-inner { position: relative; max-width: 800px; margin: 0 auto; z-index: 1; }
-        .custom-hero h2 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-weight: 500;
-            font-size: clamp(2rem, 4.5vw, 3.25rem);
-            letter-spacing: -0.01em;
-            margin: 0 0 .75rem;
-            line-height: 1.05;
-        }
-        .custom-hero p {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: clamp(1rem, 1.8vw, 1.25rem);
-            font-style: italic;
-            margin: 0 0 1.75rem;
-            opacity: .92;
-        }
-        .custom-hero .cta {
-            display: inline-block;
-            padding: .75rem 1.75rem;
-            border: 1px solid currentColor;
-            font-size: 0.75rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            color: inherit;
-            transition: background-color .2s ease, color .2s ease;
-        }
-        .custom-hero .cta:hover { background: var(--text); color: var(--surface); }
-        .custom-hero.with-image .cta:hover { background: white; color: var(--text); }
+        @media (max-width: 1000px) { .ritual { grid-template-columns: 1fr; } .ritual .img { height: 300px; } .hero .pimg { display: none; } .hero { padding: 60px 40px; min-height: 380px; } .cats { grid-template-columns: 1fr; } }
     </style>
 
-    @php $csHero = $store->heroBanner(); @endphp
+    <main>
+        <div class="wrap">
+            @if (! $isFiltered)
+                <section class="hero">
+                    <div class="blob b1"></div><div class="blob b2"></div>
+                    <div class="cap">
+                        <div class="k rv">{{ $csHero['title'] !== '' ? $csHero['title'] : __('site.storefront.hero.eyebrow', ['year' => date('Y')]) }}</div>
+                        <h1 class="rv">{{ $csHero['subtitle'] !== '' ? $csHero['subtitle'] : __('site.storefront.hero.headline', ['tenant' => $tenant->name]) }}</h1>
+                        <p class="rv">{{ __('site.storefront.hero.sub') }}</p>
+                        <div class="rv" style="display:flex;gap:14px;flex-wrap:wrap">
+                            <a class="btn" href="#shop">{{ $csHero['cta_label'] !== '' ? $csHero['cta_label'] : __('site.storefront.hero.cta_primary') }}</a>
+                            @if ($heroProduct)<a class="btn outline" href="/products/{{ $heroProduct->slug }}">{{ __('site.storefront.hero.cta_secondary') }} →</a>@endif
+                        </div>
+                    </div>
+                    @if ($heroImg)<div class="pimg rv"><img src="{{ $heroImg }}" alt=""></div>@endif
+                </section>
 
-    @if (! $isFiltered && $csHero['enabled'] && ($csHero['title'] !== '' || $csHero['subtitle'] !== '' || $csHero['image_path']))
-        <section class="custom-hero {{ $csHero['image_path'] ? 'with-image' : '' }} reveal">
-            @if ($csHero['image_path'])
-                <div class="bg-img" style="background-image: url('{{ \Illuminate\Support\Facades\Storage::url($csHero['image_path']) }}');" aria-hidden="true"></div>
+                <div class="trust rv">
+                    <span><b>{{ __('site.storefront.value_props.shipping_title') }}</b></span>
+                    <span><b>{{ __('site.storefront.value_props.returns_title') }}</b></span>
+                    <span><b>{{ __('site.storefront.value_props.checkout_title') }}</b></span>
+                </div>
+
+                @if ($featured->isNotEmpty())
+                    <div class="sec-head rv" id="featured"><div class="k">{{ __('site.storefront.featured.eyebrow') }}</div><h2>{{ __('site.storefront.featured.h2') }}</h2></div>
+                    <div class="pgrid">@foreach ($featured->take(4) as $product)@include('themes.minimal._card')@endforeach</div>
+                @endif
+
+                <section class="ritual">
+                    <div class="img ph">@if ($ritualImg)<img src="{{ $ritualImg }}" alt="">@else<span>ritual</span>@endif</div>
+                    <div>
+                        <h3 class="rv">{{ __('site.storefront.promo.h2_prefix', ['tenant' => $tenant->name]) }}</h3>
+                        <p class="rv">{{ __('site.storefront.promo.p') }}</p>
+                        <a class="btn rv" href="#shop">{{ __('site.storefront.promo.btn') }}</a>
+                    </div>
+                </section>
+
+                @if ($topCategories->isNotEmpty())
+                    <div class="cats">
+                        @foreach ($topCategories as $cat)
+                            <a class="cat rv" href="/categories/{{ $cat->slug }}">@if ($cat->image_path)<img src="{{ \Illuminate\Support\Facades\Storage::url($cat->image_path) }}" alt="">@endif<span class="lab">{{ $cat->name }}</span></a>
+                        @endforeach
+                    </div>
+                @endif
             @endif
-            <div class="custom-hero-inner">
-                @if ($csHero['title'] !== '')
-                    <h2>{{ $csHero['title'] }}</h2>
-                @endif
-                @if ($csHero['subtitle'] !== '')
-                    <p>{{ $csHero['subtitle'] }}</p>
-                @endif
-                @if ($csHero['cta_label'] !== '' && $csHero['cta_url'] !== '')
-                    <a href="{{ $csHero['cta_url'] }}" class="cta">{{ $csHero['cta_label'] }}</a>
-                @endif
-            </div>
-        </section>
-    @endif
 
-    @if (! $isFiltered)
-    <section class="hero reveal">
-        <p class="eyebrow">{{ __('site.storefront.hero.eyebrow', ['year' => date('Y')]) }}</p>
-        <h1>{!! str_replace('.', '<em>.</em>', __('site.storefront.hero.headline', ['tenant' => $tenant->name])) !!}</h1>
-        <p class="sub">{{ __('site.storefront.hero.sub') }}</p>
-        <a href="#shop" class="cta">{{ __('site.storefront.hero.cta_primary') }}</a>
-    </section>
-    @endif
+            @if (! $isFiltered && (isset($featuredCollections) ? $featuredCollections->isNotEmpty() : false))
+                <section class="rv">@include('storefront.partials.collection-strips')</section>
+            @endif
 
-    @if (! $isFiltered && (isset($featuredCollections) ? $featuredCollections->isNotEmpty() : false))
-        <section class="section reveal">
-            @include('storefront.partials.collection-strips')
-        </section>
-    @endif
+            <div class="sec-head rv" id="shop"><div class="k">{{ __('site.storefront.shop_all.eyebrow') }}</div><h2>{{ __('site.storefront.shop_all.h2') }}</h2></div>
+            @include('storefront.partials.catalog-controls')
+            @if ($products->isEmpty())
+                <div class="empty">{{ __('site.storefront.no_products') }}</div>
+            @else
+                <div class="pgrid">@foreach ($products as $product)@include('themes.minimal._card')@endforeach</div>
+                @include('storefront.partials.pagination')
+            @endif
 
-    <section class="section reveal" id="shop">
-        <div class="section-head">
-            <p class="eyebrow">{{ __('site.storefront.shop_all.eyebrow') }}</p>
-            <h2>{{ __('site.storefront.shop_all.h2') }}</h2>
-            <div class="hairline"></div>
+            @if (! $isFiltered)
+                <section class="news rv">
+                    <h3>{{ __('site.storefront.footer.subscribe') }}</h3>
+                    <p>{{ __('site.storefront.footer.tagline') }}</p>
+                    <form data-subscribed-label="{{ __('site.storefront.footer.subscribed') }}" onsubmit="event.preventDefault(); this.querySelector('input').value=''; this.querySelector('button').textContent=this.dataset.subscribedLabel;">
+                        <input type="email" placeholder="{{ __('site.storefront.footer.newsletter_placeholder') }}" required>
+                        <button type="submit" class="btn">{{ __('site.storefront.footer.subscribe') }}</button>
+                    </form>
+                </section>
+            @endif
         </div>
-
-        @include('storefront.partials.catalog-controls')
-
-        @if ($products->isEmpty())
-            <p class="empty">{{ __('site.storefront.no_products') }}</p>
-        @else
-            <div class="grid">
-                @foreach ($products as $product)
-                    <a href="/products/{{ $product->slug }}" class="card">
-                        <div class="card-image">
-                            @if ($product->image_path)
-                                <img src="{{ \Illuminate\Support\Facades\Storage::url($product->image_path) }}" alt="{{ $product->name }}">
-                            @else
-                                <span class="placeholder">{{ __('site.storefront.product.no_image') }}</span>
-                            @endif
-                        </div>
-                        <div class="card-body">
-                            <h3>{{ $product->name }}</h3>
-                            <div class="price">@money($product->price_cents)</div>
-                        </div>
-                    </a>
-                @endforeach
-            </div>
-
-            @include('storefront.partials.pagination')
-        @endif
-    </section>
-
-    @if (! $isFiltered && $products->isNotEmpty())
-        <section class="quote-band reveal">
-            <blockquote>{{ __('site.storefront.hero.sub') }}</blockquote>
-            <cite>— {{ $tenant->name }}</cite>
-        </section>
-    @endif
+    </main>
 @endsection

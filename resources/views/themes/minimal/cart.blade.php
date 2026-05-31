@@ -1,426 +1,103 @@
 @php
     $title = __('site.cart.title');
+    $subtotal = $total_cents ?? 0; $totalQty = $items->sum('quantity'); $discountCents = $discount_cents ?? 0;
+    $grand = max(0, $subtotal - $discountCents);
 @endphp
 @extends('themes.minimal.layout')
 
 @section('content')
     <style>
-        .cart-page {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 4rem 2rem 5rem;
-        }
-        .cart-head {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-        .cart-head .eyebrow {
-            font-size: 0.6875rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin: 0 0 .75rem;
-        }
-        .cart-head h1 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-weight: 400;
-            font-size: clamp(2.25rem, 4vw, 3.25rem);
-            letter-spacing: -0.01em;
-            margin: 0 0 .75rem;
-            line-height: 1.1;
-        }
-        .cart-head .summary-line {
-            color: var(--text-muted);
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-size: 1.125rem;
-            margin: 0;
-        }
-        .cart-head .hairline { width: 40px; height: 1px; background: var(--text); margin: 1.25rem auto 0; }
-
-        .cart-layout {
-            display: grid;
-            grid-template-columns: 1fr 360px;
-            gap: 4rem;
-            align-items: start;
-        }
-
-        /* -------- Items -------- */
-        .items {
-            border-top: 1px solid var(--hair);
-        }
-        .item {
-            display: grid;
-            grid-template-columns: 96px 1fr auto;
-            gap: 1.5rem;
-            padding: 1.75rem 0;
-            border-bottom: 1px solid var(--hair);
-            align-items: center;
-        }
-        .item-image {
-            aspect-ratio: 4 / 5;
-            width: 96px; height: auto;
-            background: var(--muted);
-            overflow: hidden;
-            position: relative;
-        }
-        .item-image img { width: 100%; height: 100%; object-fit: cover; }
-        .item-image .placeholder {
-            position: absolute; inset: 0;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--text-soft);
-            font-size: 0.625rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-        }
-        .item-details h3 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-weight: 500;
-            font-size: 1.375rem;
-            margin: 0 0 .375rem;
-            letter-spacing: 0.01em;
-            line-height: 1.2;
-        }
-        .item-details h3 a { color: var(--text); transition: color .2s ease; }
-        .item-details h3 a:hover { color: var(--primary); }
-        .item-details .unit {
-            font-size: 0.6875rem;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-        }
-        .item-actions {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 1rem;
-        }
-        .item-subtotal {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-size: 1.375rem;
-            color: var(--primary);
-        }
-        .item-controls {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        /* -------- Quantity stepper (minimal, hairline) -------- */
-        .qty {
-            display: inline-flex;
-            align-items: center;
-            gap: .5rem;
-            border-bottom: 1px solid var(--text);
-            padding-bottom: 2px;
-        }
-        .qty form { margin: 0; display: inline-flex; }
-        .qty button {
-            width: 22px; height: 22px;
-            background: transparent;
-            border: 0;
-            cursor: pointer;
-            color: var(--text);
-            font-size: 0.875rem;
-            transition: color .15s ease;
-            line-height: 1;
-            padding: 0;
-        }
-        .qty button:hover { color: var(--primary); }
-        .qty .value {
-            min-width: 1.5rem;
-            text-align: center;
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.125rem;
-            color: var(--text);
-        }
-        .remove-btn {
-            background: transparent;
-            border: 0;
-            cursor: pointer;
-            color: var(--text-soft);
-            font-size: 0.625rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            padding: 0;
-            transition: color .15s ease;
-        }
-        .remove-btn:hover { color: var(--text); }
-
-        /* -------- Summary -------- */
-        .summary {
-            position: sticky;
-            top: 8rem;
-            padding-top: 0;
-        }
-        .summary h2 {
-            font-size: 0.6875rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            margin: 0 0 2rem;
-            font-weight: 500;
-            color: var(--text);
-        }
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            padding: .75rem 0;
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            border-bottom: 1px solid var(--hair);
-        }
-        .summary-row:first-of-type { border-top: 1px solid var(--hair); }
-        .summary-row .label {
-            font-size: 0.6875rem;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-        }
-        .summary-row .num {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.0625rem;
-            color: var(--text);
-        }
-        .summary-row.free .num { color: var(--primary); font-style: italic; }
-        .summary-row.total {
-            border-bottom: 1px solid var(--text);
-            padding: 1.25rem 0;
-            margin-top: .5rem;
-        }
-        .summary-row.total .label {
-            font-size: 0.75rem;
-            letter-spacing: 0.25em;
-            color: var(--text);
-            font-weight: 500;
-        }
-        .summary-row.total .num {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-size: 2rem;
-            color: var(--primary);
-        }
-        .summary-hint {
-            color: var(--text-soft);
-            font-size: 0.625rem;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            margin: .75rem 0 1.5rem;
-            text-align: right;
-        }
-        .checkout-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: .75rem;
-            background: var(--text);
-            color: white;
-            border: 0;
-            padding: 1.125rem;
-            font-size: 0.7rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            text-decoration: none;
-            width: 100%;
-            cursor: pointer;
-            font-family: system-ui, sans-serif;
-            transition: background-color .2s ease;
-            margin-top: 1.25rem;
-        }
-        .checkout-btn:hover { background: var(--primary); }
-        .keep-shopping {
-            display: block;
-            text-align: center;
-            margin-top: 1.5rem;
-            color: var(--text-muted);
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-size: 1rem;
-            transition: color .2s ease;
-        }
-        .keep-shopping:hover { color: var(--text); }
-
-        .perks-row {
-            margin-top: 3rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--hair);
-            display: flex;
-            flex-direction: column;
-            gap: .75rem;
-            color: var(--text-muted);
-            font-size: 0.6875rem;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-        }
-        .perks-row span { display: block; }
-
-        /* -------- Empty state -------- */
-        .empty {
-            text-align: center;
-            padding: 5rem 1.5rem;
-            max-width: 460px;
-            margin: 0 auto;
-        }
-        .empty .ornament {
-            width: 36px; height: 1px;
-            background: var(--text);
-            margin: 0 auto 2.5rem;
-        }
-        .empty h2 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-weight: 400;
-            font-size: 2rem;
-            margin: 0 0 1rem;
-            letter-spacing: -0.01em;
-        }
-        .empty p {
-            color: var(--text-muted);
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-size: 1.125rem;
-            margin: 0 0 2.5rem;
-        }
-        .empty .btn {
-            display: inline-block;
-            background: var(--text);
-            color: white;
-            padding: 1rem 2.5rem;
-            font-size: 0.7rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            transition: background-color .2s ease;
-        }
-        .empty .btn:hover { background: var(--primary); }
-
-        @media (max-width: 880px) {
-            .cart-layout { grid-template-columns: 1fr; gap: 2.5rem; }
-            .summary { position: static; }
-            .cart-head { margin-bottom: 2rem; }
-        }
-        @media (max-width: 560px) {
-            .cart-page { padding: 2.5rem 1.25rem 3rem; }
-            .item { grid-template-columns: 72px 1fr; gap: 1rem; padding: 1.25rem 0; }
-            .item-image { width: 72px; }
-            .item-actions { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; gap: 1rem; }
-        }
+        .cart-wrap { padding: 40px 0 90px; }
+        .cart-wrap h1 { font-family: var(--display); font-size: 46px; margin-bottom: 4px; }
+        .cart-wrap .sub { color: var(--muted); font-size: 14px; margin-bottom: 22px; }
+        .cart { display: grid; grid-template-columns: 1fr 380px; gap: 54px; align-items: start; }
+        .cart-empty { background: var(--card); border-radius: 26px; padding: 70px; text-align: center; }
+        .cart-empty h2 { font-family: var(--display); font-size: 28px; margin-bottom: 10px; }
+        .cart-empty p { color: var(--muted); margin-bottom: 22px; }
+        .line { display: grid; grid-template-columns: 96px 1fr auto; gap: 20px; background: var(--card); border-radius: 22px; padding: 18px; margin-bottom: 16px; align-items: center; }
+        .line .img { height: 96px; width: 96px; background: var(--blush); border-radius: 16px; overflow: hidden; }
+        .line .img img { width: 100%; height: 100%; object-fit: cover; }
+        .line .t { font-family: var(--display); font-size: 18px; }
+        .line .t a:hover { color: var(--accent); }
+        .line .m { font-size: 13px; color: var(--muted); }
+        .line .unit { font-size: 12px; color: var(--muted); margin-top: 2px; }
+        .qty { display: inline-flex; border: 1.5px solid var(--line); border-radius: 99px; margin-top: 10px; }
+        .qty form { display: inline-flex; } .qty button { width: 32px; height: 32px; background: none; border: none; font-size: 16px; color: var(--ink); cursor: pointer; }
+        .qty .n { width: 34px; display: grid; place-items: center; font-size: 14px; }
+        .line .pr { font-family: var(--display); font-size: 18px; text-align: right; }
+        .line .rm { font-size: 12px; color: var(--muted); background: none; border: none; display: block; margin-top: 10px; cursor: pointer; text-align: right; width: 100%; }
+        .line .rm:hover { color: var(--accent); }
+        .summary { background: var(--card); border-radius: 26px; padding: 32px; position: sticky; top: 100px; }
+        .summary h3 { font-family: var(--display); font-size: 24px; margin-bottom: 20px; }
+        .summary .promo { display: flex; gap: 8px; margin-bottom: 8px; }
+        .summary .promo input { flex: 1; border: 1.5px solid var(--line); border-radius: 99px; padding: 11px 16px; font-family: inherit; font-size: 13px; background: var(--bg); }
+        .summary .promo button { background: var(--accent); color: #fff; border: 0; border-radius: 99px; padding: 0 18px; font-weight: 600; font-size: 13px; cursor: pointer; }
+        .summary .applied { display: flex; justify-content: space-between; align-items: center; background: var(--blush); border-radius: 14px; padding: 10px 14px; font-size: 12px; margin-bottom: 8px; }
+        .summary .applied .code { font-weight: 700; color: var(--accent); }
+        .summary .applied form button { background: none; border: none; color: var(--muted); font-size: 11px; cursor: pointer; }
+        .promo-region { margin-bottom: 16px; } .promo-msg { font-size: 12px; color: var(--muted); margin-top: 6px; }
+        .summary .r { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 13px; color: #7a5e54; }
+        .summary .r small { color: var(--muted); }
+        .summary .tot { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; border-top: 1px solid var(--line); padding-top: 16px; margin: 8px 0 22px; }
+        .summary .tot [data-cart-total] { font-family: var(--display); color: var(--accent); }
+        .summary .checkout-btn { display: block; width: 100%; text-align: center; background: var(--accent); color: #fff; border: 0; border-radius: 99px; padding: 15px; font-weight: 600; font-size: 14px; cursor: pointer; }
+        .summary .checkout-btn:hover { filter: brightness(1.06); }
+        .summary .secure { text-align: center; font-size: 12px; color: var(--muted); margin-top: 14px; }
+        @media (max-width: 1000px) { .cart { grid-template-columns: 1fr; } .summary { position: static; } }
     </style>
 
-    <div class="cart-page">
-        <div class="cart-head">
-            <p class="eyebrow">{{ __('site.storefront.shop_all.eyebrow') }}</p>
-            <h1>{{ __('site.cart.title') }}</h1>
-            @if ($items->isNotEmpty())
-                @php $totalQty = $items->sum('quantity'); @endphp
-                <p class="summary-line">{{ __('site.cart.' . ($totalQty === 1 ? 'item_count_one' : 'item_count_many'), ['count' => $totalQty]) }}</p>
-            @endif
-            <div class="hairline"></div>
-        </div>
+    @include('storefront.partials.number-anim')
 
-        @if ($items->isEmpty())
-            <div class="empty">
-                <div class="ornament"></div>
-                <h2>{{ __('site.cart.empty_title') }}</h2>
-                <p>{{ __('site.cart.empty_sub') }}</p>
-                <a href="/" class="btn">{{ __('site.cart.start_shopping') }}</a>
-            </div>
-        @else
-            <div class="cart-layout">
-                <div class="items">
-                    @foreach ($items as $row)
-                        @php
-                            $product = $row['product'];
-                            $variant = $row['variant'] ?? null;
-                            $qty = $row['quantity'];
-                            $lineId = $row['line_id'];
-                            $unitCents = $row['unit_price_cents'];
-                        @endphp
-                        <div class="item">
-                            <div class="item-image">
-                                @if ($product->image_path)
-                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($product->image_path) }}" alt="">
-                                @else
-                                    <span class="placeholder">{{ __('site.storefront.product.no_image') }}</span>
-                                @endif
-                            </div>
-                            <div class="item-details">
-                                <h3><a href="/products/{{ $product->slug }}">{{ $product->name }}</a></h3>
-                                @if ($variant)
-                                    <div class="variant">{{ $variant->label }}</div>
-                                @endif
-                                <div class="unit">{{ __('site.cart.unit_each', ['price' => \App\Services\Money::display($unitCents, $displayRate, $displayCurrency)]) }}</div>
-                            </div>
-                            <div class="item-actions">
-                                <div class="item-subtotal">@money($row['subtotal_cents'])</div>
-                                <div class="item-controls">
+    <main>
+        <div class="wrap cart-wrap">
+            <h1>{{ __('site.cart.title') }}</h1>
+            @if ($items->isNotEmpty())<div class="sub">{{ __('site.cart.' . ($totalQty === 1 ? 'item_count_one' : 'item_count_many'), ['count' => $totalQty]) }}</div>@endif
+
+            @if ($items->isEmpty())
+                <div class="cart-empty"><h2>{{ __('site.cart.empty_title') }}</h2><p>{{ __('site.cart.empty_sub') }}</p><a class="btn" href="/">{{ __('site.cart.start_shopping') }}</a></div>
+            @else
+                <div class="cart" data-cart-root data-num-anim="{{ $store->numberAnimation() }}">
+                    <div>
+                        @foreach ($items as $row)
+                            @php $product = $row['product']; $variant = $row['variant'] ?? null; $qty = $row['quantity']; $lineId = $row['line_id']; @endphp
+                            <div class="line" data-cart-line="{{ $lineId }}">
+                                <div class="img">@if ($product->image_path)<img src="{{ \Illuminate\Support\Facades\Storage::url($product->image_path) }}" alt="">@endif</div>
+                                <div>
+                                    <div class="t"><a href="/products/{{ $product->slug }}">{{ $product->name }}</a></div>
+                                    @if ($variant)<div class="m">{{ $variant->label }}</div>@endif
+                                    <div class="unit">{{ __('site.cart.unit_each', ['price' => \App\Services\Money::display($row['unit_price_cents'], $displayRate ?? 1.0, $displayCurrency ?? $store->currency)]) }}</div>
                                     <div class="qty">
-                                        <form method="post" action="/cart/{{ $lineId }}">
-                                            @csrf @method('PATCH')
-                                            <input type="hidden" name="quantity" value="{{ max(0, $qty - 1) }}">
-                                            <button type="submit" aria-label="{{ __('site.cart.decrease') }}">−</button>
-                                        </form>
-                                        <span class="value">{{ $qty }}</span>
-                                        <form method="post" action="/cart/{{ $lineId }}">
-                                            @csrf @method('PATCH')
-                                            <input type="hidden" name="quantity" value="{{ $qty + 1 }}">
-                                            <button type="submit" aria-label="{{ __('site.cart.increase') }}">+</button>
-                                        </form>
+                                        <form method="post" action="/cart/{{ $lineId }}" data-cart-qty>@csrf @method('PATCH')<input type="hidden" name="quantity" value="{{ max(0, $qty - 1) }}" data-qty-value><button type="submit" data-qty-step="-1">−</button></form>
+                                        <span class="n" data-line-qty>{{ $qty }}</span>
+                                        <form method="post" action="/cart/{{ $lineId }}" data-cart-qty>@csrf @method('PATCH')<input type="hidden" name="quantity" value="{{ $qty + 1 }}" data-qty-value><button type="submit" data-qty-step="1">+</button></form>
                                     </div>
-                                    <form method="post" action="/cart/{{ $lineId }}">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="remove-btn" aria-label="{{ __('site.cart.remove') }}">{{ __('site.cart.remove') }}</button>
-                                    </form>
+                                </div>
+                                <div style="text-align:right">
+                                    <div class="pr" data-line-subtotal>@money($row['subtotal_cents'])</div>
+                                    <form method="post" action="/cart/{{ $lineId }}" data-cart-remove>@csrf @method('DELETE')<button type="submit" class="rm">{{ __('site.cart.remove') }}</button></form>
                                 </div>
                             </div>
+                        @endforeach
+                        <a class="btn outline" href="/" style="margin-top:8px">← {{ __('site.cart.continue_shopping') }}</a>
+                    </div>
+                    <aside class="summary">
+                        <h3>{{ __('site.cart.summary') }}</h3>
+                        <div class="promo-region" data-cart-discount data-applied="{{ $applied_code ? '1' : '' }}">
+                            <form method="post" action="/cart/discount" class="promo" data-discount-apply @if ($applied_code) hidden @endif>@csrf<input type="text" name="code" placeholder="{{ __('site.cart.discount_placeholder') }}" maxlength="60" data-discount-input><button type="submit">{{ __('site.cart.discount_apply') }}</button></form>
+                            <div class="applied" data-discount-chip @unless ($applied_code) hidden @endunless><span><span class="code" data-discount-code>{{ $applied_code }}</span>@if ($discount) · <span data-discount-name>{{ $discount->name }}</span>@endif</span><form method="post" action="/cart/discount" data-discount-remove>@csrf @method('DELETE')<button type="submit">{{ __('site.cart.discount_remove') }}</button></form></div>
+                            <p class="promo-msg" data-discount-msg hidden></p>
                         </div>
-                    @endforeach
+                        <div class="r"><span>{{ __('site.cart.subtotal') }}</span><span data-cart-subtotal>@money($subtotal)</span></div>
+                        <div class="r"><span>{{ __('site.cart.shipping') }}</span><small>{{ __('site.cart.shipping_at_checkout') }}</small></div>
+                        <div class="r discount" data-cart-discount-row @unless (! empty($discount) && $discountCents > 0) hidden @endunless><span data-cart-discount-name>{{ $discount->name ?? '' }}</span><span data-cart-discount-amount>@if (! empty($discount) && $discountCents > 0)−@money($discountCents)@endif</span></div>
+                        <div class="tot"><span>{{ __('site.cart.total') }}</span><span data-cart-total>@money($grand)</span></div>
+                        <a class="checkout-btn" href="/checkout">{{ __('site.cart.checkout') }}</a>
+                        <div class="secure">{{ __('site.checkout.secure_note') }}</div>
+                    </aside>
                 </div>
+            @endif
+        </div>
+    </main>
 
-                @php
-                    $subtotal = $total_cents;
-                    $shipping = $subtotal >= 5000 ? 0 : 500;
-                    $discountCents = $discount_cents ?? 0;
-                    $grand = max(0, $subtotal + $shipping - $discountCents);
-                @endphp
-                <aside class="summary">
-                    <h2>{{ __('site.cart.summary') }}</h2>
-                    <div class="summary-row">
-                        <span class="label">{{ __('site.cart.subtotal') }}</span>
-                        <span class="num">@money($subtotal)</span>
-                    </div>
-                    <div class="summary-row {{ $shipping === 0 ? 'free' : '' }}">
-                        <span class="label">{{ __('site.cart.shipping') }}</span>
-                        <span class="num">@if($shipping === 0){{ __('site.common.free') }}@else @money($shipping) @endif</span>
-                    </div>
-                    @if ($shipping > 0)
-                        <div class="summary-hint">{{ __('site.cart.free_shipping_at') }}</div>
-                    @endif
-                    @if ($discount && $discountCents > 0)
-                        <div class="summary-row discount">
-                            <span class="label">{{ $discount->name }}</span>
-                            <span class="num">−@money($discountCents)</span>
-                        </div>
-                    @endif
-
-                    @include('storefront.partials.discount-form')
-
-                    <div class="summary-row total">
-                        <span class="label">{{ __('site.cart.total') }}</span>
-                        <span class="num">@money($grand)</span>
-                    </div>
-                    <div class="summary-hint">{{ __('site.cart.tax_at_checkout') }}</div>
-
-                    <a href="/checkout" class="checkout-btn">
-                        <span>{{ __('site.cart.checkout') }}</span>
-                        <span aria-hidden="true">→</span>
-                    </a>
-                    <a href="/" class="keep-shopping">{{ __('site.cart.keep_shopping') }}</a>
-
-                    <div class="perks-row">
-                        <span>{{ __('site.cart.perk_shipping') }}</span>
-                        <span>{{ __('site.cart.perk_returns') }}</span>
-                        <span>{{ __('site.cart.perk_fast') }}</span>
-                    </div>
-                </aside>
-            </div>
-        @endif
-    </div>
+    @include('storefront.partials.cart-behavior')
 @endsection

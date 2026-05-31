@@ -1,536 +1,128 @@
 @php
     $title = __('site.checkout.title');
+    $subtotal = $total_cents ?? 0; $shipping = $shipping_cents ?? 0; $discountCents = $discount_cents ?? 0;
+    $grand = max(0, $subtotal + $shipping - $discountCents);
+    $defaultAddress = $defaultAddress ?? []; $selectedCountry = old('country', $defaultAddress['country'] ?? 'BG');
+    $isStripe = ($payment_mode ?? 'stub') === 'stripe';
+    $payLabel = $isStripe ? __('site.checkout.pay_now') : __('site.checkout.action_place_order');
+    $wizardSteps = [1 => __('site.checkout.step_details'), 2 => __('site.checkout.step_delivery'), 3 => __('site.checkout.step_payment')];
 @endphp
 @extends('themes.minimal.layout')
 
 @section('content')
     <style>
-        .checkout-page {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 4rem 2rem 5rem;
-        }
-        .checkout-head {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-        .checkout-head .eyebrow {
-            font-size: 0.6875rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin: 0 0 .75rem;
-        }
-        .checkout-head h1 {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-weight: 400;
-            font-size: clamp(2.25rem, 4vw, 3.25rem);
-            letter-spacing: -0.01em;
-            margin: 0;
-            line-height: 1.1;
-        }
-        .checkout-head .back {
-            display: inline-block;
-            margin-top: 1.25rem;
-            color: var(--text-muted);
-            font-size: 0.6875rem;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            transition: color .15s ease;
-        }
-        .checkout-head .back:hover { color: var(--text); }
-
-        .account-prompt {
-            border: 1px solid var(--hair);
-            padding: 1.125rem 1.5rem;
-            margin-bottom: 2.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-size: 1.0625rem;
-            color: var(--text-muted);
-        }
-        .account-prompt a {
-            color: var(--text);
-            font-style: normal;
-            font-family: system-ui, sans-serif;
-            font-size: 0.6875rem;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            border-bottom: 1px solid var(--text);
-            padding-bottom: 1px;
-            transition: color .2s ease, border-color .2s ease;
-        }
-        .account-prompt a:hover { color: var(--primary); border-color: var(--primary); }
-
-        .checkout-grid {
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            gap: 4rem;
-            align-items: start;
-        }
-
-        /* -------- Form sections -------- */
-        .section {
-            padding: 2rem 0;
-            border-bottom: 1px solid var(--hair);
-        }
-        .section:first-of-type { padding-top: 0; }
-        .section-title {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin: 0 0 1.75rem;
-            font-size: 0.75rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            font-weight: 500;
-            color: var(--text);
-        }
-        .section-title .step {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-size: 1.5rem;
-            color: var(--primary);
-            letter-spacing: 0;
-            text-transform: none;
-            font-weight: 400;
-            line-height: 1;
-        }
-
-        .signed-in {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-size: 1.0625rem;
-            color: var(--text-muted);
-            margin-bottom: 1.5rem;
-        }
-        .signed-in strong { color: var(--text); font-style: normal; }
-
-        .field { margin-bottom: 1.5rem; }
-        .field:last-child { margin-bottom: 0; }
-        .fields-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-        }
-        label.field-label {
-            display: block;
-            font-size: 0.625rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            margin-bottom: .5rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-        }
-        input.field-input {
-            width: 100%;
-            padding: .625rem 0;
-            border: 0;
-            border-bottom: 1px solid var(--hair);
-            background: transparent;
-            color: var(--text);
-            font: inherit;
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.125rem;
-            transition: border-color .2s ease;
-        }
-        input.field-input:focus {
-            outline: none;
-            border-bottom-color: var(--text);
-        }
-        input.field-input::placeholder { color: var(--text-soft); font-style: italic; }
-
-        .stub-notice {
-            display: flex;
-            align-items: flex-start;
-            gap: 1rem;
-            padding: 1.25rem 0 0;
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-size: 1.0625rem;
-            color: var(--text-muted);
-            line-height: 1.6;
-        }
-        .stub-notice .icon {
-            flex-shrink: 0;
-            width: 28px; height: 28px;
-            border: 1px solid var(--text);
-            color: var(--text);
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-size: 1rem;
-        }
-        .stub-notice strong {
-            display: block;
-            margin-bottom: .25rem;
-            color: var(--text);
-            font-style: normal;
-            font-family: system-ui, sans-serif;
-            font-size: 0.6875rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            font-weight: 500;
-        }
-
-        .errors {
-            border-top: 1px solid var(--text);
-            border-bottom: 1px solid var(--text);
-            padding: 1.25rem 0;
-            margin-bottom: 2rem;
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-size: 1.0625rem;
-            color: var(--text);
-        }
-        .errors-label {
-            font-family: system-ui, sans-serif;
-            font-size: 0.6875rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            color: var(--primary);
-            font-style: normal;
-            font-weight: 500;
-            margin-bottom: .5rem;
-            display: block;
-        }
-        .errors ul { margin: 0; padding-left: 1.25rem; }
-
-        /* -------- Summary -------- */
-        .summary {
-            position: sticky;
-            top: 8rem;
-        }
-        .summary h2 {
-            font-size: 0.6875rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            margin: 0 0 2rem;
-            font-weight: 500;
-            color: var(--text);
-        }
-        .line-items {
-            border-top: 1px solid var(--hair);
-            border-bottom: 1px solid var(--hair);
-            padding: 1rem 0;
-            margin-bottom: 1.5rem;
-        }
-        .line {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: .75rem 0;
-        }
-        .line + .line { border-top: 1px solid var(--hair); }
-        .line-thumb {
-            width: 56px;
-            aspect-ratio: 4 / 5;
-            background: var(--muted);
-            overflow: hidden;
-            flex-shrink: 0;
-            position: relative;
-        }
-        .line-thumb img { width: 100%; height: 100%; object-fit: cover; }
-        .line-thumb .placeholder {
-            position: absolute; inset: 0;
-            display: flex; align-items: center; justify-content: center;
-            color: var(--text-soft);
-            font-size: 0.55rem;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-        }
-        .line-thumb .qty-pill {
-            position: absolute;
-            top: -6px; right: -6px;
-            background: var(--text);
-            color: white;
-            font-size: 0.625rem;
-            font-weight: 500;
-            padding: 1px 6px;
-            border-radius: 9999px;
-            letter-spacing: 0.05em;
-        }
-        .line-name {
-            flex: 1;
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1rem;
-            color: var(--text);
-            line-height: 1.3;
-        }
-        .line-price {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-size: 1rem;
-            color: var(--text);
-        }
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            padding: .625rem 0;
-            font-size: 0.875rem;
-            color: var(--text-muted);
-        }
-        .summary-row .label {
-            font-size: 0.6875rem;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-        }
-        .summary-row .num {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-size: 1.0625rem;
-            color: var(--text);
-        }
-        .summary-row.free .num { color: var(--primary); font-style: italic; }
-        .summary-row.total {
-            padding: 1.25rem 0;
-            margin-top: .5rem;
-            border-top: 1px solid var(--text);
-            border-bottom: 1px solid var(--text);
-        }
-        .summary-row.total .label {
-            font-size: 0.75rem;
-            letter-spacing: 0.25em;
-            color: var(--text);
-            font-weight: 500;
-        }
-        .summary-row.total .num {
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            font-size: 2rem;
-            color: var(--primary);
-        }
-        .pay-btn {
-            width: 100%;
-            margin-top: 1.5rem;
-            background: var(--text);
-            color: white;
-            border: 0;
-            padding: 1.25rem;
-            font-size: 0.7rem;
-            letter-spacing: 0.25em;
-            text-transform: uppercase;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: .75rem;
-            font-family: system-ui, sans-serif;
-            transition: background-color .2s ease;
-        }
-        .pay-btn:hover { background: var(--primary); }
-        .pay-btn .sep {
-            opacity: .6;
-            font-family: 'Cormorant Garamond', Georgia, serif;
-            font-style: italic;
-            text-transform: none;
-            letter-spacing: 0;
-        }
-        .secure-line {
-            text-align: center;
-            margin-top: 1.25rem;
-            color: var(--text-soft);
-            font-size: 0.625rem;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-        }
-
-        @media (max-width: 880px) {
-            .checkout-grid { grid-template-columns: 1fr; gap: 3rem; }
-            .summary { position: static; }
-        }
-        @media (max-width: 560px) {
-            .checkout-page { padding: 2.5rem 1.25rem 3rem; }
-            .fields-row { grid-template-columns: 1fr; gap: 0; }
-            .checkout-head { margin-bottom: 2rem; }
-        }
+        .co-wrap { padding: 30px 0 60px; } .co-wrap > h1 { font-family: var(--display); font-size: 42px; margin-bottom: 24px; }
+        .wz-steps { display: none; } .wz-on .wz-steps { display: flex; gap: 0; list-style: none; margin: 0 0 28px; padding: 0; }
+        .wz-steps li { display: flex; align-items: center; gap: 10px; flex: 1; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+        .wz-steps li:not(:last-child)::after { content: ""; flex: 1; height: 1px; background: var(--line); margin: 0 12px; }
+        .wz-steps .dot { width: 28px; height: 28px; border: 1.5px solid var(--line); border-radius: 50%; display: grid; place-items: center; font-family: var(--display); flex-shrink: 0; }
+        .wz-steps li.is-current { color: var(--ink); } .wz-steps li.is-current .dot { border-color: var(--accent); color: var(--accent); }
+        .wz-steps li.is-done { color: var(--ink); cursor: pointer; } .wz-steps li.is-done .dot { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .checkout { display: grid; grid-template-columns: 1fr 400px; gap: 56px; align-items: start; }
+        .wz-on .wz-step { display: none; } .wz-on .wz-step.is-current { display: block; animation: fade .3s ease; }
+        @keyframes fade { from { opacity: 0; transform: translateY(8px); } }
+        .fset { background: var(--card); border-radius: 24px; padding: 26px; margin-bottom: 18px; }
+        .fset h3 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 18px; display: flex; align-items: center; gap: 12px; }
+        .fset h3 .num { width: 26px; height: 26px; background: var(--accent); color: #fff; border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-size: 13px; }
+        .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+        .field { display: flex; flex-direction: column; } .field.full { grid-column: 1/-1; }
+        .field label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+        .field input, .field select, .field textarea { border: 1.5px solid var(--line); border-radius: 14px; background: var(--bg); padding: 13px 15px; font-family: inherit; font-size: 14px; color: var(--ink); }
+        .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
+        .co-signed-in { background: var(--blush); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; font-size: 13px; }
+        .co-signin-banner { background: var(--card); border-radius: 16px; padding: 14px 18px; margin-bottom: 24px; font-size: 13px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        .co-signin-banner a { color: var(--accent); font-weight: 600; }
+        .errors { border: 1.5px solid #d98b7a; background: #fbe9e2; color: #9a4a37; padding: 14px 18px; border-radius: 14px; margin-bottom: 22px; font-size: 13px; } .errors ul { padding-left: 18px; }
+        .stub-notice { background: var(--blush); border-radius: 14px; padding: 14px 18px; font-size: 13px; display: flex; gap: 12px; }
+        .stub-notice .icon { color: var(--accent); font-weight: 700; }
+        .wz-actions { display: flex; align-items: center; gap: 12px; }
+        .wz-back { background: none; border: 1.5px solid var(--line); color: var(--muted); border-radius: 99px; padding: 13px 24px; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .wz-back:hover { border-color: var(--ink); color: var(--ink); }
+        .pay-btn { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: #fff; border: 0; border-radius: 99px; padding: 15px 32px; font-weight: 600; font-size: 14px; cursor: pointer; font-family: var(--body); }
+        .pay-btn:hover { filter: brightness(1.06); }
+        .osum { background: var(--card); border-radius: 26px; padding: 30px; position: sticky; top: 100px; }
+        .osum h2 { font-family: var(--display); font-size: 24px; margin-bottom: 20px; }
+        .osum .oitem { display: grid; grid-template-columns: 54px 1fr auto; gap: 14px; align-items: center; margin-bottom: 16px; }
+        .osum .oitem .img { height: 54px; width: 54px; background: var(--blush); border-radius: 14px; overflow: hidden; position: relative; }
+        .osum .oitem .img img { width: 100%; height: 100%; object-fit: cover; }
+        .osum .oitem .qty-pill { position: absolute; top: -6px; right: -6px; background: var(--accent); color: #fff; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; display: grid; place-items: center; }
+        .osum .oitem .nm { font-size: 14px; font-weight: 600; } .osum .oitem .m { font-size: 12px; color: var(--muted); }
+        .osum .oitem .pr { font-family: var(--display); }
+        .osum .divider { border: 0; border-top: 1px solid var(--line); margin: 16px 0; }
+        .osum .r { display: flex; justify-content: space-between; font-size: 14px; margin: 11px 0; color: #7a5e54; }
+        .osum .tot { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; border-top: 1px solid var(--line); padding-top: 15px; margin: 14px 0 18px; }
+        .osum .tot [data-sm-grand] { font-family: var(--display); color: var(--accent); }
+        .osum .secure { font-size: 12px; color: var(--muted); text-align: center; }
+        @media (max-width: 1000px) { .checkout { grid-template-columns: 1fr; } .osum { position: static; order: -1; } }
+        @media (max-width: 540px) { .frow { grid-template-columns: 1fr; } }
     </style>
 
-    @php
-        $defaultAddress = $customer?->default_shipping_address ?? [];
-    @endphp
+    @include('storefront.partials.number-anim')
+    <noscript><style>.wz-step[hidden]{display:block!important}.wz-steps{display:none!important}.wz-back{display:none!important}</style></noscript>
 
-    <div class="checkout-page">
-        <div class="checkout-head">
-            <p class="eyebrow">{{ __('site.checkout.summary') }}</p>
+    <main>
+        <div class="wrap co-wrap">
             <h1>{{ __('site.checkout.title') }}</h1>
-            <a href="/cart" class="back">← {{ __('site.checkout.back_to_cart') }}</a>
-        </div>
-
-        @if (! $customer && $store->showsAccountUi())
-            <div class="account-prompt">
-                <span>
-                    {{ __('site.checkout.have_account') }}
-                    <a href="/account/login">{{ __('site.checkout.sign_in_link') }}</a>
-                    {{ __('site.checkout.for_faster') }}
-                </span>
-                @if ($store->allow_registration)
-                    <a href="/account/register">{{ __('site.checkout.create_account_link') }}</a>
+            @guest('customer')
+                @if ($store->showsAccountUi())
+                    <div class="co-signin-banner"><span>{{ __('site.checkout.have_account') }}</span><span><a href="/account/login?intent=checkout">{{ __('site.common.sign_in') }}</a>@if ($store->allow_registration) · <a href="/account/register">{{ __('site.checkout.create_account_link') }}</a>@endif</span></div>
                 @endif
-            </div>
-        @endif
+            @endguest
 
-        <form method="post" action="/checkout">
-            @csrf
+            <form method="post" action="/checkout" data-wizard>
+                @csrf
+                @if ($errors->any())<div class="errors"><ul>@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+                <ol class="wz-steps" aria-hidden="true">@foreach ($wizardSteps as $n => $label)<li data-go-step="{{ $n }}" class="{{ $n === 1 ? 'is-current' : '' }}"><span class="dot">{{ $n }}</span> <span>{{ $label }}</span></li>@endforeach</ol>
 
-            @if ($errors->any())
-                <div class="errors">
-                    <span class="errors-label">{{ __('site.common.error') ?? 'Error' }}</span>
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            <div class="checkout-grid">
-                <div>
-                    <div class="section">
-                        <h2 class="section-title"><span class="step">i.</span>{{ __('site.checkout.sec_contact') }}</h2>
-                        @if ($customer)
-                            <div class="signed-in">
-                                {!! __('site.checkout.signed_in_as', ['email' => '<strong>' . e($customer->email) . '</strong>']) !!}
+                <div class="checkout">
+                    <div class="co-main">
+                        <section class="wz-step is-current" data-step="1">
+                            <div class="fset"><h3><span class="num">1</span> {{ __('site.checkout.sec_contact') }}</h3>
+                                @if ($customer)<div class="co-signed-in">{!! __('site.checkout.signed_in_as', ['email' => '<b>' . e($customer->email) . '</b>']) !!}</div>@endif
+                                <div class="frow">
+                                    <div class="field full"><label>{{ __('site.checkout.email') }}</label><input type="email" name="customer_email" value="{{ old('customer_email', $customer?->email) }}" required></div>
+                                    <div class="field full"><label>{{ __('site.checkout.full_name') }}</label><input type="text" name="customer_name" value="{{ old('customer_name', $customer?->name) }}" required></div>
+                                    <div class="field full"><label>{{ __('site.checkout.phone') }}</label><input type="tel" name="customer_phone" value="{{ old('customer_phone', $customer?->phone) }}"></div>
+                                </div></div>
+                            <div class="fset"><h3><span class="num">2</span> {{ __('site.checkout.sec_shipping') }}</h3>
+                                <div class="frow">
+                                    <div class="field full"><label>{{ __('site.checkout.street') }}</label><input type="text" name="address_line" value="{{ old('address_line', $defaultAddress['line'] ?? '') }}" required></div>
+                                    <div class="field"><label>{{ __('site.checkout.city') }}</label><input type="text" name="city" value="{{ old('city', $defaultAddress['city'] ?? '') }}" required></div>
+                                    <div class="field"><label>{{ __('site.checkout.postal') }}</label><input type="text" name="postal_code" value="{{ old('postal_code', $defaultAddress['postal_code'] ?? '') }}" required></div>
+                                    <div class="field"><label>{{ __('site.checkout.region') }}</label><input type="text" name="address_region" value="{{ old('address_region', $defaultAddress['region'] ?? '') }}"></div>
+                                    <div class="field"><label>{{ __('site.checkout.country') }}</label><select name="country" required>@foreach ($countries as $code => $name)<option value="{{ $code }}" @selected($selectedCountry === $code)>{{ $name }}</option>@endforeach</select></div>
+                                </div></div>
+                        </section>
+                        <section class="wz-step" data-step="2" hidden>
+                            <div class="fset"><h3><span class="num">3</span> {{ __('site.checkout.sec_shipping_method') }}</h3>@include('storefront.partials.shipping-methods')</div>
+                            <div class="fset"><h3><span class="num">4</span> {{ __('site.checkout.sec_extras') }}</h3>@include('storefront.partials.checkout-extras')</div>
+                        </section>
+                        <section class="wz-step" data-step="3" hidden>
+                            <div class="fset"><h3><span class="num">5</span> {{ __('site.checkout.sec_payment') }}</h3>
+                                @if ($isStripe)@include('storefront.partials.stripe-payment')@else<div class="stub-notice"><span class="icon">!</span><div><strong>{{ __('site.checkout.stub_title') }}</strong> {!! __('site.checkout.stub_body', ['action' => '<em>' . $payLabel . '</em>']) !!}</div></div>@endif
                             </div>
-                        @endif
-                        <div class="field">
-                            <label class="field-label" for="customer_email">{{ __('site.checkout.email') }}</label>
-                            <input class="field-input" type="email" name="customer_email" id="customer_email" value="{{ old('customer_email', $customer?->email) }}" placeholder="you@example.com" required>
-                        </div>
-                        <div class="field">
-                            <label class="field-label" for="customer_name">{{ __('site.checkout.full_name') }}</label>
-                            <input class="field-input" type="text" name="customer_name" id="customer_name" value="{{ old('customer_name', $customer?->name) }}" required>
-                        </div>
-                        <div class="field">
-                            <label class="field-label" for="customer_phone">{{ __('site.checkout.phone') }} <small>({{ __('site.common.optional') }})</small></label>
-                            <input class="field-input" type="tel" name="customer_phone" id="customer_phone" value="{{ old('customer_phone', $customer?->phone) }}">
+                        </section>
+                        <div class="wz-actions">
+                            <button type="button" class="wz-back" data-wz-prev hidden>← {{ __('site.checkout.wizard_back') }}</button>
+                            <button type="submit" class="pay-btn" data-wz-primary data-pay-label="{{ $payLabel }}" data-continue-label="{{ __('site.checkout.wizard_continue') }}"><span data-wz-label>{{ $payLabel }}</span><span data-wz-amount> · <span data-sm-grand>@money($grand)</span></span></button>
                         </div>
                     </div>
-
-                    <div class="section">
-                        <h2 class="section-title"><span class="step">ii.</span>{{ __('site.checkout.sec_shipping') }}</h2>
-                        <div class="field">
-                            <label class="field-label" for="address_line">{{ __('site.checkout.street') }}</label>
-                            <input class="field-input" type="text" name="address_line" id="address_line" value="{{ old('address_line', $defaultAddress['line'] ?? '') }}" required>
-                        </div>
-                        <div class="field">
-                            <label class="field-label" for="address_region">{{ __('site.checkout.region') }} <small>({{ __('site.common.optional') }})</small></label>
-                            <input class="field-input" type="text" name="address_region" id="address_region" value="{{ old('address_region', $defaultAddress['region'] ?? '') }}">
-                        </div>
-                        <div class="fields-row">
-                            <div class="field">
-                                <label class="field-label" for="city">{{ __('site.checkout.city') }}</label>
-                                <input class="field-input" type="text" name="city" id="city" value="{{ old('city', $defaultAddress['city'] ?? '') }}" required>
-                            </div>
-                            <div class="field">
-                                <label class="field-label" for="postal_code">{{ __('site.checkout.postal') }}</label>
-                                <input class="field-input" type="text" name="postal_code" id="postal_code" value="{{ old('postal_code', $defaultAddress['postal_code'] ?? '') }}" required>
-                            </div>
-                        </div>
-                        <div class="field">
-                            <label class="field-label" for="country">{{ __('site.checkout.country') }}</label>
-                            <select class="field-input" name="country" id="country" required>
-                                @php $selectedCountry = old('country', $defaultAddress['country'] ?? 'BG'); @endphp
-                                @foreach ($countries as $code => $name)
-                                    <option value="{{ $code }}" @selected($selectedCountry === $code)>{{ $name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="section">
-                        <h2 class="section-title"><span class="step">iii.</span>{{ __('site.checkout.sec_shipping_method') }}</h2>
-                        @include('storefront.partials.shipping-methods')
-                    </div>
-
-                    <div class="section">
-                        <h2 class="section-title"><span class="step">iv.</span>{{ __('site.checkout.sec_extras') }}</h2>
-                        @include('storefront.partials.checkout-extras')
-                    </div>
-
-                    <div class="section">
-                        <h2 class="section-title"><span class="step">v.</span>{{ __('site.checkout.sec_payment') }}</h2>
-                        @if (($payment_mode ?? 'stub') === 'stripe')
-                            @include('storefront.partials.stripe-payment')
-                        @else
-                            <div class="stub-notice">
-                                <span class="icon">i</span>
-                                <div>
-                                    <strong>{{ __('site.checkout.stub_title') }}</strong>
-                                    {!! __('site.checkout.stub_body', ['action' => '<em>' . __('site.checkout.action_place_order') . '</em>']) !!}
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-
-                @php
-                    $subtotal = $total_cents;
-                    $shipping = $shipping_cents ?? ($subtotal >= 5000 ? 0 : 500);
-                    $discountCents = $discount_cents ?? 0;
-                    $grand = max(0, $subtotal + $shipping - $discountCents);
-                @endphp
-                <aside class="summary">
-                    <h2>{{ __('site.checkout.summary') }}</h2>
-                    <div class="line-items">
+                    <aside class="osum">
+                        <h2>{{ __('site.checkout.summary') }}</h2>
                         @foreach ($items as $row)
-                            <div class="line">
-                                <div class="line-thumb">
-                                    @if ($row['product']->image_path)
-                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($row['product']->image_path) }}" alt="">
-                                    @else
-                                        <span class="placeholder">·</span>
-                                    @endif
-                                    <span class="qty-pill">{{ $row['quantity'] }}</span>
-                                </div>
-                                <div class="line-name">
-                                    {{ $row['product']->name }}
-                                    @if (! empty($row['variant']))
-                                        <span class="line-variant">— {{ $row['variant']->label }}</span>
-                                    @endif
-                                </div>
-                                <div class="line-price">@money($row['subtotal_cents'])</div>
-                            </div>
+                            <div class="oitem"><div class="img">@if ($row['product']->image_path)<img src="{{ \Illuminate\Support\Facades\Storage::url($row['product']->image_path) }}" alt="">@endif<span class="qty-pill">{{ $row['quantity'] }}</span></div><div><div class="nm">{{ $row['product']->name }}</div>@if (! empty($row['variant']))<div class="m">{{ $row['variant']->label }}</div>@endif</div><div class="pr">@money($row['subtotal_cents'])</div></div>
                         @endforeach
-                    </div>
+                        <hr class="divider">
+                        <div class="r"><span>{{ __('site.cart.subtotal') }}</span><span>@money($subtotal)</span></div>
+                        <div class="r" data-sm-shipping-row><span>{{ __('site.cart.shipping') }}</span><span data-sm-shipping>@if($shipping === 0){{ __('site.common.free') }}@else @money($shipping) @endif</span></div>
+                        @if (! empty($discount) && $discountCents > 0)<div class="r"><span>{{ $discount->name }}</span><span>−@money($discountCents)</span></div>@endif
+                        <div class="tot"><span>{{ __('site.cart.total') }}</span><span data-sm-grand>@money($grand)</span></div>
+                        <div class="secure">{{ __('site.checkout.secure_note') }}</div>
+                    </aside>
+                </div>
+            </form>
+        </div>
+    </main>
 
-                    <div class="summary-row">
-                        <span class="label">{{ __('site.cart.subtotal') }}</span>
-                        <span class="num">@money($subtotal)</span>
-                    </div>
-                    <div class="summary-row {{ $shipping === 0 ? 'free' : '' }}" data-sm-shipping-row>
-                        <span class="label">{{ __('site.cart.shipping') }}</span>
-                        <span class="num" data-sm-shipping>@if($shipping === 0){{ __('site.common.free') }}@else @money($shipping) @endif</span>
-                    </div>
-                    @if (! empty($discount) && $discountCents > 0)
-                        <div class="summary-row discount">
-                            <span class="label">{{ $discount->name }}</span>
-                            <span class="num">−@money($discountCents)</span>
-                        </div>
-                    @endif
-                    <div class="summary-row total">
-                        <span class="label">{{ __('site.cart.total') }}</span>
-                        <span class="num" data-sm-grand>@money($grand)</span>
-                    </div>
-
-                    <button type="submit" class="pay-btn">
-                        <span>{{ __('site.checkout.pay_now') }}</span>
-                        <span class="sep">·</span>
-                        <span data-sm-grand>@money($grand)</span>
-                    </button>
-                    @if ($displayCurrency !== $baseCurrency)
-                        <div class="secure-line">{{ __('site.checkout.charged_in', ['amount' => \App\Services\Money::format($grand, $baseCurrency)]) }}</div>
-                    @endif
-                    <div class="secure-line">{{ ($payment_mode ?? 'stub') === 'stripe' ? __('site.checkout.secure_stripe') : __('site.checkout.secure') }}</div>
-                </aside>
-            </div>
-        </form>
-    </div>
+    @include('storefront.partials.checkout-wizard')
 @endsection
