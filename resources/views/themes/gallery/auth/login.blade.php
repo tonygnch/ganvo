@@ -3,110 +3,33 @@
 
 @section('content')
     <style>
-        .auth-page { max-width: 480px; margin: 0 auto; padding: 5rem 2rem 6rem; }
-        .auth-eyebrow {
-            font-size: 0.6875rem;
-            letter-spacing: 0.22em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin: 0 0 1rem;
-        }
-        .auth-page h1 {
-            font-size: clamp(2rem, 4vw, 2.75rem);
-            font-weight: 600;
-            letter-spacing: -0.02em;
-            margin: 0 0 .5rem;
-            line-height: 1.05;
-        }
-        .auth-page .lead {
-            color: var(--text-muted);
-            font-size: 1rem;
-            margin: 0 0 2.5rem;
-        }
-        .errors {
-            border: 1px solid var(--hair);
-            background: var(--muted);
-            color: var(--text);
-            padding: .875rem 1rem;
-            margin: 0 0 1.5rem;
-            font-size: 0.875rem;
-        }
-        .errors ul { margin: 0; padding-left: 1.125rem; }
-        .field { margin-bottom: 1.5rem; }
-        .field-label {
-            display: block;
-            font-size: 0.75rem;
-            letter-spacing: 0.06em;
-            font-weight: 500;
-            color: var(--text);
-            margin: 0 0 .5rem;
-        }
-        .field-input {
-            width: 100%;
-            background: var(--surface);
-            border: 1px solid var(--hair);
-            padding: .875rem 1rem;
-            font-size: 0.9375rem;
-            color: var(--text);
-            font-family: inherit;
-            transition: border-color .2s ease, box-shadow .2s ease;
-        }
-        .field-input:focus { outline: none; border-color: var(--text); }
-
-        .submit-btn {
-            display: block;
-            width: 100%;
-            background: var(--text);
-            color: var(--bg);
-            border: 0;
-            padding: 1.125rem 1.5rem;
-            margin-top: 2rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.22em;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: opacity .2s ease;
-            font-family: inherit;
-        }
-        .submit-btn:hover { opacity: .85; }
-
-        .auth-footer {
-            text-align: center;
-            margin-top: 2rem;
-            font-size: 0.875rem;
-            color: var(--text-muted);
-        }
-        .auth-footer a { color: var(--text); border-bottom: 1px solid var(--text); padding-bottom: 1px; }
-        .auth-footer a:hover { color: var(--primary); border-color: var(--primary); }
+        .auth { max-width: 440px; margin: 0 auto; padding: 70px 40px 96px; }
+        .auth-head { text-align: center; margin-bottom: 28px; }
+        .auth-head .eyebrow { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+        .auth-head h1 { font-family: var(--display); font-weight: 700; font-size: clamp(34px,5vw,46px); letter-spacing: -.02em; margin-top: 12px; }
+        .auth-head p { color: var(--muted); font-size: 14px; margin-top: 8px; }
+        .auth-card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 36px; }
+        .errors { border: 1px solid #c2705a; background: #f3e2da; color: #8a3f2c; padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 13px; } .errors ul { padding-left: 18px; }
+        .field { margin-bottom: 16px; } .field label { display: block; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+        .field input { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); padding: 14px; font-family: inherit; font-size: 14px; }
+        .field input:focus { outline: none; border-color: var(--accent); }
+        .auth-submit { width: 100%; background: var(--accent); color: #faf7f1; border: 0; border-radius: 8px; padding: 15px; font-weight: 600; font-size: 14px; cursor: pointer; margin-top: 6px; }
+        .auth-foot { text-align: center; margin-top: 24px; font-size: 14px; color: var(--muted); } .auth-foot a { color: var(--accent); font-weight: 600; }
     </style>
 
-    <div class="auth-page">
-        <p class="auth-eyebrow">{{ $tenant->name }}</p>
-        <h1>{{ __('site.auth.login_title') }}</h1>
-        <p class="lead">{{ __('site.auth.login_lead', ['tenant' => $tenant->name]) }}</p>
-
-        @if ($errors->any())
-            <div class="errors"><ul>@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
-        @endif
-
-        <form method="post" action="/account/login">
-            @csrf
-            <div class="field">
-                <label class="field-label" for="email">{{ __('site.auth.email') }}</label>
-                <input class="field-input" type="email" name="email" id="email" value="{{ old('email') }}" required autofocus>
+    <main>
+        <div class="auth rv">
+            <div class="auth-head"><div class="eyebrow">{{ $tenant->name }}</div><h1>{{ __('site.auth.login_title') }}</h1><p>{{ __('site.auth.login_lead', ['tenant' => $tenant->name]) }}</p></div>
+            <div class="auth-card">
+                @if ($errors->any())<div class="errors"><ul>@foreach ($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
+                <form method="post" action="/account/login">
+                    @csrf
+                    <div class="field"><label>{{ __('site.auth.email') }}</label><input type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="email"></div>
+                    <div class="field"><label>{{ __('site.auth.password') }}</label><input type="password" name="password" required autocomplete="current-password"></div>
+                    <button type="submit" class="auth-submit">{{ __('site.auth.sign_in_btn') }}</button>
+                </form>
             </div>
-            <div class="field">
-                <label class="field-label" for="password">{{ __('site.auth.password') }}</label>
-                <input class="field-input" type="password" name="password" id="password" required>
-            </div>
-            <button type="submit" class="submit-btn">{{ __('site.auth.sign_in_btn') }}</button>
-        </form>
-
-        @if ($store->allow_registration)
-            <div class="auth-footer">
-                {{ __('site.auth.new_here') }} <a href="/account/register">{{ __('site.auth.create_account_link') }}</a>
-            </div>
-        @endif
-    </div>
+            @if ($store->allow_registration)<div class="auth-foot">{{ __('site.auth.new_here') }} <a href="/account/register">{{ __('site.auth.create_account_link') }}</a></div>@endif
+        </div>
+    </main>
 @endsection

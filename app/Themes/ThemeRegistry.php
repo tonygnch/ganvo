@@ -11,18 +11,18 @@ class ThemeRegistry
     {
         return [
             'default' => [
-                'name' => 'Default',
-                'description' => 'Clean grid catalog with bold headers. Great for visual products.',
+                'name' => 'Atelier',
+                'description' => 'Editorial luxury — warm paper tones, Cormorant Garamond serif headlines, magazine-grade layouts. Built for fashion and considered lifestyle brands.',
                 'screenshot' => '/images/themes/default.svg',
             ],
             'minimal' => [
-                'name' => 'Minimal',
-                'description' => 'Quiet, text-forward layout. Great for boutique and editorial stores.',
+                'name' => 'Lumine',
+                'description' => 'Soft, premium beauty — blush palette, Marcellus serif, rounded cards and gentle gradients. Built for skincare, cosmetics, and wellness.',
                 'screenshot' => '/images/themes/minimal.svg',
             ],
             'gallery' => [
-                'name' => 'Gallery',
-                'description' => 'Asymmetric editorial grid with a featured product. Built for art, photography, and handcraft brands.',
+                'name' => 'Terra',
+                'description' => 'Warm, tactile, lifestyle — stone and clay tones, Bricolage Grotesque, split editorial panels. Built for home goods, craft, and slow brands.',
                 'screenshot' => '/images/themes/gallery.svg',
             ],
             'menu' => [
@@ -31,8 +31,8 @@ class ThemeRegistry
                 'screenshot' => '/images/themes/menu.svg',
             ],
             'tech' => [
-                'name' => 'Tech',
-                'description' => 'Spec-forward card grid with at-a-glance details. Built for electronics, gear, and digital products.',
+                'name' => 'Volt',
+                'description' => 'Sharp dark mode — near-black canvas, neon accent, Space Grotesk + mono details. Built for electronics, gear, and digital products.',
                 'screenshot' => '/images/themes/tech.svg',
             ],
         ];
