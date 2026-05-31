@@ -28,11 +28,13 @@ class Collection extends Model
         'sort_order',
         'is_featured',
         'is_active',
+        'show_in_menu',
     ];
 
     protected $casts = [
         'is_featured' => 'boolean',
         'is_active' => 'boolean',
+        'show_in_menu' => 'boolean',
         'sort_order' => 'integer',
     ];
 

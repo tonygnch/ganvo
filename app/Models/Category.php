@@ -29,10 +29,12 @@ class Category extends Model
         'image_path',
         'sort_order',
         'is_active',
+        'show_in_menu',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'show_in_menu' => 'boolean',
         'sort_order' => 'integer',
     ];
 

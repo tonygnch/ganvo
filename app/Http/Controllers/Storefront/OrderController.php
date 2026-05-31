@@ -50,7 +50,13 @@ class OrderController extends Controller
             Cart::forCurrent()->clear();
         }
 
-        return view('storefront.order', [
+        // Theme-specific order confirmation when the theme provides one,
+        // generic otherwise (same override pattern as cart / checkout).
+        $view = view()->exists("themes.{$theme}.order")
+            ? "themes.{$theme}.order"
+            : 'storefront.order';
+
+        return view($view, [
             'tenant' => $tenant,
             'store' => $store,
             'theme' => $theme,

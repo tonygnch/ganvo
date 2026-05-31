@@ -6,13 +6,56 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\Cart;
+use App\Services\Money;
 use App\Themes\ThemeRegistry;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class CartController extends Controller
 {
+    /**
+     * Build the recomputed cart state for an async (fetch) response. Money
+     * is pre-formatted server-side using the request's display currency +
+     * FX rate so the client never has to reimplement currency formatting.
+     *
+     * @return array<string, mixed>
+     */
+    private function cartState(Cart $cart, ?string $flash = null): array
+    {
+        $rate = $cart->displayRate();
+        $currency = $cart->displayCurrency();
+        $fmt = fn (int $cents) => Money::display($cents, $rate, $currency);
+
+        $items = $cart->items();
+        $subtotal = $cart->subtotalCents();
+        // Cart-page shipping is the store default (no address yet); the
+        // discount engine needs it to evaluate free-shipping style rules.
+        $shipping = $cart->defaultShippingCents();
+        $discount = $cart->appliedDiscount($shipping);
+        $discountCents = $cart->discountAmountCents($shipping);
+        $grand = max(0, $subtotal - $discountCents);
+
+        return [
+            'ok'         => true,
+            'empty'      => $items->isEmpty(),
+            'item_count' => $cart->itemCount(),
+            'lines'      => $items->map(fn ($row) => [
+                'line_id'         => $row['line_id'],
+                'quantity'        => $row['quantity'],
+                'subtotal'        => $fmt($row['subtotal_cents']),
+            ])->values()->all(),
+            'subtotal'        => $fmt($subtotal),
+            'discount'        => ($discount && $discountCents > 0) ? [
+                'name'   => $discount->name,
+                'amount' => '−' . $fmt($discountCents),
+            ] : null,
+            'applied_code' => $cart->appliedCode(),
+            'total'        => $fmt($grand),
+            'flash'        => $flash,
+        ];
+    }
     public function show(): View
     {
         $tenant = app('current_tenant');
@@ -47,14 +90,14 @@ class CartController extends Controller
      * the code resolves to a usable discount for this cart's subtotal —
      * surfaces a friendly flash either way.
      */
-    public function applyDiscount(Request $request): RedirectResponse
+    public function applyDiscount(Request $request): RedirectResponse|JsonResponse
     {
         $code = trim((string) $request->input('code', ''));
         $cart = Cart::forCurrent();
 
         if ($code === '') {
             $cart->removeDiscount();
-            return redirect('/cart')->with('cart.flash', __('site.cart.discount_removed'));
+            return $this->discountResponse($request, $cart, __('site.cart.discount_removed'));
         }
 
         $cart->applyCode($code);
@@ -67,16 +110,31 @@ class CartController extends Controller
             // Stored their input so they can see what they typed when
             // they get back to the cart, but flag the failure.
             $cart->removeDiscount();
-            return redirect('/cart')->with('cart.flash', __('site.cart.discount_invalid'));
+            return $this->discountResponse($request, $cart, __('site.cart.discount_invalid'), false);
         }
 
-        return redirect('/cart')->with('cart.flash', __('site.cart.discount_applied', ['name' => $resolved->name]));
+        return $this->discountResponse($request, $cart, __('site.cart.discount_applied', ['name' => $resolved->name]));
     }
 
-    public function removeDiscount(Request $request): RedirectResponse
+    public function removeDiscount(Request $request): RedirectResponse|JsonResponse
     {
-        Cart::forCurrent()->removeDiscount();
-        return redirect('/cart')->with('cart.flash', __('site.cart.discount_removed'));
+        $cart = Cart::forCurrent();
+        $cart->removeDiscount();
+        return $this->discountResponse($request, $cart, __('site.cart.discount_removed'));
+    }
+
+    /**
+     * Shared response shaping for the discount endpoints. Async callers
+     * get the recomputed cart state (the JS re-renders the discount-form
+     * region from `applied_code`); classic form posts get the redirect +
+     * flash they always had.
+     */
+    private function discountResponse(Request $request, Cart $cart, string $flash, bool $ok = true): RedirectResponse|JsonResponse
+    {
+        if ($request->wantsJson()) {
+            return response()->json($this->cartState($cart, $flash) + ['ok' => $ok]);
+        }
+        return redirect('/cart')->with('cart.flash', $flash);
     }
 
     public function add(Request $request): RedirectResponse
@@ -121,19 +179,33 @@ class CartController extends Controller
         return back()->with('cart.flash', __('site.storefront.added_to_cart', ['name' => $flashName]));
     }
 
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request): RedirectResponse|JsonResponse
     {
         $lineId = (string) $request->route('lineId');
         $quantity = (int) $request->input('quantity', 1);
-        Cart::forCurrent()->setQuantity($lineId, $quantity);
+        $cart = Cart::forCurrent();
+        $cart->setQuantity($lineId, $quantity);
+
+        if ($request->wantsJson()) {
+            // Tell the client whether this specific line survived (qty 0
+            // removes it) so the JS can fade the row out rather than just
+            // re-rendering a stale subtotal.
+            $stillPresent = collect($cart->items())->contains('line_id', $lineId);
+            return response()->json($this->cartState($cart) + ['line_removed' => ! $stillPresent, 'line_id' => $lineId]);
+        }
 
         return redirect('/cart');
     }
 
-    public function remove(Request $request): RedirectResponse
+    public function remove(Request $request): RedirectResponse|JsonResponse
     {
         $lineId = (string) $request->route('lineId');
-        Cart::forCurrent()->remove($lineId);
+        $cart = Cart::forCurrent();
+        $cart->remove($lineId);
+
+        if ($request->wantsJson()) {
+            return response()->json($this->cartState($cart) + ['line_removed' => true, 'line_id' => $lineId]);
+        }
 
         return redirect('/cart');
     }

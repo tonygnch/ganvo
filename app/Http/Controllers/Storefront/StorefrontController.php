@@ -188,16 +188,44 @@ class StorefrontController extends Controller
             ->where('is_active', true)
             ->firstOrFail();
 
+        // Pull the same filter set the home page uses (search / sort /
+        // price / in-stock) so the category page can host its own filter
+        // sidebar. The `category` filter param is intentionally ignored
+        // here — the path-segment slug already scopes products to this
+        // category and we don't want the dropdown to override it.
+        $filters = $this->extractFilters($request);
+
         // Products directly attached to this category. We don't auto-
         // include descendants — operators can have a "Mens" parent with
         // T-shirts/Pants/Shoes children, and the parent page should be
         // empty unless they explicitly tag products to it. Avoids
         // surprise inclusions.
-        $products = $category->products()
-            ->where('is_active', true)
-            ->orderBy('created_at', 'desc')
-            ->paginate(12)
-            ->withQueryString();
+        $query = $category->products()->where('is_active', true);
+
+        if ($filters['q']) {
+            $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', $term)
+                  ->orWhere('description', 'like', $term);
+            });
+        }
+        if ($filters['min_price'] !== null) {
+            $query->where('price_cents', '>=', $filters['min_price']);
+        }
+        if ($filters['max_price'] !== null) {
+            $query->where('price_cents', '<=', $filters['max_price']);
+        }
+        if ($filters['in_stock']) {
+            $query->where('stock_quantity', '>', 0);
+        }
+        $query = match ($filters['sort']) {
+            'price_asc'  => $query->orderBy('price_cents'),
+            'price_desc' => $query->orderBy('price_cents', 'desc'),
+            'name_asc'   => $query->orderBy('name'),
+            default      => $query->orderBy('products.created_at', 'desc'),
+        };
+
+        $products = $query->paginate(12)->withQueryString();
 
         $categories = $this->rootCategoriesFor($tenant);
 
@@ -206,7 +234,7 @@ class StorefrontController extends Controller
             ? "themes.{$theme}.category"
             : 'storefront.category';
 
-        return view($view, compact('tenant', 'store', 'category', 'products', 'categories'));
+        return view($view, compact('tenant', 'store', 'category', 'products', 'categories', 'filters'));
     }
 
     private function themeFor($store): string

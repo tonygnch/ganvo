@@ -223,6 +223,10 @@ $storefrontRoutes = function () {
     Route::post('/account/register', [CustomerAuthController::class, 'register']);
     Route::post('/account/logout', [CustomerAuthController::class, 'logout']);
     Route::get('/account', [AccountController::class, 'show']);
+    // Account settings — profile/address + password (separate forms).
+    Route::get('/account/settings', [AccountController::class, 'settings']);
+    Route::post('/account/settings', [AccountController::class, 'updateProfile']);
+    Route::post('/account/password', [AccountController::class, 'updatePassword']);
 
     // Storefront-scoped lang + currency switchers. No ->name() here — the
     // closure is registered twice (once for the subdomain group, once for

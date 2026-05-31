@@ -37,26 +37,33 @@
             // shipping cost, but those are rare; the next submit
             // re-resolves on the server anyway.
             $grandForThis = max(0, $subtotalForJs + (int) $m['cost_cents'] - $discountForJs);
+
+            // Format the money strings here in PHP rather than via the
+            // @money Blade directive inside the data-* attributes: a
+            // directive glued after @else (data-cost-text) does NOT get
+            // compiled, which leaked a literal "@money(...)" into the
+            // attribute and then into the summary when the method was
+            // picked. Plain {{ }} echoes of these vars are safe everywhere.
+            $smRate = $displayRate ?? 1.0;
+            $smCurrency = $displayCurrency ?? (isset($store) ? $store->currency : 'EUR');
+            $costText = ((int) $m['cost_cents'] === 0)
+                ? __('site.common.free')
+                : \App\Services\Money::display((int) $m['cost_cents'], $smRate, $smCurrency);
+            $grandText = \App\Services\Money::display((int) $grandForThis, $smRate, $smCurrency);
         @endphp
         <label class="sm-option">
             <input type="radio"
                    name="shipping_method"
                    value="{{ $m['id'] }}"
                    data-cost-cents="{{ $m['cost_cents'] }}"
-                   data-cost-text="@if($m['cost_cents'] === 0){{ __('site.common.free') }}@else@money($m['cost_cents'])@endif"
-                   data-grand-text="@money($grandForThis)"
+                   data-cost-text="{{ $costText }}"
+                   data-grand-text="{{ $grandText }}"
                    data-row-free="{{ $m['cost_cents'] === 0 ? '1' : '0' }}"
                    @checked($defaultId === $m['id'])>
             <span class="sm-body">
                 <span class="sm-row">
                     <span class="sm-label">{{ $m['label'] }}</span>
-                    <span class="sm-cost">
-                        @if ($m['cost_cents'] === 0)
-                            {{ __('site.common.free') }}
-                        @else
-                            @money($m['cost_cents'])
-                        @endif
-                    </span>
+                    <span class="sm-cost">{{ $costText }}</span>
                 </span>
                 @if ($m['description'])
                     <span class="sm-desc">{{ $m['description'] }}</span>
@@ -107,8 +114,13 @@
                 var cost = radio.getAttribute('data-cost-text');
                 var grand = radio.getAttribute('data-grand-text');
                 var isFree = radio.getAttribute('data-row-free') === '1';
-                document.querySelectorAll('[data-sm-shipping]').forEach(function (el) { el.textContent = cost; });
-                document.querySelectorAll('[data-sm-grand]').forEach(function (el) { el.textContent = grand; });
+                // Route through the shared number-animation engine when the
+                // theme has included it (storefront/partials/number-anim);
+                // otherwise just set the text. Keeps the shipping/total swap
+                // consistent with the cart's rolling/odometer/etc. style.
+                var setNum = window.ganvoAnimateNumber || function (el, str) { el.textContent = str; };
+                document.querySelectorAll('[data-sm-shipping]').forEach(function (el) { setNum(el, cost); });
+                document.querySelectorAll('[data-sm-grand]').forEach(function (el) { setNum(el, grand); });
                 document.querySelectorAll('[data-sm-shipping-row]').forEach(function (el) {
                     el.classList.toggle('free', isFree);
                 });

@@ -63,15 +63,18 @@
             align-items: center;
             gap: 1rem;
             flex-wrap: wrap;
-            padding: .75rem 1rem;
+            padding: .875rem 1.125rem;
             margin: 0 0 1rem;
-            border: 1px solid rgba(0,0,0,.08);
+            border: 1px solid rgba(0,0,0,.12);
             border-radius: 10px;
-            background: rgba(255,255,255,.92);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            /* Fully opaque so the buttons read cleanly even when scrolled
+               content sits under the toolbar — previously .92 alpha let
+               whatever was below bleed through and made the Save button
+               (especially when disabled-at-45%-opacity) hard to see. */
+            background: #ffffff;
+            box-shadow: 0 4px 12px -4px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
         }
-        .dark .ct-toolbar { background: rgba(17,24,39,.85); border-color: rgba(255,255,255,.08); }
+        .dark .ct-toolbar { background: #111827; border-color: rgba(255,255,255,.12); box-shadow: 0 4px 12px -4px rgba(0,0,0,.4); }
         .ct-toolbar .ct-help,
         .dark .ct-toolbar .ct-help {
             /* Strip the standalone .ct-help chrome when it's nested
@@ -104,19 +107,39 @@
         .ct-btn-primary, .ct-btn-secondary {
             font-size: .8125rem;
             font-weight: 600;
-            padding: .4rem .9rem;
+            padding: .5rem 1rem;
             border-radius: 8px;
             cursor: pointer;
             border: 1px solid transparent;
             transition: background-color .12s ease, border-color .12s ease, color .12s ease, opacity .12s ease;
+            line-height: 1.25;
         }
-        .ct-btn-primary { background: rgb(var(--primary-600, 79 70 229)); color: white; }
-        .ct-btn-primary:hover:not(:disabled) { background: rgb(var(--primary-700, 67 56 202)); }
-        .ct-btn-secondary { background: transparent; color: rgba(0,0,0,.7); border-color: rgba(0,0,0,.15); }
-        .ct-btn-secondary:hover:not(:disabled) { background: rgba(0,0,0,.06); color: rgba(0,0,0,.9); }
+        /* Hardcoded emerald (matches the panel's Color::Emerald primary) so
+           the button is reliably visible — relying on rgb(var(--primary-600))
+           breaks when Filament's CSS variable name differs or isn't loaded
+           in the order this <style> block expects. */
+        .ct-btn-primary {
+            background: #059669;   /* emerald-600 */
+            color: #ffffff;
+            border-color: #059669;
+            box-shadow: 0 1px 2px rgba(5, 150, 105, .25);
+        }
+        .ct-btn-primary:hover:not(:disabled) {
+            background: #047857;   /* emerald-700 */
+            border-color: #047857;
+        }
+        .dark .ct-btn-primary { background: #10b981; border-color: #10b981; }
+        .dark .ct-btn-primary:hover:not(:disabled) { background: #059669; border-color: #059669; }
+
+        .ct-btn-secondary {
+            background: transparent;
+            color: rgba(0,0,0,.7);
+            border-color: rgba(0,0,0,.2);
+        }
+        .ct-btn-secondary:hover:not(:disabled) { background: rgba(0,0,0,.06); color: rgba(0,0,0,.9); border-color: rgba(0,0,0,.3); }
         .dark .ct-btn-secondary { color: rgba(255,255,255,.75); border-color: rgba(255,255,255,.18); }
         .dark .ct-btn-secondary:hover:not(:disabled) { background: rgba(255,255,255,.08); color: rgba(255,255,255,.95); }
-        .ct-btn-primary:disabled, .ct-btn-secondary:disabled { opacity: .45; cursor: not-allowed; }
+        .ct-btn-primary:disabled, .ct-btn-secondary:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
 
         .ct-help {
             font-size: .875rem;
@@ -149,7 +172,9 @@
             align-items: center;
             gap: .625rem;
             padding: .5rem .625rem;
-            background: rgb(var(--gray-50));
+            /* Hardcoded neutral grey instead of rgb(var(--gray-50)) — same
+               Filament-variable fragility as the buttons above. */
+            background: #f9fafb;   /* gray-50 */
             border: 1px solid rgba(0,0,0,.08);
             border-radius: 8px;
             transition: border-color .12s ease, background-color .12s ease;

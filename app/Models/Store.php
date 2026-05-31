@@ -173,6 +173,30 @@ class Store extends Model
     */
 
     /**
+     * Valid storefront number-change animation styles. Drives the rolling /
+     * odometer / fade / flip effect when cart totals update asynchronously.
+     * Keys are the stored slug; values are the admin-facing label.
+     */
+    public const NUMBER_ANIMATIONS = [
+        'count'    => 'Count up (rolling)',
+        'odometer' => 'Odometer (digit reels)',
+        'flip'     => 'Flip (vertical)',
+        'fade'     => 'Fade swap',
+        'none'     => 'None (instant)',
+    ];
+
+    /**
+     * Resolved number-change animation style for this store's storefront.
+     * Stored in theme_settings.number_animation; defaults to 'count'.
+     * Falls back to 'count' for any unknown / legacy value.
+     */
+    public function numberAnimation(): string
+    {
+        $v = (string) (($this->theme_settings ?? [])['number_animation'] ?? 'count');
+        return array_key_exists($v, self::NUMBER_ANIMATIONS) ? $v : 'count';
+    }
+
+    /**
      * The announcement bar at the top of every theme.
      *
      * @return array{enabled: bool, text: string, link: ?string}
@@ -191,23 +215,169 @@ class Store extends Model
 
     /**
      * Navigation menu items for the header, sorted by sort_order ascending.
-     * Each item: { label, url, sort_order }.
      *
-     * @return array<int, array{label: string, url: string, sort_order: int}>
+     * Each item: { label, url, sort_order, auto_source, children }.
+     *
+     * `url` is nullable: an item with NO url and a non-empty `children` array
+     * renders as a dropdown-only parent (label triggers a flyout, no own
+     * page). An item with a url AND children renders as a clickable parent
+     * whose menu still flyouts on hover/click. An item with neither url nor
+     * children is dropped (it would be invisible).
+     *
+     * `auto_source` (optional): when set to "categories" or "collections",
+     * the item's children are replaced by an auto-fetched list of the
+     * corresponding model rows where `show_in_menu = true`. This is the
+     * preferred way to wire category/collection dropdowns — single source
+     * of truth, no double-bookkeeping when the merchant adds a new category.
+     * When `auto_source` is null or "none", `children` is read from the
+     * stored manual list (back-compat with old configs).
+     *
+     * `children` is always present (possibly empty) so view code doesn't
+     * have to defend against missing keys.
+     *
+     * @return array<int, array{label: string, url: ?string, sort_order: int, auto_source: ?string, children: array<int, array{label: string, url: string, sort_order: int}>}>
      */
     public function navMenuItems(): array
     {
         $items = collect((array) ($this->nav_menu ?? []))
-            ->filter(fn ($r) => is_array($r) && ! empty($r['label']) && ! empty($r['url']))
-            ->map(fn ($r) => [
-                'label'      => trim((string) $r['label']),
-                'url'        => trim((string) $r['url']),
-                'sort_order' => (int) ($r['sort_order'] ?? 0),
-            ])
+            ->filter(fn ($r) => is_array($r) && ! empty($r['label']))
+            ->map(function ($r) {
+                $autoSource = $r['auto_source'] ?? null;
+                $autoSource = in_array($autoSource, ['categories', 'collections'], true)
+                    ? $autoSource
+                    : null;
+
+                if ($autoSource === 'categories') {
+                    $children = $this->autoChildrenForCategories();
+                } elseif ($autoSource === 'collections') {
+                    $children = $this->autoChildrenForCollections();
+                } else {
+                    // Manual children — same shape as auto, validated +
+                    // sort-ordered. Old configs (no auto_source) flow here.
+                    $children = collect((array) ($r['children'] ?? []))
+                        ->filter(fn ($c) => is_array($c)
+                            && ! empty($c['label'])
+                            && ! empty($c['url']))
+                        ->map(fn ($c) => [
+                            'label'      => trim((string) $c['label']),
+                            'url'        => trim((string) $c['url']),
+                            'sort_order' => (int) ($c['sort_order'] ?? 0),
+                        ])
+                        ->sortBy('sort_order')
+                        ->values()
+                        ->all();
+                }
+
+                $url = trim((string) ($r['url'] ?? ''));
+                return [
+                    'label'       => trim((string) $r['label']),
+                    'url'         => $url !== '' ? $url : null,
+                    'sort_order'  => (int) ($r['sort_order'] ?? 0),
+                    'auto_source' => $autoSource,
+                    'children'    => $children,
+                ];
+            })
+            // Drop items that have neither a URL nor any children — there's
+            // nothing for the user to click. (An auto_source row with zero
+            // visible categories/collections gets dropped here too — keeps
+            // the storefront from showing an empty dropdown.)
+            ->filter(fn ($i) => $i['url'] !== null || ! empty($i['children']))
             ->sortBy('sort_order')
             ->values()
             ->all();
         return $items;
+    }
+
+    /**
+     * Live list of categories tagged `show_in_menu`. Scoped to this store's
+     * tenant. Includes nested children: walks the category tree DFS so each
+     * parent is followed immediately by its children (sorted by sort_order
+     * within each level). Every child carries a `depth` field — 0 for
+     * roots, 1 for direct children, etc. — which the layout uses to
+     * visually indent the dropdown items so the hierarchy reads at a
+     * glance without needing nested submenus.
+     *
+     * Edge case: when a child's parent is hidden (show_in_menu=false or
+     * is_active=false), the child is orphaned and rendered at depth 0
+     * as if it were a root. Better than silently disappearing — the
+     * merchant intentionally exposed the child via show_in_menu, so
+     * we honor that.
+     *
+     * @return array<int, array{label: string, url: string, sort_order: int, depth: int}>
+     */
+    private function autoChildrenForCategories(): array
+    {
+        $all = Category::query()
+            ->where('tenant_id', $this->tenant_id)
+            ->where('is_active', true)
+            ->where('show_in_menu', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get(['id', 'name', 'slug', 'parent_id', 'sort_order']);
+
+        $byParent = $all->groupBy(fn ($c) => $c->parent_id);
+        $emitted = [];
+        $flat = [];
+
+        $walk = function ($parentKey, int $depth) use (&$walk, $byParent, &$emitted, &$flat) {
+            foreach (($byParent->get($parentKey) ?? collect()) as $c) {
+                if (isset($emitted[$c->id])) {
+                    continue;
+                }
+                $emitted[$c->id] = true;
+                $flat[] = [
+                    'label'      => $c->name,
+                    'url'        => '/categories/' . $c->slug,
+                    'sort_order' => (int) $c->sort_order,
+                    'depth'      => $depth,
+                ];
+                $walk($c->id, $depth + 1);
+            }
+        };
+
+        // Roots use the literal null key — groupBy on a nullable column
+        // produces an empty-string key, not a null key, so coalesce both.
+        $walk(null, 0);
+        $walk('', 0);
+
+        // Orphans: categories whose parent isn't in the visible set
+        // (parent hidden or out of tenant). Render at depth 0 so the
+        // merchant's show_in_menu toggle still wins.
+        foreach ($all as $c) {
+            if (! isset($emitted[$c->id])) {
+                $flat[] = [
+                    'label'      => $c->name,
+                    'url'        => '/categories/' . $c->slug,
+                    'sort_order' => (int) $c->sort_order,
+                    'depth'      => 0,
+                ];
+            }
+        }
+
+        return $flat;
+    }
+
+    /**
+     * Live list of collections tagged `show_in_menu`. Scoped to this store's
+     * tenant.
+     *
+     * @return array<int, array{label: string, url: string, sort_order: int}>
+     */
+    private function autoChildrenForCollections(): array
+    {
+        return Collection::query()
+            ->where('tenant_id', $this->tenant_id)
+            ->where('is_active', true)
+            ->where('show_in_menu', true)
+            ->orderBy('sort_order')
+            ->orderBy('title')
+            ->get()
+            ->map(fn ($c) => [
+                'label'      => $c->title,
+                'url'        => '/collections/' . $c->slug,
+                'sort_order' => (int) $c->sort_order,
+            ])
+            ->all();
     }
 
     /**

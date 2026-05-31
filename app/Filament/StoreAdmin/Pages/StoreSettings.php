@@ -18,6 +18,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -69,12 +70,43 @@ class StoreSettings extends Page implements HasForms
         $data['announcement_text']    = $announcement['text'];
         $data['announcement_link']    = $announcement['link'];
 
-        $data['nav_menu'] = collect($store->navMenuItems())
-            ->map(fn ($i) => [
-                'label'      => $i['label'],
-                'url'        => $i['url'],
-                'sort_order' => $i['sort_order'],
-            ])
+        // For nav_menu, we hydrate the FORM from the stored config, not
+        // from navMenuItems() — the latter auto-injects categories/collections
+        // children for display, but those auto rows shouldn't be saved back
+        // into the JSON. We need the raw stored shape so the merchant edits
+        // their config (auto_source flag) rather than a materialized copy.
+        $rawNav = (array) ($store->nav_menu ?? []);
+        $data['nav_menu'] = collect($rawNav)
+            ->filter(fn ($r) => is_array($r) && ! empty($r['label']))
+            ->map(function ($r) {
+                $autoSource = $r['auto_source'] ?? 'none';
+                if (! in_array($autoSource, ['none', 'categories', 'collections'], true)) {
+                    $autoSource = 'none';
+                }
+                // Auto-source rows shouldn't carry stale manual children;
+                // make sure they hydrate with an empty children array so
+                // the conditionally-hidden Repeater starts fresh.
+                $children = $autoSource === 'none'
+                    ? collect((array) ($r['children'] ?? []))
+                        ->filter(fn ($c) => is_array($c)
+                            && ! empty($c['label']))
+                        ->map(fn ($c) => [
+                            'label'      => (string) $c['label'],
+                            'url'        => (string) ($c['url'] ?? ''),
+                            'sort_order' => (int) ($c['sort_order'] ?? 0),
+                        ])
+                        ->all()
+                    : [];
+                return [
+                    'label'       => (string) $r['label'],
+                    'url'         => (string) ($r['url'] ?? ''),
+                    'sort_order'  => (int) ($r['sort_order'] ?? 0),
+                    'auto_source' => $autoSource,
+                    'children'    => $children,
+                ];
+            })
+            ->sortBy('sort_order')
+            ->values()
             ->all();
 
         $hero = $store->heroBanner();
@@ -92,6 +124,9 @@ class StoreSettings extends Page implements HasForms
         }
         $data['hero_cta_label'] = $hero['cta_label'];
         $data['hero_cta_url']   = $hero['cta_url'];
+
+        // Storefront effects.
+        $data['number_animation'] = $store->numberAnimation();
 
         $this->form->fill($data);
     }
@@ -137,6 +172,18 @@ class StoreSettings extends Page implements HasForms
                             ->columnSpanFull(),
                     ]),
 
+                Section::make('Storefront effects')
+                    ->description('Fine-tune the motion of your storefront.')
+                    ->schema([
+                        Select::make('number_animation')
+                            ->label('Cart number animation')
+                            ->options(\App\Models\Store::NUMBER_ANIMATIONS)
+                            ->default('count')
+                            ->required()
+                            ->native(false)
+                            ->helperText('How prices and quantities animate when the cart updates without a page reload. Honors a visitor’s “reduce motion” setting automatically.'),
+                    ]),
+
                 Section::make('Announcement bar')
                     ->description('A thin promo strip shown at the top of every page on your storefront.')
                     ->collapsed()
@@ -155,7 +202,7 @@ class StoreSettings extends Page implements HasForms
                     ]),
 
                 Section::make('Header menu')
-                    ->description('Top-level navigation links shown in your storefront header. Drag rows to reorder.')
+                    ->description('Top-level navigation links shown in your storefront header. Drag rows to reorder. Add sub-links to turn a top-level item into a dropdown.')
                     ->collapsed()
                     ->schema([
                         Repeater::make('nav_menu')
@@ -164,17 +211,56 @@ class StoreSettings extends Page implements HasForms
                                 TextInput::make('label')
                                     ->required()
                                     ->maxLength(60)
-                                    ->placeholder('Shop'),
+                                    ->placeholder('Shop')
+                                    ->columnSpan(1),
                                 TextInput::make('url')
-                                    ->required()
                                     ->maxLength(500)
                                     ->placeholder('/')
-                                    ->helperText('Use / for the home page, or a full URL like https://...'),
+                                    ->helperText('Leave blank to make this a dropdown-only header (no own page).')
+                                    ->columnSpan(1),
                                 TextInput::make('sort_order')
                                     ->numeric()
                                     ->minValue(0)
                                     ->default(0)
-                                    ->helperText('Lower numbers come first.'),
+                                    ->helperText('Lower numbers come first.')
+                                    ->columnSpan(1),
+                                Select::make('auto_source')
+                                    ->label('Dropdown contents')
+                                    ->options([
+                                        'none'        => 'Manual sub-links',
+                                        'categories' => 'Auto: all categories tagged "Show in menu"',
+                                        'collections'=> 'Auto: all collections tagged "Show in menu"',
+                                    ])
+                                    ->default('none')
+                                    ->live()
+                                    ->helperText('Pick "Auto" to have this dropdown stay in sync with your Categories or Collections list — no manual upkeep.')
+                                    ->columnSpanFull(),
+                                Repeater::make('children')
+                                    ->label('Sub-links (dropdown)')
+                                    ->visible(fn (Get $get): bool => ($get('auto_source') ?? 'none') === 'none')
+                                    ->schema([
+                                        TextInput::make('label')
+                                            ->required()
+                                            ->maxLength(60)
+                                            ->placeholder('Apparel'),
+                                        TextInput::make('url')
+                                            ->required()
+                                            ->maxLength(500)
+                                            ->placeholder('/categories/apparel'),
+                                        TextInput::make('sort_order')
+                                            ->numeric()
+                                            ->minValue(0)
+                                            ->default(0),
+                                    ])
+                                    ->columns(3)
+                                    ->reorderable()
+                                    ->reorderableWithDragAndDrop()
+                                    ->collapsible()
+                                    ->cloneable()
+                                    ->defaultItems(0)
+                                    ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
+                                    ->addActionLabel('Add a sub-link')
+                                    ->columnSpanFull(),
                             ])
                             ->columns(3)
                             ->reorderable()
@@ -393,15 +479,60 @@ class StoreSettings extends Page implements HasForms
         ];
         unset($state['announcement_enabled'], $state['announcement_text'], $state['announcement_link']);
 
-        // Nav menu: drop rows missing label/url, coerce sort_order to int,
-        // sort ascending so the stored order matches what'll render.
+        // Fold number_animation into theme_settings, preserving other keys.
+        $anim = $state['number_animation'] ?? 'count';
+        if (! array_key_exists($anim, \App\Models\Store::NUMBER_ANIMATIONS)) {
+            $anim = 'count';
+        }
+        $themeSettings = (array) ($store->theme_settings ?? []);
+        $themeSettings['number_animation'] = $anim;
+        $state['theme_settings'] = $themeSettings;
+        unset($state['number_animation']);
+
+        // Nav menu: drop rows missing label, coerce sort_order to int, sort
+        // ascending so the stored order matches what'll render. URL is now
+        // optional — a row with no URL but with `children` (or auto_source)
+        // becomes a dropdown-only parent in the rendered header. Drop rows
+        // with neither url nor children nor auto_source — they'd be empty.
         $state['nav_menu'] = collect($state['nav_menu'] ?? [])
-            ->filter(fn ($r) => is_array($r) && trim((string) ($r['label'] ?? '')) !== '' && trim((string) ($r['url'] ?? '')) !== '')
-            ->map(fn ($r) => [
-                'label'      => trim((string) $r['label']),
-                'url'        => trim((string) $r['url']),
-                'sort_order' => (int) ($r['sort_order'] ?? 0),
-            ])
+            ->filter(fn ($r) => is_array($r) && trim((string) ($r['label'] ?? '')) !== '')
+            ->map(function ($r) {
+                $url = trim((string) ($r['url'] ?? ''));
+                $autoSource = $r['auto_source'] ?? 'none';
+                if (! in_array($autoSource, ['none', 'categories', 'collections'], true)) {
+                    $autoSource = 'none';
+                }
+                // Manual children are stored only when auto_source is "none".
+                // Auto rows always store an empty children array — the
+                // navMenuItems() helper injects the live list at render time.
+                $children = $autoSource === 'none'
+                    ? collect((array) ($r['children'] ?? []))
+                        ->filter(fn ($c) => is_array($c)
+                            && trim((string) ($c['label'] ?? '')) !== ''
+                            && trim((string) ($c['url'] ?? '')) !== '')
+                        ->map(fn ($c) => [
+                            'label'      => trim((string) $c['label']),
+                            'url'        => trim((string) $c['url']),
+                            'sort_order' => (int) ($c['sort_order'] ?? 0),
+                        ])
+                        ->sortBy('sort_order')
+                        ->values()
+                        ->all()
+                    : [];
+                return [
+                    'label'       => trim((string) $r['label']),
+                    'url'         => $url !== '' ? $url : null,
+                    'sort_order'  => (int) ($r['sort_order'] ?? 0),
+                    'auto_source' => $autoSource === 'none' ? null : $autoSource,
+                    'children'    => $children,
+                ];
+            })
+            // Keep auto-source rows even when they have no URL — they'll
+            // materialize children at render-time. Manual rows without URL
+            // need at least one child to survive.
+            ->filter(fn ($r) => $r['url'] !== null
+                || ! empty($r['children'])
+                || $r['auto_source'] !== null)
             ->sortBy('sort_order')
             ->values()
             ->all();

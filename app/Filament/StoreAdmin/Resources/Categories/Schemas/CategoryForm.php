@@ -88,6 +88,10 @@ class CategoryForm
                             ->label('Visible in storefront')
                             ->default(true)
                             ->helperText('When off, the category is hidden from the storefront but products inside it still appear if assigned to other visible categories or queried directly.'),
+                        Toggle::make('show_in_menu')
+                            ->label('Show in header navigation')
+                            ->default(true)
+                            ->helperText('When the merchant has set up a Categories dropdown in their header menu, this category appears as a link inside it. Turn off to keep the category page accessible by URL but hide it from the nav.'),
                     ]),
             ]);
     }

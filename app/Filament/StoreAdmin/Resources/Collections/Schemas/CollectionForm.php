@@ -86,6 +86,10 @@ class CollectionForm
                             ->label('Visible to customers')
                             ->default(true)
                             ->helperText('When off, the collection and its /collections/{slug} page are hidden — products inside still appear elsewhere.'),
+                        Toggle::make('show_in_menu')
+                            ->label('Show in header navigation')
+                            ->default(true)
+                            ->helperText('When the merchant has set up a Collections dropdown in their header menu, this collection appears as a link inside it. Turn off to keep the collection accessible by URL but hide it from the nav.'),
                         TextInput::make('sort_order')
                             ->numeric()
                             ->minValue(0)
