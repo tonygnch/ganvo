@@ -23,10 +23,10 @@
         .hero {
             margin-top: 24px; border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
             background: radial-gradient(120% 130% at 78% 8%, #1b2233 0, #0c0e14 60%); position: relative;
-            display: grid; grid-template-columns: 1.05fr .95fr; min-height: 540px;
+            display: grid; grid-template-columns: 1.05fr .95fr; min-height: 420px;
         }
         .hero .cap { padding: 64px; display: flex; flex-direction: column; justify-content: center; position: relative; z-index: 2; }
-        .hero .cap h1 { font-family: var(--archivo); font-weight: 800; font-size: clamp(44px,5.6vw,76px); line-height: .96; letter-spacing: -.03em; margin: 18px 0; }
+        .hero .cap h1 { font-family: var(--archivo); font-weight: 800; font-size: clamp(34px,4.2vw,56px); line-height: 1.0; letter-spacing: -.03em; margin: 14px 0; }
         .hero .cap p { color: var(--muted); font-size: 17px; max-width: 40ch; margin-bottom: 30px; }
         .hero .cap .row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
         .hero .visual { position: relative; }
@@ -37,12 +37,12 @@
 
         .strip { display: flex; justify-content: center; gap: 46px; flex-wrap: wrap; padding: 30px 0; color: var(--faint); font-family: var(--mono); font-size: 12px; letter-spacing: .05em; border-bottom: 1px solid var(--line); }
 
-        .banner { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 90px 0; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+        .banner { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 64px 0; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
         .banner .txt { padding: 56px; background: var(--surface); }
         .banner .txt .tag { margin-bottom: 14px; display: block; }
         .banner .txt h3 { font-family: var(--archivo); font-weight: 800; font-size: clamp(30px,3.6vw,46px); letter-spacing: -.02em; line-height: 1.02; margin-bottom: 16px; }
         .banner .txt p { color: var(--muted); max-width: 42ch; margin-bottom: 26px; }
-        .banner .vis { position: relative; background: var(--surface2); overflow: hidden; min-height: 320px; }
+        .banner .vis { position: relative; background: var(--surface2); overflow: hidden; min-height: 260px; }
         .banner .vis img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
 
         .news { border: 1px solid var(--line); border-radius: 16px; padding: 50px; margin: 80px 0; text-align: center; background: radial-gradient(80% 120% at 50% 0,#161a24,#0c0e13); }
@@ -61,7 +61,7 @@
 
         @media (max-width: 1000px) {
             .hero, .banner { grid-template-columns: 1fr; }
-            .hero .visual { min-height: 300px; }
+            .hero .visual { min-height: 240px; }
             .cats { grid-template-columns: 1fr 1fr; }
         }
         @media (max-width: 720px) { .hero .cap { padding: 40px 28px; } }

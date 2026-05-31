@@ -44,8 +44,9 @@
         }
         .hero .main {
             position: relative;
-            height: 74vh;
-            min-height: 520px;
+            height: 56vh;
+            min-height: 380px;
+            max-height: 560px;
             overflow: hidden;
         }
         /* Gradient overlay so the caption reads cleanly against ANY photo —
@@ -75,8 +76,8 @@
         }
         .hero .main .cap h1 {
             font-family: var(--display);
-            font-size: clamp(54px, 7vw, 104px);
-            line-height: .9;
+            font-size: clamp(38px, 4.4vw, 68px);
+            line-height: .95;
             font-weight: 500;
             color: #fff;
         }
@@ -105,10 +106,10 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 0;
-            margin-top: 100px;
+            margin-top: 72px;
             align-items: stretch;
         }
-        .editorial .img { min-height: 560px; }
+        .editorial .img { min-height: 400px; }
         .editorial .txt {
             background: var(--ink);
             color: var(--paper);
@@ -125,10 +126,10 @@
         }
         .editorial .txt h3 {
             font-family: var(--display);
-            font-size: clamp(34px, 4vw, 56px);
+            font-size: clamp(26px, 3vw, 42px);
             font-weight: 500;
-            margin: 18px 0 18px;
-            line-height: 1.02;
+            margin: 14px 0 14px;
+            line-height: 1.05;
         }
         .editorial .txt p {
             color: #cfc7b8;
@@ -147,11 +148,11 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 18px;
-            margin-top: 100px;
+            margin-top: 72px;
         }
         .cat {
             position: relative;
-            height: 440px;
+            height: 340px;
             cursor: pointer;
             overflow: hidden;
         }
@@ -191,7 +192,7 @@
         /* newsletter */
         .news {
             text-align: center;
-            margin: 110px 0;
+            margin: 80px 0;
             padding: 0 20px;
         }
         .news h3 {
@@ -236,7 +237,7 @@
             .cats { grid-template-columns: 1fr; }
             .hero { grid-template-columns: 1fr; }
             .hero .side { display: none; }
-            .hero .main { height: 64vh; }
+            .hero .main { height: 46vh; min-height: 320px; }
         }
     </style>
 

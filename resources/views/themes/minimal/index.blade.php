@@ -12,22 +12,22 @@
     @endphp
 
     <style>
-        .hero { margin-top: 14px; border-radius: 34px; background: linear-gradient(120deg,#f6dccd,#f9eae0 55%,#f1d2c3); position: relative; overflow: hidden; padding: 90px 64px; min-height: 480px; display: flex; align-items: center; }
+        .hero { margin-top: 14px; border-radius: 34px; background: linear-gradient(120deg,#f6dccd,#f9eae0 55%,#f1d2c3); position: relative; overflow: hidden; padding: 56px 56px; min-height: 360px; display: flex; align-items: center; }
         .hero .blob { position: absolute; border-radius: 50%; filter: blur(2px); }
         .hero .b1 { width: 520px; height: 520px; background: rgba(231,170,142,.5); right: -120px; top: -120px; }
         .hero .b2 { width: 300px; height: 300px; background: rgba(255,255,255,.5); right: 160px; bottom: -90px; }
         .hero .cap { position: relative; z-index: 2; max-width: 560px; }
         .hero .k { letter-spacing: .18em; text-transform: uppercase; font-size: 12px; color: var(--accent); font-weight: 700; }
-        .hero h1 { font-family: var(--display); font-size: clamp(46px,6vw,76px); line-height: 1.02; margin: 18px 0 20px; color: #5a3f35; }
+        .hero h1 { font-family: var(--display); font-size: clamp(34px,4.4vw,56px); line-height: 1.05; margin: 14px 0 16px; color: #5a3f35; }
         .hero p { font-size: 17px; color: #7a5e54; max-width: 42ch; margin-bottom: 30px; }
-        .hero .pimg { position: absolute; right: 70px; bottom: 0; width: 300px; height: 430px; z-index: 2; border-radius: 24px 24px 0 0; overflow: hidden; }
+        .hero .pimg { position: absolute; right: 64px; bottom: 0; width: 250px; height: 320px; z-index: 2; border-radius: 24px 24px 0 0; overflow: hidden; }
         .hero .pimg img { width: 100%; height: 100%; object-fit: cover; }
 
         .trust { display: flex; justify-content: center; gap: 50px; flex-wrap: wrap; padding: 34px 0; color: var(--muted); font-size: 13px; letter-spacing: .04em; }
         .trust b { color: var(--ink); font-weight: 600; }
 
-        .ritual { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: center; margin: 100px 0; background: var(--blush); border-radius: 34px; padding: 56px; }
-        .ritual .img { height: 420px; border-radius: 24px; overflow: hidden; }
+        .ritual { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: center; margin: 72px 0; background: var(--blush); border-radius: 34px; padding: 48px; }
+        .ritual .img { height: 330px; border-radius: 24px; overflow: hidden; }
         .ritual .img img { width: 100%; height: 100%; object-fit: cover; }
         .ritual h3 { font-family: var(--display); font-size: clamp(32px,4vw,48px); line-height: 1.05; margin-bottom: 18px; }
         .ritual p { color: #7a5e54; margin-bottom: 24px; }
@@ -46,7 +46,7 @@
 
         .empty { text-align: center; padding: 60px; color: var(--muted); }
 
-        @media (max-width: 1000px) { .ritual { grid-template-columns: 1fr; } .ritual .img { height: 300px; } .hero .pimg { display: none; } .hero { padding: 60px 40px; min-height: 380px; } .cats { grid-template-columns: 1fr; } }
+        @media (max-width: 1000px) { .ritual { grid-template-columns: 1fr; } .ritual .img { height: 260px; } .hero .pimg { display: none; } .hero { padding: 44px 28px; min-height: 280px; } .cats { grid-template-columns: 1fr; } }
     </style>
 
     <main>

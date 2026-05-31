@@ -13,11 +13,11 @@
     @endphp
 
     <style>
-        .hero { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; padding: 60px 0 0; min-height: 72vh; }
+        .hero { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; padding: 40px 0 0; min-height: 54vh; }
         .hero .k { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
-        .hero h1 { font-family: var(--display); font-weight: 700; font-size: clamp(46px,5.6vw,78px); line-height: 1; letter-spacing: -.02em; margin: 18px 0 20px; }
+        .hero h1 { font-family: var(--display); font-weight: 700; font-size: clamp(34px,4.2vw,58px); line-height: 1.04; letter-spacing: -.02em; margin: 14px 0 18px; }
         .hero p { font-size: 17px; color: var(--muted); max-width: 42ch; margin-bottom: 30px; }
-        .hero .imgwrap { height: 70vh; min-height: 480px; position: relative; }
+        .hero .imgwrap { height: 52vh; min-height: 380px; max-height: 560px; position: relative; }
         .hero .imgwrap .main { position: absolute; inset: 0; border-radius: 18px; overflow: hidden; }
         .hero .imgwrap .main img { width: 100%; height: 100%; object-fit: cover; }
         .hero .imgwrap .float { position: absolute; left: -34px; bottom: 40px; width: 200px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; box-shadow: 0 18px 40px -20px rgba(52,48,42,.4); }
@@ -34,8 +34,8 @@
         .split .ov { position: relative; z-index: 1; }
         .split .ov h3 { font-family: var(--display); font-weight: 700; font-size: 30px; color: #fff; text-shadow: 0 2px 16px rgba(0,0,0,.4); }
 
-        .story { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 100px 0; align-items: stretch; border-radius: 20px; overflow: hidden; }
-        .story .img { min-height: 460px; background: var(--soft); } .story .img img { width: 100%; height: 100%; object-fit: cover; }
+        .story { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 72px 0; align-items: stretch; border-radius: 20px; overflow: hidden; }
+        .story .img { min-height: 360px; background: var(--soft); } .story .img img { width: 100%; height: 100%; object-fit: cover; }
         .story .txt { background: var(--soft); padding: 64px 56px; display: flex; flex-direction: column; justify-content: center; }
         .story .k { font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
         .story h3 { font-family: var(--display); font-weight: 600; font-size: clamp(30px,3.8vw,46px); letter-spacing: -.02em; margin: 14px 0 16px; line-height: 1.04; }
@@ -52,7 +52,7 @@
 
         @media (max-width: 1000px) {
             .hero, .splits, .story { grid-template-columns: 1fr; }
-            .hero .imgwrap { height: 48vh; min-height: 340px; } .hero .imgwrap .float { display: none; }
+            .hero .imgwrap { height: 40vh; min-height: 280px; } .hero .imgwrap .float { display: none; }
             .story .img { min-height: 300px; }
         }
     </style>
