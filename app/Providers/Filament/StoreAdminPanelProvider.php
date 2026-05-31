@@ -41,16 +41,35 @@ class StoreAdminPanelProvider extends PanelProvider
             // Browser tab icon for the storefront admin panel. Same source
             // as the SA panel — both panels are platform UI.
             ->favicon(asset('favicon.ico'))
-            // Header + login-screen logo. Mirrors the SuperAdmin panel
-            // and the coming-soon page so the merchant sees the same
-            // mark wherever they land. Filament auto-switches to the
-            // dark variant in dark mode.
-            ->brandLogo(asset('images/brand/logo-full-black.png'))
-            ->darkModeBrandLogo(asset('images/brand/logo-full-white.png'))
+            // Header logo. Resolved per-request (closures run at render time,
+            // after auth) so a merchant who uploaded an admin logo in Store
+            // Settings sees their own mark; everyone else gets the default
+            // Ganvo lockup. The login screen has no auth context yet, so it
+            // shows the Ganvo default.
+            ->brandLogo(fn (): string => auth()->user()?->tenant?->store?->adminLogoUrl()
+                ?? asset('images/brand/logo-full-black.png'))
+            ->darkModeBrandLogo(fn (): string => auth()->user()?->tenant?->store?->adminLogoUrl()
+                ?? asset('images/brand/logo-full-white.png'))
             ->brandLogoHeight('2rem')
             ->colors([
                 'primary' => Color::Emerald,
             ])
+            // Per-merchant accent: override Filament's primary palette with a
+            // ramp generated from the merchant's chosen hex. Injected after
+            // Filament's own stylesheet so it cascades over the Emerald default.
+            ->renderHook(
+                PanelsRenderHook::STYLES_AFTER,
+                function (): string {
+                    $hex = auth()->user()?->tenant?->store?->adminAccentColor();
+                    if (! $hex) {
+                        return '';
+                    }
+
+                    return '<style id="ganvo-admin-accent">'
+                        . \App\Support\AccentPalette::css($hex)
+                        . '</style>';
+                }
+            )
             ->discoverResources(in: app_path('Filament/StoreAdmin/Resources'), for: 'App\\Filament\\StoreAdmin\\Resources')
             ->discoverPages(in: app_path('Filament/StoreAdmin/Pages'), for: 'App\\Filament\\StoreAdmin\\Pages')
             ->pages([

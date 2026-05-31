@@ -24,6 +24,8 @@ class Store extends Model
         'logo_path',
         'primary_color',
         'secondary_color',
+        'admin_logo_path',
+        'admin_accent_color',
         'font_family',
         'currency',
         'display_currencies',
@@ -126,6 +128,30 @@ class Store extends Model
     public function hasMultipleDisplayCurrencies(): bool
     {
         return count($this->supportedDisplayCurrencies()) > 1;
+    }
+
+    /**
+     * Public URL for the merchant's admin-panel logo, or null to fall back
+     * to the default Ganvo mark. Separate from the storefront logo.
+     */
+    public function adminLogoUrl(): ?string
+    {
+        return $this->admin_logo_path
+            ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->admin_logo_path)
+            : null;
+    }
+
+    /**
+     * The merchant's chosen admin accent hex, normalized to #rrggbb, or
+     * null when unset/invalid (panel then uses its default Emerald).
+     */
+    public function adminAccentColor(): ?string
+    {
+        $hex = $this->admin_accent_color;
+
+        return \App\Support\AccentPalette::isValid($hex)
+            ? '#' . ltrim(trim((string) $hex), '#')
+            : null;
     }
 
     public function allowsGuestCheckout(): bool

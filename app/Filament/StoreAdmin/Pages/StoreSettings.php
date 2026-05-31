@@ -49,6 +49,8 @@ class StoreSettings extends Page implements HasForms
             'secondary_color',
             'font_family',
             'logo_path',
+            'admin_logo_path',
+            'admin_accent_color',
             'currency',
             'custom_domain',
             'is_live',
@@ -169,6 +171,25 @@ class StoreSettings extends Page implements HasForms
                             ->disk('public')
                             ->directory('logos')
                             ->maxSize(2048)
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('Admin panel appearance')
+                    ->description('Brand your own admin workspace. This changes the logo and accent color you see here in the dashboard — it does not affect your storefront.')
+                    ->columns(2)
+                    ->collapsed()
+                    ->schema([
+                        FileUpload::make('admin_logo_path')
+                            ->label('Admin logo')
+                            ->image()
+                            ->disk('public')
+                            ->directory('admin-logos')
+                            ->maxSize(2048)
+                            ->helperText('Shown in the top-left of your admin panel, replacing the Ganvo logo. Leave empty to keep the Ganvo mark. Takes effect on your next page load.')
+                            ->columnSpanFull(),
+                        ColorPicker::make('admin_accent_color')
+                            ->label('Admin accent color')
+                            ->helperText('Tints buttons, links, and the active menu item in your admin panel. Leave empty for the default green.')
                             ->columnSpanFull(),
                     ]),
 
