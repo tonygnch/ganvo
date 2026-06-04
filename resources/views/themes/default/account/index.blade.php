@@ -30,9 +30,11 @@
         }
         .acct-head h1 {
             font-family: var(--display);
-            font-size: clamp(32px, 4.5vw, 46px);
-            font-weight: 500;
-            line-height: 1.02;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: -.02em;
+            font-size: clamp(30px, 4.5vw, 50px);
+            line-height: .95;
         }
         .acct-head p {
             color: var(--muted);

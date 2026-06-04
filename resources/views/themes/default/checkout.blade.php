@@ -16,19 +16,7 @@
 
     <style>
         /* ===== CHECKOUT ===== */
-        .co-wrap { padding: 40px 0 60px; }
-        .co-head { margin-bottom: 28px; }
-        .co-head h1 {
-            font-family: var(--display);
-            font-size: clamp(36px, 4.5vw, 56px);
-            font-weight: 500;
-            line-height: 1;
-        }
-        .co-head p {
-            color: var(--muted);
-            margin-top: 8px;
-            font-size: 14px;
-        }
+        .co-wrap { padding: 0 0 60px; }
 
         .checkout {
             display: grid;
@@ -407,8 +395,11 @@
 
     <main>
         <div class="wrap co-wrap">
-            <div class="co-head rv">
-                <h1>{{ __('site.checkout.title') }}</h1>
+            <div class="ed-head rv">
+                <div>
+                    <div class="crumb">{{ __('site.checkout.secure_note') }}</div>
+                    <h1>{{ __('site.checkout.title') }}</h1>
+                </div>
             </div>
 
             @guest('customer')

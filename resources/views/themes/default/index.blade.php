@@ -14,10 +14,8 @@
 
         $featured = $products->take(8);
         $heroProduct = $featured->first();
-        $sideOne     = $featured->skip(1)->first();
-        $sideTwo     = $featured->skip(2)->first();
 
-        // Merchant-supplied hero overrides the editorial product images.
+        // Merchant-supplied hero overrides the editorial backdrop.
         $csHero = $store->heroBanner();
         $heroImageUrl = $csHero['enabled'] && $csHero['image_path']
             ? \Illuminate\Support\Facades\Storage::url($csHero['image_path'])
@@ -25,373 +23,242 @@
                 ? \Illuminate\Support\Facades\Storage::url($heroProduct->image_path)
                 : null);
 
-        // Top 3 categories show as the lower category tiles. Pulled in priority
-        // order — merchant controls via sort_order in the Categories admin.
-        $topCategories = ($categories ?? collect())
-            ->where('parent_id', null)
-            ->sortBy('sort_order')
-            ->take(3)
-            ->values();
+        // Lookbook rail = the next handful of products with imagery.
+        $lookbook = $featured->skip(1)->take(5)->values();
+
+        // Editorial film-block image = a later product shot.
+        $filmProduct = $featured->skip(3)->first();
+        $filmImageUrl = $filmProduct && $filmProduct->image_path
+            ? \Illuminate\Support\Facades\Storage::url($filmProduct->image_path)
+            : null;
     @endphp
 
     <style>
-        /* ===== HERO ===== */
-        .hero {
-            display: grid;
-            grid-template-columns: 1.25fr 1fr;
-            gap: 18px;
-            padding: 18px 0 0;
-        }
-        .hero .main {
-            position: relative;
-            height: 56vh;
-            min-height: 380px;
-            max-height: 560px;
-            overflow: hidden;
-        }
-        /* Gradient overlay so the caption reads cleanly against ANY photo —
-           the original template's mix-blend-mode trick only worked on quiet,
-           single-subject lookbook shots. */
-        .hero .main::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(
-                to top,
-                rgba(0, 0, 0, .55) 0%,
-                rgba(0, 0, 0, .28) 35%,
-                rgba(0, 0, 0, 0) 65%
-            );
-            pointer-events: none;
-            z-index: 1;
-        }
-        .hero .main .cap {
-            position: absolute;
-            left: 48px;
-            right: 48px;
-            bottom: 46px;
-            color: #fff;
-            z-index: 2;
-            text-shadow: 0 2px 24px rgba(0, 0, 0, .35);
-        }
-        .hero .main .cap h1 {
-            font-family: var(--display);
-            font-size: clamp(38px, 4.4vw, 68px);
-            line-height: .95;
-            font-weight: 500;
-            color: #fff;
-        }
-        .hero .main .cap .sub {
-            letter-spacing: .2em;
-            text-transform: uppercase;
-            font-size: 12px;
-            margin-bottom: 16px;
-            color: rgba(255, 255, 255, .9);
-        }
-        .hero .side {
-            display: grid;
-            grid-template-rows: 1fr 1fr;
-            gap: 18px;
-        }
-        .hero-cta {
-            padding: 30px 0 0;
-            display: flex;
-            gap: 16px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
+        /* ===== HOME ===== */
+        /* hero */
+        .hero { position: relative; height: 78vh; min-height: 560px; max-height: 760px; overflow: hidden; background: var(--ink); }
+        .hero .bg { position: absolute; inset: 0; }
+        .hero .bg img { width: 100%; height: 100%; object-fit: cover; }
+        .hero .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(8,8,8,.62), rgba(8,8,8,.15) 55%, transparent); }
+        .hero .inner { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 36px 7vh; max-width: 1320px; margin: 0 auto; left: 0; right: 0; color: var(--paper); }
+        .hero .eyebrow { display: flex; gap: 14px; align-items: center; margin-bottom: 22px; }
+        .hero .eyebrow .ln { width: 54px; height: 1px; background: var(--accent); }
+        .hero h1 { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: clamp(40px, 7vw, 118px); line-height: .86; letter-spacing: -.02em; }
+        .hero h1 .rot { color: var(--accent); }
+        .hero .sub { display: flex; gap: 26px; align-items: flex-end; justify-content: space-between; margin-top: 30px; flex-wrap: wrap; }
+        .hero .sub p { max-width: 40ch; font-size: 15px; opacity: .85; }
+        .hero .sub .cta { display: flex; gap: 12px; flex-wrap: wrap; }
 
-        /* editorial */
-        .editorial {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0;
-            margin-top: 72px;
-            align-items: stretch;
-        }
-        .editorial .img { min-height: 400px; }
-        .editorial .txt {
-            background: var(--ink);
-            color: var(--paper);
-            padding: 72px 64px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .editorial .txt .k {
-            letter-spacing: .2em;
-            text-transform: uppercase;
-            font-size: 11px;
-            color: #b3aa9a;
-        }
-        .editorial .txt h3 {
-            font-family: var(--display);
-            font-size: clamp(26px, 3vw, 42px);
-            font-weight: 500;
-            margin: 14px 0 14px;
-            line-height: 1.05;
-        }
-        .editorial .txt p {
-            color: #cfc7b8;
-            max-width: 42ch;
-            margin-bottom: 30px;
-        }
-        .editorial .btn.outline {
-            color: var(--paper);
-            border-color: var(--paper);
-            align-self: flex-start;
-        }
-        .editorial .btn.outline:hover { background: var(--paper); color: var(--ink); }
+        /* brand marquee */
+        .brandmarq { border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); overflow: hidden; background: var(--paper); }
+        .brandmarq .track { display: flex; align-items: center; gap: 46px; white-space: nowrap; animation: bm 28s linear infinite; padding: 14px 0; }
+        .brandmarq .track span { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: clamp(34px, 6vw, 84px); letter-spacing: -.02em; }
+        .brandmarq .track .o { -webkit-text-stroke: 1.5px var(--ink); color: transparent; }
+        .brandmarq .track .star { color: var(--accent); font-size: clamp(22px, 4vw, 48px); }
+        @keyframes bm { to { transform: translateX(-50%); } }
 
-        /* category tiles */
-        .cats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 18px;
-            margin-top: 72px;
-        }
-        .cat {
-            position: relative;
-            height: 340px;
-            cursor: pointer;
-            overflow: hidden;
-        }
-        .cat .img {
-            position: absolute;
-            inset: 0;
-            transition: transform .55s cubic-bezier(.19,.7,.16,1);
-        }
-        .cat::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(
-                to top,
-                rgba(0, 0, 0, .55) 0%,
-                rgba(0, 0, 0, .15) 50%,
-                rgba(0, 0, 0, 0) 80%
-            );
-            pointer-events: none;
-            z-index: 1;
-            transition: opacity .35s ease;
-        }
-        .cat:hover::after { opacity: .85; }
-        .cat:hover .img { transform: scale(1.04); }
-        .cat .lab {
-            position: absolute;
-            left: 26px;
-            right: 26px;
-            bottom: 26px;
-            color: #fff;
-            font-family: var(--display);
-            font-size: 30px;
-            z-index: 2;
-            text-shadow: 0 2px 16px rgba(0, 0, 0, .35);
-        }
+        /* lookbook rail */
+        .rail-head { display: flex; align-items: flex-end; justify-content: space-between; padding-top: 64px; padding-bottom: 24px; }
+        .rail-head h2 { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: clamp(24px, 3.4vw, 42px); letter-spacing: -.01em; }
+        .rail-head .hint { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+        .rail { display: flex; gap: 18px; overflow-x: auto; padding: 0 36px 18px; scrollbar-width: none; }
+        .rail::-webkit-scrollbar { display: none; }
+        .look { flex: 0 0 clamp(260px, 34vw, 460px); }
+        .look .img { height: 56vh; min-height: 380px; max-height: 520px; margin-bottom: 14px; overflow: hidden; }
+        .look .img img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s cubic-bezier(.19,.7,.16,1); }
+        .look:hover .img img { transform: scale(1.05); }
+        .look .cap { display: flex; justify-content: space-between; border-top: 1px solid var(--rule); padding-top: 10px; gap: 12px; }
+        .look .cap .t { font-family: var(--serif); font-size: 20px; }
+        .look .cap .n { font-family: var(--body); font-size: 13px; color: var(--muted); white-space: nowrap; }
 
-        /* newsletter */
-        .news {
-            text-align: center;
-            margin: 80px 0;
-            padding: 0 20px;
-        }
-        .news h3 {
-            font-family: var(--display);
-            font-size: clamp(32px, 4vw, 52px);
-            font-weight: 500;
-        }
-        .news p {
-            color: var(--muted);
-            margin: 14px 0 28px;
-        }
-        .news form {
-            display: flex;
-            max-width: 460px;
-            margin: 0 auto;
-            border-bottom: 1px solid var(--ink);
-        }
-        .news input {
-            flex: 1;
-            border: none;
-            background: none;
-            padding: 14px 4px;
-            font-family: inherit;
-            font-size: 15px;
-            color: var(--ink);
-        }
-        .news input:focus { outline: none; }
-        .news button {
-            background: none;
-            border: none;
-            letter-spacing: .14em;
-            text-transform: uppercase;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--ink);
-        }
+        /* product index */
+        .idx-head { display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid var(--ink); padding-bottom: 14px; margin: 80px 0 30px; gap: 16px; flex-wrap: wrap; }
+        .idx-head h2 { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: clamp(22px, 3vw, 36px); letter-spacing: -.01em; }
+        .idx-head a { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+        .idx-head a:hover { color: var(--ink); }
 
-        @media (max-width: 1000px) {
-            .editorial { grid-template-columns: 1fr; }
-            .editorial .img { min-height: 340px; }
-            .editorial .txt { padding: 56px 32px; }
-            .cats { grid-template-columns: 1fr; }
-            .hero { grid-template-columns: 1fr; }
-            .hero .side { display: none; }
-            .hero .main { height: 46vh; min-height: 320px; }
+        /* editorial dark split */
+        .filmblock { position: relative; margin: 100px 0; background: var(--ink); color: var(--paper); display: grid; grid-template-columns: 1fr 1fr; align-items: stretch; overflow: hidden; }
+        .filmblock .art { min-height: 480px; }
+        .filmblock .art img { width: 100%; height: 100%; object-fit: cover; }
+        .filmblock .txt { padding: 72px 60px; display: flex; flex-direction: column; justify-content: center; }
+        .filmblock .txt .kicker { color: var(--accent); }
+        .filmblock .txt h3 { font-family: var(--serif); font-size: clamp(30px, 4.2vw, 56px); line-height: 1.02; margin: 18px 0 18px; }
+        .filmblock .txt p { opacity: .82; max-width: 42ch; margin-bottom: 26px; }
+        .filmblock .btn.ghost { color: var(--paper); border-color: var(--paper); }
+        .filmblock .btn.ghost:hover { background: var(--paper); color: var(--ink); }
+
+        /* colophon / newsletter */
+        .colophon { display: grid; grid-template-columns: 1.2fr 1fr; gap: 50px; margin: 90px 0; align-items: end; }
+        .colophon h3 { font-family: var(--serif); font-size: clamp(30px, 4vw, 52px); line-height: 1; }
+        .colophon .sub { display: flex; border-bottom: 1px solid var(--ink); margin-top: 22px; }
+        .colophon input { flex: 1; border: none; background: none; padding: 14px 2px; font-family: inherit; font-size: 15px; color: var(--ink); }
+        .colophon input:focus { outline: none; }
+        .colophon button { background: none; border: none; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; font-weight: 600; color: var(--ink); }
+
+        .home-empty { text-align: center; padding: 80px 20px; color: var(--muted); border: 1px solid var(--ink); }
+        .home-empty p { font-size: 13px; letter-spacing: .14em; text-transform: uppercase; }
+
+        @media (max-width: 1080px) {
+            .filmblock { grid-template-columns: 1fr; }
+            .filmblock .art { min-height: 320px; }
+            .colophon { grid-template-columns: 1fr; gap: 24px; }
+        }
+        @media (max-width: 680px) {
+            .hero { height: 70vh; min-height: 460px; }
+            .rail { padding: 0 20px 18px; }
+            .filmblock .txt { padding: 48px 28px; }
         }
     </style>
 
     <main>
-        <div class="wrap">
-            @if (! $isFiltered)
-                <section class="hero rv">
-                    <div class="main ph">
-                        @if ($heroImageUrl)
-                            <img src="{{ $heroImageUrl }}" alt="{{ $csHero['title'] ?? $tenant->name }}">
-                        @else
-                            <span>{{ __('site.storefront.product.no_image') }}</span>
-                        @endif
-                        <div class="cap">
-                            <div class="sub">{{ $csHero['title'] !== '' ? $csHero['title'] : __('site.storefront.hero.eyebrow', ['year' => date('Y')]) }}</div>
-                            <h1>{{ $csHero['subtitle'] !== '' ? $csHero['subtitle'] : __('site.storefront.hero.headline', ['tenant' => $tenant->name]) }}</h1>
-                        </div>
-                    </div>
-                    <div class="side">
-                        <div class="ph">
-                            @if ($sideOne && $sideOne->image_path)
-                                <img src="{{ \Illuminate\Support\Facades\Storage::url($sideOne->image_path) }}" alt="{{ $sideOne->name }}">
-                            @else
-                                <span>editorial</span>
-                            @endif
-                        </div>
-                        <div class="ph">
-                            @if ($sideTwo && $sideTwo->image_path)
-                                <img src="{{ \Illuminate\Support\Facades\Storage::url($sideTwo->image_path) }}" alt="{{ $sideTwo->name }}">
-                            @else
-                                <span>editorial</span>
-                            @endif
-                        </div>
-                    </div>
-                </section>
-
-                <div class="hero-cta rv">
-                    <a class="btn" href="#shop">
-                        {{ $csHero['cta_label'] !== '' ? $csHero['cta_label'] : __('site.storefront.hero.cta_primary') }}
-                    </a>
-                    <a class="btn outline" href="#featured">{{ __('site.storefront.hero.cta_secondary') }}</a>
+        @if (! $isFiltered)
+            {{-- ===== HERO ===== --}}
+            <section class="hero">
+                <div class="bg ph dark">
+                    @if ($heroImageUrl)
+                        <img src="{{ $heroImageUrl }}" alt="{{ $csHero['title'] !== '' ? $csHero['title'] : $tenant->name }}">
+                    @endif
                 </div>
+                <div class="scrim"></div>
+                <div class="inner">
+                    <div class="eyebrow">
+                        <span class="ln"></span>
+                        <span class="kicker">{{ $csHero['title'] !== '' ? $csHero['title'] : __('site.storefront.hero.eyebrow', ['year' => date('Y')]) }}</span>
+                    </div>
+                    <h1>{!! $csHero['subtitle'] !== '' ? e($csHero['subtitle']) : __('site.storefront.hero.headline', ['tenant' => e($tenant->name)]) !!}</h1>
+                    <div class="sub">
+                        <p>{{ __('site.storefront.hero.sub') }}</p>
+                        <div class="cta">
+                            <a class="btn red" href="#shop">{{ $csHero['cta_label'] !== '' ? $csHero['cta_label'] : __('site.storefront.hero.cta_primary') }} <span class="arc">→</span></a>
+                            <a class="btn ghost" href="#featured" style="color:var(--paper)">{{ __('site.storefront.hero.cta_secondary') }}</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-                @if ($featured->isNotEmpty())
-                    <div class="sec-head rv" id="featured">
+            {{-- ===== BRAND MARQUEE ===== --}}
+            <div class="brandmarq"><div class="track" id="bmTrack"></div></div>
+
+            {{-- ===== LOOKBOOK RAIL ===== --}}
+            @if ($lookbook->isNotEmpty())
+                <div class="rail-head wrap">
+                    <h2>{{ __('site.storefront.lookbook.title') }}</h2>
+                    <span class="hint">{{ __('site.storefront.lookbook.hint') }}</span>
+                </div>
+                <div class="rail" id="rail">
+                    @foreach ($lookbook as $i => $lp)
+                        <a class="look" href="/products/{{ $lp->slug }}">
+                            <div class="img ph dark">
+                                @if ($lp->image_path)
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($lp->image_path) }}" alt="{{ $lp->name }}">
+                                @else
+                                    <span>{{ $lp->name }}</span>
+                                @endif
+                            </div>
+                            <div class="cap">
+                                <span class="t ital">{{ $lp->name }}</span>
+                                <span class="n">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}</span>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+
+            {{-- ===== NEW IN GRID ===== --}}
+            @if ($featured->isNotEmpty())
+                <div class="wrap">
+                    <div class="idx-head rv" id="featured">
                         <h2>{{ __('site.storefront.featured.h2') }}</h2>
                         <a href="#shop">{{ __('site.storefront.featured.browse_all') }} →</a>
                     </div>
                     <div class="pgrid">
                         @foreach ($featured->take(4) as $i => $product)
-                            <a class="pcard rv" href="/products/{{ $product->slug }}">
-                                <div class="img ph">
-                                    @if ($product->image_path)
-                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($product->image_path) }}" alt="{{ $product->name }}">
-                                    @else
-                                        <span>{{ $product->name }}</span>
-                                    @endif
-                                    @if ($i === 0)
-                                        <div class="tag">{{ __('site.storefront.featured.badge') }}</div>
-                                    @endif
-                                </div>
-                                <div class="nm">{{ $product->name }}</div>
-                                <div class="pr">@money($product->price_cents)</div>
-                            </a>
-                        @endforeach
-                    </div>
-                @endif
-            @endif
-        </div>
-
-        @if (! $isFiltered)
-            <section class="editorial rv">
-                <div class="img ph">
-                    @if ($featured->skip(3)->first() && $featured->skip(3)->first()->image_path)
-                        <img src="{{ \Illuminate\Support\Facades\Storage::url($featured->skip(3)->first()->image_path) }}" alt="">
-                    @else
-                        <span>editorial photo</span>
-                    @endif
-                </div>
-                <div class="txt">
-                    <div class="k">{{ __('site.storefront.featured.eyebrow') }}</div>
-                    <h3>{{ __('site.storefront.promo.h2_prefix', ['tenant' => $tenant->name]) }}</h3>
-                    <p>{{ __('site.storefront.promo.p') }}</p>
-                    <a class="btn outline" href="#shop">{{ __('site.storefront.promo.btn') }}</a>
-                </div>
-            </section>
-
-            @if ($topCategories->isNotEmpty())
-                <div class="wrap">
-                    <div class="cats">
-                        @foreach ($topCategories as $cat)
-                            <a class="cat rv" href="/categories/{{ $cat->slug }}">
-                                <div class="img ph">
-                                    @if ($cat->image_path)
-                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($cat->image_path) }}" alt="{{ $cat->name }}">
-                                    @else
-                                        <span>{{ $cat->name }}</span>
-                                    @endif
-                                </div>
-                                <div class="lab">{{ $cat->name }}</div>
-                            </a>
+                            @include('themes.default._card', ['product' => $product, 'badge' => $i === 0 ? __('site.storefront.featured.badge') : null])
                         @endforeach
                     </div>
                 </div>
+
+                {{-- ===== EDITORIAL FILM BLOCK ===== --}}
+                <section class="filmblock rv">
+                    <div class="art ph dark">
+                        @if ($filmImageUrl)
+                            <img src="{{ $filmImageUrl }}" alt="">
+                        @else
+                            <span>editorial</span>
+                        @endif
+                    </div>
+                    <div class="txt">
+                        <div class="kicker">{{ __('site.storefront.featured.eyebrow') }}</div>
+                        <h3>{{ __('site.storefront.promo.h2_prefix', ['tenant' => $tenant->name]) }}</h3>
+                        <p>{{ __('site.storefront.promo.p') }}</p>
+                        <a class="btn ghost" href="#shop">{{ __('site.storefront.promo.btn') }}</a>
+                    </div>
+                </section>
             @endif
         @endif
 
+        {{-- ===== COLLECTION STRIPS (featured) ===== --}}
         <div class="wrap">
             @if (! $isFiltered && (isset($featuredCollections) ? $featuredCollections->isNotEmpty() : false))
-                <div class="sec-head rv">
+                <div class="idx-head rv">
                     <h2>{{ __('site.storefront.shop_all.h2') }}</h2>
                 </div>
                 @include('storefront.partials.collection-strips')
             @endif
 
-            <div class="sec-head rv" id="shop">
+            {{-- ===== SHOP ALL (filterable catalog) ===== --}}
+            <div class="idx-head rv" id="shop">
                 <h2>{{ __('site.storefront.shop_all.h2') }}</h2>
             </div>
 
+            @include('storefront.partials.catalog-controls')
+
             @if ($products->isEmpty())
-                <div style="text-align:center; padding: 80px 20px; color: var(--muted); border: 1px solid var(--line);">
-                    <p style="font-size: 13px; letter-spacing: .14em; text-transform: uppercase;">{{ __('site.storefront.no_products') }}</p>
+                <div class="home-empty rv">
+                    <p>{{ __('site.storefront.no_products') }}</p>
                 </div>
             @else
                 <div class="pgrid">
                     @foreach ($products as $product)
-                        <a class="pcard rv" href="/products/{{ $product->slug }}">
-                            <div class="img ph">
-                                @if ($product->image_path)
-                                    <img src="{{ \Illuminate\Support\Facades\Storage::url($product->image_path) }}" alt="{{ $product->name }}">
-                                @else
-                                    <span>{{ $product->name }}</span>
-                                @endif
-                            </div>
-                            <div class="nm">{{ $product->name }}</div>
-                            <div class="pr">@money($product->price_cents)</div>
-                        </a>
+                        @include('themes.default._card', ['product' => $product, 'badge' => null])
                     @endforeach
                 </div>
 
                 @include('storefront.partials.pagination')
             @endif
 
+            {{-- ===== NEWSLETTER COLOPHON ===== --}}
             @if (! $isFiltered)
-                <section class="news rv">
-                    <h3>{{ __('site.storefront.footer.subscribe') }}</h3>
-                    <p>{{ __('site.storefront.footer.tagline') }}</p>
-                    <form data-subscribed-label="{{ __('site.storefront.footer.subscribed') }}"
-                          onsubmit="event.preventDefault(); this.querySelector('input').value=''; this.querySelector('button').textContent=this.dataset.subscribedLabel;">
-                        <input type="email" placeholder="{{ __('site.storefront.footer.newsletter_placeholder') }}" required>
-                        <button type="submit">{{ __('site.storefront.footer.subscribe') }}</button>
-                    </form>
+                <section class="colophon rv">
+                    <div>
+                        <div class="kicker" style="color:var(--accent)">{{ __('site.storefront.featured.eyebrow') }}</div>
+                        <h3>{{ __('site.storefront.footer.subscribe') }}</h3>
+                    </div>
+                    <div>
+                        <p style="color:var(--muted)">{{ __('site.storefront.footer.tagline') }}</p>
+                        <form class="sub" data-subscribed-label="{{ __('site.storefront.footer.subscribed') }}"
+                              onsubmit="event.preventDefault(); this.querySelector('input').value=''; this.querySelector('button').textContent=this.dataset.subscribedLabel;">
+                            <input type="email" placeholder="{{ __('site.storefront.footer.newsletter_placeholder') }}" required>
+                            <button type="submit">{{ __('site.storefront.footer.subscribe') }} →</button>
+                        </form>
+                    </div>
                 </section>
             @endif
         </div>
     </main>
+
+    @if (! $isFiltered)
+        <script>
+            // Brand marquee — duplicated content for a seamless loop.
+            (function () {
+                var track = document.getElementById('bmTrack');
+                if (! track) return;
+                var name = @json($tenant->name);
+                var unit = '<span>' + name + '</span><span class="star">✶</span>' +
+                           '<span class="o">' + @json(__('site.storefront.hero.eyebrow', ['year' => date('Y')])) + '</span><span class="star">✶</span>';
+                track.innerHTML = unit.repeat(4);
+            })();
+        </script>
+    @endif
 @endsection

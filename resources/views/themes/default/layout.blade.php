@@ -6,41 +6,43 @@
     @include('partials.favicon')
     <title>{{ ($title ?? null) ? $title . ' — ' . $tenant->name : $tenant->name }}</title>
 
-    {{-- Atelier hard-codes its typography — the design depends on Cormorant
-         Garamond display + Hanken Grotesk body. The merchant's font_family
-         setting is intentionally ignored for this theme. --}}
+    {{-- Atelier hard-codes its typography — the design depends on its
+         Archivo Expanded display + Cormorant Garamond serif + Hanken
+         Grotesk body. The merchant's font_family setting is intentionally
+         ignored for this theme. --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Marcellus&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Archivo+Expanded:wght@600;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
             /* The one merchant-controllable knob: brand accent maps to
                primary_color. Everything else is the Atelier palette. */
-            --accent: {{ $store->primary_color ?: '#1a1a1a' }};
-            --display: "Cormorant Garamond", serif;
+            --accent: {{ $store->primary_color ?: '#b23a2e' }};
+            --display: "Archivo Expanded", sans-serif;
+            --serif: "Cormorant Garamond", serif;
             --body: "Hanken Grotesk", system-ui, sans-serif;
-            --ink: #16140f;
-            --paper: #f4f2ee;
-            --soft: #e8e3da;
-            --soft2: #ded7cc;
-            --line: #d8d2c7;
-            --muted: #8b8478;
+            --ink: #100f0d;
+            --paper: #ece7dd;
+            --soft: #ddd6c8;
+            --soft2: #cfc7b6;
+            --muted: #867f72;
+            --rule: #100f0d22;
+            --line: #d3ccbe;
 
             /* Aliases — shared storefront pages (cart, checkout, order, auth)
-               reference the legacy default-theme tokens. Mapping them here
-               keeps those pages rendering coherently with Atelier without
-               a per-page rewrite. */
+               reference these legacy default-theme tokens. Mapping them here
+               keeps those pages rendering coherently with Atelier without a
+               per-page rewrite. */
             --primary: var(--accent);
             --primary-soft: color-mix(in srgb, var(--accent) 12%, var(--paper));
             --primary-strong: var(--accent);
             --secondary: var(--ink);
             --bg: var(--paper);
             --surface: #ffffff;
-            --muted: #8b8478;
             --border: var(--line);
             --text: var(--ink);
-            --text-muted: #4f4a40;
+            --text-muted: #4a4338;
             --text-soft: var(--muted);
 
             /* Variant picker: sharp, ink-filled selected chip (Atelier). */
@@ -54,15 +56,15 @@
             background: var(--paper);
             color: var(--ink);
             font-family: var(--body);
-            line-height: 1.55;
+            line-height: 1.5;
             font-size: 16px;
             min-height: 100vh;
+            overflow-x: hidden;
         }
         img { display: block; max-width: 100%; }
         a { color: inherit; text-decoration: none; }
         button { font-family: inherit; cursor: pointer; }
-        .wrap { max-width: 1280px; margin: 0 auto; padding: 0 40px; }
-        .serif { font-family: var(--display); }
+        .wrap { max-width: 1320px; margin: 0 auto; padding: 0 36px; }
 
         :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
@@ -70,49 +72,79 @@
         .ph {
             position: relative;
             background: var(--soft);
-            background-image: repeating-linear-gradient(45deg, rgba(22,20,15,.05) 0 10px, transparent 10px 20px);
+            background-image: repeating-linear-gradient(135deg, rgba(16,15,13,.05) 0 11px, transparent 11px 22px);
             display: grid;
             place-items: center;
             overflow: hidden;
         }
         .ph span {
-            font-family: "Hanken Grotesk", monospace;
-            font-size: 11px;
-            letter-spacing: .14em;
+            font-family: var(--body);
+            font-size: 10px;
+            letter-spacing: .18em;
             text-transform: uppercase;
             color: var(--muted);
-            background: rgba(244,242,238,.7);
-            padding: 5px 11px;
-            border-radius: 2px;
+            background: rgba(236,231,221,.66);
+            padding: 5px 10px;
         }
+        .ph.dark { background: #1c1a17; background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.04) 0 11px, transparent 11px 22px); }
+        .ph.dark span { background: rgba(16,15,13,.5); color: #b9b1a2; }
         .ph img { width: 100%; height: 100%; object-fit: cover; }
+
+        .disp { font-family: var(--display); text-transform: uppercase; letter-spacing: -.02em; line-height: .92; }
+        .kicker { font-family: var(--body); font-size: 11px; letter-spacing: .28em; text-transform: uppercase; font-weight: 600; }
+        .ital { font-family: var(--serif); font-style: italic; text-transform: none; letter-spacing: 0; }
+        .serif { font-family: var(--serif); }
 
         /* buttons */
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 9px;
-            font-size: 13px;
-            letter-spacing: .14em;
+            gap: 10px;
+            font-size: 11px;
+            letter-spacing: .2em;
             text-transform: uppercase;
             font-weight: 600;
-            padding: 15px 30px;
-            border: 1px solid var(--accent);
-            background: var(--accent);
-            color: #fff;
-            transition: .2s;
+            padding: 17px 34px;
+            border: 1px solid currentColor;
+            background: var(--ink);
+            color: var(--paper);
+            transition: .25s;
         }
-        .btn:hover { opacity: .84; }
-        .btn.outline {
-            background: transparent;
-            color: var(--ink);
-            border-color: var(--ink);
-        }
-        .btn.outline:hover { background: var(--ink); color: var(--paper); opacity: 1; }
+        .btn:hover { background: transparent; color: var(--ink); }
+        .btn.ghost { background: transparent; color: inherit; }
+        .btn.ghost:hover { background: var(--ink); color: var(--paper); }
+        .btn.red { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .btn.red:hover { filter: brightness(1.1); background: var(--accent); color: #fff; }
+        .btn.outline { background: transparent; color: var(--ink); border-color: var(--ink); }
+        .btn.outline:hover { background: var(--ink); color: var(--paper); }
         .btn.block { width: 100%; }
+        .btn .arc { transition: transform .25s; }
+        .btn:hover .arc { transform: translateX(4px); }
 
-        /* marquee (top announcement strip) */
+        /* scroll progress */
+        .scrollbar { position: fixed; top: 0; left: 0; height: 3px; width: 100%; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; z-index: 100; will-change: transform; }
+
+        /* reveal */
+        .rv { opacity: 0; transform: translateY(30px); }
+        .rv.rv-in {
+            opacity: 1;
+            transform: none;
+            transition: opacity .9s ease, transform 1s cubic-bezier(.19,.7,.16,1);
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .rv, .rv.rv-in { opacity: 1 !important; transform: none !important; transition: none !important; }
+            .tick .track, .brandmarq .track { animation: none !important; }
+        }
+
+        /* ticker */
+        .tick { background: var(--ink); color: var(--paper); overflow: hidden; white-space: nowrap; }
+        .tick .track { display: inline-flex; gap: 38px; padding: 9px 0; animation: tick 26s linear infinite; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; }
+        .tick .track span { display: inline-flex; gap: 38px; }
+        .tick .track .dot { color: var(--accent); }
+        @keyframes tick { to { transform: translateX(-50%); } }
+
+        /* announcement marquee (merchant-controlled strip) */
         .marquee {
             background: var(--ink);
             color: var(--paper);
@@ -122,80 +154,34 @@
             text-transform: uppercase;
             padding: 9px;
         }
-        .marquee a { color: inherit; border-bottom: 1px solid rgba(244,242,238,.4); padding-bottom: 1px; }
+        .marquee a { color: inherit; border-bottom: 1px solid rgba(236,231,221,.4); padding-bottom: 1px; }
 
-        /* header */
-        header.site {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            background: rgba(244,242,238,.86);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--line);
-        }
-        .nav {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            align-items: center;
-            height: 74px;
-        }
-        .nav .left, .nav .right {
-            display: flex;
-            gap: 26px;
-            align-items: center;
-            font-size: 12px;
-            letter-spacing: .14em;
-            text-transform: uppercase;
-        }
+        /* nav */
+        header.site { position: sticky; top: 0; z-index: 60; background: rgba(236,231,221,.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--ink); }
+        .nav { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 64px; }
+        .nav .left, .nav .right { display: flex; gap: 26px; align-items: center; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; }
         .nav .right { justify-content: flex-end; }
-        .nav a.lk {
-            color: var(--ink);
-            position: relative;
-            padding: 4px 0;
-        }
-        .nav a.lk:hover { color: var(--ink); }
-        .nav a.lk::after {
-            content: "";
-            position: absolute;
-            left: 0;
-            bottom: -1px;
-            height: 1px;
-            width: 0;
-            background: currentColor;
-            transition: width .35s cubic-bezier(.19,.7,.16,1);
-        }
+        .nav a.lk { position: relative; padding: 4px 0; color: var(--ink); }
+        .nav a.lk::after { content: ""; position: absolute; left: 0; bottom: 0; height: 1px; width: 0; background: var(--accent); transition: width .3s; }
         .nav a.lk:hover::after { width: 100%; }
-        .logo {
-            font-family: var(--display);
-            font-size: 30px;
-            letter-spacing: .34em;
-            text-transform: uppercase;
-            text-align: center;
-            padding-left: .34em;
-            color: var(--ink);
-            white-space: nowrap;
-        }
-        .logo img { height: 36px; width: auto; display: inline-block; }
-        .bag {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-        }
+        .logo { font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: .16em; text-transform: uppercase; text-align: center; color: var(--ink); white-space: nowrap; }
+        .logo img { height: 30px; width: auto; display: inline-block; }
+        .bag { display: inline-flex; align-items: center; gap: 7px; }
         .bag .n {
             background: var(--accent);
             color: #fff;
-            width: 18px;
+            min-width: 18px;
             height: 18px;
-            border-radius: 50%;
+            padding: 0 5px;
+            border-radius: 9px;
             font-size: 10px;
-            display: grid;
+            display: inline-grid;
             place-items: center;
             font-family: var(--body);
         }
-        .menu-toggle { display: none; background: none; border: none; font-size: 22px; }
+        .menu-toggle { display: none; background: none; border: none; font-size: 20px; z-index: 80; position: relative; color: var(--ink); }
 
-        /* language / currency dropdowns — minimal, fit the Atelier nav style */
+        /* language / currency / nav dropdowns */
         .menu { position: relative; }
         .menu summary {
             list-style: none;
@@ -204,24 +190,15 @@
             align-items: center;
             gap: 6px;
             color: var(--ink);
-            font-size: 12px;
-            letter-spacing: .14em;
+            font-size: 11px;
+            letter-spacing: .18em;
             text-transform: uppercase;
             user-select: none;
             padding: 4px 0;
             position: relative;
         }
         .menu summary::-webkit-details-marker, .menu summary::marker { display: none; content: none; }
-        .menu summary::after {
-            content: "";
-            position: absolute;
-            left: 0;
-            bottom: -1px;
-            height: 1px;
-            width: 0;
-            background: currentColor;
-            transition: width .35s cubic-bezier(.19,.7,.16,1);
-        }
+        .menu summary::after { content: ""; position: absolute; left: 0; bottom: 0; height: 1px; width: 0; background: var(--accent); transition: width .3s; }
         .menu:hover summary::after, .menu[open] summary::after { width: 100%; }
         .menu .chev { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 2; transition: transform .15s ease; }
         .menu[open] .chev { transform: rotate(180deg); }
@@ -231,10 +208,10 @@
             right: 0;
             min-width: 190px;
             background: var(--paper);
-            border: 1px solid var(--line);
+            border: 1px solid var(--ink);
             padding: 6px;
-            z-index: 60;
-            box-shadow: 0 20px 40px -16px rgba(22,20,15,.18);
+            z-index: 70;
+            box-shadow: 0 20px 40px -16px rgba(16,15,13,.25);
         }
         .menu-items a {
             display: flex;
@@ -243,214 +220,112 @@
             gap: 10px;
             padding: 10px 12px;
             color: var(--ink);
-            font-size: 12px;
-            letter-spacing: .12em;
+            font-size: 11px;
+            letter-spacing: .14em;
             text-transform: uppercase;
             transition: background-color .12s ease, color .12s ease;
         }
         .menu-items a:hover { background: var(--soft); }
         .menu-items a.active { color: var(--accent); }
-        .menu-items .check {
-            width: 13px; height: 13px;
-            fill: none; stroke: var(--accent);
-            stroke-width: 2.2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
+        .menu-items .check { width: 13px; height: 13px; fill: none; stroke: var(--accent); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
         .menu-items a:not(.active) .check { visibility: hidden; }
 
-        /* Nav dropdown — flyout under a top-level header item that has
-           configured children. Wider than the lang/currency popovers to
-           fit category names comfortably; "View all" entry rendered
-           prominent so the parent's own page stays one click away. */
-        .menu.nav-menu .menu-items {
-            right: auto;
-            left: 0;
-            min-width: 230px;
-        }
-        .menu.nav-menu .menu-items a {
-            justify-content: flex-start;
-            gap: 8px;
-        }
-        .menu.nav-menu .menu-items a.view-all {
-            color: var(--ink);
-            font-weight: 700;
-            border-bottom: 1px solid var(--line);
-            margin-bottom: 4px;
-            padding-bottom: 12px;
-        }
+        /* nav dropdown flyout (category/collection children) */
+        .menu.nav-menu .menu-items { right: auto; left: 0; min-width: 230px; }
+        .menu.nav-menu .menu-items a { justify-content: flex-start; gap: 8px; }
+        .menu.nav-menu .menu-items a.view-all { color: var(--ink); font-weight: 700; border-bottom: 1px solid var(--line); margin-bottom: 4px; padding-bottom: 12px; }
         .menu.nav-menu .menu-items a.view-all:hover { color: var(--accent); }
-
-        /* Hierarchy indent — child categories get a small left padding
-           scaled by depth, plus a "└" leader to read as nested in a
-           single flat dropdown without needing real submenus. */
         .menu.nav-menu .menu-items a[data-depth] { padding-left: calc(12px + 18px * var(--d, 0)); }
-        .menu.nav-menu .menu-items a[data-depth]::before {
-            content: "";
-            display: inline-block;
+        .menu.nav-menu .menu-items a[data-depth]:not([data-depth="0"])::before { content: "└"; display: inline-block; margin-right: 4px; color: var(--muted); font-weight: 400; }
+
+        /* mobile drawer */
+        .m-drawer {
+            position: fixed; inset: 0; z-index: 75; background: var(--ink); color: var(--paper);
+            display: flex; flex-direction: column; justify-content: center; padding: 0 32px;
+            opacity: 0; visibility: hidden; transition: opacity .45s ease, visibility .45s;
         }
-        .menu.nav-menu .menu-items a[data-depth]:not([data-depth="0"])::before {
-            content: "└";
-            display: inline-block;
-            margin-right: 4px;
-            color: var(--muted);
-            font-weight: 400;
+        .m-drawer.open { opacity: 1; visibility: visible; }
+        .m-drawer .mclose { position: absolute; top: 18px; right: 26px; background: none; border: none; color: var(--paper); font-size: 26px; cursor: pointer; }
+        .m-drawer .mtop { position: absolute; top: 20px; left: 32px; font-family: var(--display); font-weight: 800; text-transform: uppercase; letter-spacing: .16em; font-size: 18px; }
+        .m-drawer nav { display: flex; flex-direction: column; gap: 6px; }
+        .m-drawer nav a {
+            font-family: var(--display); font-weight: 800; text-transform: uppercase;
+            font-size: clamp(30px, 11vw, 54px); line-height: 1.1; letter-spacing: -.02em;
+            opacity: 0; transform: translateY(24px); transition: opacity .5s ease, transform .6s cubic-bezier(.19,.7,.16,1);
         }
+        .m-drawer.open nav a { opacity: 1; transform: none; }
+        .m-drawer nav a:nth-child(1) { transition-delay: .08s; }
+        .m-drawer nav a:nth-child(2) { transition-delay: .14s; }
+        .m-drawer nav a:nth-child(3) { transition-delay: .20s; }
+        .m-drawer nav a:nth-child(4) { transition-delay: .26s; }
+        .m-drawer nav a:nth-child(5) { transition-delay: .32s; }
+        .m-drawer nav a:nth-child(6) { transition-delay: .38s; }
+        .m-drawer nav a .ix { font-family: var(--body); font-size: 11px; letter-spacing: .2em; color: var(--accent); vertical-align: super; margin-right: 10px; }
+        .m-drawer .mfoot { position: absolute; bottom: 30px; left: 32px; right: 32px; display: flex; justify-content: space-between; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; opacity: 0; transition: opacity .5s ease .4s; }
+        .m-drawer.open .mfoot { opacity: .7; }
+        .m-drawer .mfoot a { cursor: pointer; }
+        @media (prefers-reduced-motion: reduce) { .m-drawer, .m-drawer nav a, .m-drawer .mfoot { transition: none !important; } }
 
         /* toast */
         .toast {
-            position: fixed;
-            top: 24px;
-            right: 24px;
-            background: var(--ink);
-            color: var(--paper);
-            padding: 14px 18px;
-            z-index: 100;
-            font-size: 12px;
-            font-weight: 600;
-            letter-spacing: .14em;
-            text-transform: uppercase;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 20px 40px -10px rgba(22,20,15,.3);
+            position: fixed; top: 24px; right: 24px; background: var(--ink); color: var(--paper);
+            padding: 14px 18px; z-index: 100; font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+            display: flex; align-items: center; gap: 10px; box-shadow: 0 20px 40px -10px rgba(16,15,13,.4);
             animation: toastIn .25s ease-out, toastOut .25s ease-in 3s forwards;
         }
-        .toast::before {
-            content: "";
-            display: inline-block;
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--accent);
-        }
-        @keyframes toastIn  { from { transform: translateY(-1rem); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .toast::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+        @keyframes toastIn { from { transform: translateY(-1rem); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes toastOut { to { opacity: 0; transform: translateY(-1rem); } }
 
-        /* scroll/transition reveal */
-        .rv { opacity: 0; transform: translateY(26px); }
-        .rv.rv-in {
-            opacity: 1;
-            transform: none;
-            transition: opacity .8s ease, transform .9s cubic-bezier(.19,.7,.16,1);
-        }
-        @media (prefers-reduced-motion: reduce) {
-            .rv, .rv.rv-in { opacity: 1 !important; transform: none !important; transition: none !important; }
-        }
-
-        /* section heading */
-        .sec-head {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            margin: 84px 0 28px;
-            border-bottom: 1px solid var(--line);
-            padding-bottom: 18px;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
-        .sec-head h2 {
-            font-family: var(--display);
-            font-size: clamp(30px, 3.6vw, 46px);
-            font-weight: 500;
-        }
-        .sec-head a {
-            font-size: 12px;
-            letter-spacing: .14em;
-            text-transform: uppercase;
-            color: var(--muted);
-        }
+        /* section heading shared by inner pages */
+        .sec-head { display: flex; align-items: flex-end; justify-content: space-between; margin: 84px 0 28px; border-bottom: 1px solid var(--ink); padding-bottom: 16px; gap: 16px; flex-wrap: wrap; }
+        .sec-head h2 { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: clamp(24px, 3vw, 40px); letter-spacing: -.01em; }
+        .sec-head a { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
         .sec-head a:hover { color: var(--ink); }
 
-        /* product grid + product card (used by index/category/collection/PDP-related) */
-        .pgrid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 22px 22px;
-        }
-        .pcard {
-            cursor: pointer;
-            overflow: hidden;
-            display: block;
-            color: inherit;
-        }
-        .pcard .img {
-            height: 360px;
-            margin-bottom: 14px;
-            transition: transform .55s cubic-bezier(.19,.7,.16,1), opacity .3s;
-        }
-        .pcard:hover .img { opacity: .9; transform: scale(1.035); }
-        .pcard .nm { font-size: 15px; font-weight: 500; }
-        .pcard .pr { font-size: 14px; color: var(--muted); margin-top: 3px; }
-        .pcard .tag {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            background: var(--paper);
-            font-size: 10px;
-            letter-spacing: .12em;
-            text-transform: uppercase;
-            padding: 5px 9px;
-        }
+        /* product grid + card (shared by index / catalog / collection / related) */
+        .pgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
+        .pcard { cursor: pointer; position: relative; display: block; color: inherit; }
+        .pcard .imgwrap { position: relative; overflow: hidden; height: 380px; margin-bottom: 13px; }
+        .pcard .imgwrap .img { position: absolute; inset: 0; transition: transform .9s cubic-bezier(.19,.7,.16,1); }
+        .pcard:hover .imgwrap .img { transform: scale(1.07); }
+        .pcard .over { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px; background: linear-gradient(to top, rgba(16,15,13,.85), transparent); transform: translateY(101%); transition: transform .45s cubic-bezier(.19,.7,.16,1); }
+        .pcard:hover .over { transform: translateY(0); }
+        .pcard .over .q { display: inline-flex; gap: 8px; color: #fff; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; border: 1px solid rgba(255,255,255,.5); padding: 9px 14px; }
+        .pcard .tag { font-family: var(--body); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+        .pcard .rowt { display: flex; justify-content: space-between; align-items: baseline; margin-top: 3px; gap: 12px; }
+        .pcard .nm { font-family: var(--serif); font-size: 19px; }
+        .pcard .pr { font-size: 13px; color: var(--muted); white-space: nowrap; }
+
+        /* inner-page editorial header */
+        .ed-head { display: flex; align-items: flex-end; justify-content: space-between; border-bottom: 1px solid var(--ink); padding: 44px 0 18px; flex-wrap: wrap; gap: 12px; }
+        .ed-head .crumb { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+        .ed-head .crumb a:hover { color: var(--ink); }
+        .ed-head h1 { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: clamp(38px, 6vw, 84px); line-height: .9; margin-top: 10px; letter-spacing: -.02em; }
+        .ed-head .meta { text-align: right; font-size: 12px; color: var(--muted); max-width: 30ch; }
 
         /* footer */
-        footer.site {
-            border-top: 1px solid var(--line);
-            margin-top: 100px;
-            padding: 70px 0 40px;
-        }
-        .fgrid {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 40px;
-        }
-        .fgrid .logo {
-            text-align: left;
-            padding: 0;
-            font-size: 26px;
-        }
-        .fcol h4 {
-            font-size: 11px;
-            letter-spacing: .16em;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-bottom: 18px;
-        }
-        .fcol a {
-            display: block;
-            font-size: 14px;
-            margin-bottom: 11px;
-            color: #4f4a40;
-        }
-        .fcol a:hover { color: var(--ink); }
-        .fbot {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 60px;
-            padding-top: 24px;
-            border-top: 1px solid var(--line);
-            font-size: 12px;
-            color: var(--muted);
-            gap: 16px;
-            flex-wrap: wrap;
-        }
+        footer.site { border-top: 1px solid var(--ink); margin-top: 60px; padding: 46px 0 40px; }
+        .fgrid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 40px; }
+        .fgrid .wm { font-family: var(--display); font-weight: 800; font-size: 30px; letter-spacing: .14em; text-transform: uppercase; }
+        .fcol h4 { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+        .fcol a { display: block; font-size: 13px; margin-bottom: 10px; color: #4a4338; }
+        .fcol a:hover { color: var(--accent); }
+        .fbot { display: flex; justify-content: space-between; margin-top: 50px; padding-top: 22px; border-top: 1px solid var(--rule); font-size: 11px; letter-spacing: .06em; color: var(--muted); gap: 16px; flex-wrap: wrap; }
         .fbot a { color: inherit; border-bottom: 1px solid currentColor; padding-bottom: 1px; }
 
-        /* responsive */
-        @media (max-width: 1000px) {
+        @media (max-width: 1080px) {
             .pgrid { grid-template-columns: repeat(2, 1fr); }
         }
-        @media (max-width: 720px) {
+        @media (max-width: 680px) {
             .wrap { padding: 0 20px; }
-            .nav .left, .nav a.lk:not(.logo) { display: none; }
-            .nav .right { gap: 18px; }
+            .nav .left { display: none; }
             .nav { grid-template-columns: auto 1fr auto; }
             .menu-toggle { display: block; }
-            .logo { text-align: left; font-size: 24px; padding-left: 0; letter-spacing: .24em; }
-            .pgrid { gap: 16px; }
-            .pcard .img { height: 260px; }
+            .pgrid { grid-template-columns: 1fr 1fr; gap: 14px; }
+            .pcard .imgwrap { height: 240px; }
             .fgrid { grid-template-columns: 1fr 1fr; }
-            footer.site { padding: 50px 0 30px; }
-            .sec-head { margin: 60px 0 22px; }
+            .ed-head .meta { text-align: left; }
         }
     </style>
 </head>
@@ -467,6 +342,8 @@
             ? \Illuminate\Support\Facades\Storage::url($store->logo_path)
             : null;
     @endphp
+
+    <div class="scrollbar" id="scrollbar"></div>
 
     @if ($csAnnouncement['enabled'] && $csAnnouncement['text'] !== '')
         <div class="marquee">
@@ -486,10 +363,6 @@
                     @if (! empty($csNavMenu))
                         @foreach ($csNavMenu as $item)
                             @if (! empty($item['children']))
-                                {{-- Dropdown parent. Uses the same <details> pattern as
-                                     the language/currency menus so behavior + a11y stay
-                                     consistent. If the parent ALSO has a URL, the dropdown
-                                     gets a "View all" link as its first entry. --}}
                                 <details class="menu nav-menu">
                                     <summary>
                                         <span>{{ $item['label'] }}</span>
@@ -573,6 +446,26 @@
         </div>
     </header>
 
+    {{-- Mobile drawer mirrors the nav menu (or the default shop links). --}}
+    <div class="m-drawer" id="mDrawer">
+        <div class="mtop">{{ $tenant->name }}</div>
+        <button class="mclose" id="mClose" aria-label="Close menu">✕</button>
+        <nav>
+            @if (! empty($csNavMenu))
+                @foreach ($csNavMenu as $i => $item)
+                    <a href="{{ $item['url'] ?: '/' }}"><span class="ix">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}</span>{{ $item['label'] }}</a>
+                @endforeach
+            @else
+                <a href="/"><span class="ix">01</span>{{ __('site.storefront.nav.shop') }}</a>
+                <a href="/#featured"><span class="ix">02</span>{{ __('site.storefront.nav.featured') }}</a>
+            @endif
+            @if ($store->showsAccountUi())
+                <a href="{{ $customer ? '/account' : '/account/login' }}"><span class="ix">★</span>{{ $customer ? __('site.common.my_account') : __('site.common.sign_in') }}</a>
+            @endif
+        </nav>
+        <div class="mfoot"><a href="/cart">{{ __('site.common.cart') }} ({{ $cartCount }})</a><span>{{ $tenant->name }}</span></div>
+    </div>
+
     @if (session('cart.flash'))
         <div class="toast">{{ session('cart.flash') }}</div>
     @endif
@@ -583,8 +476,8 @@
         <div class="wrap">
             <div class="fgrid">
                 <div>
-                    <div class="logo">{{ $tenant->name }}</div>
-                    <p style="color: var(--muted); max-width: 30ch; margin-top: 16px; font-size: 14px;">
+                    <div class="wm">{{ $tenant->name }}</div>
+                    <p style="color: var(--muted); max-width: 32ch; margin-top: 16px; font-size: 13px;">
                         {{ __('site.storefront.footer.tagline') }}
                     </p>
                 </div>
@@ -615,11 +508,24 @@
     </footer>
 
     <script>
-        // Scroll-driven reveal (simpler than the original template's per-screen
-        // stagger since each page is a real navigation, not a SPA screen swap).
+        // Mobile drawer open/close.
+        (function () {
+            var drawer = document.getElementById('mDrawer');
+            var toggle = document.querySelector('.menu-toggle');
+            var close = document.getElementById('mClose');
+            if (! drawer || ! toggle) return;
+            function open() { drawer.classList.add('open'); document.body.style.overflow = 'hidden'; }
+            function shut() { drawer.classList.remove('open'); document.body.style.overflow = ''; }
+            toggle.addEventListener('click', function (e) { e.stopPropagation(); open(); });
+            if (close) close.addEventListener('click', shut);
+            drawer.querySelectorAll('nav a').forEach(function (a) { a.addEventListener('click', shut); });
+        })();
+
+        // Scroll-driven reveal (each page is a real navigation, not a SPA
+        // screen swap, so we just observe .rv elements as they enter).
         (function () {
             if (! ('IntersectionObserver' in window)) {
-                document.querySelectorAll('.rv').forEach(el => el.classList.add('rv-in'));
+                document.querySelectorAll('.rv').forEach(function (el) { el.classList.add('rv-in'); });
                 return;
             }
             var io = new IntersectionObserver(function (entries) {
@@ -632,6 +538,21 @@
                 });
             }, { threshold: 0.08, rootMargin: '0px 0px -6% 0px' });
             document.querySelectorAll('.rv').forEach(function (el) { io.observe(el); });
+        })();
+
+        // Scroll progress bar.
+        (function () {
+            var bar = document.getElementById('scrollbar');
+            if (! bar) return;
+            var ticking = false;
+            function onScroll() {
+                var y = window.scrollY || 0;
+                var docH = document.documentElement.scrollHeight - window.innerHeight;
+                bar.style.transform = 'scaleX(' + (docH > 0 ? Math.min(y / docH, 1) : 0) + ')';
+                ticking = false;
+            }
+            window.addEventListener('scroll', function () { if (! ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+            onScroll();
         })();
     </script>
 </body>

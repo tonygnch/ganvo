@@ -5,261 +5,67 @@
 
 @section('content')
     @php
-        // Cart math — mirror what the shared cart computes so the summary
-        // shows the same numbers as before.
         $subtotal = $total_cents ?? 0;
         $totalQty = $items->sum('quantity');
         $discountCents = $discount_cents ?? 0;
-        // Shipping isn't known until address is entered — surface a friendly
-        // "calculated at checkout" hint. The /checkout page does the real
-        // shipping math + free-threshold logic.
         $grand = max(0, $subtotal - $discountCents);
     @endphp
 
     <style>
         /* ===== CART ===== */
-        .cart-wrap { padding: 40px 0 80px; }
-        .cart-head { margin-bottom: 28px; }
-        .cart-head h1 {
-            font-family: var(--display);
-            font-size: clamp(36px, 4.5vw, 56px);
-            font-weight: 500;
-            line-height: 1;
-        }
-        .cart-head p {
-            color: var(--muted);
-            margin-top: 8px;
-            font-size: 14px;
-            letter-spacing: .02em;
-        }
+        .cart-wrap { padding: 0 0 80px; }
 
-        .cart-empty {
-            text-align: center;
-            padding: 80px 24px;
-            border: 1px solid var(--line);
-        }
-        .cart-empty h2 {
-            font-family: var(--display);
-            font-size: 28px;
-            font-weight: 500;
-            margin-bottom: 10px;
-        }
+        .cart-empty { text-align: center; padding: 90px 24px; border: 1px solid var(--ink); margin-top: 40px; }
+        .cart-empty h2 { font-family: var(--serif); font-size: 30px; margin-bottom: 10px; }
         .cart-empty p { color: var(--muted); margin-bottom: 24px; font-size: 14px; }
 
-        .cart {
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            gap: 60px;
-            align-items: start;
-        }
+        .cart { display: grid; grid-template-columns: 1fr 360px; gap: 60px; padding: 30px 0 0; align-items: start; }
 
-        /* ----- line items ----- */
-        .lines { display: flex; flex-direction: column; }
-        .line {
-            display: grid;
-            grid-template-columns: 96px 1fr auto;
-            gap: 20px;
-            padding: 24px 0;
-            border-bottom: 1px solid var(--line);
-        }
-        .line .img {
-            height: 120px;
-            background: var(--soft);
-            overflow: hidden;
-            display: grid;
-            place-items: center;
-            color: var(--muted);
-            font-size: 10px;
-            letter-spacing: .14em;
-            text-transform: uppercase;
-        }
+        /* line items */
+        .lines { border-top: 1px solid var(--ink); }
+        .line { display: grid; grid-template-columns: 96px 1fr auto; gap: 20px; padding: 24px 0; border-bottom: 1px solid var(--rule); }
+        .line .img { height: 120px; background: var(--soft); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
         .line .img img { width: 100%; height: 100%; object-fit: cover; }
-        .line .t {
-            font-size: 16px;
-            font-weight: 500;
-            line-height: 1.3;
-        }
+        .line .t { font-family: var(--serif); font-size: 20px; line-height: 1.25; }
         .line .t a { color: var(--ink); transition: color .15s ease; }
         .line .t a:hover { color: var(--accent); }
-        .line .m { font-size: 13px; color: var(--muted); margin-top: 4px; }
+        .line .m { font-size: 12px; color: var(--muted); margin-top: 3px; }
         .line .unit { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: .02em; }
 
-        .qty {
-            display: inline-flex;
-            border: 1px solid var(--line);
-            margin-top: 14px;
-        }
+        .qty { display: inline-flex; border: 1px solid var(--ink); margin-top: 14px; }
         .qty form { display: inline-flex; }
-        .qty button {
-            width: 32px;
-            height: 32px;
-            background: none;
-            border: none;
-            font-size: 15px;
-            color: var(--ink);
-            cursor: pointer;
-            transition: background-color .12s ease;
-        }
+        .qty button { width: 32px; height: 32px; background: none; border: none; font-size: 15px; color: var(--ink); cursor: pointer; transition: background-color .12s ease; }
         .qty button:hover { background: var(--soft); }
-        .qty .n {
-            width: 38px;
-            display: grid;
-            place-items: center;
-            font-size: 13px;
-            border-left: 1px solid var(--line);
-            border-right: 1px solid var(--line);
-        }
+        .qty .n { width: 38px; display: grid; place-items: center; font-size: 13px; border-left: 1px solid var(--rule); border-right: 1px solid var(--rule); }
 
-        .line .pr {
-            font-family: var(--display);
-            font-size: 20px;
-            text-align: right;
-        }
-        .line .rm {
-            font-size: 11px;
-            letter-spacing: .14em;
-            text-transform: uppercase;
-            color: var(--muted);
-            margin-top: 14px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            text-align: right;
-            width: 100%;
-            transition: color .15s ease;
-        }
+        .line .pr { font-family: var(--serif); font-size: 18px; text-align: right; }
+        .line .rm { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-top: 14px; background: none; border: none; cursor: pointer; text-align: right; width: 100%; transition: color .15s ease; }
         .line .rm:hover { color: var(--accent); }
 
-        .cart-actions {
-            margin-top: 28px;
-            display: flex;
-            gap: 12px;
-        }
+        .cart-actions { margin-top: 28px; }
 
-        /* ----- summary aside ----- */
-        .summary {
-            border: 1px solid var(--line);
-            padding: 32px;
-            position: sticky;
-            top: 100px;
-        }
-        .summary h3 {
-            font-family: var(--display);
-            font-size: 26px;
-            font-weight: 500;
-            margin-bottom: 22px;
-        }
+        /* summary aside */
+        .summary { border: 1px solid var(--ink); padding: 32px; position: sticky; top: 96px; }
+        .summary h3 { font-family: var(--serif); font-size: 26px; margin-bottom: 22px; }
 
-        /* discount-form override — make it match Atelier paper/ink */
-        .summary .promo {
-            display: flex;
-            gap: 0;
-            margin-bottom: 22px;
-        }
-        .summary .promo input {
-            flex: 1;
-            border: 1px solid var(--line);
-            border-right: none;
-            padding: 12px 14px;
-            font-family: var(--body);
-            font-size: 13px;
-            background: var(--paper);
-            color: var(--ink);
-            outline: none;
-            min-width: 0;
-        }
-        .summary .promo input:focus { border-color: var(--ink); }
-        .summary .promo button {
-            border: 1px solid var(--ink);
-            background: var(--ink);
-            color: var(--paper);
-            padding: 0 18px;
-            font-size: 11px;
-            letter-spacing: .14em;
-            text-transform: uppercase;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color .15s ease;
-        }
+        .summary .promo { display: flex; margin-bottom: 22px; }
+        .summary .promo input { flex: 1; border: 1px solid var(--ink); border-right: none; padding: 12px 14px; font-family: var(--body); font-size: 13px; background: none; color: var(--ink); outline: none; min-width: 0; }
+        .summary .promo button { border: 1px solid var(--ink); background: var(--ink); color: var(--paper); padding: 0 16px; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; cursor: pointer; transition: background-color .15s ease; }
         .summary .promo button:hover { background: var(--accent); border-color: var(--accent); }
 
-        .summary .applied {
-            margin-bottom: 18px;
-            padding: 10px 12px;
-            background: var(--soft);
-            border-left: 2px solid var(--accent);
-            font-size: 12px;
-            letter-spacing: .04em;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .summary .applied form button {
-            background: none;
-            border: none;
-            font-size: 11px;
-            letter-spacing: .12em;
-            text-transform: uppercase;
-            color: var(--muted);
-            cursor: pointer;
-            transition: color .15s ease;
-        }
+        .summary .applied { margin-bottom: 18px; padding: 10px 12px; background: var(--soft); border-left: 2px solid var(--accent); font-size: 12px; letter-spacing: .04em; display: flex; justify-content: space-between; align-items: center; }
+        .summary .applied form button { background: none; border: none; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: color .15s ease; }
         .summary .applied form button:hover { color: var(--accent); }
         .summary .applied .code { font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
         .promo-region { margin-bottom: 22px; }
-        .promo-msg {
-            margin-top: 8px;
-            font-size: 12px;
-            letter-spacing: .02em;
-            color: var(--muted);
-        }
+        .promo-msg { margin-top: 8px; font-size: 12px; letter-spacing: .02em; color: var(--muted); }
 
-        .summary .r {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            margin-bottom: 14px;
-            color: #4f4a40;
-        }
+        .summary .r { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 14px; color: #3c382f; }
         .summary .r.discount { color: var(--accent); }
         .summary .r small { color: var(--muted); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+        .summary .tot { display: flex; justify-content: space-between; font-size: 18px; font-weight: 600; border-top: 1px solid var(--ink); padding-top: 18px; margin: 8px 0 22px; }
 
-        .summary .tot {
-            display: flex;
-            justify-content: space-between;
-            font-size: 18px;
-            font-weight: 600;
-            border-top: 1px solid var(--line);
-            padding-top: 18px;
-            margin-top: 8px;
-            margin-bottom: 24px;
-        }
-        .summary .checkout-btn {
-            display: block;
-            width: 100%;
-            text-align: center;
-            background: var(--ink);
-            color: var(--paper);
-            border: 1px solid var(--ink);
-            padding: 16px;
-            font-size: 12px;
-            letter-spacing: .18em;
-            text-transform: uppercase;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color .2s ease, border-color .2s ease, color .2s ease;
-            font-family: var(--body);
-        }
-        .summary .checkout-btn:hover { background: var(--accent); border-color: var(--accent); }
-
-        .summary .secure {
-            margin-top: 18px;
-            text-align: center;
-            font-size: 11px;
-            letter-spacing: .14em;
-            text-transform: uppercase;
-            color: var(--muted);
-        }
+        .summary .secure { margin-top: 18px; text-align: center; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 
         @media (max-width: 980px) {
             .cart { grid-template-columns: 1fr; gap: 40px; }
@@ -280,10 +86,13 @@
 
     <main>
         <div class="wrap cart-wrap">
-            <div class="cart-head rv">
-                <h1>{{ __('site.cart.title') }}</h1>
+            <div class="ed-head rv">
+                <div>
+                    <div class="crumb">{{ __('site.cart.your_selection') }}</div>
+                    <h1>{{ __('site.cart.title') }}</h1>
+                </div>
                 @if ($items->isNotEmpty())
-                    <p>{{ __('site.cart.' . ($totalQty === 1 ? 'item_count_one' : 'item_count_many'), ['count' => $totalQty]) }}</p>
+                    <div class="meta">{{ __('site.cart.' . ($totalQty === 1 ? 'item_count_one' : 'item_count_many'), ['count' => $totalQty]) }}</div>
                 @endif
             </div>
 
@@ -347,7 +156,7 @@
                         </div>
 
                         <div class="cart-actions">
-                            <a class="btn outline" href="/">← {{ __('site.cart.continue_shopping') }}</a>
+                            <a class="btn ghost" href="/">← {{ __('site.cart.continue_shopping') }}</a>
                         </div>
                     </div>
 
@@ -390,7 +199,7 @@
                             <span>{{ __('site.cart.total') }}</span>
                             <span data-cart-total>@money($grand)</span>
                         </div>
-                        <a class="checkout-btn" href="/checkout">{{ __('site.cart.checkout') }}</a>
+                        <a class="btn red block" href="/checkout">{{ __('site.cart.checkout') }}</a>
                         <div class="secure">{{ __('site.checkout.secure_note') }}</div>
                     </aside>
                 </div>
@@ -423,14 +232,10 @@
 
             // Update the header bag count + summary totals + each line subtotal.
             function applyState(s) {
-                // Header cart count (in the layout's .bag .n) — rolls too.
                 animate(document.querySelector('.bag .n'), String(s.item_count));
-
-                // Summary totals — rolling count-up/down.
                 animate(root.querySelector('[data-cart-subtotal]'), s.subtotal);
                 animate(root.querySelector('[data-cart-total]'), s.total);
 
-                // Discount summary row
                 var dRow = root.querySelector('[data-cart-discount-row]');
                 if (dRow) {
                     if (s.discount) {
@@ -442,13 +247,11 @@
                     }
                 }
 
-                // Per-line subtotals + quantities
                 (s.lines || []).forEach(function (line) {
                     var row = root.querySelector('[data-cart-line="' + line.line_id + '"]');
                     if (! row) return;
                     animate(row.querySelector('[data-line-subtotal]'), line.subtotal);
                     animate(row.querySelector('[data-line-qty]'), String(line.quantity));
-                    // Keep the +/- hidden inputs in step with the new qty.
                     row.querySelectorAll('[data-qty-step]').forEach(function (btn) {
                         var step = parseInt(btn.getAttribute('data-qty-step'), 10);
                         var input = btn.closest('form').querySelector('[data-qty-value]');
@@ -456,12 +259,9 @@
                     });
                 });
 
-                // If the cart emptied out, reload to render the empty state
-                // (simpler + guaranteed correct vs. reconstructing it here).
                 if (s.empty) { window.location.reload(); }
             }
 
-            // Fade + remove a line element, then collapse its height.
             function dropLine(lineId) {
                 var row = root.querySelector('[data-cart-line="' + lineId + '"]');
                 if (! row) return;
@@ -477,7 +277,7 @@
                     send(form).then(function (s) {
                         if (s.line_removed && s.line_id) dropLine(s.line_id);
                         applyState(s);
-                    }).catch(function () { form.submit(); }); // fall back to full post
+                    }).catch(function () { form.submit(); });
                 });
             });
 

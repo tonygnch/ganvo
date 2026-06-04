@@ -129,6 +129,10 @@ return [
             'eyebrow' => 'The whole collection',
             'h2' => 'Shop everything',
         ],
+        'lookbook' => [
+            'title' => 'The Lookbook',
+            'hint' => 'Scroll to explore →',
+        ],
         'promo' => [
             'h2_prefix' => 'Join the :tenant list',
             'p' => 'Get first dibs on new drops and exclusive subscriber-only offers.',
@@ -136,6 +140,8 @@ return [
         ],
         'product' => [
             'breadcrumb_shop' => 'Shop',
+            'quick_view' => 'Quick view',
+            'wear_it_with' => 'Wear it with',
             'tax_included' => 'tax included',
             'in_stock_full' => 'In stock and ready to ship',
             'in_stock_low' => 'Only :count left in stock',
@@ -206,6 +212,7 @@ return [
 
     'cart' => [
         'title' => 'Your cart',
+        'your_selection' => 'Your selection',
         'item_count_one' => ':count item ready to check out.',
         'item_count_many' => ':count items ready to check out.',
         'empty_title' => 'Your cart is empty',
