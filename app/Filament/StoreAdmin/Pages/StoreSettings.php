@@ -71,6 +71,7 @@ class StoreSettings extends Page implements HasForms
         $data['announcement_enabled'] = $announcement['enabled'];
         $data['announcement_text']    = $announcement['text'];
         $data['announcement_link']    = $announcement['link'];
+        $data['announcement_speed']   = $announcement['speed'];
 
         // For nav_menu, we hydrate the FORM from the stored config, not
         // from navMenuItems() — the latter auto-injects categories/collections
@@ -220,6 +221,12 @@ class StoreSettings extends Page implements HasForms
                             ->placeholder('https://example.com/shipping')
                             ->url()
                             ->maxLength(500),
+                        Select::make('announcement_speed')
+                            ->label('Scroll speed')
+                            ->options(\App\Models\Store::announcementSpeedOptions())
+                            ->default('normal')
+                            ->native(false)
+                            ->helperText('How fast the bar scrolls on themes that animate it (e.g. Brick). Choose “Static” to stop it scrolling. Themes with a non-moving bar ignore this.'),
                     ]),
 
                 Section::make('Header menu')
@@ -493,12 +500,17 @@ class StoreSettings extends Page implements HasForms
         $state['fx_rates'] = $rates;
 
         // Fold the flat announcement_* inputs back into the announcement JSON column.
+        $annSpeed = $state['announcement_speed'] ?? 'normal';
+        if (! array_key_exists($annSpeed, \App\Models\Store::ANNOUNCEMENT_SPEEDS)) {
+            $annSpeed = 'normal';
+        }
         $state['announcement'] = [
             'enabled' => (bool) ($state['announcement_enabled'] ?? false),
             'text'    => trim((string) ($state['announcement_text'] ?? '')),
             'link'    => trim((string) ($state['announcement_link'] ?? '')) ?: null,
+            'speed'   => $annSpeed,
         ];
-        unset($state['announcement_enabled'], $state['announcement_text'], $state['announcement_link']);
+        unset($state['announcement_enabled'], $state['announcement_text'], $state['announcement_link'], $state['announcement_speed']);
 
         // Fold number_animation into theme_settings, preserving other keys.
         $anim = $state['number_animation'] ?? 'count';

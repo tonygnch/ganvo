@@ -124,14 +124,25 @@
         /* reveal */
         .rv { opacity: 0; transform: translateY(22px); }
         .rv.rv-in { opacity: 1; transform: none; transition: opacity .5s ease, transform .55s cubic-bezier(.2,.8,.2,1); }
-        @media (prefers-reduced-motion: reduce) { .rv, .rv.rv-in { opacity: 1 !important; transform: none !important; transition: none !important; } .marquee-tape .tape { animation: none !important; } }
+        @media (prefers-reduced-motion: reduce) { .rv, .rv.rv-in { opacity: 1 !important; transform: none !important; transition: none !important; } }
 
-        /* announcement marquee — scrolling tape, brutalist staple */
+        /* announcement marquee — scrolling tape, brutalist staple.
+           Speed is driven by the merchant's setting as a px/sec rate: the
+           track holds two identical copies of the text and translates -50%,
+           so a JS pass sets animation-duration = (oneCopyWidth ÷ pps) to keep
+           the *perceived* speed identical no matter how long the text is.
+           --tape-dur is a sane pre-JS fallback; 'static' speed + reduced
+           motion both pause it (paused, not removed, so it stays readable). */
         .marquee-tape { background: var(--ink); color: var(--accent); overflow: hidden; white-space: nowrap; border-bottom: 2.5px solid var(--ink); }
-        .marquee-tape .tape { display: inline-flex; gap: 36px; padding: 8px 0; animation: tape 22s linear infinite; font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
-        .marquee-tape .tape span { display: inline-flex; gap: 36px; }
+        .marquee-tape .tape { display: inline-flex; padding: 8px 0; font-family: var(--display); font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; animation: tape var(--tape-dur, 24s) linear infinite; will-change: transform; }
+        .marquee-tape .tape .tape-half { display: inline-block; white-space: nowrap; }
         @keyframes tape { to { transform: translateX(-50%); } }
+        .marquee-tape[data-pps="0"] .tape { animation: none; }
         .marquee-tape.link a { color: inherit; }
+        @media (prefers-reduced-motion: reduce) { .marquee-tape .tape { animation-play-state: paused; } }
+
+        /* Visually-hidden but AT-reachable (for the keyboard-focusable link copy). */
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
         /* header */
         header.site { position: sticky; top: 0; z-index: 60; background: var(--paper); border-bottom: 2.5px solid var(--ink); }
@@ -259,15 +270,38 @@
     @endphp
 
     @if ($csAnnouncement['enabled'] && $csAnnouncement['text'] !== '')
-        <div class="marquee-tape {{ $csAnnouncement['link'] ? 'link' : '' }}">
-            @php $tape = trim($csAnnouncement['text']); @endphp
-            <div class="tape">
+        @php
+            $tape = trim($csAnnouncement['text']);
+            // One repeating unit (text + diamond separator). The track holds two
+            // identical halves, each = this unit repeated; the -50% translate then
+            // loops seamlessly. JS measures a half and sets the duration from the
+            // px/sec rate so perceived speed is length-independent.
+            $tapeUnit = e($tape) . ' ✦ ';
+            $tapeHalf = str_repeat($tapeUnit, 6);
+            // Pre-JS fallback duration so it scrolls sensibly before measurement:
+            // estimate a half-width as ~7.4px per char (Lexend Mega @12px, .08em
+            // tracking) and divide by the chosen rate. Clamped to a sane band.
+            $estWidth = max(320, (int) round(mb_strlen($tape) * 6 * 7.4));
+            $pps = (int) $csAnnouncement['speed_px'];
+            $fallbackDur = $pps > 0 ? max(6, min(120, (int) round($estWidth / $pps))) : 0;
+        @endphp
+        <div class="marquee-tape {{ $csAnnouncement['link'] ? 'link' : '' }}"
+             data-marquee data-pps="{{ $pps }}"
+             aria-label="{{ $tape }}"
+             @if ($fallbackDur > 0) style="--tape-dur: {{ $fallbackDur }}s;" @endif>
+            <div class="tape" aria-hidden="true">
                 @if ($csAnnouncement['link'])
-                    <a href="{{ $csAnnouncement['link'] }}"><span>{!! str_repeat(e($tape) . ' ✦ ', 6) !!}</span><span>{!! str_repeat(e($tape) . ' ✦ ', 6) !!}</span></a>
+                    <a class="tape-half" href="{{ $csAnnouncement['link'] }}" tabindex="-1" data-tape-unit="{{ $tapeUnit }}">{!! $tapeHalf !!}</a>
+                    <a class="tape-half" href="{{ $csAnnouncement['link'] }}" tabindex="-1" aria-hidden="true">{!! $tapeHalf !!}</a>
                 @else
-                    <span>{!! str_repeat(e($tape) . ' ✦ ', 6) !!}</span><span>{!! str_repeat(e($tape) . ' ✦ ', 6) !!}</span>
+                    <span class="tape-half" data-tape-unit="{{ $tapeUnit }}">{!! $tapeHalf !!}</span>
+                    <span class="tape-half">{!! $tapeHalf !!}</span>
                 @endif
             </div>
+            @if ($csAnnouncement['link'])
+                {{-- Reachable, non-animated link for keyboard/AT (the moving copies are aria-hidden). --}}
+                <a href="{{ $csAnnouncement['link'] }}" class="sr-only">{{ $tape }}</a>
+            @endif
         </div>
     @endif
 
@@ -423,6 +457,41 @@
     </footer>
 
     <script>
+        // Marquee tape — set animation duration from the merchant's px/sec rate
+        // so perceived speed is the same regardless of text length. We measure
+        // ONE tape half (the track is two halves; the loop translates -50%) and
+        // set duration = halfWidth / pps. Re-runs on resize + after web fonts
+        // load (Lexend Mega changes the measured width). data-pps="0" = static.
+        (function () {
+            var bar = document.querySelector('[data-marquee]');
+            if (! bar) return;
+            var pps = parseInt(bar.getAttribute('data-pps'), 10) || 0;
+            if (pps <= 0) return; // static — CSS already disables the animation
+            var half = bar.querySelector('.tape-half');
+            if (! half) return;
+
+            function apply() {
+                var w = half.getBoundingClientRect().width;
+                if (! w) return;
+                // Clamp to a sane band so a tiny or huge string can't produce a
+                // jittery (<5s) or near-frozen (>180s) loop.
+                var dur = Math.max(5, Math.min(180, w / pps));
+                bar.style.setProperty('--tape-dur', dur.toFixed(2) + 's');
+            }
+
+            apply();
+            // Re-measure once the display font swaps in (metrics shift).
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(apply).catch(function () {});
+            }
+            // Debounced re-measure on resize.
+            var t;
+            window.addEventListener('resize', function () {
+                clearTimeout(t);
+                t = setTimeout(apply, 150);
+            }, { passive: true });
+        })();
+
         // Mobile drawer.
         (function () {
             var drawer = document.getElementById('mDrawer');

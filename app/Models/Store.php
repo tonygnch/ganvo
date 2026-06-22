@@ -223,19 +223,51 @@ class Store extends Model
     }
 
     /**
+     * Announcement-bar scroll speeds, for themes that render the bar as a
+     * moving marquee (e.g. Brick). Keys are the stored slug; values pair an
+     * admin label with a target scroll rate in CSS pixels per second.
+     *
+     * Themes that show a STATIC announcement bar simply ignore the speed.
+     * Driving it as px/sec (rather than a fixed animation duration) keeps the
+     * perceived speed consistent no matter how long the announcement text is.
+     */
+    public const ANNOUNCEMENT_SPEEDS = [
+        'slow'   => ['label' => 'Slow',   'pxPerSec' => 30],
+        'normal' => ['label' => 'Normal', 'pxPerSec' => 55],
+        'fast'   => ['label' => 'Fast',   'pxPerSec' => 90],
+        'static' => ['label' => 'Static (no scroll)', 'pxPerSec' => 0],
+    ];
+
+    /** @return array<string, string> [slug => label] for the admin select. */
+    public static function announcementSpeedOptions(): array
+    {
+        return array_map(fn ($s) => $s['label'], self::ANNOUNCEMENT_SPEEDS);
+    }
+
+    /**
      * The announcement bar at the top of every theme.
      *
-     * @return array{enabled: bool, text: string, link: ?string}
+     * `speed` is one of self::ANNOUNCEMENT_SPEEDS (default 'normal'); only
+     * marquee-style themes use it. `speed_px` resolves it to a px/sec rate so
+     * a theme can render the marquee at a length-independent speed.
+     *
+     * @return array{enabled: bool, text: string, link: ?string, speed: string, speed_px: int}
      */
     public function announcementBar(): array
     {
         $a = (array) ($this->announcement ?? []);
+        $speed = (string) ($a['speed'] ?? 'normal');
+        if (! array_key_exists($speed, self::ANNOUNCEMENT_SPEEDS)) {
+            $speed = 'normal';
+        }
         return [
             'enabled' => (bool) ($a['enabled'] ?? false),
             'text'    => trim((string) ($a['text'] ?? '')),
             'link'    => isset($a['link']) && trim((string) $a['link']) !== ''
                 ? trim((string) $a['link'])
                 : null,
+            'speed'    => $speed,
+            'speed_px' => (int) self::ANNOUNCEMENT_SPEEDS[$speed]['pxPerSec'],
         ];
     }
 
