@@ -226,17 +226,20 @@
 
         /* product grid + card */
         .pgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
-        .pcard { cursor: pointer; position: relative; display: block; color: inherit; border: 2.5px solid var(--ink); background: var(--paper); box-shadow: var(--pop); transition: transform .14s ease, box-shadow .14s ease; }
+        /* Card matches the collection-strip card: flex column, square image,
+           name above, accent price chip pinned to the bottom-left so prices
+           align across a row (cards stretch to equal height in the grid). */
+        .pcard { cursor: pointer; position: relative; display: flex; flex-direction: column; color: inherit; border: 2.5px solid var(--ink); background: var(--paper); box-shadow: var(--pop); transition: transform .14s ease, box-shadow .14s ease; }
         .pcard:hover { transform: translate(-2px, -2px); box-shadow: var(--pop-lg); }
         .pcard:active { transform: translate(5px, 5px); box-shadow: 0 0 0 var(--shadow); }
-        .pcard .imgwrap { position: relative; overflow: hidden; height: 320px; border-bottom: 2.5px solid var(--ink); }
+        .pcard .imgwrap { position: relative; overflow: hidden; aspect-ratio: 1 / 1; border-bottom: 2.5px solid var(--ink); }
         .pcard .imgwrap .img { position: absolute; inset: 0; }
         .pcard .imgwrap .img img { width: 100%; height: 100%; object-fit: cover; transition: filter .14s ease; }
         .pcard:hover .imgwrap .img img { filter: brightness(1.05); }
         .pcard .tag { position: absolute; top: 0; left: 0; background: var(--accent); border-right: 2.5px solid var(--ink); border-bottom: 2.5px solid var(--ink); font-family: var(--display); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 8px 14px; min-height: 32px; display: inline-flex; align-items: center; }
-        .pcard .body { padding: 14px 16px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-        .pcard .nm { font-family: var(--display); font-weight: 700; font-size: 15px; line-height: 1.15; }
-        .pcard .pr { font-family: var(--display); font-weight: 800; font-size: 15px; white-space: nowrap; background: var(--accent); border: 2.5px solid var(--ink); padding: 2px 7px; }
+        .pcard .body { flex: 1; padding: 14px 16px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+        .pcard .nm { font-family: var(--display); font-weight: 700; font-size: 15px; line-height: 1.15; text-transform: uppercase; letter-spacing: -0.01em; }
+        .pcard .pr { margin-top: auto; align-self: flex-start; font-family: var(--display); font-weight: 800; font-size: 15px; white-space: nowrap; background: var(--accent); border: 2.5px solid var(--ink); padding: 2px 7px; }
         @media (prefers-reduced-motion: reduce) { .pcard, .pcard:hover, .pcard:active, .sec-head a:hover, .sec-head a:active, .bag:hover { transform: none; } }
 
         /* page editorial header */
@@ -262,16 +265,15 @@
             .nav { grid-template-columns: auto 1fr auto; }
             .menu-toggle { display: inline-grid; place-items: center; }
             .pgrid { grid-template-columns: 1fr 1fr; gap: 14px; }
-            .pcard .imgwrap { height: 220px; }
             .fgrid { grid-template-columns: 1fr 1fr; }
             .ed-head .meta { text-align: left; }
             .ed-head h1 { font-size: clamp(32px, 13vw, 60px); }
         }
         /* Compact phones: a 2-col grid gets cramped (cards ~160px wide), so
-           drop to a single confident column with taller image blocks. */
+           drop to a single confident column. The square image scales with the
+           full-width card, matching the collection-strip cards at this size. */
         @media (max-width: 480px) {
             .pgrid { grid-template-columns: 1fr; gap: 12px; }
-            .pcard .imgwrap { height: 280px; }
         }
         /* Ultra-narrow: tighten the gutter so 2.5px borders + padding breathe. */
         @media (max-width: 375px) {

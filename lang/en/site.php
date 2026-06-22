@@ -187,6 +187,7 @@ return [
         ],
         // Curated product groupings — strips on the home, dedicated pages.
         'collections' => [
+            'heading'  => 'Collections',
             'view_all' => 'View all',
             'empty'    => 'No products in this collection yet.',
         ],

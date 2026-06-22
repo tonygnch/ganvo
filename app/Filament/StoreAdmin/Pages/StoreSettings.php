@@ -130,6 +130,19 @@ class StoreSettings extends Page implements HasForms
         $data['hero_cta_label'] = $hero['cta_label'];
         $data['hero_cta_url']   = $hero['cta_url'];
 
+        // Collection strip appearance. Hydrate the preset keyword from the
+        // resolver, but pre-fill the custom-px boxes from the RAW stored px so a
+        // merchant's last custom value survives switching to a preset and back
+        // (the resolver returns the preset px for non-custom keys, which would
+        // otherwise overwrite it). Falls back to the resolved px when no custom
+        // value was ever entered.
+        $cd = $store->collectionDisplay();
+        $cdRaw = (array) ($store->collection_display ?? []);
+        $data['collection_band_height']    = $cd['band_height'];
+        $data['collection_band_height_px'] = (int) ($cdRaw['band_height_px'] ?? $cd['band_height_px']);
+        $data['collection_title_size']     = $cd['title_size'];
+        $data['collection_title_size_px']  = (int) ($cdRaw['title_size_px'] ?? $cd['title_size_px']);
+
         // Storefront effects.
         $data['number_animation'] = $store->numberAnimation();
 
@@ -328,6 +341,60 @@ class StoreSettings extends Page implements HasForms
                             ->directory('hero-banners')
                             ->maxSize(4096)
                             ->columnSpanFull(),
+                    ]),
+                Section::make('Collection strips')
+                    ->description('How featured-collection strips look on your storefront home. Honored by themes with a banner band (e.g. Brick).')
+                    ->collapsible()
+                    ->columns(2)
+                    ->schema([
+                        Select::make('collection_band_height')
+                            ->label('Banner band height')
+                            ->options([
+                                'compact'  => 'Compact',
+                                'standard' => 'Standard',
+                                'tall'     => 'Tall',
+                                'custom'   => 'Custom (px)',
+                            ])
+                            ->default('standard')
+                            ->selectablePlaceholder(false)
+                            ->native(false)
+                            ->live()
+                            ->helperText('Height of the image band behind a collection title.'),
+                        TextInput::make('collection_band_height_px')
+                            ->label('Custom band height')
+                            ->numeric()
+                            ->suffix('px')
+                            ->minValue(Store::COLLECTION_BAND_MIN)
+                            ->maxValue(Store::COLLECTION_BAND_MAX)
+                            ->visible(fn (Get $get): bool => ($get('collection_band_height') ?? 'standard') === 'custom')
+                            ->required(fn (Get $get): bool => ($get('collection_band_height') ?? 'standard') === 'custom')
+                            // Keep the value in state even while hidden so toggling to a
+                            // preset and back doesn't wipe the merchant's custom number.
+                            ->dehydratedWhenHidden()
+                            ->helperText('Between ' . Store::COLLECTION_BAND_MIN . ' and ' . Store::COLLECTION_BAND_MAX . ' px.'),
+                        Select::make('collection_title_size')
+                            ->label('Collection title size')
+                            ->options([
+                                'small'  => 'Small',
+                                'medium' => 'Medium',
+                                'large'  => 'Large',
+                                'custom' => 'Custom (px)',
+                            ])
+                            ->default('medium')
+                            ->selectablePlaceholder(false)
+                            ->native(false)
+                            ->live()
+                            ->helperText('Size of each collection’s title.'),
+                        TextInput::make('collection_title_size_px')
+                            ->label('Custom title size')
+                            ->numeric()
+                            ->suffix('px')
+                            ->minValue(Store::COLLECTION_TITLE_MIN)
+                            ->maxValue(Store::COLLECTION_TITLE_MAX)
+                            ->visible(fn (Get $get): bool => ($get('collection_title_size') ?? 'medium') === 'custom')
+                            ->required(fn (Get $get): bool => ($get('collection_title_size') ?? 'medium') === 'custom')
+                            ->dehydratedWhenHidden()
+                            ->helperText('Between ' . Store::COLLECTION_TITLE_MIN . ' and ' . Store::COLLECTION_TITLE_MAX . ' px.'),
                     ]),
                     ]), // end Storefront tab
 
@@ -615,6 +682,26 @@ class StoreSettings extends Page implements HasForms
         ];
         unset($state['hero_enabled'], $state['hero_title'], $state['hero_subtitle'],
               $state['hero_image_path'], $state['hero_cta_label'], $state['hero_cta_url']);
+
+        // Collection strip appearance: fold the flat inputs into one JSON blob.
+        // Validate the preset keyword and clamp the custom px on the way in so
+        // a hand-tampered request can't store an out-of-range or unknown value.
+        $bandKey = $state['collection_band_height'] ?? 'standard';
+        if (! array_key_exists($bandKey, Store::COLLECTION_BAND_HEIGHTS) && $bandKey !== 'custom') {
+            $bandKey = 'standard';
+        }
+        $titleKey = $state['collection_title_size'] ?? 'medium';
+        if (! array_key_exists($titleKey, Store::COLLECTION_TITLE_SIZES) && $titleKey !== 'custom') {
+            $titleKey = 'medium';
+        }
+        $state['collection_display'] = [
+            'band_height'    => $bandKey,
+            'band_height_px' => max(Store::COLLECTION_BAND_MIN, min(Store::COLLECTION_BAND_MAX, (int) ($state['collection_band_height_px'] ?? 210))),
+            'title_size'     => $titleKey,
+            'title_size_px'  => max(Store::COLLECTION_TITLE_MIN, min(Store::COLLECTION_TITLE_MAX, (int) ($state['collection_title_size_px'] ?? 44))),
+        ];
+        unset($state['collection_band_height'], $state['collection_band_height_px'],
+              $state['collection_title_size'], $state['collection_title_size_px']);
 
         // Fold the per-field signup toggles back into the signup_fields JSON.
         // Walks Store::SIGNUP_FIELDS so adding a new field name in the model

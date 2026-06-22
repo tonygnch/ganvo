@@ -37,6 +37,7 @@ class Store extends Model
         'announcement',
         'nav_menu',
         'hero_banner',
+        'collection_display',
         'signup_fields',
         'shipping_methods',
         'is_live',
@@ -51,6 +52,7 @@ class Store extends Model
         'announcement' => 'array',
         'nav_menu' => 'array',
         'hero_banner' => 'array',
+        'collection_display' => 'array',
         'signup_fields' => 'array',
         'shipping_methods' => 'array',
         'is_live' => 'boolean',
@@ -456,6 +458,58 @@ class Store extends Model
             'image_path' => isset($h['image_path']) && $h['image_path'] !== '' ? $h['image_path'] : null,
             'cta_label'  => trim((string) ($h['cta_label'] ?? '')),
             'cta_url'    => trim((string) ($h['cta_url'] ?? '')),
+        ];
+    }
+
+    /**
+     * Featured-collection strip appearance. Two merchant-controlled knobs —
+     * the banner band height and the collection-title size — each a named
+     * preset OR a custom pixel value. Presets resolve to the px maps below;
+     * "custom" uses the stored px, clamped to a sane band.
+     *
+     * Defaults (standard / medium) equal the values Brick previously hard-
+     * coded, so a store that never touches these settings looks unchanged.
+     * Consumed by themes that render a collection banner band (Brick today)
+     * as CSS custom properties; other themes simply ignore it.
+     */
+    public const COLLECTION_BAND_HEIGHTS = ['compact' => 170, 'standard' => 210, 'tall' => 260];
+
+    public const COLLECTION_TITLE_SIZES = ['small' => 34, 'medium' => 44, 'large' => 56];
+
+    /** Bounds for the "custom" px inputs, enforced on both read and save. */
+    public const COLLECTION_BAND_MIN = 120;
+    public const COLLECTION_BAND_MAX = 360;
+    public const COLLECTION_TITLE_MIN = 24;
+    public const COLLECTION_TITLE_MAX = 72;
+
+    /**
+     * @return array{band_height: string, band_height_px: int, title_size: string, title_size_px: int}
+     */
+    public function collectionDisplay(): array
+    {
+        $c = (array) ($this->collection_display ?? []);
+
+        $bandKey = (string) ($c['band_height'] ?? 'standard');
+        if (! array_key_exists($bandKey, self::COLLECTION_BAND_HEIGHTS) && $bandKey !== 'custom') {
+            $bandKey = 'standard';
+        }
+        $bandPx = $bandKey === 'custom'
+            ? max(self::COLLECTION_BAND_MIN, min(self::COLLECTION_BAND_MAX, (int) ($c['band_height_px'] ?? 210)))
+            : self::COLLECTION_BAND_HEIGHTS[$bandKey];
+
+        $titleKey = (string) ($c['title_size'] ?? 'medium');
+        if (! array_key_exists($titleKey, self::COLLECTION_TITLE_SIZES) && $titleKey !== 'custom') {
+            $titleKey = 'medium';
+        }
+        $titlePx = $titleKey === 'custom'
+            ? max(self::COLLECTION_TITLE_MIN, min(self::COLLECTION_TITLE_MAX, (int) ($c['title_size_px'] ?? 44)))
+            : self::COLLECTION_TITLE_SIZES[$titleKey];
+
+        return [
+            'band_height'    => $bandKey,
+            'band_height_px' => $bandPx,
+            'title_size'     => $titleKey,
+            'title_size_px'  => $titlePx,
         ];
     }
 
