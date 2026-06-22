@@ -53,7 +53,8 @@
         .gallery .thumbs .pdp-thumb.on { opacity: 1; outline: 1px solid var(--ink); }
         .gallery .thumbs .pdp-thumb:hover { opacity: .85; }
         .gallery .hero-img { height: 640px; background: var(--soft); overflow: hidden; position: relative; }
-        .gallery .hero-img img { width: 100%; height: 100%; object-fit: cover; transition: opacity .25s ease; }
+        .gallery .hero-img img { width: 100%; height: 100%; object-fit: cover; transition: opacity .35s var(--ease-soft), transform 1.2s var(--ease-out); }
+        .gallery .hero-img:hover img { transform: scale(1.04); }
 
         /* info column */
         .pinfo { position: sticky; top: 96px; }
@@ -83,7 +84,8 @@
         /* accordion */
         .acc { margin-top: 30px; border-top: 1px solid var(--ink); }
         .acc details { border-bottom: 1px solid var(--rule); }
-        .acc summary { padding: 16px 0; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; display: flex; justify-content: space-between; list-style: none; cursor: pointer; }
+        .acc summary { padding: 16px 0; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; display: flex; justify-content: space-between; list-style: none; cursor: pointer; transition: color .25s var(--ease-soft); }
+        .acc summary:hover { color: var(--accent); }
         .acc summary::-webkit-details-marker { display: none; }
         .acc summary .marker::after { content: "+"; }
         .acc details[open] summary .marker::after { content: "−"; }

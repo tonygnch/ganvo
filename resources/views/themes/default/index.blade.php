@@ -39,7 +39,12 @@
         .hero { position: relative; height: 78vh; min-height: 560px; max-height: 760px; overflow: hidden; background: var(--ink); }
         .hero .bg { position: absolute; inset: 0; }
         .hero .bg img { width: 100%; height: 100%; object-fit: cover; }
+        /* Slow Ken Burns drift — lends the still a quiet, premium motion.
+           Subtle (1.0 → 1.08 over 18s) so it never reads as a gimmick. */
+        .hero .bg img { animation: heroDrift 18s var(--ease-soft) infinite alternate; transform-origin: 60% 40%; }
+        @keyframes heroDrift { from { transform: scale(1.0); } to { transform: scale(1.08); } }
         .hero .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(8,8,8,.62), rgba(8,8,8,.15) 55%, transparent); }
+        @media (prefers-reduced-motion: reduce) { .hero .bg img { animation: none; } }
         .hero .inner { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 36px 7vh; max-width: 1320px; margin: 0 auto; left: 0; right: 0; color: var(--paper); }
         .hero .eyebrow { display: flex; gap: 14px; align-items: center; margin-bottom: 22px; }
         .hero .eyebrow .ln { width: 54px; height: 1px; background: var(--accent); }
@@ -64,11 +69,15 @@
         .rail { display: flex; gap: 18px; overflow-x: auto; padding: 0 36px 18px; scrollbar-width: none; }
         .rail::-webkit-scrollbar { display: none; }
         .look { flex: 0 0 clamp(260px, 34vw, 460px); }
-        .look .img { height: 56vh; min-height: 380px; max-height: 520px; margin-bottom: 14px; overflow: hidden; }
-        .look .img img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s cubic-bezier(.19,.7,.16,1); }
+        .look .img { height: 56vh; min-height: 380px; max-height: 520px; margin-bottom: 14px; overflow: hidden; position: relative; }
+        .look .img img { width: 100%; height: 100%; object-fit: cover; transition: transform 1s var(--ease-out); }
         .look:hover .img img { transform: scale(1.05); }
-        .look .cap { display: flex; justify-content: space-between; border-top: 1px solid var(--rule); padding-top: 10px; gap: 12px; }
-        .look .cap .t { font-family: var(--serif); font-size: 20px; }
+        /* Caption number turns accent + the rule slides in on hover. */
+        .look .cap { display: flex; justify-content: space-between; border-top: 1px solid var(--rule); padding-top: 10px; gap: 12px; position: relative; }
+        .look .cap::before { content: ""; position: absolute; top: -1px; left: 0; height: 1px; width: 0; background: var(--accent); transition: width .6s var(--ease-out); }
+        .look:hover .cap::before { width: 100%; }
+        .look .cap .t { font-family: var(--serif); font-size: 20px; transition: color .3s var(--ease-soft); }
+        .look:hover .cap .t { color: var(--accent); }
         .look .cap .n { font-family: var(--body); font-size: 13px; color: var(--muted); white-space: nowrap; }
 
         /* product index */

@@ -49,6 +49,12 @@
             --vp-radius: 2px;
             --vp-fill: var(--accent);
             --vp-on-accent: var(--paper);
+
+            /* Premium easing curves — ease-out for entering UI, a softer
+               curve for fluid hover/scroll polish. Used everywhere instead
+               of linear so motion reads couture rather than mechanical. */
+            --ease-out: cubic-bezier(.19, .7, .16, 1);
+            --ease-soft: cubic-bezier(.4, 0, .2, 1);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
@@ -97,6 +103,7 @@
 
         /* buttons */
         .btn {
+            position: relative;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -109,18 +116,29 @@
             border: 1px solid currentColor;
             background: var(--ink);
             color: var(--paper);
-            transition: .25s;
+            transition: background-color .35s var(--ease-soft), color .35s var(--ease-soft),
+                        transform .35s var(--ease-out), box-shadow .35s var(--ease-out);
+            will-change: transform;
         }
-        .btn:hover { background: transparent; color: var(--ink); }
+        .btn:hover { background: transparent; color: var(--ink); transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
         .btn.ghost { background: transparent; color: inherit; }
-        .btn.ghost:hover { background: var(--ink); color: var(--paper); }
+        .btn.ghost:hover { background: var(--ink); color: var(--paper); transform: translateY(-2px); }
         .btn.red { background: var(--accent); border-color: var(--accent); color: #fff; }
-        .btn.red:hover { filter: brightness(1.1); background: var(--accent); color: #fff; }
+        .btn.red:hover {
+            background: var(--accent);
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 14px 30px -12px color-mix(in srgb, var(--accent) 75%, transparent);
+        }
         .btn.outline { background: transparent; color: var(--ink); border-color: var(--ink); }
-        .btn.outline:hover { background: var(--ink); color: var(--paper); }
+        .btn.outline:hover { background: var(--ink); color: var(--paper); transform: translateY(-2px); }
         .btn.block { width: 100%; }
-        .btn .arc { transition: transform .25s; }
-        .btn:hover .arc { transform: translateX(4px); }
+        .btn .arc { transition: transform .35s var(--ease-out); }
+        .btn:hover .arc { transform: translateX(5px); }
+        @media (prefers-reduced-motion: reduce) {
+            .btn, .btn:hover, .btn:active, .btn.ghost:hover, .btn.red:hover, .btn.outline:hover { transform: none; }
+        }
 
         /* scroll progress */
         .scrollbar { position: fixed; top: 0; left: 0; height: 3px; width: 100%; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; z-index: 100; will-change: transform; }
@@ -130,7 +148,7 @@
         .rv.rv-in {
             opacity: 1;
             transform: none;
-            transition: opacity .9s ease, transform 1s cubic-bezier(.19,.7,.16,1);
+            transition: opacity .9s var(--ease-soft), transform 1s var(--ease-out);
         }
         @media (prefers-reduced-motion: reduce) {
             .rv, .rv.rv-in { opacity: 1 !important; transform: none !important; transition: none !important; }
@@ -161,8 +179,9 @@
         .nav { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 64px; }
         .nav .left, .nav .right { display: flex; gap: 26px; align-items: center; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; }
         .nav .right { justify-content: flex-end; }
-        .nav a.lk { position: relative; padding: 4px 0; color: var(--ink); }
-        .nav a.lk::after { content: ""; position: absolute; left: 0; bottom: 0; height: 1px; width: 0; background: var(--accent); transition: width .3s; }
+        .nav a.lk { position: relative; padding: 4px 0; color: var(--ink); transition: color .3s var(--ease-soft); }
+        .nav a.lk:hover { color: var(--accent); }
+        .nav a.lk::after { content: ""; position: absolute; left: 0; bottom: 0; height: 1px; width: 0; background: var(--accent); transition: width .4s var(--ease-out); }
         .nav a.lk:hover::after { width: 100%; }
         .logo { font-family: var(--display); font-weight: 800; font-size: 22px; letter-spacing: .16em; text-transform: uppercase; text-align: center; color: var(--ink); white-space: nowrap; }
         .logo img { height: 30px; width: auto; display: inline-block; }
@@ -207,12 +226,18 @@
             top: calc(100% + 12px);
             right: 0;
             min-width: 190px;
-            background: var(--paper);
+            background: rgba(236,231,221,.92);
+            backdrop-filter: blur(12px) saturate(1.2);
+            -webkit-backdrop-filter: blur(12px) saturate(1.2);
             border: 1px solid var(--ink);
             padding: 6px;
             z-index: 70;
-            box-shadow: 0 20px 40px -16px rgba(16,15,13,.25);
+            box-shadow: 0 24px 48px -18px rgba(16,15,13,.35);
+            transform-origin: top;
+            animation: menuPop .28s var(--ease-out);
         }
+        @keyframes menuPop { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .menu-items { animation: none; } }
         .menu-items a {
             display: flex;
             align-items: center;
@@ -223,7 +248,7 @@
             font-size: 11px;
             letter-spacing: .14em;
             text-transform: uppercase;
-            transition: background-color .12s ease, color .12s ease;
+            transition: background-color .2s var(--ease-soft), color .2s var(--ease-soft);
         }
         .menu-items a:hover { background: var(--soft); }
         .menu-items a.active { color: var(--accent); }
@@ -285,17 +310,44 @@
 
         /* product grid + card (shared by index / catalog / collection / related) */
         .pgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
-        .pcard { cursor: pointer; position: relative; display: block; color: inherit; }
-        .pcard .imgwrap { position: relative; overflow: hidden; height: 380px; margin-bottom: 13px; }
-        .pcard .imgwrap .img { position: absolute; inset: 0; transition: transform .9s cubic-bezier(.19,.7,.16,1); }
+        .pcard { cursor: pointer; position: relative; display: block; color: inherit; transition: transform .5s var(--ease-out); will-change: transform; }
+        .pcard:hover { transform: translateY(-6px); }
+        .pcard .imgwrap { position: relative; overflow: hidden; height: 380px; margin-bottom: 13px; background: var(--soft); }
+        .pcard .imgwrap .img { position: absolute; inset: 0; transition: transform 1s var(--ease-out); }
         .pcard:hover .imgwrap .img { transform: scale(1.07); }
-        .pcard .over { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px; background: linear-gradient(to top, rgba(16,15,13,.85), transparent); transform: translateY(101%); transition: transform .45s cubic-bezier(.19,.7,.16,1); }
+        /* Sheen — a soft light sweep across the image on hover. Pure
+           transform/opacity, gated by reduced-motion below. */
+        .pcard .imgwrap::after {
+            content: "";
+            position: absolute;
+            top: 0; bottom: 0;
+            left: -60%;
+            width: 50%;
+            background: linear-gradient(100deg, transparent, rgba(255,255,255,.28), transparent);
+            transform: skewX(-18deg);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .pcard:hover .imgwrap::after { animation: pcardSheen .9s var(--ease-soft); }
+        @keyframes pcardSheen {
+            0% { left: -60%; opacity: 0; }
+            18% { opacity: 1; }
+            100% { left: 120%; opacity: 0; }
+        }
+        .pcard .over { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px; background: linear-gradient(to top, rgba(16,15,13,.85), transparent); transform: translateY(101%); transition: transform .5s var(--ease-out); z-index: 2; }
         .pcard:hover .over { transform: translateY(0); }
-        .pcard .over .q { display: inline-flex; gap: 8px; color: #fff; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; border: 1px solid rgba(255,255,255,.5); padding: 9px 14px; }
+        .pcard .over .q { display: inline-flex; gap: 8px; color: #fff; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; border: 1px solid rgba(255,255,255,.5); padding: 9px 14px; transition: background-color .35s var(--ease-soft), border-color .35s var(--ease-soft); }
+        .pcard:hover .over .q { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.8); }
         .pcard .tag { font-family: var(--body); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
         .pcard .rowt { display: flex; justify-content: space-between; align-items: baseline; margin-top: 3px; gap: 12px; }
-        .pcard .nm { font-family: var(--serif); font-size: 19px; }
+        .pcard .nm { font-family: var(--serif); font-size: 19px; transition: color .3s var(--ease-soft); }
+        .pcard:hover .nm { color: var(--accent); }
         .pcard .pr { font-size: 13px; color: var(--muted); white-space: nowrap; }
+        @media (prefers-reduced-motion: reduce) {
+            .pcard, .pcard:hover { transform: none; }
+            .pcard:hover .imgwrap::after { animation: none; }
+        }
 
         /* inner-page editorial header */
         .ed-head { display: flex; align-items: flex-end; justify-content: space-between; border-bottom: 1px solid var(--ink); padding: 44px 0 18px; flex-wrap: wrap; gap: 12px; }
