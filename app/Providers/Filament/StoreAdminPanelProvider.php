@@ -51,25 +51,22 @@ class StoreAdminPanelProvider extends PanelProvider
             ->darkModeBrandLogo(fn (): string => auth()->user()?->tenant?->store?->adminLogoUrl()
                 ?? asset('images/brand/logo-full-white.png'))
             ->brandLogoHeight('2rem')
-            ->colors([
-                'primary' => Color::Emerald,
-            ])
-            // Per-merchant accent: override Filament's primary palette with a
-            // ramp generated from the merchant's chosen hex. Injected after
-            // Filament's own stylesheet so it cascades over the Emerald default.
-            ->renderHook(
-                PanelsRenderHook::STYLES_AFTER,
-                function (): string {
-                    $hex = auth()->user()?->tenant?->store?->adminAccentColor();
-                    if (! $hex) {
-                        return '';
-                    }
+            // Per-merchant accent. We register `primary` as a CLOSURE: the panel
+            // evaluates it in Panel::boot() (per request, after auth), so each
+            // merchant's chosen hex becomes the real primary palette. Letting
+            // Filament generate the palette via Color::hex() — instead of our
+            // own CSS-variable override — is what makes button text contrast
+            // correct: Filament runs its own WCAG check against the actual
+            // colour to pick a legible text shade. Unusable accents (near-black
+            // / white / grey, per Store::adminAccentColor()) resolve to null,
+            // so we fall back to the default Emerald.
+            ->colors(function (): array {
+                $hex = auth()->user()?->tenant?->store?->adminAccentColor();
 
-                    return '<style id="ganvo-admin-accent">'
-                        . \App\Support\AccentPalette::css($hex)
-                        . '</style>';
-                }
-            )
+                return [
+                    'primary' => $hex ? Color::hex($hex) : Color::Emerald,
+                ];
+            })
             ->discoverResources(in: app_path('Filament/StoreAdmin/Resources'), for: 'App\\Filament\\StoreAdmin\\Resources')
             ->discoverPages(in: app_path('Filament/StoreAdmin/Pages'), for: 'App\\Filament\\StoreAdmin\\Pages')
             ->pages([
