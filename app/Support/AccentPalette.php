@@ -11,29 +11,36 @@ namespace App\Support;
  * at :root — injected after Filament's own stylesheet — re-tints the
  * entire admin panel to the merchant's accent without recompiling CSS.
  *
- * The ramp lightens the base toward white for 50–400 and darkens toward
- * black for 600–950, with the base sitting at 500. It's a perceptually
- * reasonable accent ramp — not a designed palette, but right for a
- * single-color "tint my admin" control.
+ * Each shade is rendered at a FIXED target lightness (a Tailwind-style
+ * ramp), keeping the picked color's hue + saturation. This is what makes
+ * the palette robust for any input: an earlier version mixed the base
+ * toward white/black, which collapsed at the extremes — a pure-black accent
+ * produced an identical `0 0 0` for shades 500–950, so Filament's selected /
+ * toggle / checked states lost all contrast and the merchant "couldn't see
+ * what was enabled." Anchoring lightness per shade guarantees every shade is
+ * visually distinct (black simply yields a usable monochrome grey ramp),
+ * and that shade 600 (button fill) is always dark enough for white text
+ * regardless of how light the picked color is.
  */
 class AccentPalette
 {
     /**
-     * Shade => mix factor. Negative = fraction toward white (lighter),
-     * positive = fraction toward black (darker), 0 = the base color.
+     * Shade => target lightness (0..1). A perceptually even ramp from a
+     * near-white tint (50) to a near-black (950), matching how Tailwind /
+     * Radix scales space their steps.
      */
-    private const RAMP = [
-        50  => -0.95,
-        100 => -0.90,
-        200 => -0.75,
-        300 => -0.58,
-        400 => -0.30,
-        500 => 0.0,
-        600 => 0.12,
-        700 => 0.28,
-        800 => 0.44,
-        900 => 0.58,
-        950 => 0.72,
+    private const LIGHTNESS = [
+        50  => 0.97,
+        100 => 0.93,
+        200 => 0.86,
+        300 => 0.76,
+        400 => 0.64,
+        500 => 0.53,
+        600 => 0.45,
+        700 => 0.37,
+        800 => 0.29,
+        900 => 0.22,
+        950 => 0.15,
     ];
 
     /** Emerald-500, mirrors the panel's default primary. */
@@ -44,22 +51,12 @@ class AccentPalette
      */
     public static function shades(string $hex): array
     {
-        [$r, $g, $b] = self::parse($hex);
+        [$h, $s] = self::rgbToHsl(...self::parse($hex));
 
         $out = [];
-        foreach (self::RAMP as $shade => $factor) {
-            if ($factor < 0) {
-                $t = -$factor;
-                $rr = (int) round($r + (255 - $r) * $t);
-                $gg = (int) round($g + (255 - $g) * $t);
-                $bb = (int) round($b + (255 - $b) * $t);
-            } else {
-                $t = $factor;
-                $rr = (int) round($r * (1 - $t));
-                $gg = (int) round($g * (1 - $t));
-                $bb = (int) round($b * (1 - $t));
-            }
-            $out[$shade] = "{$rr} {$gg} {$bb}";
+        foreach (self::LIGHTNESS as $shade => $l) {
+            [$r, $g, $b] = self::hslToRgb($h, $s, $l);
+            $out[$shade] = "{$r} {$g} {$b}";
         }
 
         return $out;
@@ -109,5 +106,82 @@ class AccentPalette
         $h = ltrim(trim($hex), '#');
 
         return (strlen($h) === 3 || strlen($h) === 6) && ctype_xdigit($h);
+    }
+
+    /**
+     * RGB (0–255) → HSL. Hue in degrees (0–360), S + L in 0–1.
+     *
+     * @return array{0:float,1:float,2:float} [h, s, l]
+     */
+    private static function rgbToHsl(int $r, int $g, int $b): array
+    {
+        $r /= 255;
+        $g /= 255;
+        $b /= 255;
+
+        $max = max($r, $g, $b);
+        $min = min($r, $g, $b);
+        $l = ($max + $min) / 2;
+        $d = $max - $min;
+
+        if ($d == 0.0) {
+            return [0.0, 0.0, $l]; // achromatic (grey/black/white)
+        }
+
+        $s = $l > 0.5 ? $d / (2 - $max - $min) : $d / ($max + $min);
+
+        if ($max === $r) {
+            $h = (($g - $b) / $d) + ($g < $b ? 6 : 0);
+        } elseif ($max === $g) {
+            $h = (($b - $r) / $d) + 2;
+        } else {
+            $h = (($r - $g) / $d) + 4;
+        }
+
+        return [$h * 60, $s, $l];
+    }
+
+    /**
+     * HSL → RGB (0–255). Hue in degrees, S + L in 0–1.
+     *
+     * @return array{0:int,1:int,2:int}
+     */
+    private static function hslToRgb(float $h, float $s, float $l): array
+    {
+        if ($s == 0.0) {
+            $v = (int) round($l * 255);
+            return [$v, $v, $v];
+        }
+
+        $h /= 360;
+        $q = $l < 0.5 ? $l * (1 + $s) : $l + $s - $l * $s;
+        $p = 2 * $l - $q;
+
+        return [
+            (int) round(self::hue2rgb($p, $q, $h + 1 / 3) * 255),
+            (int) round(self::hue2rgb($p, $q, $h) * 255),
+            (int) round(self::hue2rgb($p, $q, $h - 1 / 3) * 255),
+        ];
+    }
+
+    private static function hue2rgb(float $p, float $q, float $t): float
+    {
+        if ($t < 0) {
+            $t += 1;
+        }
+        if ($t > 1) {
+            $t -= 1;
+        }
+        if ($t < 1 / 6) {
+            return $p + ($q - $p) * 6 * $t;
+        }
+        if ($t < 1 / 2) {
+            return $q;
+        }
+        if ($t < 2 / 3) {
+            return $p + ($q - $p) * (2 / 3 - $t) * 6;
+        }
+
+        return $p;
     }
 }
