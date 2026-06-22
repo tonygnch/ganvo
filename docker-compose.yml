@@ -10,8 +10,8 @@ services:
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
-      APP_URL: http://ganvo.lvh.me:8000
-      CENTRAL_DOMAIN: ganvo.lvh.me
+      APP_URL: http://127.0.0.1.nip.io:8000
+      CENTRAL_DOMAIN: 127.0.0.1.nip.io
       # SQLite by default for zero-setup dev. Switch to MySQL by either:
       #   (a) editing .env (see the DB_* stanza there), or
       #   (b) overriding here with DB_CONNECTION=mysql + the matching host/port.
