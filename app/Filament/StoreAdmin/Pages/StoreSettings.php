@@ -23,6 +23,8 @@ use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 
@@ -139,6 +141,15 @@ class StoreSettings extends Page implements HasForms
         return $schema
             ->statePath('data')
             ->components([
+                Tabs::make('Store settings')
+                    ->persistTabInQueryString()
+                    ->columnSpanFull()
+                    ->tabs([
+
+                // ───────────────────────── DESIGN ─────────────────────────
+                Tab::make('Design')
+                    ->icon(Heroicon::OutlinedSwatch)
+                    ->schema([
                 Section::make('Theme')
                     ->description('Pick a starting point for your storefront.')
                     ->schema([
@@ -175,25 +186,6 @@ class StoreSettings extends Page implements HasForms
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Admin panel appearance')
-                    ->description('Brand your own admin workspace. This changes the logo and accent color you see here in the dashboard — it does not affect your storefront.')
-                    ->columns(2)
-                    ->collapsed()
-                    ->schema([
-                        FileUpload::make('admin_logo_path')
-                            ->label('Admin logo')
-                            ->image()
-                            ->disk('public')
-                            ->directory('admin-logos')
-                            ->maxSize(2048)
-                            ->helperText('Shown in the top-left of your admin panel, replacing the Ganvo logo. Leave empty to keep the Ganvo mark. Takes effect on your next page load.')
-                            ->columnSpanFull(),
-                        ColorPicker::make('admin_accent_color')
-                            ->label('Admin accent color')
-                            ->helperText('Tints buttons, links, and the active menu item in your admin panel. Leave empty for the default green.')
-                            ->columnSpanFull(),
-                    ]),
-
                 Section::make('Storefront effects')
                     ->description('Fine-tune the motion of your storefront.')
                     ->schema([
@@ -205,10 +197,15 @@ class StoreSettings extends Page implements HasForms
                             ->native(false)
                             ->helperText('How prices and quantities animate when the cart updates without a page reload. Honors a visitor’s “reduce motion” setting automatically.'),
                     ]),
+                    ]), // end Design tab
 
+                // ─────────────────────── STOREFRONT ───────────────────────
+                Tab::make('Storefront')
+                    ->icon(Heroicon::OutlinedSparkles)
+                    ->schema([
                 Section::make('Announcement bar')
                     ->description('A thin promo strip shown at the top of every page on your storefront.')
-                    ->collapsed()
+                    ->collapsible()
                     ->schema([
                         Toggle::make('announcement_enabled')
                             ->label('Show announcement bar'),
@@ -231,7 +228,7 @@ class StoreSettings extends Page implements HasForms
 
                 Section::make('Header menu')
                     ->description('Top-level navigation links shown in your storefront header. Drag rows to reorder. Add sub-links to turn a top-level item into a dropdown.')
-                    ->collapsed()
+                    ->collapsible()
                     ->schema([
                         Repeater::make('nav_menu')
                             ->label('')
@@ -302,7 +299,7 @@ class StoreSettings extends Page implements HasForms
 
                 Section::make('Hero banner')
                     ->description('A large welcome panel above the product grid on your storefront home.')
-                    ->collapsed()
+                    ->collapsible()
                     ->columns(2)
                     ->schema([
                         Toggle::make('hero_enabled')
@@ -332,7 +329,12 @@ class StoreSettings extends Page implements HasForms
                             ->maxSize(4096)
                             ->columnSpanFull(),
                     ]),
+                    ]), // end Storefront tab
 
+                // ───────────────────── CURRENCY & DOMAIN ─────────────────────
+                Tab::make('Currency & domain')
+                    ->icon(Heroicon::OutlinedGlobeAlt)
+                    ->schema([
                 Section::make('Currency')
                     ->description('Customers can switch the displayed currency in the storefront header; you\'re still paid in your base currency.')
                     ->schema([
@@ -371,6 +373,12 @@ class StoreSettings extends Page implements HasForms
                             ->unique(table: 'stores', column: 'custom_domain', ignorable: fn () => $this->getStore())
                             ->nullable(),
                     ]),
+                    ]), // end Currency & domain tab
+
+                // ─────────────────── CHECKOUT & SHIPPING ───────────────────
+                Tab::make('Checkout & shipping')
+                    ->icon(Heroicon::OutlinedShoppingCart)
+                    ->schema([
                 Section::make('Customer accounts')
                     ->description('Decide whether shoppers must sign in to check out, or can buy as guests.')
                     ->schema([
@@ -387,7 +395,7 @@ class StoreSettings extends Page implements HasForms
 
                 Section::make('Signup form fields')
                     ->description('Choose which optional fields your storefront signup form collects. Each field can be enabled and, separately, marked required.')
-                    ->collapsed()
+                    ->collapsible()
                     ->columns(2)
                     ->schema([
                         // Phone
@@ -406,7 +414,7 @@ class StoreSettings extends Page implements HasForms
 
                 Section::make('Shipping methods')
                     ->description('Set the shipping options customers can choose at checkout. The first row is pre-selected. Leave the list empty to use the built-in Standard (free over €50) + Express (€15) defaults.')
-                    ->collapsed()
+                    ->collapsible()
                     ->schema([
                         Repeater::make('shipping_methods')
                             ->label('')
@@ -460,6 +468,32 @@ class StoreSettings extends Page implements HasForms
                             ->label('Storefront is live')
                             ->helperText('When off, visitors see a 404.'),
                     ]),
+                    ]), // end Checkout & shipping tab
+
+                // ───────────────────────── ADMIN PANEL ─────────────────────────
+                Tab::make('Admin panel')
+                    ->icon(Heroicon::OutlinedCog6Tooth)
+                    ->schema([
+                Section::make('Admin panel appearance')
+                    ->description('Brand your own admin workspace. This changes the logo and accent color you see here in the dashboard — it does not affect your storefront.')
+                    ->columns(2)
+                    ->schema([
+                        FileUpload::make('admin_logo_path')
+                            ->label('Admin logo')
+                            ->image()
+                            ->disk('public')
+                            ->directory('admin-logos')
+                            ->maxSize(2048)
+                            ->helperText('Shown in the top-left of your admin panel, replacing the Ganvo logo. Leave empty to keep the Ganvo mark. Takes effect on your next page load.')
+                            ->columnSpanFull(),
+                        ColorPicker::make('admin_accent_color')
+                            ->label('Admin accent color')
+                            ->helperText('Tints buttons, links, and the active menu item in your admin panel. Pick any colour except black, white, or grey (those fall back to the default green). Leave empty for the default green.')
+                            ->columnSpanFull(),
+                    ]),
+                    ]), // end Admin panel tab
+
+                    ]), // end Tabs
             ]);
     }
 
