@@ -13,6 +13,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Facades\FilamentColor;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Support\Facades\Blade;
@@ -51,21 +52,38 @@ class StoreAdminPanelProvider extends PanelProvider
             ->darkModeBrandLogo(fn (): string => auth()->user()?->tenant?->store?->adminLogoUrl()
                 ?? asset('images/brand/logo-full-white.png'))
             ->brandLogoHeight('2rem')
-            // Per-merchant accent. We register `primary` as a CLOSURE: the panel
-            // evaluates it in Panel::boot() (per request, after auth), so each
-            // merchant's chosen hex becomes the real primary palette. Letting
-            // Filament generate the palette via Color::hex() — instead of our
-            // own CSS-variable override — is what makes button text contrast
-            // correct: Filament runs its own WCAG check against the actual
-            // colour to pick a legible text shade. Unusable accents (near-black
-            // / white / grey, per Store::adminAccentColor()) resolve to null,
-            // so we fall back to the default Emerald.
-            ->colors(function (): array {
-                $hex = auth()->user()?->tenant?->store?->adminAccentColor();
+            // Per-merchant admin accent, done the only way that actually works
+            // in Filament v5:
+            //
+            //   * We must NOT use ->colors(closure): Panel::boot() eagerly
+            //     evaluates panel colours while *registering* them, and boot
+            //     runs in the SetUpPanel middleware before Authenticate — so
+            //     auth() is null and the merchant's colour is never read.
+            //   * FilamentColor::register(Closure) keeps the closure and only
+            //     evaluates it in ColorManager::getColors(), which runs at
+            //     @filamentStyles render time — AFTER Authenticate. Good.
+            //   * BUT registration order matters: getColors() is last-write-
+            //     wins per colour name. If we registered our closure in the
+            //     provider's register(), the panel's own boot-time colour
+            //     registration would land later and overwrite it. So we
+            //     register from bootUsing(), which runs at the END of
+            //     Panel::boot() — after the panel's own colour registration —
+            //     and fold the Emerald fallback into this single closure so
+            //     nothing can override it.
+            //
+            // Returning a real palette via Color::hex() (not a CSS-variable
+            // override) is also what keeps button text legible: Filament runs
+            // its WCAG contrast check against the actual colour to pick the
+            // text shade. Unusable accents (near-black/white/grey, per
+            // Store::adminAccentColor()) fall back to Emerald.
+            ->bootUsing(function (): void {
+                FilamentColor::register(function (): array {
+                    $hex = auth()->user()?->tenant?->store?->adminAccentColor();
 
-                return [
-                    'primary' => $hex ? Color::hex($hex) : Color::Emerald,
-                ];
+                    return [
+                        'primary' => $hex ? Color::hex($hex) : Color::Emerald,
+                    ];
+                });
             })
             ->discoverResources(in: app_path('Filament/StoreAdmin/Resources'), for: 'App\\Filament\\StoreAdmin\\Resources')
             ->discoverPages(in: app_path('Filament/StoreAdmin/Pages'), for: 'App\\Filament\\StoreAdmin\\Pages')
