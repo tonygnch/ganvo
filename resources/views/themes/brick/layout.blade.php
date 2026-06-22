@@ -34,6 +34,9 @@
             --pop-sm: 3px 3px 0 var(--shadow);
             --pop-lg: 8px 8px 0 var(--shadow);
 
+            /* Sticky header height — used to keep the toast clear of the bar. */
+            --header-height: 70px;
+
             /* Legacy aliases for shared pages (cart/checkout/order/auth that
                reference default-theme tokens). Map them to the brick palette. */
             --primary: var(--accent);
@@ -68,7 +71,10 @@
         button { font-family: inherit; cursor: pointer; }
         .wrap { max-width: 1320px; margin: 0 auto; padding: 0 28px; }
 
-        :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+        /* Focus ring uses --ink, not --accent: a lime ring is invisible on
+           lime buttons AND on the cream paper (~1.1:1). Black gives ~13:1
+           everywhere while keeping the acid-lime accent intact. */
+        :focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
 
         /* placeholder */
         .ph {
@@ -87,7 +93,7 @@
             text-transform: uppercase;
             color: var(--ink);
             background: var(--accent);
-            border: 2px solid var(--ink);
+            border: 2.5px solid var(--ink);
             padding: 4px 9px;
         }
         .ph img { width: 100%; height: 100%; object-fit: cover; }
@@ -112,6 +118,7 @@
         }
         .btn:hover { transform: translate(-1px, -1px); box-shadow: var(--pop-lg); }
         .btn:active { transform: translate(5px, 5px); box-shadow: 0 0 0 var(--shadow); }
+        .btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: var(--pop); transform: none; }
         .btn.accent { background: var(--accent); color: var(--ink); }
         .btn.ink { background: var(--ink); color: var(--paper); }
         .btn.block { width: 100%; }
@@ -176,7 +183,7 @@
         .menu-items a {
             display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px;
             color: var(--ink); font-family: var(--display); font-size: 11px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
-            border-bottom: 2px solid var(--ink); transition: background-color .12s ease;
+            border-bottom: 2.5px solid var(--ink); transition: background-color .12s ease;
         }
         .menu-items a:last-child { border-bottom: none; }
         .menu-items a:hover { background: var(--accent); }
@@ -197,12 +204,16 @@
         .m-drawer .mclose { position: absolute; top: 18px; right: 22px; background: var(--ink); color: var(--accent); border: 2.5px solid var(--ink); width: 44px; height: 44px; font-size: 22px; }
         .m-drawer .mtop { position: absolute; top: 22px; left: 28px; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 20px; }
         .m-drawer nav { display: flex; flex-direction: column; gap: 8px; }
-        .m-drawer nav a { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: clamp(28px, 10vw, 52px); line-height: 1.05; letter-spacing: -.02em; }
+        .m-drawer nav a { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: clamp(28px, 10vw, 52px); line-height: 1.05; letter-spacing: -.02em; transition: transform .12s ease, opacity .12s ease; }
+        .m-drawer nav a:hover { transform: translate(-1px, -1px); opacity: .85; }
+        .m-drawer nav a:active { transform: translate(4px, 4px); opacity: .7; }
+        .m-drawer nav a:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+        @media (prefers-reduced-motion: reduce) { .m-drawer nav a, .m-drawer nav a:hover, .m-drawer nav a:active { transform: none; opacity: 1; } }
         .m-drawer nav a .ix { font-family: var(--body); font-size: 12px; font-weight: 700; vertical-align: super; margin-right: 10px; background: var(--ink); color: var(--accent); padding: 2px 6px; }
         .m-drawer .mfoot { position: absolute; bottom: 28px; left: 28px; right: 28px; display: flex; justify-content: space-between; font-family: var(--display); font-size: 12px; font-weight: 700; text-transform: uppercase; }
 
         /* toast */
-        .toast { position: fixed; top: 22px; right: 22px; background: var(--accent); color: var(--ink); padding: 14px 18px; z-index: 100; font-family: var(--display); font-size: 12px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; border: 2.5px solid var(--ink); box-shadow: var(--pop); display: flex; align-items: center; gap: 10px; animation: toastIn .2s ease-out, toastOut .2s ease-in 3s forwards; }
+        .toast { position: fixed; top: calc(var(--header-height) + 18px); right: 22px; background: var(--accent); color: var(--ink); padding: 14px 18px; z-index: 100; font-family: var(--display); font-size: 12px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; border: 2.5px solid var(--ink); box-shadow: var(--pop); display: flex; align-items: center; gap: 10px; animation: toastIn .2s ease-out, toastOut .2s ease-in 3s forwards; }
         @keyframes toastIn { from { transform: translateX(1rem); opacity: 0; } to { transform: none; opacity: 1; } }
         @keyframes toastOut { to { opacity: 0; transform: translateX(1rem); } }
 
@@ -211,25 +222,28 @@
         .sec-head h2 { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: clamp(28px, 4vw, 52px); line-height: .95; letter-spacing: -.02em; }
         .sec-head a { font-family: var(--display); font-size: 12px; font-weight: 700; text-transform: uppercase; border: 2.5px solid var(--ink); padding: 8px 14px; background: var(--paper); box-shadow: var(--pop-sm); transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease; }
         .sec-head a:hover { background: var(--accent); transform: translate(-1px,-1px); box-shadow: var(--pop); }
+        .sec-head a:active { transform: translate(5px, 5px); box-shadow: 0 0 0 var(--shadow); }
 
         /* product grid + card */
         .pgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
         .pcard { cursor: pointer; position: relative; display: block; color: inherit; border: 2.5px solid var(--ink); background: var(--paper); box-shadow: var(--pop); transition: transform .14s ease, box-shadow .14s ease; }
         .pcard:hover { transform: translate(-2px, -2px); box-shadow: var(--pop-lg); }
+        .pcard:active { transform: translate(5px, 5px); box-shadow: 0 0 0 var(--shadow); }
         .pcard .imgwrap { position: relative; overflow: hidden; height: 320px; border-bottom: 2.5px solid var(--ink); }
         .pcard .imgwrap .img { position: absolute; inset: 0; }
-        .pcard .imgwrap .img img { width: 100%; height: 100%; object-fit: cover; }
-        .pcard .tag { position: absolute; top: 0; left: 0; background: var(--accent); border-right: 2.5px solid var(--ink); border-bottom: 2.5px solid var(--ink); font-family: var(--display); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 5px 10px; }
+        .pcard .imgwrap .img img { width: 100%; height: 100%; object-fit: cover; transition: filter .14s ease; }
+        .pcard:hover .imgwrap .img img { filter: brightness(1.05); }
+        .pcard .tag { position: absolute; top: 0; left: 0; background: var(--accent); border-right: 2.5px solid var(--ink); border-bottom: 2.5px solid var(--ink); font-family: var(--display); font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 8px 14px; min-height: 32px; display: inline-flex; align-items: center; }
         .pcard .body { padding: 14px 16px; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
         .pcard .nm { font-family: var(--display); font-weight: 700; font-size: 15px; line-height: 1.15; }
-        .pcard .pr { font-family: var(--display); font-weight: 800; font-size: 15px; white-space: nowrap; background: var(--accent); border: 2px solid var(--ink); padding: 2px 7px; }
-        @media (prefers-reduced-motion: reduce) { .pcard, .pcard:hover, .sec-head a:hover, .bag:hover { transform: none; } }
+        .pcard .pr { font-family: var(--display); font-weight: 800; font-size: 15px; white-space: nowrap; background: var(--accent); border: 2.5px solid var(--ink); padding: 2px 7px; }
+        @media (prefers-reduced-motion: reduce) { .pcard, .pcard:hover, .pcard:active, .sec-head a:hover, .sec-head a:active, .bag:hover { transform: none; } }
 
         /* page editorial header */
         .ed-head { border: 2.5px solid var(--ink); background: var(--accent); box-shadow: var(--pop); padding: 32px 30px; margin: 32px 0 36px; display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
         .ed-head .crumb { font-family: var(--display); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
         .ed-head h1 { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: clamp(34px, 6vw, 76px); line-height: .9; margin-top: 8px; letter-spacing: -.03em; }
-        .ed-head .meta { font-family: var(--display); font-size: 12px; font-weight: 700; text-transform: uppercase; max-width: 30ch; text-align: right; }
+        .ed-head .meta { font-family: var(--display); font-size: 12px; font-weight: 700; text-transform: uppercase; max-width: 30ch; text-align: right; overflow-wrap: break-word; }
 
         /* footer */
         footer.site { border-top: 2.5px solid var(--ink); margin-top: 70px; background: var(--ink); color: var(--paper); padding: 50px 0 36px; }
@@ -238,7 +252,7 @@
         .fcol h4 { font-family: var(--display); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
         .fcol a { display: block; font-size: 14px; margin-bottom: 9px; color: var(--paper); }
         .fcol a:hover { color: var(--accent); }
-        .fbot { display: flex; justify-content: space-between; margin-top: 44px; padding-top: 20px; border-top: 2px solid rgba(253,251,240,.25); font-family: var(--display); font-size: 11px; font-weight: 700; text-transform: uppercase; color: rgba(253,251,240,.7); gap: 16px; flex-wrap: wrap; }
+        .fbot { display: flex; justify-content: space-between; margin-top: 44px; padding-top: 20px; border-top: 2.5px solid rgba(253,251,240,.25); font-family: var(--display); font-size: 11px; font-weight: 700; text-transform: uppercase; color: rgba(253,251,240,.7); gap: 16px; flex-wrap: wrap; }
         .fbot a { color: var(--accent); }
 
         @media (max-width: 1080px) { .pgrid { grid-template-columns: repeat(2, 1fr); } }
@@ -252,6 +266,16 @@
             .fgrid { grid-template-columns: 1fr 1fr; }
             .ed-head .meta { text-align: left; }
             .ed-head h1 { font-size: clamp(32px, 13vw, 60px); }
+        }
+        /* Compact phones: a 2-col grid gets cramped (cards ~160px wide), so
+           drop to a single confident column with taller image blocks. */
+        @media (max-width: 480px) {
+            .pgrid { grid-template-columns: 1fr; gap: 12px; }
+            .pcard .imgwrap { height: 280px; }
+        }
+        /* Ultra-narrow: tighten the gutter so 2.5px borders + padding breathe. */
+        @media (max-width: 375px) {
+            .wrap { padding: 0 12px; }
         }
     </style>
 </head>
@@ -291,7 +315,7 @@
              @if ($fallbackDur > 0) style="--tape-dur: {{ $fallbackDur }}s;" @endif>
             <div class="tape" aria-hidden="true">
                 @if ($csAnnouncement['link'])
-                    <a class="tape-half" href="{{ $csAnnouncement['link'] }}" tabindex="-1" data-tape-unit="{{ $tapeUnit }}">{!! $tapeHalf !!}</a>
+                    <a class="tape-half" href="{{ $csAnnouncement['link'] }}" tabindex="-1" aria-hidden="true" data-tape-unit="{{ $tapeUnit }}">{!! $tapeHalf !!}</a>
                     <a class="tape-half" href="{{ $csAnnouncement['link'] }}" tabindex="-1" aria-hidden="true">{!! $tapeHalf !!}</a>
                 @else
                     <span class="tape-half" data-tape-unit="{{ $tapeUnit }}">{!! $tapeHalf !!}</span>

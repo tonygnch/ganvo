@@ -22,10 +22,10 @@
         .filters .check { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600; cursor: pointer; }
         .filters .check input { width: 18px; height: 18px; accent-color: var(--ink); }
         .filters .actions { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
-        .filters .clear { font-family: var(--display); font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center; }
-        .filters .clear:hover { color: var(--accent); background: var(--ink); padding: 4px; }
+        .filters .clear { font-family: var(--display); font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center; padding: 8px 6px; display: inline-block; transition: background-color .12s ease, color .12s ease; }
+        .filters .clear:hover { color: var(--accent); background: var(--ink); }
 
-        .toolbar { border: 2.5px solid var(--ink); box-shadow: var(--pop-sm); background: var(--accent); padding: 14px 18px; margin-bottom: 26px; font-family: var(--display); font-size: 13px; font-weight: 800; text-transform: uppercase; }
+        .toolbar { border: 2.5px solid var(--ink); box-shadow: var(--pop-sm); background: var(--accent); padding: 14px 18px; margin: 72px 0 26px; font-family: var(--display); font-size: 13px; font-weight: 800; text-transform: uppercase; }
         .cat-empty { border: 2.5px solid var(--ink); box-shadow: var(--pop); padding: 60px 24px; text-align: center; font-family: var(--display); font-weight: 800; text-transform: uppercase; }
 
         @media (max-width: 1000px) { .catalog { grid-template-columns: 1fr; } }

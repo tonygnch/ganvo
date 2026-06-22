@@ -8,15 +8,16 @@
     <style>
         .acct { max-width: 720px; margin: 0 auto; padding: 36px 1.5rem 80px; }
         .acct-head { margin-bottom: 30px; }
-        .acct-head .back { font-family: var(--display); font-size: 11px; font-weight: 700; text-transform: uppercase; border: 2px solid var(--ink); padding: 5px 10px; display: inline-block; margin-bottom: 16px; }
+        .acct-head .back { font-family: var(--display); font-size: 11px; font-weight: 700; text-transform: uppercase; border: 2.5px solid var(--ink); padding: 5px 10px; display: inline-block; margin-bottom: 16px; }
         .acct-head .back:hover { background: var(--accent); }
+        .acct-head .back:active { transform: translate(2px, 2px); box-shadow: var(--pop-sm); }
         .acct-head h1 { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: clamp(30px, 4.5vw, 48px); line-height: .92; letter-spacing: -.02em; }
         .acct-head p { color: var(--muted); font-size: 14px; margin-top: 8px; font-weight: 600; }
 
         .flash { border: 2.5px solid var(--ink); background: #b6f5b6; padding: 12px 16px; margin-bottom: 24px; font-family: var(--display); font-size: 12px; font-weight: 700; text-transform: uppercase; }
         .panel { border: 2.5px solid var(--ink); box-shadow: var(--pop); background: var(--paper); padding: 28px 30px; margin-bottom: 22px; }
         .panel > h2 { font-family: var(--display); font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 2.5px solid var(--ink); }
-        .errors { border: 2.5px solid #b91c1c; background: #fff; color: #b91c1c; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; font-weight: 600; }
+        .errors { border: 2.5px solid #b91c1c; background: #fff; color: var(--ink); padding: 12px 16px; margin-bottom: 20px; font-size: 13px; font-weight: 600; }
         .errors ul { margin: 0; padding-left: 18px; }
 
         .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -30,6 +31,8 @@
         .check-row input { margin-top: .15rem; width: 18px; height: 18px; accent-color: var(--ink); flex-shrink: 0; }
         .save-btn { font-family: var(--display); font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; background: var(--accent); color: var(--ink); border: 2.5px solid var(--ink); box-shadow: var(--pop-sm); padding: 13px 26px; margin-top: 8px; cursor: pointer; }
         .save-btn:hover { background: var(--ink); color: var(--accent); }
+        .save-btn:active { transform: translate(5px, 5px); box-shadow: 0 0 0 var(--shadow); }
+        @media (prefers-reduced-motion: reduce) { .save-btn:active, .acct-head .back:active { transform: none; box-shadow: var(--pop-sm); } }
 
         @media (max-width: 540px) { .frow { grid-template-columns: 1fr; } }
     </style>

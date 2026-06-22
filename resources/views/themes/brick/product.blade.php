@@ -41,13 +41,16 @@
         .gallery .thumbs .pdp-thumb img { width: 100%; height: 100%; object-fit: cover; opacity: .6; transition: opacity .12s ease; }
         .gallery .thumbs .pdp-thumb.on img, .gallery .thumbs .pdp-thumb:hover img { opacity: 1; }
         .gallery .thumbs .pdp-thumb.on { background: var(--accent); }
+        .gallery .thumbs .pdp-thumb:active { transform: translate(1px, 1px); }
+        @media (prefers-reduced-motion: reduce) { .gallery .thumbs .pdp-thumb:active { transform: none; } }
         .gallery .hero-img { min-height: 560px; background: var(--soft); overflow: hidden; position: relative; }
         .gallery .hero-img img { width: 100%; height: 100%; object-fit: cover; }
 
         /* info */
         .pinfo { padding: 36px 34px; }
         .pinfo .crumb { font-family: var(--display); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
-        .pinfo .crumb a:hover { color: var(--ink); }
+        .pinfo .crumb a { border-bottom: 2px solid transparent; transition: border-color .12s ease; }
+        .pinfo .crumb a:hover { color: var(--ink); border-bottom-color: var(--accent); }
         .pinfo .cat { display: inline-flex; background: var(--ink); color: var(--accent); font-family: var(--display); font-weight: 800; font-size: 11px; letter-spacing: .05em; text-transform: uppercase; padding: 5px 10px; margin-bottom: 14px; }
         .pinfo h1 { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: clamp(28px, 3.6vw, 48px); line-height: .92; letter-spacing: -.02em; margin-bottom: 16px; }
         .pinfo .price { display: inline-flex; background: var(--accent); border: 2.5px solid var(--ink); box-shadow: var(--pop-sm); font-family: var(--display); font-weight: 800; font-size: 22px; padding: 8px 16px; margin-bottom: 18px; }
@@ -61,17 +64,21 @@
 
         .add-row { display: flex; gap: 12px; align-items: stretch; margin-top: 8px; }
         .add-row .btn { flex: 1; }
-        .wishlist-btn { background: var(--paper); border: 2.5px solid var(--ink); box-shadow: var(--pop-sm); padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease; }
+        .wishlist-btn { background: var(--paper); border: 2.5px solid var(--ink); box-shadow: var(--pop-sm); padding: 0 16px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease; }
         .wishlist-btn:hover { background: var(--accent); transform: translate(-1px,-1px); box-shadow: var(--pop); }
         .wishlist-btn svg { width: 20px; height: 20px; fill: none; stroke: var(--ink); stroke-width: 2; }
 
         .acc { margin-top: 28px; border-top: 2.5px solid var(--ink); }
         .acc details { border-bottom: 2.5px solid var(--ink); }
-        .acc summary { padding: 16px 0; font-family: var(--display); font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; display: flex; justify-content: space-between; list-style: none; cursor: pointer; }
+        .acc summary { padding: 16px 0; font-family: var(--display); font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; display: flex; justify-content: space-between; list-style: none; cursor: pointer; transition: color .15s ease; }
+        .acc summary:hover { color: var(--muted); }
+        .acc summary:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
         .acc summary::-webkit-details-marker { display: none; }
         .acc summary .marker::after { content: "[+]"; }
         .acc details[open] summary .marker::after { content: "[–]"; }
-        .acc .b { padding: 0 0 16px; color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+        .acc .b { padding: 0 0 16px; color: var(--text-muted); font-size: 14px; line-height: 1.6; animation: accIn .2s ease; }
+        @keyframes accIn { from { opacity: 0; } to { opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) { .acc .b { animation: none; } }
 
         @media (max-width: 980px) {
             .pdp { grid-template-columns: 1fr; }
@@ -82,6 +89,10 @@
             .gallery { grid-template-columns: 1fr; }
             .gallery .thumbs { flex-direction: row; border-right: none; border-bottom: 2.5px solid var(--ink); }
             .gallery .thumbs .pdp-thumb { flex: 1; height: 70px; border-bottom: none; border-right: 2.5px solid var(--ink); }
+            /* Stack add-to-cart + wishlist so neither gets squeezed below 44px. */
+            .add-row { flex-direction: column; }
+            .add-row .btn { flex: 1; }
+            .wishlist-btn { width: 100%; }
         }
     </style>
 
@@ -142,7 +153,7 @@
                         @endif
 
                         <div class="add-row">
-                            <button type="submit" class="btn accent block" data-vp-submit>
+                            <button type="submit" class="btn accent block" data-vp-submit @if ($product->hasVariants()) disabled @endif>
                                 {{ __('site.storefront.product.add_to_cart') }} — <span data-vp-submit-price>@money($product->price_cents)</span>
                             </button>
                             <button type="button" class="wishlist-btn" aria-label="{{ __('site.storefront.product.wishlist') }}" title="{{ __('site.storefront.product.wishlist') }}">

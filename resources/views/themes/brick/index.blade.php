@@ -31,7 +31,7 @@
         .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 0; border: 2.5px solid var(--ink); box-shadow: var(--pop-lg); margin: 28px 0 0; background: var(--paper); }
         .hero .copy { padding: 48px 44px; display: flex; flex-direction: column; justify-content: center; border-right: 2.5px solid var(--ink); }
         .hero .eyebrow { display: inline-flex; align-self: flex-start; background: var(--ink); color: var(--accent); font-family: var(--display); font-weight: 800; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; padding: 6px 12px; margin-bottom: 22px; }
-        .hero h1 { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: clamp(40px, 6vw, 92px); line-height: .86; letter-spacing: -.03em; }
+        .hero h1 { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: clamp(40px, 6vw, 92px); line-height: .9; letter-spacing: -.03em; }
         .hero h1 .hl { background: var(--accent); padding: 0 .12em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
         .hero p { font-size: 16px; max-width: 42ch; margin: 24px 0 30px; color: var(--text-muted); }
         .hero .cta { display: flex; gap: 14px; flex-wrap: wrap; }
@@ -43,7 +43,7 @@
         .ticker { display: flex; flex-wrap: wrap; gap: 0; border: 2.5px solid var(--ink); border-top: none; }
         .ticker .t { flex: 1 1 0; min-width: 180px; padding: 16px 20px; border-right: 2.5px solid var(--ink); font-family: var(--display); font-weight: 700; font-size: 12px; text-transform: uppercase; display: flex; align-items: center; gap: 10px; }
         .ticker .t:last-child { border-right: none; }
-        .ticker .t .num { background: var(--accent); border: 2px solid var(--ink); width: 26px; height: 26px; display: grid; place-items: center; font-size: 12px; flex-shrink: 0; }
+        .ticker .t .num { background: var(--accent); border: 2.5px solid var(--ink); width: 26px; height: 26px; display: grid; place-items: center; font-size: 12px; flex-shrink: 0; }
 
         /* drop banner — big offset block */
         .drop { display: grid; grid-template-columns: 1fr 1fr; margin: 72px 0; border: 2.5px solid var(--ink); box-shadow: var(--pop-lg); background: var(--ink); color: var(--paper); }
@@ -62,6 +62,13 @@
             .hero .vis { min-height: 320px; }
             .drop .vis { border-right: none; border-bottom: 2.5px solid var(--ink); min-height: 280px; }
             .ticker .t { flex-basis: 50%; border-bottom: 2.5px solid var(--ink); }
+        }
+        @media (max-width: 540px) {
+            /* Stop the 40px clamp floor from overflowing the narrow hero. */
+            .hero h1 { font-size: clamp(28px, 7vw, 40px); }
+            .hero .copy { padding: 32px 22px; }
+            .drop .txt { padding: 32px 20px; }
+            .drop .txt h3 { font-size: clamp(24px, 5vw, 30px); }
         }
     </style>
 

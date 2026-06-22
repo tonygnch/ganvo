@@ -12,7 +12,7 @@
         .auth-head p { color: var(--muted); font-size: 14px; margin-top: 10px; font-weight: 600; }
 
         .auth-card { border: 2.5px solid var(--ink); box-shadow: var(--pop-lg); background: var(--paper); padding: 32px 30px; }
-        .errors { border: 2.5px solid #b91c1c; background: #fff; color: #b91c1c; padding: 12px 16px; margin-bottom: 22px; font-size: 13px; font-weight: 600; }
+        .errors { border: 2.5px solid #b91c1c; background: #fff; color: var(--ink); padding: 12px 16px; margin-bottom: 22px; font-size: 13px; font-weight: 600; }
         .errors ul { margin: 0; padding-left: 18px; }
 
         /* class names match the shared _signup_fields partial */

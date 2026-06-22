@@ -15,7 +15,7 @@
         .cart-wrap { padding: 0 0 70px; }
         .cart-empty { border: 2.5px solid var(--ink); box-shadow: var(--pop); text-align: center; padding: 70px 24px; margin-top: 32px; }
         .cart-empty h2 { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 28px; margin-bottom: 10px; }
-        .cart-empty p { color: var(--muted); margin-bottom: 24px; }
+        .cart-empty p { color: var(--text-muted); margin-bottom: 24px; }
 
         .cart { display: grid; grid-template-columns: 1fr 360px; gap: 28px; align-items: start; }
         .lines { border: 2.5px solid var(--ink); box-shadow: var(--pop); background: var(--paper); }
@@ -29,12 +29,14 @@
         .line .unit { font-size: 12px; color: var(--muted); margin-top: 4px; }
         .qty { display: inline-flex; border: 2.5px solid var(--ink); margin-top: 12px; }
         .qty form { display: inline-flex; }
-        .qty button { width: 34px; height: 34px; background: var(--paper); border: none; font-family: var(--display); font-weight: 800; font-size: 16px; }
+        .qty button { width: 44px; height: 44px; background: var(--paper); border: none; font-family: var(--display); font-weight: 800; font-size: 16px; transition: background-color .12s ease; }
         .qty button:hover { background: var(--accent); }
-        .qty .n { width: 40px; display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 14px; border-left: 2.5px solid var(--ink); border-right: 2.5px solid var(--ink); }
+        .qty button:active { transform: translate(2px, 2px); }
+        .qty .n { width: 44px; display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 14px; border-left: 2.5px solid var(--ink); border-right: 2.5px solid var(--ink); }
         .line .pr { font-family: var(--display); font-weight: 800; font-size: 18px; text-align: right; }
-        .line .rm { font-family: var(--display); font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-top: 12px; background: none; border: none; cursor: pointer; text-align: right; width: 100%; }
+        .line .rm { font-family: var(--display); font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-top: 12px; background: none; border: none; cursor: pointer; text-align: right; width: 100%; transition: background-color .12s ease, color .12s ease; }
         .line .rm:hover { color: var(--ink); background: var(--accent); }
+        .line .rm:active { transform: translate(2px, 2px); }
 
         .cart-actions { margin-top: 24px; }
 
@@ -42,14 +44,15 @@
         .summary h3 { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 22px; margin-bottom: 20px; }
         .summary .promo { display: flex; margin-bottom: 20px; }
         .summary .promo input { flex: 1; border: 2.5px solid var(--ink); border-right: none; padding: 11px 12px; font-family: var(--body); font-size: 13px; background: #fff; min-width: 0; }
-        .summary .promo input:focus { outline: none; }
-        .summary .promo button { border: 2.5px solid var(--ink); background: var(--ink); color: var(--paper); padding: 0 16px; font-family: var(--display); font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+        .summary .promo input:focus { outline: 3px solid var(--accent); outline-offset: -3px; }
+        .summary .promo button { border: 2.5px solid var(--ink); background: var(--ink); color: var(--paper); padding: 0 16px; font-family: var(--display); font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; transition: background-color .12s ease, color .12s ease; }
         .summary .promo button:hover { background: var(--accent); color: var(--ink); }
+        .summary .promo button:active { transform: translate(2px, 2px); }
         .summary .applied { margin-bottom: 18px; padding: 10px 12px; background: var(--accent); border: 2.5px solid var(--ink); font-family: var(--display); font-size: 11px; font-weight: 700; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
         .summary .applied form button { background: none; border: none; font-family: var(--display); font-size: 10px; font-weight: 700; text-transform: uppercase; cursor: pointer; text-decoration: underline; }
         .summary .applied .code { font-weight: 800; }
         .promo-region { margin-bottom: 20px; }
-        .promo-msg { margin-top: 8px; font-size: 12px; color: var(--muted); }
+        .promo-msg { margin-top: 8px; font-size: 12px; color: var(--text-muted); }
         .summary .r { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 12px; font-weight: 600; }
         .summary .r.discount { color: var(--ink); }
         .summary .r small { color: var(--muted); font-size: 11px; text-transform: uppercase; font-weight: 700; }
@@ -58,9 +61,16 @@
 
         @media (max-width: 980px) { .cart { grid-template-columns: 1fr; } .summary { position: static; } }
         @media (max-width: 540px) {
+            /* Float the total + checkout above the line items so it's visible
+               without scrolling past a long cart. */
+            .summary { order: -1; margin-bottom: 24px; }
+            .qty button { font-size: 18px; }
             .line { grid-template-columns: 80px 1fr; }
             .line .actions { grid-column: 1 / -1; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; }
             .line .pr { text-align: left; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .qty button:active, .line .rm:active, .summary .promo button:active { transform: none; }
         }
     </style>
 
@@ -98,7 +108,7 @@
                                 <div class="line" data-cart-line="{{ $lineId }}">
                                     <div class="img">
                                         @if ($product->image_path)
-                                            <img src="{{ \Illuminate\Support\Facades\Storage::url($product->image_path) }}" alt="">
+                                            <img src="{{ \Illuminate\Support\Facades\Storage::url($product->image_path) }}" alt="{{ $product->name }}@if ($variant) — {{ $variant->label }}@endif">
                                         @else
                                             <div class="ph" style="width:100%;height:100%"><span>img</span></div>
                                         @endif

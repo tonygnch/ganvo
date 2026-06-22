@@ -31,9 +31,9 @@
 
         .co-signed-in { background: var(--accent); border: 2.5px solid var(--ink); padding: 11px 14px; margin-bottom: 16px; font-size: 13px; font-weight: 600; }
         .co-signin-banner { border: 2.5px solid var(--ink); box-shadow: var(--pop-sm); background: var(--paper); padding: 14px 18px; margin-bottom: 26px; font-size: 13px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .co-signin-banner a { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 12px; background: var(--accent); border: 2px solid var(--ink); padding: 3px 8px; }
+        .co-signin-banner a { font-family: var(--display); font-weight: 700; text-transform: uppercase; font-size: 12px; background: var(--accent); border: 2.5px solid var(--ink); padding: 3px 8px; }
 
-        .errors { border: 2.5px solid #b91c1c; background: #fff; padding: 14px 18px; margin-bottom: 24px; font-size: 13px; color: #b91c1c; font-weight: 600; }
+        .errors { border: 2.5px solid #b91c1c; background: #fff; padding: 14px 18px; margin-bottom: 24px; font-size: 13px; color: var(--ink); font-weight: 600; }
         .errors ul { padding-left: 18px; }
 
         .stub-notice { background: var(--accent); border: 2.5px solid var(--ink); padding: 14px 18px; font-size: 13px; display: flex; gap: 12px; align-items: flex-start; }
@@ -46,7 +46,7 @@
         .osum .oitem { display: grid; grid-template-columns: 56px 1fr auto; gap: 14px; align-items: center; margin-bottom: 16px; }
         .osum .oitem .img { height: 64px; border: 2.5px solid var(--ink); background: var(--soft); overflow: hidden; position: relative; }
         .osum .oitem .img img { width: 100%; height: 100%; object-fit: cover; }
-        .osum .oitem .qty-pill { position: absolute; top: -9px; right: -9px; background: var(--accent); border: 2px solid var(--ink); width: 22px; height: 22px; display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 11px; }
+        .osum .oitem .qty-pill { position: absolute; top: -9px; right: -9px; background: var(--accent); border: 2.5px solid var(--ink); width: 22px; height: 22px; display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 11px; }
         .osum .oitem .nm { font-family: var(--display); font-weight: 700; font-size: 13px; line-height: 1.2; }
         .osum .oitem .m { font-size: 12px; color: var(--muted); }
         .osum .oitem .pr { font-family: var(--display); font-weight: 800; font-size: 14px; }
@@ -79,6 +79,7 @@
         .pay-btn { margin-left: auto; display: inline-flex; align-items: baseline; gap: 8px; background: var(--accent); color: var(--ink); border: 2.5px solid var(--ink); box-shadow: var(--pop); padding: 15px 32px; font-family: var(--display); font-size: 13px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; cursor: pointer; transition: transform .12s ease, box-shadow .12s ease; }
         .pay-btn:hover { transform: translate(-1px,-1px); box-shadow: var(--pop-lg); }
         .pay-btn:active { transform: translate(5px,5px); box-shadow: 0 0 0 var(--shadow); }
+        .pay-btn:focus-visible { outline: none; box-shadow: var(--pop-sm); }
         .pay-btn:disabled { opacity: .5; cursor: not-allowed; }
 
         @media (max-width: 980px) {
@@ -257,7 +258,7 @@
                             <div class="oitem">
                                 <div class="img">
                                     @if ($row['product']->image_path)
-                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($row['product']->image_path) }}" alt="">
+                                        <img src="{{ \Illuminate\Support\Facades\Storage::url($row['product']->image_path) }}" alt="{{ $row['product']->name }}@if (! empty($row['variant'])) — {{ $row['variant']->label }}@endif">
                                     @else
                                         <div class="ph" style="width:100%;height:100%"><span>img</span></div>
                                     @endif

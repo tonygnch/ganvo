@@ -23,13 +23,13 @@
         .order-row:first-child { border-top: 0; }
         .order-row:hover { background: var(--soft); }
         .order-row .num { font-family: var(--display); font-weight: 800; font-size: 15px; }
-        .order-row .date { color: var(--muted); font-size: 13px; margin-top: 4px; font-weight: 600; }
-        .ord-status { display: inline-block; font-family: var(--display); padding: 5px 11px; border: 2px solid var(--ink); font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+        .order-row .date { color: var(--text-muted); font-size: 13px; margin-top: 4px; font-weight: 600; }
+        .ord-status { display: inline-block; font-family: var(--display); padding: 5px 11px; border: 2.5px solid var(--ink); font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
         .ord-status.paid { background: #b6f5b6; }
         .ord-status.shipped { background: var(--soft); }
         .ord-status.pending { background: var(--accent); }
         .ord-status.failed, .ord-status.cancelled, .ord-status.refunded { background: #f5b6b6; }
-        .order-row .view { font-family: var(--display); font-size: 11px; font-weight: 700; text-transform: uppercase; border: 2px solid var(--ink); padding: 7px 11px; white-space: nowrap; }
+        .order-row .view { font-family: var(--display); font-size: 11px; font-weight: 700; text-transform: uppercase; border: 2.5px solid var(--ink); padding: 7px 11px; white-space: nowrap; }
         .order-row .view:hover { background: var(--accent); }
 
         .acct-empty { border: 2.5px solid var(--ink); box-shadow: var(--pop); text-align: center; padding: 60px 24px; font-family: var(--display); font-weight: 700; text-transform: uppercase; }
