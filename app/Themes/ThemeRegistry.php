@@ -35,6 +35,11 @@ class ThemeRegistry
                 'description' => 'Sharp dark mode — near-black canvas, neon accent, Space Grotesk + mono details. Built for electronics, gear, and digital products.',
                 'screenshot' => '/images/themes/tech.svg',
             ],
+            'brick' => [
+                'name' => 'Brick',
+                'description' => 'Loud neo-brutalist — thick black borders, hard offset shadows, acid-lime accent, Lexend Mega display. Built for streetwear, sneakers, records, and bold DTC brands.',
+                'screenshot' => '/images/themes/brick.svg',
+            ],
         ];
     }
 

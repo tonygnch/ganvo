@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Brick theme preview">
+  <rect width="400" height="300" fill="#fdfbf0"/>
+  <!-- header -->
+  <rect x="0" y="0" width="400" height="34" fill="#fdfbf0" stroke="#0a0a0a" stroke-width="3"/>
+  <text x="16" y="23" font-family="'Lexend Mega',sans-serif" font-size="15" font-weight="900" fill="#0a0a0a">STORE</text>
+  <rect x="330" y="8" width="54" height="20" fill="#d4ff00" stroke="#0a0a0a" stroke-width="2.5"/>
+  <!-- hero block with offset shadow -->
+  <rect x="24" y="56" width="352" height="90" fill="#0a0a0a"/>
+  <rect x="20" y="52" width="352" height="90" fill="#fdfbf0" stroke="#0a0a0a" stroke-width="3"/>
+  <rect x="20" y="52" width="200" height="90" fill="#fdfbf0" stroke="#0a0a0a" stroke-width="3"/>
+  <rect x="36" y="66" width="92" height="13" fill="#0a0a0a"/>
+  <text x="40" y="76" font-family="'Lexend Mega',sans-serif" font-size="8" font-weight="800" fill="#d4ff00">NEW DROP</text>
+  <text x="36" y="104" font-family="'Lexend Mega',sans-serif" font-size="20" font-weight="900" fill="#0a0a0a">BOLD</text>
+  <text x="36" y="124" font-family="'Lexend Mega',sans-serif" font-size="20" font-weight="900" fill="#0a0a0a"><tspan fill="#0a0a0a">FITS</tspan></text>
+  <rect x="220" y="52" width="152" height="90" fill="#e4dcc4"/>
+  <!-- product cards -->
+  <g>
+    <rect x="24" y="170" width="78" height="104" fill="#0a0a0a"/>
+    <rect x="20" y="166" width="78" height="104" fill="#fdfbf0" stroke="#0a0a0a" stroke-width="3"/>
+    <rect x="20" y="166" width="78" height="66" fill="#efe9d6" stroke="#0a0a0a" stroke-width="3"/>
+    <rect x="20" y="166" width="34" height="14" fill="#d4ff00" stroke="#0a0a0a" stroke-width="2.5"/>
+  </g>
+  <g>
+    <rect x="120" y="170" width="78" height="104" fill="#0a0a0a"/>
+    <rect x="116" y="166" width="78" height="104" fill="#fdfbf0" stroke="#0a0a0a" stroke-width="3"/>
+    <rect x="116" y="166" width="78" height="66" fill="#efe9d6" stroke="#0a0a0a" stroke-width="3"/>
+  </g>
+  <g>
+    <rect x="216" y="170" width="78" height="104" fill="#0a0a0a"/>
+    <rect x="212" y="166" width="78" height="104" fill="#fdfbf0" stroke="#0a0a0a" stroke-width="3"/>
+    <rect x="212" y="166" width="78" height="66" fill="#efe9d6" stroke="#0a0a0a" stroke-width="3"/>
+  </g>
+  <g>
+    <rect x="312" y="170" width="72" height="104" fill="#0a0a0a"/>
+    <rect x="308" y="166" width="72" height="104" fill="#d4ff00" stroke="#0a0a0a" stroke-width="3"/>
+    <rect x="308" y="166" width="72" height="66" fill="#efe9d6" stroke="#0a0a0a" stroke-width="3"/>
+  </g>
+</svg>
