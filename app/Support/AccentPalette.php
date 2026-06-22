@@ -63,13 +63,22 @@ class AccentPalette
     }
 
     /**
-     * A `<style>`-ready CSS rule overriding the primary palette variables.
+     * A `<style>`-ready CSS rule overriding Filament's primary palette.
+     *
+     * Filament v5 sets each shade as a CSS variable holding a *complete*
+     * color value, e.g. `--primary-600: oklch(0.596 0.145 163.2)`, then
+     * consumes it via `rgb(var(--primary-600) / <alpha>)`-equivalent maps.
+     * We therefore emit a full `rgb(r g b)` value (NOT a bare `r g b`
+     * triplet — an earlier version did that, which is not a valid color and
+     * was silently dropped, so the accent never applied). `rgb(r g b)` is a
+     * valid <color> in every modern browser and composes correctly wherever
+     * Filament references the variable.
      */
     public static function css(string $hex, string $selector = ':root, :host'): string
     {
         $vars = '';
         foreach (self::shades($hex) as $shade => $rgb) {
-            $vars .= "--primary-{$shade}: {$rgb};";
+            $vars .= "--primary-{$shade}: rgb({$rgb});";
         }
 
         return "{$selector}{{$vars}}";
@@ -106,6 +115,27 @@ class AccentPalette
         $h = ltrim(trim($hex), '#');
 
         return (strlen($h) === 3 || strlen($h) === 6) && ctype_xdigit($h);
+    }
+
+    /**
+     * Whether a color is a *usable* admin accent. Near-black, near-white,
+     * and very desaturated (grey) inputs can't drive a legible primary
+     * palette — Filament needs a saturated mid-tone so its selected /
+     * toggle-on / focus states read clearly. Callers treat an unusable
+     * accent as "unset" and fall back to the panel's default.
+     *
+     * Thresholds operate on HSL: reject L outside [0.18, 0.82] (too dark /
+     * too light to tell shades apart) or S below 0.20 (greyscale).
+     */
+    public static function isUsable(?string $hex): bool
+    {
+        if (! self::isValid($hex)) {
+            return false;
+        }
+
+        [$h, $s, $l] = self::rgbToHsl(...self::parse((string) $hex));
+
+        return $s >= 0.20 && $l >= 0.18 && $l <= 0.82;
     }
 
     /**

@@ -143,13 +143,16 @@ class Store extends Model
 
     /**
      * The merchant's chosen admin accent hex, normalized to #rrggbb, or
-     * null when unset/invalid (panel then uses its default Emerald).
+     * null when unset / invalid / unusable (panel then uses its default
+     * Emerald). "Unusable" = near-black, near-white, or greyscale: those
+     * can't drive a legible Filament primary palette (selected/toggle/focus
+     * states would lose contrast), so we ignore them rather than break the UI.
      */
     public function adminAccentColor(): ?string
     {
         $hex = $this->admin_accent_color;
 
-        return \App\Support\AccentPalette::isValid($hex)
+        return \App\Support\AccentPalette::isUsable($hex)
             ? '#' . ltrim(trim((string) $hex), '#')
             : null;
     }
