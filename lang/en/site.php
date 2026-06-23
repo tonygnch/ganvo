@@ -154,6 +154,13 @@ return [
             ],
             'in_stock_badge' => 'In stock',
             'no_image' => 'No image',
+            // Image gallery / fullscreen viewer
+            'view_fullscreen' => 'View full screen',
+            'view_image'      => 'View image :n of :total',
+            'gallery_label'   => 'Product image viewer',
+            'close'           => 'Close',
+            'prev_image'      => 'Previous image',
+            'next_image'      => 'Next image',
             // Variants
             'choose_variant' => 'Choose an option',
             'out_of_stock'   => 'Out of stock',
