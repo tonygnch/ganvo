@@ -27,6 +27,7 @@
         .summary h3 { font-family: var(--display); font-weight: 600; font-size: 22px; margin-bottom: 20px; }
         .summary .promo { display: flex; gap: 8px; margin-bottom: 8px; } .summary .promo input { flex: 1; border: 1px solid var(--line); border-radius: 8px; padding: 11px 14px; font-family: inherit; font-size: 13px; background: var(--bg); }
         .summary .promo button { background: var(--accent); color: #faf7f1; border: 0; border-radius: 8px; padding: 0 16px; font-weight: 600; font-size: 13px; cursor: pointer; }
+        .summary [hidden] { display: none !important; } /* hidden attr must beat .summary .applied/.r display rules */
         .summary .applied { display: flex; justify-content: space-between; align-items: center; background: var(--soft); border-radius: 10px; padding: 10px 14px; font-size: 12px; margin-bottom: 8px; } .summary .applied .code { font-weight: 700; color: var(--accent); }
         .summary .applied form button { background: none; border: none; color: var(--muted); font-size: 11px; cursor: pointer; }
         .promo-region { margin-bottom: 16px; } .promo-msg { font-size: 12px; color: var(--muted); margin-top: 6px; }

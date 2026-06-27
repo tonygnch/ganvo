@@ -64,12 +64,12 @@
         .osum .oitem .qty-pill { position: absolute; top: -8px; right: -8px; background: var(--accent); color: #fbfcf5; width: 22px; height: 22px; border-radius: 99px; display: grid; place-items: center; font-family: var(--display); font-size: 11px; box-shadow: 0 2px 6px rgba(40, 50, 31, .25); }
         .osum .oitem .nm { font-family: var(--display); font-size: 15px; line-height: 1.25; }
         .osum .oitem .m { font-size: 12px; color: var(--muted); }
-        .osum .oitem .pr { font-family: var(--serif); font-size: 17px; color: var(--accent); }
+        .osum .oitem .pr { font-family: var(--body); font-weight: 600; font-size: 17px; font-variant-numeric: tabular-nums; color: var(--accent); }
         .osum .divider { border: 0; border-top: 1px solid var(--line); margin: 18px 0; }
         .osum .r { display: flex; justify-content: space-between; font-size: 14px; margin: 10px 0; color: var(--ink); }
         .osum .r.discount { color: var(--accent); }
         .osum .tot { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--display); font-size: 21px; border-top: 1px solid var(--line); padding-top: 18px; margin: 16px 0 18px; }
-        .osum .tot span:last-child { font-family: var(--serif); font-style: italic; color: var(--accent); }
+        .osum .tot span:last-child { font-family: var(--body); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); }
         .osum .secure { font-size: 12px; letter-spacing: .04em; color: var(--muted); text-align: center; margin-top: 12px; }
 
         /* wizard stepper */
@@ -96,7 +96,7 @@
         .pay-btn { margin-left: auto; display: inline-flex; align-items: baseline; gap: 8px; background: var(--accent); color: #fbfcf5; border: 1px solid var(--accent); border-radius: 99px; padding: 15px 34px; font-size: 14px; font-weight: 600; transition: filter .25s ease, transform .25s ease; }
         .pay-btn:hover { filter: brightness(1.08); transform: translateY(-2px); }
         .pay-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; filter: none; }
-        .pay-btn [data-wz-amount] { font-family: var(--serif); font-style: italic; }
+        .pay-btn [data-wz-amount] { font-weight: 700; font-variant-numeric: tabular-nums; }
 
         @media (max-width: 980px) {
             .checkout { grid-template-columns: 1fr; }

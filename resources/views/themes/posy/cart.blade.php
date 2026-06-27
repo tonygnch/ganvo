@@ -37,7 +37,7 @@
         .qty .n { width: 34px; display: grid; place-items: center; font-size: 14px; }
 
         .line .actions { text-align: right; }
-        .line .pr { font-family: var(--serif); font-size: 18px; text-align: right; color: var(--accent); }
+        .line .pr { font-family: var(--body); font-weight: 600; font-size: 19px; font-variant-numeric: tabular-nums; text-align: right; color: var(--accent); }
         .line .rm { font-size: 12px; color: var(--muted); background: none; border: none; display: block; margin-top: 10px; margin-left: auto; transition: color .2s ease; }
         .line .rm:hover { color: var(--ink); text-decoration: underline; }
 
@@ -56,12 +56,17 @@
         .summary .applied form button { background: none; border: none; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); text-decoration: underline; }
         .summary .applied form button:hover { color: var(--ink); }
         .promo-msg { margin-top: 8px; font-size: 12px; color: var(--muted); }
+        /* The `hidden` attribute toggles the promo form / applied chip / discount
+           row, but a class selector (.summary .applied) out-specifies the UA
+           [hidden] rule — so without this the empty chip + REMOVE link leak
+           through. Scoped to .summary so it can't touch the checkout wizard. */
+        .summary [hidden] { display: none !important; }
 
         .summary .r { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 13px; color: var(--muted); }
         .summary .r small { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
         .summary .r.discount { color: var(--accent); }
         .summary .tot { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; color: var(--ink); border-top: 1px solid var(--line); padding-top: 16px; margin: 8px 0 20px; }
-        .summary .tot span:last-child { font-family: var(--serif); color: var(--accent); }
+        .summary .tot span:last-child { font-family: var(--body); font-variant-numeric: tabular-nums; color: var(--accent); }
         .summary .secure { margin-top: 16px; text-align: center; font-size: 12px; letter-spacing: .04em; color: var(--muted); }
 
         @media (max-width: 900px) {
@@ -83,7 +88,7 @@
         <div class="wrap cart-wrap">
             <div class="page-head reveal" style="padding-top: 10px; padding-bottom: 10px;">
                 <div class="crumb">{{ __('site.cart.your_selection') }}</div>
-                <h1>Your <em>Cart</em></h1>
+                <h1>{!! __('site.cart.heading_html') !!}</h1>
                 @if ($items->isNotEmpty())
                     <p>{{ __('site.cart.' . ($totalQty === 1 ? 'item_count_one' : 'item_count_many'), ['count' => $totalQty]) }}</p>
                 @endif

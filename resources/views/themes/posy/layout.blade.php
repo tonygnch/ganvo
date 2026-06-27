@@ -66,7 +66,7 @@
         /* placeholder fills (used wherever a real image is missing) */
         .ph { position: relative; background: var(--leaf); overflow: hidden; }
         .bloomph { background: var(--bloom); }
-        .ph img, .bloomph img { width: 100%; height: 100%; object-fit: cover; }
+        .ph img, .bloomph img, .bcard .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         .kicker { font-family: var(--body); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; font-weight: 600; color: var(--accent); }
 
@@ -163,7 +163,7 @@
         .bcard .badge { position: absolute; top: 12px; left: 12px; background: var(--card); font-size: 11px; padding: 4px 10px; border-radius: 99px; color: var(--accent); font-weight: 600; z-index: 2; }
         .bcard .cat { font-size: 12px; color: var(--muted); text-align: center; }
         .bcard h3 { font-family: var(--display); font-size: 23px; text-align: center; margin: 2px 0 4px; font-weight: 400; }
-        .bcard .pr { font-family: var(--serif); font-size: 19px; text-align: center; color: var(--accent); }
+        .bcard .pr { font-family: var(--body); font-weight: 600; font-size: 20px; font-variant-numeric: tabular-nums; text-align: center; color: var(--accent); }
         @media (prefers-reduced-motion: reduce) { .bcard, .bcard:hover { transform: none; } }
 
         /* footer */

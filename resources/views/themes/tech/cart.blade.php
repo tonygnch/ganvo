@@ -37,6 +37,7 @@
         .summary .promo { display: flex; gap: 8px; margin-bottom: 8px; }
         .summary .promo input { flex: 1; background: var(--bg); border: 1px solid var(--line); border-radius: 7px; padding: 11px; color: var(--txt); font-family: var(--mono); font-size: 12px; }
         .summary .promo button { background: var(--accent); color: #0a0b0e; border: 0; border-radius: 7px; padding: 0 16px; font-weight: 700; font-size: 12px; font-family: var(--mono); cursor: pointer; }
+        .summary [hidden] { display: none !important; } /* hidden attr must beat .summary .applied/.r display rules */
         .summary .applied { display: flex; justify-content: space-between; align-items: center; background: var(--surface2); border: 1px solid var(--line); border-radius: 7px; padding: 9px 12px; font-family: var(--mono); font-size: 12px; margin-bottom: 8px; }
         .summary .applied .code { color: var(--accent); }
         .summary .applied form button { background: none; border: none; color: var(--faint); font-family: var(--mono); font-size: 11px; cursor: pointer; }

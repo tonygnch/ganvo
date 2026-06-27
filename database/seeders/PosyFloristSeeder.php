@@ -107,10 +107,10 @@ class PosyFloristSeeder extends Seeder
     private function seedCategories(Tenant $tenant): array
     {
         $rows = [
-            ['Bouquets', 'Seasonal hand-tied arrangements, cut to order the morning they ship.', 'bouquet,flowers'],
-            ['Plants',   'Potted greenery for every corner of the home.',                         'potted,plant'],
-            ['Dried',    'Everlasting stems and grasses that last for months.',                   'dried,flowers'],
-            ['Vases',    'Simple vessels to show your stems off.',                                 'vase,ceramic'],
+            ['Bouquets', 'Seasonal hand-tied arrangements, cut to order the morning they ship.', '1487070183336-b863922373d4'], // florist stall
+            ['Plants',   'Potted greenery for every corner of the home.',                         '1453904300235-0f2f60b15b5d'], // fiddle-leaf fig
+            ['Dried',    'Everlasting stems and grasses that last for months.',                   '1466692476868-aef1dfb1e735'], // grasses
+            ['Vases',    'Simple vessels to show your stems off.',                                 '1518895949257-7621c3c786d7'], // rose in a glass vase
         ];
         $out = [];
         foreach ($rows as $i => [$name, $desc, $kw]) {
@@ -132,36 +132,46 @@ class PosyFloristSeeder extends Seeder
     /** @return array<int, Product> */
     private function seedProducts(Tenant $tenant, array $categories): array
     {
-        // [name, description, price € cents, loremflickr keywords, badge]
+        // [name, description, price € cents, Unsplash photo ID (hand-verified subject), badge]
         $catalog = [
             'bouquets' => [
-                ['The Wildling',   "A loose, garden-gathered bunch of the season's best — ranunculus, sweet pea, foraged greenery and a few happy surprises.", 6200, 'bouquet,wildflowers', 'Bestseller'],
-                ['Sunday Market',  "A cheerful market bunch of whatever's freshest that morning, wrapped in compostable paper.",                                  4800, 'flowers,bouquet',     ''],
-                ['Blush Garden',   'Soft pinks and creams — peonies, garden roses and a haze of astilbe.',                                                          5600, 'pink,roses',          ''],
-                ['The Brightside', 'Bold and sunny — ranunculus, tulips and pops of craspedia for the grey days.',                                                 5800, 'tulips,colourful',    'New'],
+                ['The Wildling',   "A loose, garden-gathered bunch of the season's best — ranunculus, sweet pea, foraged greenery and a few happy surprises.", 6200, '1490750967868-88aa4486c946', 'Bestseller'], // yellow poppies
+                ['Sunday Market',  "A cheerful market bunch of whatever's freshest that morning, wrapped in compostable paper.",                                  4800, '1457089328109-e5d9bd499191', ''],          // colourful bouquet
+                ['Blush Garden',   'Soft pinks and creams — peonies, garden roses and a haze of astilbe.',                                                          5600, '1521543832500-49e69fb2bea2', ''],          // blush bridal bouquet
+                ['The Brightside', 'Bold and sunny — ranunculus, tulips and pops of craspedia for the grey days.',                                                 5800, '1455659817273-f96807779a8a', 'New'],       // sunflowers
             ],
             'plants' => [
-                ['Olive Tree',      'A young olive in a hand-thrown terracotta pot. Loves a bright, sunny sill.',  4800, 'olive,plant',     ''],
-                ['Trailing Pothos', 'An easy, forgiving trailing plant that thrives in the dimmest corner.',      3200, 'pothos,houseplant', ''],
+                ['Olive Tree',      'A young olive in a hand-thrown terracotta pot. Loves a bright, sunny sill.',  4800, '1459411552884-841db9b3cc2a', ''], // potted plant in terracotta
+                ['Trailing Pothos', 'An easy, forgiving trailing plant that thrives in the dimmest corner.',      3200, '1453904300235-0f2f60b15b5d', ''], // fiddle-leaf fig
             ],
             'dried' => [
-                ['Everlasting Bunch', 'A dried arrangement that lasts for months — bunny tails, statice and feathered grasses.', 3800, 'dried,pampas', ''],
-                ['Wheat & Grasses',   'Golden wheat and soft grasses, simply tied with twine.',                                  3400, 'wheat,dried',  ''],
+                ['Everlasting Bunch', 'A dried arrangement that lasts for months — bunny tails, statice and feathered grasses.', 3800, '1469259943454-aa100abba749', ''], // calla lilies
+                ['Wheat & Grasses',   'Golden wheat and soft grasses, simply tied with twine.',                                  3400, '1466692476868-aef1dfb1e735', ''], // green grasses / seedlings
             ],
             'vases' => [
-                ['Glass Bud Vase',      'A simple, clear hand-blown glass vase for a single stem or two.', 1800, 'glass,vase',  ''],
-                ['Ceramic Footed Bowl', 'A handmade stoneware bowl, perfect for low, loose arrangements.', 3400, 'ceramic,bowl', ''],
+                ['Glass Bud Vase',      'A simple, clear hand-blown glass vase for a single stem or two.', 1800, '1518895949257-7621c3c786d7', ''], // rose in a glass vase
+                ['Ceramic Footed Bowl', 'A handmade stoneware bowl, perfect for low, loose arrangements.', 3400, '1485955900006-10f4d324d411', ''], // succulent in a pot
             ],
+        ];
+
+        // Extra verified-flower shots for the bouquet PDP gallery + fullscreen
+        // viewer, cycled so each product pages through distinct images.
+        $galleryPool = [
+            '1508610048659-a06b669e3321', // rainbow roses
+            '1496062031456-07b8f162a322', // single red rose
+            '1469259943454-aa100abba749', // calla lilies
+            '1487070183336-b863922373d4', // florist stall
         ];
 
         $products = [];
         $lock = 10;
+        $gi = 0;
         foreach ($catalog as $catSlug => $items) {
             $category = $categories[$catSlug] ?? null;
             if (! $category) {
                 continue;
             }
-            foreach ($items as $i => [$name, $desc, $price, $kw, $badge]) {
+            foreach ($items as $i => [$name, $desc, $price, $imgId, $badge]) {
                 $slug = Str::slug($name);
                 $stock = 12 + ($i * 5) % 24;
                 $product = Product::create([
@@ -172,7 +182,7 @@ class PosyFloristSeeder extends Seeder
                     'price_cents'    => $price,
                     'currency'       => 'EUR',
                     'stock_quantity' => $stock,
-                    'image_path'     => $this->flower("demo/posy/{$slug}-1.jpg", $kw, $lock++, 1000, 1100),
+                    'image_path'     => $this->flower("demo/posy/{$slug}-1.jpg", $imgId, $lock++, 1000, 1100),
                     'is_active'      => true,
                 ]);
 
@@ -180,7 +190,8 @@ class PosyFloristSeeder extends Seeder
                 // fullscreen viewer have something to page through.
                 if ($catSlug === 'bouquets') {
                     foreach ([2, 3] as $n) {
-                        if ($path = $this->flower("demo/posy/{$slug}-{$n}.jpg", $kw, $lock++, 1000, 1100)) {
+                        $poolId = $galleryPool[$gi++ % count($galleryPool)];
+                        if ($path = $this->flower("demo/posy/{$slug}-{$n}.jpg", $poolId, $lock++, 1000, 1100)) {
                             ProductImage::create([
                                 'product_id' => $product->id,
                                 'path'       => $path,
@@ -246,7 +257,7 @@ class PosyFloristSeeder extends Seeder
             'title'        => "This week's gathering",
             'slug'         => 'this-week',
             'description'  => 'The freshest bunches in the studio right now, cut to order.',
-            'banner_path'  => $this->flower('demo/posy/coll-this-week.jpg', 'bouquet,flowers', 60, 1600, 720),
+            'banner_path'  => $this->flower('demo/posy/coll-this-week.jpg', '1457089328109-e5d9bd499191', 60, 1600, 720), // colourful bouquet
             'sort_order'   => 0,
             'is_featured'  => true,
             'is_active'    => true,
@@ -259,7 +270,7 @@ class PosyFloristSeeder extends Seeder
             'title'        => 'On sale',
             'slug'         => 'on-sale',
             'description'  => 'A few stems and pots at a gentle price while they last.',
-            'banner_path'  => $this->flower('demo/posy/coll-on-sale.jpg', 'dried,flowers', 61, 1600, 720),
+            'banner_path'  => $this->flower('demo/posy/coll-on-sale.jpg', '1508610048659-a06b669e3321', 61, 1600, 720), // rainbow roses
             'sort_order'   => 1,
             'is_featured'  => true,
             'is_active'    => true,
@@ -320,20 +331,35 @@ class PosyFloristSeeder extends Seeder
      * theme falls back to its own leaf/bloom gradient placeholders rather
      * than an ugly broken image.
      */
-    private function flower(string $storagePath, string $keywords, int $lock, int $width, int $height): ?string
+    /**
+     * Download a curated florist photo by its Unsplash photo ID.
+     *
+     * loremflickr proved unusable for this set — it ANDed comma-separated tags,
+     * returned off-topic, duplicated photos (a cat statue for "wheat"), and
+     * randomly injected a pure-red band into the top of ~1-in-7 images. So
+     * every image here is a HAND-VERIFIED Unsplash photo (stable CDN, no
+     * watermarks, correct florist subject). Picsum is a clean fallback if
+     * Unsplash is unreachable; null → the theme's bloom/leaf gradient.
+     */
+    private function flower(string $storagePath, string $photoId, int $lock, int $width, int $height): ?string
     {
         $disk = Storage::disk('public');
         if ($disk->exists($storagePath)) {
             return $storagePath;
         }
-        $url = "https://loremflickr.com/{$width}/{$height}/" . rawurlencode($keywords) . "?lock={$lock}";
+        $sources = [
+            "https://images.unsplash.com/photo-{$photoId}?w={$width}&h={$height}&fit=crop&q=72",
+            "https://picsum.photos/seed/posy-{$lock}/{$width}/{$height}.jpg",
+        ];
         $ctx = stream_context_create(['http' => ['timeout' => 15, 'follow_location' => 1]]);
-        $bytes = @file_get_contents($url, false, $ctx);
-        if ($bytes === false || strlen($bytes) < 800) {
-            $this->command->warn("  loremflickr unavailable for '{$keywords}' — using theme placeholder");
-            return null;
+        foreach ($sources as $url) {
+            $bytes = @file_get_contents($url, false, $ctx);
+            if ($bytes !== false && strlen($bytes) > 800) {
+                $disk->put($storagePath, $bytes);
+                return $storagePath;
+            }
         }
-        $disk->put($storagePath, $bytes);
-        return $storagePath;
+        $this->command->warn("  no image for {$storagePath} — using theme placeholder");
+        return null;
     }
 }

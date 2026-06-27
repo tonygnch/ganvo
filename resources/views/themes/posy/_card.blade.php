@@ -16,7 +16,7 @@
 
 <a class="bcard reveal" href="/products/{{ $product->slug }}">
     <div class="tape"></div>
-    <div class="pic {{ $imgUrl ? '' : 'bloomph' }}">
+    <div class="pic {{ $imgUrl ? '' : ($product->id % 2 ? 'ph' : 'bloomph') }}">
         @if ($badge)<div class="badge">{{ $badge }}</div>@endif
         @if ($imgUrl)<img src="{{ $imgUrl }}" alt="{{ $product->name }}" loading="lazy">@endif
     </div>

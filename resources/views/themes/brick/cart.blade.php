@@ -48,6 +48,7 @@
         .summary .promo button { border: 2.5px solid var(--ink); background: var(--ink); color: var(--paper); padding: 0 16px; font-family: var(--display); font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; transition: background-color .12s ease, color .12s ease; }
         .summary .promo button:hover { background: var(--accent); color: var(--ink); }
         .summary .promo button:active { transform: translate(2px, 2px); }
+        .summary [hidden] { display: none !important; } /* hidden attr must beat .summary .applied/.r display rules */
         .summary .applied { margin-bottom: 18px; padding: 10px 12px; background: var(--accent); border: 2.5px solid var(--ink); font-family: var(--display); font-size: 11px; font-weight: 700; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
         .summary .applied form button { background: none; border: none; font-family: var(--display); font-size: 10px; font-weight: 700; text-transform: uppercase; cursor: pointer; text-decoration: underline; }
         .summary .applied .code { font-weight: 800; }

@@ -53,6 +53,7 @@
         .summary .promo button { border: 1px solid var(--ink); background: var(--ink); color: var(--paper); padding: 0 16px; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; cursor: pointer; transition: background-color .15s ease; }
         .summary .promo button:hover { background: var(--accent); border-color: var(--accent); }
 
+        .summary [hidden] { display: none !important; } /* hidden attr must beat .summary .applied/.r display rules */
         .summary .applied { margin-bottom: 18px; padding: 10px 12px; background: var(--soft); border-left: 2px solid var(--accent); font-size: 12px; letter-spacing: .04em; display: flex; justify-content: space-between; align-items: center; }
         .summary .applied form button { background: none; border: none; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); cursor: pointer; transition: color .15s ease; }
         .summary .applied form button:hover { color: var(--accent); }

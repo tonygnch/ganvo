@@ -219,12 +219,14 @@ return [
 
     'cart' => [
         'title' => 'Твоята кошница',
+        'heading_html' => 'Твоята <em>кошница</em>',
         'your_selection' => 'Твоят избор',
         'item_count_one' => ':count артикул готов за поръчка.',
         'item_count_many' => ':count артикула готови за поръчка.',
         'empty_title' => 'Кошницата ти е празна',
         'empty_sub' => 'Изглежда още не си добавил нищо.',
         'start_shopping' => 'Започни пазаруване →',
+        'continue_shopping' => 'Продължи пазаруването',
         'unit_each' => ':price бр.',
         'decrease' => 'Намали количеството',
         'increase' => 'Увеличи количеството',

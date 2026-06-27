@@ -220,12 +220,14 @@ return [
 
     'cart' => [
         'title' => 'Your cart',
+        'heading_html' => 'Your <em>Cart</em>',
         'your_selection' => 'Your selection',
         'item_count_one' => ':count item ready to check out.',
         'item_count_many' => ':count items ready to check out.',
         'empty_title' => 'Your cart is empty',
         'empty_sub' => "Looks like you haven't added anything yet.",
         'start_shopping' => 'Start shopping →',
+        'continue_shopping' => 'Continue shopping',
         'unit_each' => ':price each',
         'decrease' => 'Decrease quantity',
         'increase' => 'Increase quantity',

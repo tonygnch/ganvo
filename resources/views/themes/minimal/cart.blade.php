@@ -32,6 +32,7 @@
         .summary .promo { display: flex; gap: 8px; margin-bottom: 8px; }
         .summary .promo input { flex: 1; border: 1.5px solid var(--line); border-radius: 99px; padding: 11px 16px; font-family: inherit; font-size: 13px; background: var(--bg); }
         .summary .promo button { background: var(--accent); color: #fff; border: 0; border-radius: 99px; padding: 0 18px; font-weight: 600; font-size: 13px; cursor: pointer; }
+        .summary [hidden] { display: none !important; } /* hidden attr must beat .summary .applied/.r display rules */
         .summary .applied { display: flex; justify-content: space-between; align-items: center; background: var(--blush); border-radius: 14px; padding: 10px 14px; font-size: 12px; margin-bottom: 8px; }
         .summary .applied .code { font-weight: 700; color: var(--accent); }
         .summary .applied form button { background: none; border: none; color: var(--muted); font-size: 11px; cursor: pointer; }

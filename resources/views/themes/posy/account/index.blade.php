@@ -24,7 +24,7 @@
         .order .head { display: flex; flex-wrap: wrap; gap: 18px; justify-content: space-between; align-items: center; padding: 18px 22px; background: var(--soft); font-size: 13px; }
         .order .head .k { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
         .order .head b { font-family: var(--display); font-size: 16px; font-weight: 400; }
-        .order .head .total b { font-family: var(--serif); color: var(--accent); }
+        .order .head .total b { font-family: var(--body); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--accent); }
         .order .head .status { color: var(--accent); font-weight: 600; font-size: 12px; text-transform: uppercase; }
         .order .head .status.delivered { color: var(--muted); }
         .order .body { display: flex; gap: 18px; padding: 20px 22px; align-items: center; flex-wrap: wrap; }

@@ -65,16 +65,16 @@
         .ord-item { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; padding: 16px 26px; border-bottom: 1px solid var(--line); }
         .ord-item .name { font-family: var(--display); font-weight: 400; font-size: 18px; line-height: 1.2; color: var(--ink); }
         .ord-item .meta { color: var(--muted); font-size: 13px; margin-top: 3px; }
-        .ord-item .pr { font-family: var(--serif); font-weight: 500; font-size: 18px; white-space: nowrap; color: var(--accent); }
+        .ord-item .pr { font-family: var(--body); font-weight: 600; font-size: 18px; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--accent); }
 
         .ord-tot { padding: 20px 26px 24px; background: var(--soft); }
         .ord-tot .row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; font-size: 14px; color: var(--muted); }
-        .ord-tot .row .num { font-weight: 600; color: var(--ink); font-family: var(--serif); font-size: 16px; }
+        .ord-tot .row .num { font-weight: 600; color: var(--ink); font-family: var(--body); font-variant-numeric: tabular-nums; font-size: 16px; }
         .ord-tot .row.disc .num { color: var(--accent); }
         .ord-tot .row code { background: var(--card); border: 1px solid var(--line); border-radius: 5px; padding: 0 6px; font-family: var(--serif); font-size: 13px; color: var(--ink); }
         .ord-tot .grand { padding-top: 16px; margin-top: 12px; border-top: 1px solid var(--line); }
         .ord-tot .grand .label { font-family: var(--display); font-weight: 400; font-size: 18px; color: var(--ink); }
-        .ord-tot .grand .num { font-family: var(--serif); font-weight: 600; font-size: 26px; color: var(--accent); }
+        .ord-tot .grand .num { font-family: var(--body); font-weight: 700; font-size: 27px; font-variant-numeric: tabular-nums; color: var(--accent); }
 
         .ord-actions { display: flex; gap: 14px; justify-content: center; margin-top: 36px; flex-wrap: wrap; }
 

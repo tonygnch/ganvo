@@ -30,6 +30,7 @@
         .collage { position: relative; height: 0; }
         .citem { position: absolute; border-radius: 6px; box-shadow: 0 20px 44px -22px rgba(40, 50, 31, .5); background: var(--card); padding: 10px 10px 14px; }
         .citem .pic { border-radius: 3px; overflow: hidden; }
+        .citem .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .citem .cap { font-family: var(--serif); font-style: italic; font-size: 15px; text-align: center; margin-top: 8px; min-height: 1.2em; }
         .c1 { width: 190px; left: 2%; top: 30px; transform: rotate(-7deg); } .c1 .pic { height: 200px; }
         .c2 { width: 160px; right: 3%; top: 0; transform: rotate(6deg); } .c2 .pic { height: 170px; }
@@ -47,6 +48,40 @@
         .home-empty { text-align: center; padding: 70px 24px; font-family: var(--serif); font-style: italic; font-size: 22px; color: var(--muted); }
 
         @media (max-width: 1000px) { .collage { display: none; } }
+
+        /* category pills — replaces the generic search/sort filter toolbar */
+        .pills { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 28px 0 42px; }
+        .pills .pill { border: 1px solid var(--line); background: var(--card); border-radius: 99px; padding: 10px 22px; font-size: 13px; font-weight: 600; color: var(--ink); transition: background-color .2s ease, color .2s ease, border-color .2s ease; }
+        .pills .pill.on, .pills .pill:hover { background: var(--accent); border-color: var(--accent); color: #fbfcf5; }
+
+        /* ===== Collection rails — soft Posy restyle of the shared .cs-* partial.
+           Each featured collection becomes a soft-sage panel with cream polaroid
+           cards. Selectors are `.wrap `-prefixed to beat the partial's own
+           later-in-source `.cs-*` rules. ===== */
+        /* margin-top separates the first rail from the seasonal strip above
+           (the old section heading used to provide this gap); the same top
+           margin spaces the rails from each other via collapse. */
+        .wrap .cs-strip { position: relative; margin: 64px 0 0; padding: 40px 36px; border-radius: 24px; background: var(--soft); overflow: hidden; }
+        /* Drop the partial's full-bleed banner backdrop — as a faint ghost behind
+           the cards it just muddies the soft panel. The cream cards (with their
+           own flower photos) carry the imagery. */
+        .wrap .cs-banner { display: none; }
+        .wrap .cs-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin: 0 0 26px; flex-wrap: wrap; }
+        .wrap .cs-head h2 { font-family: var(--display); font-weight: 400; font-size: clamp(26px, 3vw, 40px); line-height: 1.05; }
+        .wrap .cs-head p { color: var(--muted); font-size: 14px; max-width: 50ch; margin-top: 4px; }
+        .wrap .cs-view-all { font-size: 13px; font-weight: 600; color: var(--accent); border: 1px solid var(--accent); border-radius: 99px; padding: 10px 20px; background: var(--card); white-space: nowrap; transition: background-color .2s ease, color .2s ease; }
+        .wrap .cs-view-all:hover { background: var(--accent); color: #fbfcf5; }
+        .wrap .cs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 22px; }
+        .wrap .cs-card { display: flex; flex-direction: column; color: inherit; background: var(--card); border-radius: 6px; padding: 10px 10px 16px; box-shadow: 0 14px 32px -22px rgba(40, 50, 31, .4); transition: transform .3s cubic-bezier(.19, .7, .16, 1), box-shadow .3s ease; }
+        .wrap .cs-card:hover { transform: translateY(-5px); box-shadow: 0 26px 48px -26px rgba(40, 50, 31, .5); }
+        .wrap .cs-img { aspect-ratio: 1 / 1; border-radius: 3px; overflow: hidden; background: var(--bloom); margin-bottom: 12px; }
+        .wrap .cs-card:nth-child(even) .cs-img { background: var(--leaf); }
+        .wrap .cs-img img { width: 100%; height: 100%; object-fit: cover; }
+        .wrap .cs-meta { display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; padding: 0; }
+        .wrap .cs-name { font-family: var(--display); font-weight: 400; font-size: 17px; line-height: 1.2; }
+        .wrap .cs-price { font-family: var(--body); font-weight: 600; font-size: 18px; font-variant-numeric: tabular-nums; color: var(--accent); }
+        @media (prefers-reduced-motion: reduce) { .wrap .cs-card, .wrap .cs-card:hover { transform: none; } }
+        @media (max-width: 540px) { .wrap .cs-strip { padding: 28px 22px; } .wrap .cs-grid { grid-template-columns: repeat(2, 1fr); } }
     </style>
 
     <main>
@@ -90,10 +125,7 @@
         <div class="wrap">
             {{-- Curated collections (only when the merchant features them) --}}
             @if (! $isFiltered && (isset($featuredCollections) ? $featuredCollections->isNotEmpty() : false))
-                <div class="sec-head reveal">
-                    <span class="kicker">{{ __('site.storefront.collections.heading') }}</span>
-                    <h2>{{ __('site.storefront.collections.heading') }}</h2>
-                </div>
+                {{-- Each rail self-titles, so no extra section heading here. --}}
                 @include('storefront.partials.collection-strips')
             @endif
 
@@ -103,7 +135,15 @@
                 <h2>{{ __('site.storefront.shop_all.h2') }}</h2>
             </div>
 
-            @include('storefront.partials.catalog-controls')
+            {{-- Posy category pills (replaces the generic search/sort/price toolbar). --}}
+            @if ($categories->isNotEmpty())
+                <div class="pills reveal">
+                    <a href="/" class="pill {{ ! ($filters['category'] ?? null) ? 'on' : '' }}">{{ __('site.storefront.controls.category_all') }}</a>
+                    @foreach ($categories as $cat)
+                        <a href="/?category={{ $cat->slug }}" class="pill {{ ($filters['category'] ?? null) === $cat->slug ? 'on' : '' }}">{{ $cat->name }}</a>
+                    @endforeach
+                </div>
+            @endif
 
             @if ($products->isEmpty())
                 <div class="home-empty reveal">{{ __('site.storefront.no_products') }}</div>
