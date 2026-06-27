@@ -40,6 +40,11 @@ class ThemeRegistry
                 'description' => 'Loud neo-brutalist — thick black borders, hard offset shadows, acid-lime accent, Lexend Mega display. Built for streetwear, sneakers, records, and bold DTC brands.',
                 'screenshot' => '/images/themes/brick.svg',
             ],
+            'posy' => [
+                'name' => 'Posy',
+                'description' => 'Soft seasonal florist — sage and cream palette, DM Serif Display with Cormorant italics, polaroid cards and washi-tape details. Built for florists, plants, gifting, and gentle lifestyle brands.',
+                'screenshot' => '/images/themes/posy.svg',
+            ],
         ];
     }
 
