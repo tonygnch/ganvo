@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Ember theme preview">
+  <rect width="400" height="300" fill="#f2eadc"/>
+  <!-- ticker -->
+  <rect width="400" height="18" fill="#22150d"/>
+  <text x="14" y="13" font-family="'Space Mono',monospace" font-size="8" letter-spacing="1" fill="#e5d8c4">ROASTED TO ORDER &#183; FREE SHIP OVER &#8364;40 &#183; SHIPS IN 48H</text>
+  <!-- header -->
+  <line x1="0" y1="58" x2="400" y2="58" stroke="#cdb999" stroke-width="1"/>
+  <text x="24" y="46" font-family="'Spectral',serif" font-weight="600" font-size="23" fill="#2c1e15">Ember</text>
+  <text x="226" y="43" font-family="'Hanken Grotesk',sans-serif" font-size="9" fill="#2c1e15">Single Origin&#160;&#160;Blends&#160;&#160;Equipment</text>
+  <circle cx="372" cy="40" r="8" fill="#b0542a"/>
+  <text x="369" y="43" font-family="'Hanken Grotesk',sans-serif" font-size="8" fill="#fdf8ef">2</text>
+  <!-- hero -->
+  <text x="200" y="96" text-anchor="middle" font-family="'Space Mono',monospace" font-size="8" letter-spacing="2" fill="#b0542a">ROASTED TO ORDER</text>
+  <text x="200" y="128" text-anchor="middle" font-family="'Spectral',serif" font-weight="600" font-size="29" fill="#2c1e15">Coffee, fresh</text>
+  <text x="200" y="158" text-anchor="middle" font-family="'Spectral',serif" font-style="italic" font-size="29" fill="#b0542a">from the drum.</text>
+  <rect x="154" y="173" width="92" height="22" rx="3" fill="#b0542a"/>
+  <text x="200" y="188" text-anchor="middle" font-family="'Hanken Grotesk',sans-serif" font-size="9" font-weight="600" fill="#fdf8ef">Shop coffee</text>
+  <!-- coffee-bag cards -->
+  <g>
+    <rect x="24" y="216" width="108" height="80" rx="4" fill="#fdf8ef" stroke="#cdb999"/>
+    <rect x="36" y="225" width="84" height="42" rx="2" fill="#b0542a"/>
+    <text x="36" y="283" font-family="'Spectral',serif" font-size="10" fill="#2c1e15">Yirgacheffe</text>
+    <text x="36" y="294" font-family="'Space Mono',monospace" font-size="8" fill="#8a7257">&#8364;18.50</text>
+  </g>
+  <g>
+    <rect x="146" y="216" width="108" height="80" rx="4" fill="#fdf8ef" stroke="#cdb999"/>
+    <rect x="158" y="225" width="84" height="42" rx="2" fill="#6b4326"/>
+    <text x="158" y="283" font-family="'Spectral',serif" font-size="10" fill="#2c1e15">House Espresso</text>
+    <text x="158" y="294" font-family="'Space Mono',monospace" font-size="8" fill="#8a7257">&#8364;16.00</text>
+  </g>
+  <g>
+    <rect x="268" y="216" width="108" height="80" rx="4" fill="#fdf8ef" stroke="#cdb999"/>
+    <rect x="280" y="225" width="84" height="42" rx="2" fill="#22150d"/>
+    <text x="280" y="283" font-family="'Spectral',serif" font-size="10" fill="#2c1e15">Colombia Huila</text>
+    <text x="280" y="294" font-family="'Space Mono',monospace" font-size="8" fill="#8a7257">&#8364;17.50</text>
+  </g>
+</svg>

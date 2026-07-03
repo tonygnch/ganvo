@@ -129,6 +129,55 @@ return [
             'eyebrow' => 'The whole collection',
             'h2' => 'Shop everything',
         ],
+        // Forma theme — single-product hardware storefront.
+        'forma' => [
+            'related_eyebrow' => 'Complete the kit',
+        ],
+        // Kiln theme — studio/ceramics editorial sections (home only).
+        'kiln' => [
+            'hero_eyebrow'    => 'Hand-thrown studio ceramics',
+            'hero_lede'       => 'A small collection of wheel-thrown stoneware — released in limited runs, each piece quietly different from the last.',
+            'index_label'     => 'Selected work',
+            'meta_1_b'        => 'Wheel-thrown',
+            'meta_1_t'        => 'in small batches',
+            'meta_2_b'        => 'Food-safe',
+            'meta_2_t'        => 'glazes throughout',
+            'meta_3_b'        => 'Limited',
+            'meta_3_t'        => 'seasonal runs',
+            'meta_4_b'        => 'Wrapped',
+            'meta_4_t'        => 'by hand',
+            'recent_h2'       => 'Recent work',
+            'recent_more'     => 'All pieces →',
+            'maker_kicker'    => 'From the studio',
+            'maker_quote'     => '“I make things to be used — chipped, stained, lived with. A pot that gathers a little history is doing exactly what it should.”',
+            'maker_sign'      => 'Hand-thrown · One of a kind',
+            'process_kicker'  => 'The process',
+            'process_h3'      => 'Thrown, trimmed, glazed,',
+            'process_h3_em'   => 'fired',
+            'process_h3_tail' => '— twice.',
+            'process_p'       => 'Every piece passes through the same slow rhythm over a fortnight. Because each is shaped by hand, no two will ever be identical.',
+            'step_1_b'        => 'Thrown',
+            'step_1_p'        => 'On the wheel, in small daily batches.',
+            'step_2_b'        => 'Trimmed & dried',
+            'step_2_p'        => 'Footed, refined, left to firm up.',
+            'step_3_b'        => 'Glazed & fired',
+            'step_3_p'        => 'Bisque, hand-glazed, fired to 1260°C.',
+            'process_cta'     => 'Shop the work',
+            'news_h3'         => 'Be first to the next',
+            'news_h3_em'      => 'release',
+            'news_p'          => 'New runs are small and tend to sell out. We’ll let you know before they go live.',
+            'related_eyebrow' => 'From the same shelf',
+            'pill_wheel'      => 'Wheel-thrown',
+            'pill_stoneware'  => 'Stoneware',
+            'pill_unique'     => 'One of a kind',
+        ],
+        // Sediment theme — natural-wine cellar accents.
+        'wick' => [
+            'related_eyebrow' => 'Burns well beside',
+            'pill_low'        => 'Small-batch soy',
+            'pill_poured'     => 'Poured by hand',
+            'pill_hand'       => 'Cotton wicks',
+        ],
         'lookbook' => [
             'title' => 'The Lookbook',
             'hint' => 'Scroll to explore →',
@@ -215,6 +264,14 @@ return [
         // Variant-related cart messages
         'cart' => [
             'pick_a_variant' => 'Please choose an option before adding to your cart.',
+        ],
+        // Ember theme — specialty-coffee-roaster copy
+        'ember' => [
+            'related_eyebrow' => 'Pairs well with',
+            'roast_label' => 'Roast level',
+            'pill_origin' => 'Single-origin',
+            'pill_whole_bean' => 'Whole bean',
+            'pill_small_batch' => 'Small-batch',
         ],
     ],
 

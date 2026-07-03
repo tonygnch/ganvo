@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300" role="img" aria-label="Kiln theme preview">
+  <defs>
+    <linearGradient id="kStone" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#d2c8b7"/><stop offset="1" stop-color="#b3a892"/>
+    </linearGradient>
+    <linearGradient id="kStone2" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#c9bda8"/><stop offset="1" stop-color="#a89a82"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="#ece8df"/>
+  <!-- ticker -->
+  <rect width="400" height="18" fill="#26241f"/>
+  <text x="14" y="13" font-family="'Hanken Grotesk',sans-serif" font-size="8" letter-spacing="1.4" fill="#d8d2c3">HAND-THROWN IN SMALL BATCHES &#183; EACH PIECE ONE OF A KIND</text>
+  <!-- header -->
+  <line x1="0" y1="58" x2="400" y2="58" stroke="#d7d1c3" stroke-width="1"/>
+  <text x="24" y="46" font-family="'Schibsted Grotesk',sans-serif" font-weight="700" font-size="21" fill="#33312b">Kiln</text>
+  <text x="244" y="43" font-family="'Hanken Grotesk',sans-serif" font-size="9" fill="#33312b">Tableware&#160;&#160;Vases&#160;&#160;Decor</text>
+  <circle cx="372" cy="40" r="8" fill="#a9774a"/>
+  <text x="369" y="43" font-family="'Hanken Grotesk',sans-serif" font-size="8" fill="#f6f3ec">1</text>
+  <!-- hero -->
+  <text x="200" y="96" text-anchor="middle" font-family="'Hanken Grotesk',sans-serif" font-size="8" letter-spacing="2.5" fill="#a9774a">THE STUDIO</text>
+  <text x="200" y="128" text-anchor="middle" font-family="'Schibsted Grotesk',sans-serif" font-weight="600" font-size="28" fill="#33312b">Made by hand,</text>
+  <text x="200" y="158" text-anchor="middle" font-family="'Newsreader',serif" font-style="italic" font-size="29" fill="#a9774a">made to use.</text>
+  <rect x="156" y="173" width="88" height="22" rx="11" fill="#a9774a"/>
+  <text x="200" y="188" text-anchor="middle" font-family="'Hanken Grotesk',sans-serif" font-size="9" font-weight="600" fill="#f6f3ec">Shop the studio</text>
+  <!-- ceramic product cards -->
+  <g>
+    <rect x="24" y="216" width="108" height="80" rx="6" fill="#f6f3ec" stroke="#d7d1c3"/>
+    <rect x="36" y="225" width="84" height="42" rx="4" fill="url(#kStone)"/>
+    <text x="36" y="283" font-family="'Schibsted Grotesk',sans-serif" font-weight="600" font-size="10" fill="#33312b">Stoneware Mug</text>
+    <text x="36" y="294" font-family="'Newsreader',serif" font-size="10" fill="#a9774a">&#8364;28</text>
+  </g>
+  <g>
+    <rect x="146" y="216" width="108" height="80" rx="6" fill="#f6f3ec" stroke="#d7d1c3"/>
+    <rect x="158" y="225" width="84" height="42" rx="4" fill="url(#kStone2)"/>
+    <text x="158" y="283" font-family="'Schibsted Grotesk',sans-serif" font-weight="600" font-size="10" fill="#33312b">Tall Vessel</text>
+    <text x="158" y="294" font-family="'Newsreader',serif" font-size="10" fill="#a9774a">&#8364;58</text>
+  </g>
+  <g>
+    <rect x="268" y="216" width="108" height="80" rx="6" fill="#f6f3ec" stroke="#d7d1c3"/>
+    <rect x="280" y="225" width="84" height="42" rx="4" fill="url(#kStone)"/>
+    <text x="280" y="283" font-family="'Schibsted Grotesk',sans-serif" font-weight="600" font-size="10" fill="#33312b">Pasta Bowl</text>
+    <text x="280" y="294" font-family="'Newsreader',serif" font-size="10" fill="#a9774a">&#8364;36</text>
+  </g>
+</svg>

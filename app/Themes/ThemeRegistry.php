@@ -45,6 +45,26 @@ class ThemeRegistry
                 'description' => 'Soft seasonal florist — sage and cream palette, DM Serif Display with Cormorant italics, polaroid cards and washi-tape details. Built for florists, plants, gifting, and gentle lifestyle brands.',
                 'screenshot' => '/images/themes/posy.svg',
             ],
+            'ember' => [
+                'name' => 'Ember',
+                'description' => 'Warm specialty coffee — roasted terracotta on cream, Spectral serif with Space Mono detailing, tactile café layouts. Built for roasters, tea, bakeries, and warm artisan brands.',
+                'screenshot' => '/images/themes/ember.svg',
+            ],
+            'kiln' => [
+                'name' => 'Kiln',
+                'description' => 'Handmade ceramics — muted clay and stone tones, Schibsted Grotesk with Newsreader serif, soft stone-gradient cards. Built for pottery, homeware, craft, and slow-made goods.',
+                'screenshot' => '/images/themes/kiln.svg',
+            ],
+            'wick' => [
+                'name' => 'Wick',
+                'description' => 'Candlelit apothecary — near-black canvas warmed by amber, Fraunces serif with mono batch labels. Built for candles, home fragrance, apothecary, and moody artisan brands.',
+                'screenshot' => '/images/themes/wick.svg',
+            ],
+            'forma' => [
+                'name' => 'Forma',
+                'description' => 'Single-product showcase — cobalt accent on light grey, Sora geometric sans, configurator-style hero with spec rows. Built for one hero product: gadgets, bottles, design objects.',
+                'screenshot' => '/images/themes/forma.svg',
+            ],
         ];
     }
 
