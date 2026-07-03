@@ -33,6 +33,8 @@
         .hero { position: relative; display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; padding: 54px 0 0; min-height: 80vh; }
         /* ghost batch number — an oversized outlined numeral sunk into the dark */
         .hero::before { content: "№01"; position: absolute; right: -3%; bottom: -8%; z-index: 0; pointer-events: none; font-family: var(--display); font-weight: 800; letter-spacing: -.05em; line-height: 1; font-size: clamp(150px, 24vw, 320px); color: transparent; -webkit-text-stroke: 1px rgba(217, 154, 78, .12); }
+        .hero.no-mark::before { display: none; }
+        .hero .stage.no-flame .glow, .hero .stage.no-flame .flame, .hero .stage.no-flame .votive::before { display: none; }
         .hero .lead { position: relative; z-index: 3; }
         .hero .lead .k { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--accent); text-transform: uppercase; }
         .hero .lead .k::before { content: "// "; color: var(--faint); }
@@ -173,7 +175,7 @@
     <main>
         @if (! $isFiltered)
             <div class="wrap">
-                <section class="hero">
+                <section class="hero {{ $theme->on('watermark') ? '' : 'no-mark' }}">
                     <div class="lead">
                         <div class="k reveal">{{ $csHero['title'] !== '' ? $csHero['title'] : __('site.storefront.hero.eyebrow', ['year' => date('Y')]) }}</div>
                         <h1 class="reveal s1">@if ($csHero['subtitle'] !== ''){{ $csHero['subtitle'] }}@else{!! __('site.storefront.hero.headline', ['tenant' => '<span class="o">' . e($tenant->name) . '</span>']) !!}@endif</h1>
@@ -183,7 +185,7 @@
                             <a class="btn outline" href="#shop">{{ __('site.storefront.hero.cta_secondary') }}</a>
                         </div>
                     </div>
-                    <div class="stage reveal s1" aria-hidden="true">
+                    <div class="stage reveal s1 {{ $theme->on('flame') ? '' : 'no-flame' }}" aria-hidden="true">
                         <div class="glow"></div>
                         <div class="halo h1"></div>
                         <div class="halo h2"></div>
@@ -193,18 +195,21 @@
                             <div class="cap"></div>
                             @if ($heroImageUrl)<img src="{{ $heroImageUrl }}" alt="">@endif
                         </div>
-                        <div class="label">
-                            @if ($heroProdCat)<div class="ln">{{ $heroProdCat }}</div>@else<div class="ln">{{ $tenant->name }}</div>@endif
-                            <h3>{{ $heroProduct->name ?? $tenant->name }}</h3>
-                            <div class="div"></div>
-                            <div class="yr">BATCH № {{ date('y') }}</div>
-                            <div class="ln" style="margin-top: 6px;">{{ __('site.storefront.shop_all.eyebrow') }}</div>
-                        </div>
+                        @if ($theme->on('jar_label'))
+                            <div class="label">
+                                @if ($heroProdCat)<div class="ln">{{ $heroProdCat }}</div>@else<div class="ln">{{ $tenant->name }}</div>@endif
+                                <h3>{{ $heroProduct->name ?? $tenant->name }}</h3>
+                                <div class="div"></div>
+                                <div class="yr">{{ $theme->label('batch_numerals') }} № {{ date('y') }}</div>
+                                <div class="ln" style="margin-top: 6px;">{{ $theme->copy('label_note') }}</div>
+                            </div>
+                        @endif
                     </div>
                 </section>
             </div>
 
             {{-- Facts band — bench notes in mono, not a free-shipping strip. --}}
+            @if ($theme->on('facts_strip'))
             <div class="wrap">
                 <div class="strip reveal">
                     <span><b>{{ $products->total() }}</b> {{ __('site.storefront.footer.all_products') }}</span>
@@ -213,6 +218,7 @@
                     <span><b>{{ __('site.storefront.value_props.checkout_title') }}</b></span>
                 </div>
             </div>
+            @endif
         @endif
 
         <div class="wrap">
@@ -239,7 +245,7 @@
             @if ($products->isEmpty())
                 <div class="home-empty reveal">{{ __('site.storefront.no_products') }}</div>
             @else
-                <div class="blooms">
+                <div class="blooms {{ $theme->on('batch_numerals') ? '' : 'no-batch' }}" style="--batch-label: '{{ str_replace(['\\', '\''], '', $theme->label('batch_numerals')) }} '">
                     @foreach ($products as $product)
                         @include('themes.wick._card', ['product' => $product, 'badge' => null])
                     @endforeach
@@ -249,24 +255,26 @@
 
             @if (! $isFiltered)
                 {{-- Editorial ticket — the manifesto, framed two-up. --}}
-                <section class="explain reveal">
-                    <div class="art"><div class="stamp">{{ $tenant->name }}<br>★</div></div>
-                    <div class="txt">
-                        <div class="k">{{ __('site.storefront.featured.eyebrow') }}</div>
-                        <h3>{!! __('site.storefront.hero.headline', ['tenant' => '<em>' . e($tenant->name) . '</em>']) !!}</h3>
-                        <p>{{ __('site.storefront.hero.sub') }}</p>
-                        <p>{{ __('site.storefront.footer.tagline') }}</p>
-                        <div><a class="btn outline" href="#shop">{{ __('site.storefront.hero.cta_secondary') }}</a></div>
-                    </div>
-                </section>
+                @if ($theme->on('explain'))
+                    <section class="explain reveal">
+                        <div class="art"><div class="stamp">{{ $tenant->name }}<br>★</div></div>
+                        <div class="txt">
+                            <div class="k">{{ __('site.storefront.featured.eyebrow') }}</div>
+                            <h3>{!! __('site.storefront.hero.headline', ['tenant' => '<em>' . e($tenant->name) . '</em>']) !!}</h3>
+                            <p>{{ __('site.storefront.hero.sub') }}</p>
+                            <p>{{ $theme->copy('explain_body') }}</p>
+                            <div><a class="btn outline" href="#shop">{{ __('site.storefront.hero.cta_secondary') }}</a></div>
+                        </div>
+                    </section>
+                @endif
 
                 {{-- Discovery set — curated sampler on a surface panel. --}}
-                @if ($products->isNotEmpty())
+                @if ($products->isNotEmpty() && $theme->on('discovery_case'))
                     <section class="case reveal">
                         <div>
                             <div class="k">{{ __('site.storefront.featured.eyebrow') }}</div>
                             <h3>{{ __('site.storefront.featured.h2') }}</h3>
-                            <p>{{ __('site.storefront.promo.p') }}</p>
+                            <p>{{ $theme->copy('case_body') }}</p>
                             <a class="btn" href="#shop">{{ __('site.storefront.featured.browse_all') }}</a>
                         </div>
                         <div class="grid6" aria-hidden="true">
@@ -282,14 +290,16 @@
                 @endif
 
                 {{-- The dropping list — newsletter. --}}
+                @if ($theme->on('news_band'))
                 <section class="news reveal">
                     <h3>{!! __('site.storefront.promo.h2_prefix', ['tenant' => '<em>' . e($tenant->name) . '</em>']) !!}</h3>
-                    <p>{{ __('site.storefront.promo.p') }}</p>
+                    <p>{{ $theme->copy('news_body') }}</p>
                     <form onsubmit="return false">
                         <input type="email" placeholder="{{ __('site.storefront.footer.newsletter_placeholder') }}" aria-label="{{ __('site.storefront.footer.newsletter_placeholder') }}">
                         <button type="submit" class="btn">{{ __('site.storefront.footer.subscribe') }}</button>
                     </form>
                 </section>
+                @endif
             @endif
         </div>
     </main>

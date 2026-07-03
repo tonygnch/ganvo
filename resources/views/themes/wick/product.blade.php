@@ -184,7 +184,7 @@
                     <h2>{{ __('site.storefront.featured.browse_all') }}</h2>
                     <a class="more" href="/">{{ __('site.storefront.featured.browse_all') }} →</a>
                 </div>
-                <div class="blooms">
+                <div class="blooms {{ $theme->on('batch_numerals') ? '' : 'no-batch' }}" style="--batch-label: '{{ str_replace(['\\', '\''], '', $theme->label('batch_numerals')) }} '">
                     @foreach ($related as $rp)
                         @include('themes.wick._card', ['product' => $rp, 'badge' => null])
                     @endforeach

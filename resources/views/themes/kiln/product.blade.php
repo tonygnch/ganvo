@@ -132,7 +132,7 @@
 
                     @if ($primaryCategory)<div class="cat">{{ $primaryCategory->name }}</div>@endif
                     <h1>{{ $product->name }}</h1>
-                    <div class="placard">{{ __('site.storefront.kiln.maker_sign') }}</div>
+                    @if ($theme->on('placard'))<div class="placard">{{ $theme->label('placard') }}</div>@endif
                     <div class="price"><span data-vp-price>@money($product->price_cents)</span></div>
 
                     @if (! $product->hasVariants() && $product->stock_quantity > 0)

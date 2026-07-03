@@ -61,7 +61,7 @@
             @if ($products->isEmpty())
                 <div class="coll-empty reveal">{{ __('site.storefront.no_products') }}</div>
             @else
-                <div class="blooms">
+                <div class="blooms {{ $theme->on('batch_numerals') ? '' : 'no-batch' }}" style="--batch-label: '{{ str_replace(['\\', '\''], '', $theme->label('batch_numerals')) }} '">
                     @foreach ($products as $product)
                         @include('themes.wick._card', ['product' => $product, 'badge' => null])
                     @endforeach

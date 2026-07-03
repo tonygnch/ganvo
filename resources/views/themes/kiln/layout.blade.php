@@ -86,8 +86,12 @@
         .ph::after, .bloomph::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-radial-gradient(circle at 62% 40%, color-mix(in srgb, var(--deep) 7%, transparent) 0 1px, transparent 1px 24px); }
         .ph img, .bloomph img, .bcard .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        /* signature ornament — concentric clay rings, a pot seen from above */
+        /* signature ornament — concentric clay rings, a pot seen from above.
+           The whole family (marks + the hero ring field) switches off with the
+           merchant's "thrown_rings" motif via a body-level no-rings class. */
         .rings-mark { width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0; background: repeating-radial-gradient(circle at 50% 46%, color-mix(in srgb, var(--accent) 80%, transparent) 0 1px, transparent 1px 8px); opacity: .55; }
+        .no-rings .rings-mark { display: none; }
+        .no-rings .khero::before { display: none; }
 
         /* consistent focus treatment for form fields across every Kiln page */
         .field input:focus, .field select:focus, .field textarea:focus,
@@ -234,8 +238,9 @@
             .nav .right .lbl { display: none; }
         }
     </style>
+    {!! $theme->headExtras() !!}
 </head>
-<body>
+<body class="{{ $theme->on('thrown_rings') ? '' : 'no-rings' }}">
     @php
         $csAnnouncement = $store->announcementBar();
         $csNavMenu = $store->navMenuItems();

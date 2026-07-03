@@ -35,6 +35,7 @@
         .board { border: 2px solid var(--ink); background: var(--card); border-radius: 4px; padding: 40px 44px; position: relative; box-shadow: 8px 8px 0 var(--soft2), 0 34px 60px -38px rgba(44, 30, 21, .55); }
         .board::before { content: ""; position: absolute; inset: 8px; border: 1px solid var(--rule); border-radius: 2px; pointer-events: none; }
         .board::after { content: ""; position: absolute; top: -32px; right: 30px; width: 112px; height: 102px; border: 3px solid var(--accent); border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--accent), inset 3px 4px 0 -1px color-mix(in srgb, var(--accent) 55%, transparent); opacity: .11; transform: rotate(-7deg); pointer-events: none; }
+        .board.no-stain::after { display: none; }
         .board .bh { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding-bottom: 14px; margin-bottom: 8px; }
         .board .bh h2 { font-family: var(--display); font-weight: 700; font-size: 28px; letter-spacing: -.015em; }
         /* the "roast schedule" chip — hand-stamped: tilted + overprint mask */
@@ -136,15 +137,15 @@
                         </div>
                     </div>
 
-                    @if ($boardRows->isNotEmpty())
-                        <div class="board reveal s2">
+                    @if ($boardRows->isNotEmpty() && $theme->on('menu_board'))
+                        <div class="board reveal s2 {{ $theme->on('ring_stain') ? '' : 'no-stain' }}">
                             <div class="bh">
-                                <h2>{{ __('site.storefront.shop_all.h2') }}</h2>
+                                <h2>{{ $theme->copy('board_heading') }}</h2>
                                 <span class="when">{{ __('site.storefront.shop_all.eyebrow') }}</span>
                             </div>
                             @foreach ($boardRows as $cp)
                                 @php
-                                    // Roast-level pips — deterministic per product so the
+                                    // Level pips — deterministic per product so the
                                     // board reads the same on every visit (2–4 of 5 lit).
                                     $roastOn = ($cp->id % 3) + 2;
                                 @endphp
@@ -152,9 +153,11 @@
                                     <div class="left">
                                         <div class="nm">{{ $cp->name }}</div>
                                         @if ($cp->description)<div class="nt">{{ \Illuminate\Support\Str::limit(strip_tags($cp->description), 48) }}</div>@endif
-                                        <div class="roast" role="img" aria-label="{{ __('site.storefront.ember.roast_label') }} {{ $roastOn }}/5">
-                                            @for ($i = 0; $i < 5; $i++)<i class="{{ $i < $roastOn ? 'on' : '' }}"></i>@endfor
-                                        </div>
+                                        @if ($theme->on('roast_pips'))
+                                            <div class="roast" role="img" aria-label="{{ $theme->label('roast_pips') }} {{ $roastOn }}/5">
+                                                @for ($i = 0; $i < 5; $i++)<i class="{{ $i < $roastOn ? 'on' : '' }}"></i>@endfor
+                                            </div>
+                                        @endif
                                     </div>
                                     <div class="lead-dots" aria-hidden="true"></div>
                                     <div class="pr">@money($cp->price_cents)</div>
@@ -167,14 +170,16 @@
 
             {{-- Ledger strip — figures drawn from the live catalog, not generic
                  "free shipping" boilerplate. Reads like a roaster's tally. --}}
-            <div class="wrap">
-                <div class="ledger reveal">
-                    <span><b>{{ $products->total() }}</b> {{ __('site.storefront.collections.heading') }}</span>
-                    @if ($categories->isNotEmpty())<span><b>{{ $categories->count() }}</b> {{ __('site.storefront.controls.category') }}</span>@endif
-                    <span><b>48h</b> {{ __('site.storefront.value_props.checkout_title') }}</span>
-                    <span><b>{{ __('site.storefront.value_props.shipping_title') }}</b></span>
+            @if ($theme->on('stats_strip'))
+                <div class="wrap">
+                    <div class="ledger reveal">
+                        <span><b>{{ $products->total() }}</b> {{ __('site.storefront.collections.heading') }}</span>
+                        @if ($categories->isNotEmpty())<span><b>{{ $categories->count() }}</b> {{ __('site.storefront.controls.category') }}</span>@endif
+                        <span><b>48h</b> {{ __('site.storefront.value_props.checkout_title') }}</span>
+                        <span><b>{{ __('site.storefront.value_props.shipping_title') }}</b></span>
+                    </div>
                 </div>
-            </div>
+            @endif
         @endif
 
         <div class="wrap">
@@ -210,28 +215,32 @@
             @endif
         </div>
 
-        @if (! $isFiltered)
+        @if (! $isFiltered && ($theme->on('craft_band') || $theme->on('subscribe_band')))
             <div class="wrap">
                 {{-- Craft band — "one roaster, one small room" two-up, image left,
                      ledger copy right. A signature Ember section. --}}
-                <section class="craft reveal">
-                    <div class="img bloomph ph" aria-hidden="true"></div>
-                    <div class="txt">
-                        <div class="est">// {{ __('site.storefront.nav.featured') }}</div>
-                        <h3>{!! __('site.storefront.hero.headline', ['tenant' => '<em>' . e($tenant->name) . '</em>']) !!}</h3>
-                        <p>{{ __('site.storefront.footer.tagline') }}</p>
-                        <a class="btn ghost" href="#shop">{{ __('site.storefront.hero.cta_secondary') }}</a>
-                    </div>
-                </section>
+                @if ($theme->on('craft_band'))
+                    <section class="craft reveal">
+                        <div class="img bloomph ph" aria-hidden="true"></div>
+                        <div class="txt">
+                            <div class="est">// {{ __('site.storefront.nav.featured') }}</div>
+                            <h3>{!! __('site.storefront.hero.headline', ['tenant' => '<em>' . e($tenant->name) . '</em>']) !!}</h3>
+                            <p>{{ $theme->copy('craft_body') }}</p>
+                            <a class="btn ghost" href="#shop">{{ __('site.storefront.hero.cta_secondary') }}</a>
+                        </div>
+                    </section>
+                @endif
 
                 {{-- Subscription / newsletter band — dark slab, reuses the promo
                      keys. Replaces a generic centered card. --}}
-                <section class="subband reveal">
-                    <div class="est">// {{ __('site.storefront.collections.heading') }}</div>
-                    <h3>{!! __('site.storefront.promo.h2_prefix', ['tenant' => '<em>' . e($tenant->name) . '</em>']) !!}</h3>
-                    <p>{{ __('site.storefront.promo.p') }}</p>
-                    <a class="btn accent" href="#shop">{{ __('site.storefront.hero.cta_primary') }}</a>
-                </section>
+                @if ($theme->on('subscribe_band'))
+                    <section class="subband reveal">
+                        <div class="est">// {{ __('site.storefront.collections.heading') }}</div>
+                        <h3>{!! __('site.storefront.promo.h2_prefix', ['tenant' => '<em>' . e($tenant->name) . '</em>']) !!}</h3>
+                        <p>{{ $theme->copy('subscribe_body') }}</p>
+                        <a class="btn accent" href="#shop">{{ __('site.storefront.hero.cta_primary') }}</a>
+                    </section>
+                @endif
             </div>
         @endif
     </main>

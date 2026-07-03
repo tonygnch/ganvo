@@ -73,6 +73,25 @@ class ThemeRegistry
         return array_key_exists($id, self::all());
     }
 
+    /**
+     * A theme's customization manifest (content fields, section/motif toggles,
+     * palette presets, font pairings) from its manifest.php, or [] when the
+     * theme doesn't declare one. Cached per request.
+     *
+     * @var array<string, array>
+     */
+    private static array $manifests = [];
+
+    public static function manifest(string $id): array
+    {
+        if (! array_key_exists($id, self::$manifests)) {
+            $path = resource_path("views/themes/{$id}/manifest.php");
+            self::$manifests[$id] = is_file($path) ? (array) require $path : [];
+        }
+
+        return self::$manifests[$id];
+    }
+
     public static function get(string $id): array
     {
         return self::all()[$id] ?? self::all()['default'];

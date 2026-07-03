@@ -97,6 +97,11 @@
                 linear-gradient(color-mix(in srgb, var(--ink) 30%, transparent), color-mix(in srgb, var(--ink) 30%, transparent)) 7px 0 / 1px 100% no-repeat,
                 linear-gradient(color-mix(in srgb, var(--ink) 30%, transparent), color-mix(in srgb, var(--ink) 30%, transparent)) 0 7px / 100% 1px no-repeat;
         }
+        /* merchant knob: crosshairs motif off — kills the CSS-drawn card
+           ticks (the explicit .xmark elements are gated in the templates) */
+        body.no-xmarks .summary::after, body.no-xmarks .osum::after, body.no-xmarks .filters::after,
+        body.no-xmarks .fset::after, body.no-xmarks .ord-card::after, body.no-xmarks .acct-side::after,
+        body.no-xmarks .auth .card::after, body.no-xmarks .cart-empty::after, body.no-xmarks .acct-empty::after { content: none; }
 
         /* placeholder fills (used wherever a real image is missing).
            Forma has no product photos — the .ph block is a hatched canvas
@@ -310,8 +315,9 @@
             .fspec .fs:last-child { border-bottom: none; }
         }
     </style>
+    {!! $theme->headExtras() !!}
 </head>
-<body>
+<body class="{{ $theme->on('crosshairs') ? '' : 'no-xmarks' }}">
     @php
         $csAnnouncement = $store->announcementBar();
         $csNavMenu = $store->navMenuItems();
@@ -348,6 +354,7 @@
     <header class="site">
         {{-- Tier 1: mono instrument bar — fixed spec coordinates, the
              tech-brand readout the merchant doesn't control. --}}
+        @if ($theme->on('metabar'))
         <div class="metabar">
             <div class="wrap">
                 <div class="mb-l">
@@ -361,6 +368,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         {{-- Tier 2: wordmark + catalogue links + utility console. --}}
         <div class="wrap">
@@ -450,8 +458,10 @@
         <div class="wrap">
             {{-- Spec-sheet colophon band — mono labels, display values. --}}
             <div class="fspec">
-                <i class="xmark xl" aria-hidden="true"></i>
-                <i class="xmark xr" aria-hidden="true"></i>
+                @if ($theme->on('crosshairs'))
+                    <i class="xmark xl" aria-hidden="true"></i>
+                    <i class="xmark xr" aria-hidden="true"></i>
+                @endif
                 <div class="fs"><div class="l">{{ __('site.storefront.value_props.shipping_title') }}</div><div class="v">{{ __('site.storefront.value_props.shipping_sub') }}</div></div>
                 <div class="fs"><div class="l">{{ __('site.storefront.value_props.returns_title') }}</div><div class="v">{{ __('site.storefront.value_props.returns_sub') }}</div></div>
                 <div class="fs"><div class="l">{{ __('site.storefront.value_props.checkout_title') }}</div><div class="v">{{ __('site.storefront.value_props.checkout_sub') }}</div></div>

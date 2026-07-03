@@ -159,7 +159,7 @@
                     <div class="lede">
                         <span class="kicker reveal">{{ $csHero['title'] !== '' ? $csHero['title'] : __('site.storefront.kiln.hero_eyebrow') }}</span>
                         <h1 class="reveal s1">@if ($csHero['subtitle'] !== ''){{ $csHero['subtitle'] }}@else{!! __('site.storefront.hero.headline', ['tenant' => '<em>' . e($tenant->name) . '</em>']) !!}@endif</h1>
-                        <p class="reveal s2">{{ __('site.storefront.kiln.hero_lede') }}</p>
+                        <p class="reveal s2">{{ $theme->copy('hero_lede') }}</p>
                         <div class="cta reveal s2">
                             <a class="btn" href="#shop">{{ $csHero['cta_label'] !== '' ? $csHero['cta_label'] : __('site.storefront.hero.cta_primary') }}</a>
                             <a class="btn outline" href="#shop">{{ __('site.storefront.hero.cta_secondary') }}</a>
@@ -168,21 +168,22 @@
                     <div class="panels reveal s1" aria-hidden="true">
                         <div class="pn pa {{ $panelAUrl ? '' : 'ph' }}">
                             @if ($panelAUrl)<img src="{{ $panelAUrl }}" alt="">@endif
-                            @if ($panelA)<span class="lab">01 · {{ $panelA->name }}</span>@endif
+                            @if ($panelA && $theme->on('work_numbers'))<span class="lab">01 · {{ $panelA->name }}</span>@endif
                         </div>
                         <div class="pn pb {{ $panelBUrl ? '' : 'bloomph' }}">
                             @if ($panelBUrl)<img src="{{ $panelBUrl }}" alt="">@endif
-                            @if ($panelB)<span class="lab">02 · {{ $panelB->name }}</span>@endif
+                            @if ($panelB && $theme->on('work_numbers'))<span class="lab">02 · {{ $panelB->name }}</span>@endif
                         </div>
                         <div class="pn pc">
                             <div class="rings-mark"></div>
-                            <div class="q">{{ __('site.storefront.kiln.maker_sign') }}</div>
+                            @if ($theme->on('placard'))<div class="q">{{ $theme->label('placard') }}</div>@endif
                         </div>
                     </div>
                 </section>
             </div>
 
             {{-- ===== Quiet stats band ===== --}}
+            @if ($theme->on('meta_row'))
             <div class="wrap">
                 <div class="kmeta reveal">
                     <span><b>{{ __('site.storefront.kiln.meta_1_b') }}</b><i>{{ __('site.storefront.kiln.meta_1_t') }}</i></span>
@@ -191,6 +192,7 @@
                     <span><b>{{ __('site.storefront.kiln.meta_4_b') }}</b><i>{{ __('site.storefront.kiln.meta_4_t') }}</i></span>
                 </div>
             </div>
+            @endif
         @endif
 
         <div class="wrap">
@@ -231,20 +233,23 @@
 
             @if (! $isFiltered)
                 {{-- ===== Maker statement — centred literary aside ===== --}}
+                @if ($theme->on('maker_quote'))
                 <section class="kmaker reveal">
                     <div class="rings-mark" aria-hidden="true"></div>
                     <span class="kicker">{{ __('site.storefront.kiln.maker_kicker') }}</span>
-                    <p>{{ __('site.storefront.kiln.maker_quote') }}</p>
-                    <div class="sign">{{ __('site.storefront.kiln.maker_sign') }}</div>
+                    <p>{{ $theme->copy('maker_quote') }}</p>
+                    @if ($theme->on('placard'))<div class="sign">{{ $theme->label('placard') }}</div>@endif
                 </section>
+                @endif
 
                 {{-- ===== Process — asymmetric image + numbered steps ===== --}}
+                @if ($theme->on('process_band'))
                 <section class="kprocess">
                     <div class="img ph reveal"></div>
                     <div class="txt reveal s1">
                         <span class="kicker">{{ __('site.storefront.kiln.process_kicker') }}</span>
                         <h3>{{ __('site.storefront.kiln.process_h3') }}<br><em>{{ __('site.storefront.kiln.process_h3_em') }}</em> {{ __('site.storefront.kiln.process_h3_tail') }}</h3>
-                        <p>{{ __('site.storefront.kiln.process_p') }}</p>
+                        <p>{{ $theme->copy('process_p') }}</p>
                         <div class="steps">
                             <div class="st"><span class="n">i</span><div><b>{{ __('site.storefront.kiln.step_1_b') }}</b><p>{{ __('site.storefront.kiln.step_1_p') }}</p></div></div>
                             <div class="st"><span class="n">ii</span><div><b>{{ __('site.storefront.kiln.step_2_b') }}</b><p>{{ __('site.storefront.kiln.step_2_p') }}</p></div></div>
@@ -253,16 +258,19 @@
                         <a class="btn outline" href="#shop">{{ __('site.storefront.kiln.process_cta') }}</a>
                     </div>
                 </section>
+                @endif
 
                 {{-- ===== Newsletter — hairline underline form ===== --}}
+                @if ($theme->on('news_band'))
                 <section class="knews reveal">
                     <h3>{{ __('site.storefront.kiln.news_h3') }} <em>{{ __('site.storefront.kiln.news_h3_em') }}</em></h3>
-                    <p>{{ __('site.storefront.kiln.news_p') }}</p>
+                    <p>{{ $theme->copy('news_p') }}</p>
                     <form onsubmit="return false">
                         <input type="email" placeholder="{{ __('site.storefront.footer.newsletter_placeholder') }}" aria-label="{{ __('site.storefront.footer.newsletter_placeholder') }}">
                         <button type="submit">{{ __('site.storefront.footer.subscribe') }}</button>
                     </form>
                 </section>
+                @endif
             @endif
         </div>
     </main>

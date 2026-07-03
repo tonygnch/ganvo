@@ -245,6 +245,7 @@
             .nav .right .lbl { display: none; }
         }
     </style>
+    {!! $theme->headExtras() !!}
 </head>
 <body>
     @php

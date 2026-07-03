@@ -48,6 +48,8 @@
                 linear-gradient(90deg, color-mix(in srgb, var(--accent) 6%, transparent) 1px, transparent 1px),
                 radial-gradient(130% 120% at 50% 30%, #fff, var(--soft));
             background-size: auto, 112px 112px, 112px 112px, 28px 28px, 28px 28px, auto; }
+        /* merchant knob: blueprint grid off — the stage becomes clean air */
+        .pgal .main.no-grid, .pgal .main.no-grid.bloomph, .pgal .main.no-grid.ph { background: radial-gradient(130% 120% at 50% 30%, #fff, var(--soft)); background-size: auto; }
         .pgal .main[data-pdp-open] { cursor: zoom-in; }
         .pgal .main img { width: 100%; height: 100%; object-fit: cover; }
         .pgal .main .fig { position: absolute; left: 22px; bottom: 18px; z-index: 3; background: color-mix(in srgb, var(--bg) 72%, transparent); backdrop-filter: blur(3px); padding: 4px 9px; border-radius: 7px; }
@@ -144,17 +146,23 @@
         <div class="wrap" style="padding-top: 24px;">
             <div class="pdp">
                 <div class="pgal">
-                    <div class="main {{ $heroImage ? '' : 'bloomph' }}" @if ($heroImage) data-pdp-open @endif>
+                    <div class="main {{ $heroImage ? '' : 'bloomph' }} {{ $theme->on('blueprint_grid') ? '' : 'no-grid' }}" @if ($heroImage) data-pdp-open @endif>
                         @if ($heroImage)
                             <img id="pdp-main-image" src="{{ $heroImage }}" alt="{{ $product->name }}">
                         @else
-                            <i class="xmark" style="top: 16px; left: 16px;" aria-hidden="true"></i>
-                            <i class="xmark" style="top: 16px; right: 16px;" aria-hidden="true"></i>
+                            @if ($theme->on('crosshairs'))
+                                <i class="xmark" style="top: 16px; left: 16px;" aria-hidden="true"></i>
+                                <i class="xmark" style="top: 16px; right: 16px;" aria-hidden="true"></i>
+                            @endif
                             <div class="obj" aria-hidden="true"></div>
-                            <div class="dim dim-v" aria-hidden="true"><span>H&nbsp;260&nbsp;MM</span></div>
-                            <div class="dim dim-h" aria-hidden="true"><span>Ø&nbsp;73&nbsp;MM</span></div>
+                            @if ($theme->on('dim_lines'))
+                                <div class="dim dim-v" aria-hidden="true"><span>H&nbsp;260&nbsp;MM</span></div>
+                                <div class="dim dim-h" aria-hidden="true"><span>Ø&nbsp;73&nbsp;MM</span></div>
+                            @endif
                         @endif
-                        <div class="fig" aria-hidden="true"><b>FIG. 01</b> — {{ $product->name }}</div>
+                        @if ($theme->on('fig_caption'))
+                            <div class="fig" aria-hidden="true"><b>{{ $theme->label('fig_caption') }} 01</b> — {{ $product->name }}</div>
+                        @endif
                     </div>
                     @if ($images->count() > 1)
                         <div class="thumbs">

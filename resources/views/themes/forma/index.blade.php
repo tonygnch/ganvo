@@ -37,6 +37,9 @@
                 linear-gradient(90deg, color-mix(in srgb, var(--accent) 6%, transparent) 1px, transparent 1px),
                 radial-gradient(130% 120% at 50% 30%, #fff, var(--soft));
             background-size: auto, 112px 112px, 112px 112px, 28px 28px, 28px 28px, auto; }
+        /* merchant knob: blueprint grid off — the stage becomes clean air */
+        .config .stage.no-grid { background: radial-gradient(130% 120% at 50% 30%, #fff, var(--soft)); background-size: auto; }
+        .band .shot.no-grid::after { display: none; }
         .config .stage > .xmark { z-index: 3; }
         .config .stage .spin { position: absolute; width: 330px; height: 330px; border: 1px dashed color-mix(in srgb, var(--accent) 34%, var(--line2)); border-radius: 50%; animation: spin 30s linear infinite; }
         .config .stage .spin::before { content: ""; position: absolute; top: -5px; left: 50%; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); transform: translateX(-50%); }
@@ -207,11 +210,13 @@
         @if (! $isFiltered && $heroProduct)
             {{-- ===================== SINGLE-PRODUCT CONFIGURATOR ===================== --}}
             <section class="config">
-                <div class="stage">
+                <div class="stage {{ $theme->on('blueprint_grid') ? '' : 'no-grid' }}">
                     {{-- registration marks — print-shop alignment crosses --}}
-                    <i class="xmark" style="top: 18px; left: 18px;" aria-hidden="true"></i>
-                    <i class="xmark" style="top: 18px; right: 18px;" aria-hidden="true"></i>
-                    <i class="xmark" style="bottom: 18px; left: 50%; margin-left: -8px;" aria-hidden="true"></i>
+                    @if ($theme->on('crosshairs'))
+                        <i class="xmark" style="top: 18px; left: 18px;" aria-hidden="true"></i>
+                        <i class="xmark" style="top: 18px; right: 18px;" aria-hidden="true"></i>
+                        <i class="xmark" style="bottom: 18px; left: 50%; margin-left: -8px;" aria-hidden="true"></i>
+                    @endif
                     <div class="spin" aria-hidden="true"></div>
                     <div class="badge">// {{ $heroProduct->name }}</div>
                     <div class="obj-shadow" aria-hidden="true"></div>
@@ -219,9 +224,13 @@
                         @if ($heroProductImg)<img src="{{ $heroProductImg }}" alt="">@endif
                     </div>
                     {{-- dimension lines — the engineering-drawing signature --}}
-                    <div class="dim dim-v" aria-hidden="true"><span>H&nbsp;260&nbsp;MM</span></div>
-                    <div class="dim dim-h" aria-hidden="true"><span>Ø&nbsp;73&nbsp;MM</span></div>
-                    <div class="fig" aria-hidden="true"><b>FIG. 01</b> — {{ $heroProduct->name }}</div>
+                    @if ($theme->on('dim_lines'))
+                        <div class="dim dim-v" aria-hidden="true"><span>H&nbsp;260&nbsp;MM</span></div>
+                        <div class="dim dim-h" aria-hidden="true"><span>Ø&nbsp;73&nbsp;MM</span></div>
+                    @endif
+                    @if ($theme->on('fig_caption'))
+                        <div class="fig" aria-hidden="true"><b>{{ $theme->label('fig_caption') }} 01</b> — {{ $heroProduct->name }}</div>
+                    @endif
                     <div class="price-fly">
                         <div class="mono">{{ __('site.storefront.shop_all.eyebrow') }}</div>
                         <div class="v">@money($heroProduct->price_cents)</div>
@@ -262,15 +271,18 @@
 
             <div class="wrap">
                 {{-- 4-up instrument readout — animated counts where numeric --}}
+                @if ($theme->on('spec_row'))
                 <div class="specrow reveal">
                     <div class="s"><div class="v" data-count="24" data-suffix="h">0</div><div class="l">{{ __('site.storefront.value_props.shipping_title') }}</div></div>
                     <div class="s"><div class="v" data-count="30" data-suffix="d">0</div><div class="l">{{ __('site.storefront.value_props.returns_title') }}</div></div>
-                    <div class="s"><div class="v">18/8</div><div class="l">{{ __('site.storefront.value_props.checkout_title') }}</div></div>
+                    <div class="s"><div class="v">{{ $theme->copy('spec_material') }}</div><div class="l">{{ __('site.storefront.value_props.checkout_title') }}</div></div>
                     <div class="s"><div class="v" data-count="{{ max(1, $products->total()) }}">0</div><div class="l">{{ __('site.storefront.shop_all.h2') }}</div></div>
                 </div>
+                @endif
 
                 {{-- SPEC TABLE — the technical datasheet for the hero product.
                      Presented like hardware: mono keys, display values. --}}
+                @if ($theme->on('spec_sheet'))
                 <div class="sec-head reveal">
                     <span class="kicker">// {{ __('site.storefront.hero.eyebrow', ['year' => date('Y')]) }}</span>
                     <h2>{!! __('site.storefront.hero.headline', ['tenant' => '<em>' . e($tenant->name) . '</em>']) !!}</h2>
@@ -289,19 +301,22 @@
                         <div class="row"><div class="rk">{{ __('site.storefront.value_props.checkout_title') }}</div><div class="rv">{{ __('site.storefront.value_props.checkout_sub') }}</div></div>
                     </div>
                 </div>
+                @endif
 
+                @if ($theme->on('cobalt_band'))
                 <section class="band reveal">
                     <div>
                         <div class="bk">// {{ __('site.storefront.shop_all.eyebrow') }}</div>
                         <h3>{{ $tenant->name }}</h3>
-                        <p>{{ __('site.storefront.footer.tagline') }}</p>
+                        <p>{{ $theme->copy('band_body') }}</p>
                     </div>
-                    <div class="shot" aria-hidden="true">
-                        <i class="xmark" style="top: 12px; right: 12px;"></i>
+                    <div class="shot {{ $theme->on('blueprint_grid') ? '' : 'no-grid' }}" aria-hidden="true">
+                        @if ($theme->on('crosshairs'))<i class="xmark" style="top: 12px; right: 12px;"></i>@endif
                         <div class="obj"></div>
-                        <div class="fig"><b>FIG. 02</b></div>
+                        @if ($theme->on('fig_caption'))<div class="fig"><b>{{ $theme->label('fig_caption') }} 02</b></div>@endif
                     </div>
                 </section>
+                @endif
             </div>
         @endif
 
@@ -314,7 +329,7 @@
             {{-- Shop all — the catalogue / accessories --}}
             <div class="sec-head reveal" id="shop">
                 <span class="kicker">// {{ __('site.storefront.shop_all.eyebrow') }}</span>
-                <h2>{{ __('site.storefront.shop_all.h2') }}</h2>
+                <h2>{{ $theme->copy('shop_heading') }}</h2>
             </div>
 
             {{-- Category pills (replaces the generic search/sort/price toolbar). --}}

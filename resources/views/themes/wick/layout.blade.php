@@ -223,7 +223,8 @@
         .bcard .pic { height: 320px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 14px; position: relative; overflow: hidden; display: grid; place-items: center; transition: border-color .3s ease, box-shadow .3s ease; }
         /* candlelight falloff inside the frame */
         .bcard .pic::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(120% 80% at 50% -5%, rgba(240, 231, 212, .05), transparent 45%), radial-gradient(150% 90% at 50% 115%, rgba(9, 6, 3, .5), transparent 55%); }
-        .blooms .bcard .pic::after { content: "BATCH " counter(batch, decimal-leading-zero); position: absolute; bottom: 10px; right: 12px; z-index: 2; font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--faint); }
+        .blooms .bcard .pic::after { content: var(--batch-label, "BATCH ") counter(batch, decimal-leading-zero); position: absolute; bottom: 10px; right: 12px; z-index: 2; font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--faint); }
+        .blooms.no-batch .bcard .pic::after { display: none; }
         .bcard:hover .pic { border-color: var(--line2); box-shadow: 0 26px 48px -30px rgba(0, 0, 0, .85), 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent); }
         .bcard .badge { position: absolute; top: 12px; left: 12px; font-family: var(--mono); font-size: 10px; letter-spacing: .04em; padding: 4px 10px; border: 1px solid var(--line2); background: rgba(15, 10, 7, .6); border-radius: 99px; color: var(--accent); z-index: 2; text-transform: uppercase; }
         .bcard .pic .jar-mark { width: 120px; height: 170px; border-radius: 16px 16px 12px 12px; background: var(--jar); border: 1px solid var(--line2); transition: transform .4s cubic-bezier(.19, .7, .16, 1); position: relative; box-shadow: inset 0 -34px 40px -22px rgba(217, 154, 78, .28); }
@@ -272,6 +273,7 @@
             .nav .right .lbl { display: none; }
         }
     </style>
+    {!! $theme->headExtras() !!}
 </head>
 <body>
     @php

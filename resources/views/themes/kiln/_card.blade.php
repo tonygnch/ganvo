@@ -19,7 +19,7 @@
 <a class="bcard reveal" href="/products/{{ $product->slug }}">
     <div class="pic {{ $imgUrl ? '' : ($product->id % 2 ? 'ph' : 'bloomph') }}">
         @if ($badge)<div class="badge">{{ $badge }}</div>@endif
-        @if ($workNum)<span class="idx" aria-hidden="true">{{ $workNum }}</span>@endif
+        @if ($workNum && $theme->on('work_numbers'))<span class="idx" aria-hidden="true">{{ $workNum }}</span>@endif
         @if ($imgUrl)<img src="{{ $imgUrl }}" alt="{{ $product->name }}" loading="lazy">@endif
     </div>
     @if ($catLabel)<div class="cat">{{ $catLabel }}</div>@endif

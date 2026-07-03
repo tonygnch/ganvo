@@ -5,9 +5,11 @@ namespace App\Providers;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Services\RoleMatrix;
+use App\Themes\ThemeCustomizer;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Cashier;
 
@@ -51,6 +53,22 @@ class AppServiceProvider extends ServiceProvider
                 \$displayRate ?? 1.0,
                 \$displayCurrency ?? (isset(\$store) ? \$store->currency : 'EUR')
             ); ?>";
+        });
+
+        // Inject $theme (per-store theme customization) into every theme view.
+        // The slug comes from the view name (themes.{slug}.…) so partials and
+        // pages both resolve the right manifest; $store rides in via the
+        // controllers' compact(). Views outside themes.* are untouched.
+        View::composer('themes.*', function ($view) {
+            $data = $view->getData();
+            if (($data['theme'] ?? null) instanceof ThemeCustomizer) {
+                return; // parent view already injected it (e.g. @include)
+            }
+            // Note: some storefront controllers pass 'theme' as the slug
+            // string (used by the storefront.* fallbacks' @extends). For
+            // themes.* views that string is replaced with the customizer.
+            $slug = explode('.', $view->getName())[1] ?? '';
+            $view->with('theme', ThemeCustomizer::for($data['store'] ?? null, $slug));
         });
 
         // super_admin god-mode. Runs before any other gate / policy check,
