@@ -124,7 +124,9 @@ class NewThemesDemoSeeder extends Seeder
             [$cslug, $title, $desc] = $cfg['collection'];
             $coll = Collection::create([
                 'tenant_id' => $tenant->id, 'title' => $title, 'slug' => $cslug,
-                'description' => $desc, 'banner_path' => null, 'sort_order' => 0,
+                'description' => $desc,
+                'banner_path' => $this->demoImage($slug, "coll-{$cslug}", $cfg['collection_banner'] ?? null),
+                'sort_order' => 0,
                 'is_featured' => true, 'is_active' => true, 'show_in_menu' => true,
             ]);
             $sort = 0;
@@ -245,9 +247,18 @@ class NewThemesDemoSeeder extends Seeder
             ],
             'wick' => [
                 'name' => 'Wick', 'accent' => '#d99a4e', 'currency' => 'EUR',
-                // Higgsfield calibration shot (see the art-direction brief) —
-                // the blank amber jar; the theme's CSS jar-label speaks over it.
-                'demo_images' => ['hearth' => 'images/demo/wick/hearth-1.jpg'],
+                // Higgsfield art-directed set (one locked brief, per-subject
+                // prompts) — blank vessels only; the theme's CSS labels speak.
+                'demo_images' => [
+                    'hearth' => 'images/demo/wick/hearth-1.jpg',
+                    'library' => 'images/demo/wick/library-1.jpg',
+                    'orchard-dusk' => 'images/demo/wick/orchard-dusk-1.jpg',
+                    'black-honey' => 'images/demo/wick/black-honey-1.jpg',
+                    'chapel-incense' => 'images/demo/wick/chapel-incense-1.jpg',
+                    'sea-fog-room-spray' => 'images/demo/wick/sea-fog-room-spray-1.jpg',
+                    'brass-wick-trimmer' => 'images/demo/wick/brass-wick-trimmer-1.jpg',
+                ],
+                'collection_banner' => 'images/demo/wick/banner-1.jpg',
                 'announce' => 'Small-batch soy wax · Poured by hand · Cotton wicks, clean burn',
                 'hero' => ['Candlelit apothecary', 'Lit, not loud.', 'Shop the bench'],
                 'sizes' => [['Votive', 0.5, 22], ['Classic', 1.0, 14], ['Three-wick', 1.9, 5]],

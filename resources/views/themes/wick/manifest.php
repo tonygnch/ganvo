@@ -82,7 +82,9 @@ return [
             'label' => 'Story band image',
             'hint' => 'Darker, moodier photos sit best on the candlelit canvas.',
             'size' => '900×1100',
-            'default' => null, // theme falls back to the stamped mark
+            // Higgsfield art-directed default (wax-pouring workbench scene);
+            // merchants replace it from Customize Theme → Images.
+            'default' => 'images/demo/wick/story-1.jpg',
         ],
     ],
 
