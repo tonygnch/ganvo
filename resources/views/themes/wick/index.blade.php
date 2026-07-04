@@ -177,15 +177,15 @@
             <div class="wrap">
                 <section class="hero {{ $theme->on('watermark') ? '' : 'no-mark' }}">
                     <div class="lead">
-                        <div class="k reveal">{{ $csHero['title'] !== '' ? $csHero['title'] : __('site.storefront.hero.eyebrow', ['year' => date('Y')]) }}</div>
-                        <h1 class="reveal s1">@if ($csHero['subtitle'] !== ''){{ $csHero['subtitle'] }}@else{!! __('site.storefront.hero.headline', ['tenant' => '<span class="o">' . e($tenant->name) . '</span>']) !!}@endif</h1>
-                        <p class="reveal s2">{{ __('site.storefront.hero.sub') }}</p>
-                        <div class="cta reveal s3">
+                        <div class="k" data-gv-reveal="fade">{{ $csHero['title'] !== '' ? $csHero['title'] : __('site.storefront.hero.eyebrow', ['year' => date('Y')]) }}</div>
+                        <h1 data-gv-split>@if ($csHero['subtitle'] !== ''){{ $csHero['subtitle'] }}@else{!! __('site.storefront.hero.headline', ['tenant' => '<span class="o">' . e($tenant->name) . '</span>']) !!}@endif</h1>
+                        <p data-gv-reveal data-gv-delay="0.2">{{ __('site.storefront.hero.sub') }}</p>
+                        <div class="cta" data-gv-reveal data-gv-delay="0.32">
                             <a class="btn" href="#shop">{{ $csHero['cta_label'] !== '' ? $csHero['cta_label'] : __('site.storefront.hero.cta_primary') }}</a>
                             <a class="btn outline" href="#shop">{{ __('site.storefront.hero.cta_secondary') }}</a>
                         </div>
                     </div>
-                    <div class="stage reveal s1 {{ $theme->on('flame') ? '' : 'no-flame' }}" aria-hidden="true">
+                    <div class="stage {{ $theme->on('flame') ? '' : 'no-flame' }}" data-gv-reveal="scale" data-gv-delay="0.25" data-gv-parallax="0.06" aria-hidden="true">
                         <div class="glow"></div>
                         <div class="halo h1"></div>
                         <div class="halo h2"></div>
@@ -211,8 +211,8 @@
             {{-- Facts band — bench notes in mono, not a free-shipping strip. --}}
             @if ($theme->on('facts_strip'))
             <div class="wrap">
-                <div class="strip reveal">
-                    <span><b>{{ $products->total() }}</b> {{ __('site.storefront.footer.all_products') }}</span>
+                <div class="strip" data-gv-reveal>
+                    <span><b data-gv-counter="{{ $products->total() }}">{{ $products->total() }}</b> {{ __('site.storefront.footer.all_products') }}</span>
                     <span><b>{{ __('site.storefront.value_props.shipping_title') }}</b></span>
                     <span><b>{{ __('site.storefront.value_props.returns_title') }}</b></span>
                     <span><b>{{ __('site.storefront.value_props.checkout_title') }}</b></span>
@@ -228,13 +228,13 @@
             @endif
 
             {{-- On the bench now — the catalog --}}
-            <div class="sec-head reveal" id="shop">
+            <div class="sec-head" data-gv-reveal id="shop">
                 <span class="kicker">{{ __('site.storefront.shop_all.eyebrow') }}</span>
                 <h2>{{ __('site.storefront.shop_all.h2') }}</h2>
             </div>
 
             @if ($categories->isNotEmpty())
-                <div class="pills reveal">
+                <div class="pills" data-gv-reveal data-gv-delay="0.1">
                     <a href="/" class="pill {{ ! ($filters['category'] ?? null) ? 'on' : '' }}">{{ __('site.storefront.controls.category_all') }}</a>
                     @foreach ($categories as $cat)
                         <a href="/?category={{ $cat->slug }}" class="pill {{ ($filters['category'] ?? null) === $cat->slug ? 'on' : '' }}">{{ $cat->name }}</a>
@@ -247,7 +247,7 @@
             @else
                 <div class="blooms {{ $theme->on('batch_numerals') ? '' : 'no-batch' }}" style="--batch-label: '{{ str_replace(['\\', '\''], '', $theme->label('batch_numerals')) }} '">
                     @foreach ($products as $product)
-                        @include('themes.wick._card', ['product' => $product, 'badge' => null])
+                        @include('themes.wick._card', ['product' => $product, 'badge' => null, 'gvDelay' => ($loop->index % 3) * 0.09])
                     @endforeach
                 </div>
                 @include('storefront.partials.pagination')
@@ -256,10 +256,10 @@
             @if (! $isFiltered)
                 {{-- Editorial ticket — the manifesto, framed two-up. --}}
                 @if ($theme->on('explain'))
-                    <section class="explain reveal">
+                    <section class="explain" data-gv-reveal>
                         <div class="art" style="overflow: hidden;">
                             @if ($explainImg = $theme->image('explain_image'))
-                                <img src="{{ $explainImg }}" alt="" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                                <img src="{{ $explainImg }}" alt="" loading="lazy" data-gv-parallax="0.09" style="width: 100%; height: 112%; object-fit: cover; display: block;">
                             @else
                                 <div class="stamp">{{ $tenant->name }}<br>★</div>
                             @endif
@@ -297,7 +297,7 @@
 
                 {{-- The dropping list — newsletter. --}}
                 @if ($theme->on('news_band'))
-                <section class="news reveal">
+                <section class="news" data-gv-reveal="scale">
                     <h3>{!! __('site.storefront.promo.h2_prefix', ['tenant' => '<em>' . e($tenant->name) . '</em>']) !!}</h3>
                     <p>{{ $theme->copy('news_body') }}</p>
                     <form onsubmit="return false">

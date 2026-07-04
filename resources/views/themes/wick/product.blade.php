@@ -110,7 +110,7 @@
     <main>
         <div class="wrap" style="padding-top: 24px;">
             <div class="pdp">
-                <div class="pgal">
+                <div class="pgal" data-gv-reveal="fade">
                     <div class="main" @if ($heroImage) data-pdp-open @endif>
                         @if ($heroImage)
                             <img id="pdp-main-image" src="{{ $heroImage }}" alt="{{ $product->name }}">
@@ -131,7 +131,7 @@
                     @endif
                 </div>
 
-                <div class="pinfo">
+                <div class="pinfo" data-gv-reveal data-gv-delay="0.12">
                     <div class="crumb">
                         <a href="/">{{ __('site.storefront.product.breadcrumb_shop') }}</a>
                         @if ($primaryCategory) / <a href="/categories/{{ $primaryCategory->slug }}">{{ $primaryCategory->name }}</a>@endif
@@ -139,7 +139,7 @@
                     </div>
 
                     @if ($primaryCategory)<div class="cat">{{ $primaryCategory->name }}</div>@endif
-                    <h1>{{ $product->name }}</h1>
+                    <h1 data-gv-split>{{ $product->name }}</h1>
                     <div class="price"><span data-vp-price>@money($product->price_cents)</span></div>
 
                     @if (! $product->hasVariants() && $product->stock_quantity > 0)

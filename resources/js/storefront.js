@@ -238,12 +238,14 @@ window.Alpine = Alpine;
 
 document.addEventListener('DOMContentLoaded', () => {
     initReveals();
-    initSplits();
     initParallax();
     initEmblas();
     initCounters();
     initAddForms();
     Alpine.start();
+    // Split AFTER webfonts land — line boxes measured on fallback metrics
+    // would mask/break in the wrong places once the real font swaps in.
+    (document.fonts?.ready ?? Promise.resolve()).then(initSplits);
     // Fonts/images shift layout as they land — keep triggers honest.
     window.addEventListener('load', () => ScrollTrigger.refresh());
 });

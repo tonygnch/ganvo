@@ -5,6 +5,9 @@
      | display-weight price with a + add cue. Expects $product, optional $badge.
      */
     $badge = $badge ?? null;
+    // When the including page passes gvDelay, the card animates via the
+    // storefront kit (GSAP stagger); otherwise the legacy .reveal observer.
+    $gvDelay = $gvDelay ?? null;
     $imgUrl = $product->image_path
         ? \Illuminate\Support\Facades\Storage::url($product->image_path)
         : null;
@@ -14,7 +17,9 @@
         : null;
 @endphp
 
-<a class="bcard reveal" href="/products/{{ $product->slug }}">
+<a class="bcard {{ $gvDelay === null ? 'reveal' : '' }}"
+   @if ($gvDelay !== null) data-gv-reveal data-gv-delay="{{ $gvDelay }}" @endif
+   href="/products/{{ $product->slug }}">
     <div class="pic {{ $imgUrl ? '' : 'bloomph' }}">
         @if ($badge)<div class="badge">{{ $badge }}</div>@endif
         @if ($imgUrl)
