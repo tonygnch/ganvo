@@ -94,7 +94,13 @@ class NewThemesDemoSeeder extends Seeder
             $product = Product::create([
                 'tenant_id' => $tenant->id, 'name' => $name, 'slug' => $pslug,
                 'description' => $desc, 'price_cents' => $price, 'currency' => $cfg['currency'],
-                'stock_quantity' => 24, 'image_path' => null, 'is_active' => true,
+                'stock_quantity' => 24,
+                // Art-directed demo photography, committed to the repo under
+                // public/images/demo/{theme}/ and copied into storage so the
+                // demo is deterministic (no runtime downloads). Products
+                // without a shot fall back to the theme's placeholder motif.
+                'image_path' => $this->demoImage($slug, $pslug, $cfg['demo_images'][$pslug] ?? null),
+                'is_active' => true,
             ]);
             if (isset($cats[$catSlug])) {
                 DB::table('category_product')->insert(['category_id' => $cats[$catSlug]->id, 'product_id' => $product->id]);
@@ -165,6 +171,21 @@ class NewThemesDemoSeeder extends Seeder
         ]);
     }
 
+    /** Copy a committed demo photo (public/…) into the public storage disk. */
+    private function demoImage(string $storeSlug, string $productSlug, ?string $publicRelPath): ?string
+    {
+        if (! $publicRelPath || ! is_file(public_path($publicRelPath))) {
+            return null;
+        }
+        $target = "demo/{$storeSlug}/{$productSlug}-1." . pathinfo($publicRelPath, PATHINFO_EXTENSION);
+        \Illuminate\Support\Facades\Storage::disk('public')->put(
+            $target,
+            file_get_contents(public_path($publicRelPath))
+        );
+
+        return $target;
+    }
+
     private function wipe(Tenant $tenant): void
     {
         $ids = Product::where('tenant_id', $tenant->id)->withTrashed()->pluck('id');
@@ -224,6 +245,9 @@ class NewThemesDemoSeeder extends Seeder
             ],
             'wick' => [
                 'name' => 'Wick', 'accent' => '#d99a4e', 'currency' => 'EUR',
+                // Higgsfield calibration shot (see the art-direction brief) —
+                // the blank amber jar; the theme's CSS jar-label speaks over it.
+                'demo_images' => ['hearth' => 'images/demo/wick/hearth-1.jpg'],
                 'announce' => 'Small-batch soy wax · Poured by hand · Cotton wicks, clean burn',
                 'hero' => ['Candlelit apothecary', 'Lit, not loud.', 'Shop the bench'],
                 'sizes' => [['Votive', 0.5, 22], ['Classic', 1.0, 14], ['Three-wick', 1.9, 5]],

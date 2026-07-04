@@ -13,7 +13,9 @@
         $csHero = $store->heroBanner();
         // The hero "jar on the stage" leans on the lead product. Its name +
         // category drive the jar label; its photo (if any) fills the vessel.
-        $heroProduct = $products->first();
+        // Lead with a product that HAS photography (falls back to the newest) —
+        // the stage is the theme's money shot, it shouldn't waste the photo.
+        $heroProduct = $products->firstWhere('image_path') ?: $products->first();
         $heroImageUrl = $csHero['enabled'] && $csHero['image_path']
             ? \Illuminate\Support\Facades\Storage::url($csHero['image_path'])
             : ($heroProduct && $heroProduct->image_path
