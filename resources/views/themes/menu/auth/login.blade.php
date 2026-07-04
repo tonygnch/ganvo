@@ -13,7 +13,7 @@
             margin: 0 0 .5rem;
         }
         .auth-page h1 {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-style: italic;
             font-weight: 700;
             font-size: clamp(2rem, 4vw, 2.75rem);
@@ -28,7 +28,7 @@
             font-style: italic;
             font-size: 1rem;
             margin: 0 0 2.5rem;
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
         }
         .ornament {
             display: flex;
@@ -95,7 +95,7 @@
             margin-top: 2rem;
             font-size: 0.875rem;
             color: var(--ink-soft);
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-style: italic;
         }
         .auth-footer a { color: var(--ink); border-bottom: 1px solid currentColor; padding-bottom: 1px; }

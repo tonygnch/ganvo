@@ -39,7 +39,7 @@
             font-size: 0.6875rem;
             letter-spacing: 0.2em;
             text-transform: uppercase;
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-style: italic;
         }
 
@@ -52,7 +52,7 @@
             margin: 0 0 .75rem;
         }
         .dish-info h2 {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-style: italic;
             font-weight: 700;
             font-size: clamp(2rem, 4vw, 2.75rem);
@@ -62,7 +62,7 @@
             color: var(--ink);
         }
         .dish-price {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-weight: 600;
             font-size: 1.75rem;
             color: var(--ink);

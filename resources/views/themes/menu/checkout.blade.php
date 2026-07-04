@@ -20,7 +20,7 @@
             margin: 0 0 .5rem;
         }
         .checkout-heading {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-weight: 700;
             font-style: italic;
             font-size: clamp(2rem, 4vw, 2.75rem);
@@ -35,7 +35,7 @@
             font-size: 0.875rem;
             font-style: italic;
             color: var(--ink-soft);
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
         }
         .back-link:hover { color: var(--ink); }
 
@@ -45,7 +45,7 @@
             margin: 0 0 2rem;
             font-size: 0.875rem;
             font-style: italic;
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             color: var(--ink);
             display: flex;
             justify-content: space-between;
@@ -73,7 +73,7 @@
         }
         .section { margin: 0 0 2rem; }
         .section-title {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-style: italic;
             font-weight: 600;
             font-size: 1.5rem;
@@ -123,7 +123,7 @@
             margin: 0 0 1rem;
             font-size: 0.875rem;
             font-style: italic;
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             color: var(--ink);
         }
 
@@ -136,7 +136,7 @@
             font-size: 0.875rem;
             color: var(--ink-soft);
             font-style: italic;
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
         }
         .stub-notice strong { display: block; color: var(--ink); margin: 0 0 .25rem; font-style: normal; font-family: inherit; font-weight: 700; }
 
@@ -149,7 +149,7 @@
         }
         .summary h2 {
             margin: 0 0 1.5rem;
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-style: italic;
             font-size: 1.5rem;
             color: var(--ink);
@@ -169,15 +169,15 @@
         .line .qty-pill {
             min-width: 22px;
             text-align: center;
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-weight: 600;
             color: var(--ink-soft);
         }
         .line .name {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-size: 0.9375rem;
         }
-        .line .line-price { font-variant-numeric: tabular-nums; font-family: 'Playfair Display', Georgia, serif; font-weight: 600; }
+        .line .line-price { font-variant-numeric: tabular-nums; font-family: var(--display); font-weight: 600; }
 
         .summary-row {
             display: grid;
@@ -187,7 +187,7 @@
             color: var(--ink);
             font-size: 0.9375rem;
         }
-        .summary-row .label { color: var(--ink-soft); font-style: italic; font-family: 'Playfair Display', Georgia, serif; }
+        .summary-row .label { color: var(--ink-soft); font-style: italic; font-family: var(--display); }
         .summary-row .leader { border-bottom: 1px dotted var(--rule); margin: 0 .625rem .375rem; min-height: 1px; align-self: end; }
         .summary-row .num { font-variant-numeric: tabular-nums; }
         .summary-row.free .num { color: var(--primary-strong); font-weight: 600; }
@@ -206,7 +206,7 @@
             font-family: inherit;
         }
         .summary-row.total .num {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-weight: 700;
             font-size: 1.75rem;
         }
@@ -229,7 +229,7 @@
         }
         .pay-btn:hover { background: var(--primary-strong); }
         .pay-btn .sep { opacity: .65; }
-        .secure-line { text-align: center; margin-top: 1rem; font-size: 0.75rem; color: var(--ink-soft); font-style: italic; font-family: 'Playfair Display', Georgia, serif; }
+        .secure-line { text-align: center; margin-top: 1rem; font-size: 0.75rem; color: var(--ink-soft); font-style: italic; font-family: var(--display); }
 
         @media (max-width: 880px) {
             .checkout-grid { grid-template-columns: 1fr; }

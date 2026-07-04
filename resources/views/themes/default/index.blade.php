@@ -42,6 +42,7 @@
         /* Slow Ken Burns drift — lends the still a quiet, premium motion.
            Subtle (1.0 → 1.08 over 18s) so it never reads as a gimmick. */
         .hero .bg img { animation: heroDrift 18s var(--ease-soft) infinite alternate; transform-origin: 60% 40%; }
+        .hero.no-drift .bg img { animation: none; }
         @keyframes heroDrift { from { transform: scale(1.0); } to { transform: scale(1.08); } }
         .hero .scrim { position: absolute; inset: 0; background: linear-gradient(to top, rgba(8,8,8,.62), rgba(8,8,8,.15) 55%, transparent); }
         @media (prefers-reduced-motion: reduce) { .hero .bg img { animation: none; } }
@@ -123,7 +124,7 @@
     <main>
         @if (! $isFiltered)
             {{-- ===== HERO ===== --}}
-            <section class="hero">
+            <section class="hero {{ $theme->on('ken_burns') ? '' : 'no-drift' }}">
                 <div class="bg ph dark">
                     @if ($heroImageUrl)
                         <img src="{{ $heroImageUrl }}" alt="{{ $csHero['title'] !== '' ? $csHero['title'] : $tenant->name }}">
@@ -147,13 +148,15 @@
             </section>
 
             {{-- ===== BRAND MARQUEE ===== --}}
-            <div class="brandmarq"><div class="track" id="bmTrack"></div></div>
+            @if ($theme->on('brand_marquee'))
+                <div class="brandmarq"><div class="track" id="bmTrack"></div></div>
+            @endif
 
             {{-- ===== LOOKBOOK RAIL ===== --}}
-            @if ($lookbook->isNotEmpty())
+            @if ($theme->on('lookbook') && $lookbook->isNotEmpty())
                 <div class="rail-head wrap">
                     <h2>{{ __('site.storefront.lookbook.title') }}</h2>
-                    <span class="hint">{{ __('site.storefront.lookbook.hint') }}</span>
+                    <span class="hint">{{ $theme->copy('lookbook_hint') }}</span>
                 </div>
                 <div class="rail" id="rail">
                     @foreach ($lookbook as $i => $lp)
@@ -189,21 +192,23 @@
                 </div>
 
                 {{-- ===== EDITORIAL FILM BLOCK ===== --}}
-                <section class="filmblock rv">
-                    <div class="art ph dark">
-                        @if ($filmImageUrl)
-                            <img src="{{ $filmImageUrl }}" alt="">
-                        @else
-                            <span>editorial</span>
-                        @endif
-                    </div>
-                    <div class="txt">
-                        <div class="kicker">{{ __('site.storefront.featured.eyebrow') }}</div>
-                        <h3>{{ __('site.storefront.promo.h2_prefix', ['tenant' => $tenant->name]) }}</h3>
-                        <p>{{ __('site.storefront.promo.p') }}</p>
-                        <a class="btn ghost" href="#shop">{{ __('site.storefront.promo.btn') }}</a>
-                    </div>
-                </section>
+                @if ($theme->on('film_block'))
+                    <section class="filmblock rv">
+                        <div class="art ph dark">
+                            @if ($filmImageUrl)
+                                <img src="{{ $filmImageUrl }}" alt="">
+                            @else
+                                <span>editorial</span>
+                            @endif
+                        </div>
+                        <div class="txt">
+                            <div class="kicker">{{ __('site.storefront.featured.eyebrow') }}</div>
+                            <h3>{{ __('site.storefront.promo.h2_prefix', ['tenant' => $tenant->name]) }}</h3>
+                            <p>{{ $theme->copy('film_body') }}</p>
+                            <a class="btn ghost" href="#shop">{{ __('site.storefront.promo.btn') }}</a>
+                        </div>
+                    </section>
+                @endif
             @endif
         @endif
 
@@ -238,14 +243,14 @@
             @endif
 
             {{-- ===== NEWSLETTER COLOPHON ===== --}}
-            @if (! $isFiltered)
+            @if (! $isFiltered && $theme->on('colophon'))
                 <section class="colophon rv">
                     <div>
                         <div class="kicker" style="color:var(--accent)">{{ __('site.storefront.featured.eyebrow') }}</div>
                         <h3>{{ __('site.storefront.footer.subscribe') }}</h3>
                     </div>
                     <div>
-                        <p style="color:var(--muted)">{{ __('site.storefront.footer.tagline') }}</p>
+                        <p style="color:var(--muted)">{{ $theme->copy('colophon_body') }}</p>
                         <form class="sub" data-subscribed-label="{{ __('site.storefront.footer.subscribed') }}"
                               onsubmit="event.preventDefault(); this.querySelector('input').value=''; this.querySelector('button').textContent=this.dataset.subscribedLabel;">
                             <input type="email" placeholder="{{ __('site.storefront.footer.newsletter_placeholder') }}" required>
@@ -264,8 +269,9 @@
                 var track = document.getElementById('bmTrack');
                 if (! track) return;
                 var name = @json($tenant->name);
-                var unit = '<span>' + name + '</span><span class="star">✶</span>' +
-                           '<span class="o">' + @json(__('site.storefront.hero.eyebrow', ['year' => date('Y')])) + '</span><span class="star">✶</span>';
+                var star = @json($theme->on('marquee_star') ? '<span class="star">' . e($theme->label('marquee_star')) . '</span>' : '');
+                var unit = '<span>' + name + '</span>' + star +
+                           '<span class="o">' + @json(__('site.storefront.hero.eyebrow', ['year' => date('Y')])) + '</span>' + star;
                 track.innerHTML = unit.repeat(4);
             })();
         </script>

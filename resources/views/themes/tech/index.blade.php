@@ -84,7 +84,7 @@
                         <div class="prod ph">
                             @if ($heroImg)<img src="{{ $heroImg }}" alt="{{ $heroProduct->name }}">@else<span>product</span>@endif
                         </div>
-                        @if ($heroProduct)
+                        @if ($heroProduct && $theme->on('hero_chip'))
                             <div class="chip">{{ $heroProduct->name }} · <b>@money($heroProduct->price_cents)</b></div>
                         @endif
                     </div>
@@ -92,9 +92,9 @@
             @endif
         </div>
 
-        @if (! $isFiltered)
+        @if (! $isFiltered && $theme->on('spec_strip'))
             <div class="strip">
-                <span>// FAST-CHARGE</span><span>// USB-C</span><span>// BLUETOOTH 5.4</span><span>// IPX5</span><span>// 2Y WARRANTY</span>
+                @foreach (preg_split('/\r\n|\r|\n/', $theme->copy('spec_items'), -1, PREG_SPLIT_NO_EMPTY) as $spec)<span>// {{ trim($spec) }}</span>@endforeach
             </div>
         @endif
 
@@ -103,17 +103,18 @@
                 <div class="sec-head rv" id="featured"><h2>{{ __('site.storefront.featured.h2') }}</h2><a href="#shop">{{ __('site.storefront.featured.browse_all') }} →</a></div>
                 <div class="pgrid">
                     @foreach ($trending as $i => $product)
-                        @include('themes.tech._card', ['product' => $product, 'badge' => $i === 0 ? __('site.storefront.featured.badge') : null])
+                        @include('themes.tech._card', ['product' => $product, 'badge' => $i === 0 && $theme->on('featured_badge') ? $theme->label('featured_badge') : null])
                     @endforeach
                 </div>
             @endif
 
             @if (! $isFiltered)
+                @if ($theme->on('promo_banner'))
                 <section class="banner">
                     <div class="txt">
                         <span class="tag">// {{ __('site.storefront.featured.eyebrow') }}</span>
                         <h3 class="rv">{{ __('site.storefront.promo.h2_prefix', ['tenant' => $tenant->name]) }}</h3>
-                        <p class="rv">{{ __('site.storefront.promo.p') }}</p>
+                        <p class="rv">{{ $theme->copy('promo_body') }}</p>
                         <a class="btn rv" href="#shop">{{ __('site.storefront.promo.btn') }}</a>
                     </div>
                     <div class="vis">
@@ -122,8 +123,9 @@
                         @endif
                     </div>
                 </section>
+                @endif
 
-                @if ($topCategories->isNotEmpty())
+                @if ($topCategories->isNotEmpty() && $theme->on('category_tiles'))
                     <div class="cats">
                         @foreach ($topCategories as $cat)
                             <a class="cat rv" href="/categories/{{ $cat->slug }}">
@@ -161,10 +163,10 @@
                 @include('storefront.partials.pagination')
             @endif
 
-            @if (! $isFiltered)
+            @if (! $isFiltered && $theme->on('news_band'))
                 <section class="news rv">
                     <h3>{{ __('site.storefront.footer.subscribe') }}</h3>
-                    <p>{{ __('site.storefront.footer.tagline') }}</p>
+                    <p>{{ $theme->copy('news_body') }}</p>
                     <form data-subscribed-label="{{ __('site.storefront.footer.subscribed') }}"
                           onsubmit="event.preventDefault(); this.querySelector('input').value=''; this.querySelector('button').textContent=this.dataset.subscribedLabel;">
                         <input type="email" placeholder="{{ __('site.storefront.footer.newsletter_placeholder') }}" required>

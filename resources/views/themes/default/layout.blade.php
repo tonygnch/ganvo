@@ -380,6 +380,7 @@
             .ed-head .meta { text-align: left; }
         }
     </style>
+    {!! $theme->headExtras() !!}
 </head>
 <body>
     @php
@@ -395,7 +396,9 @@
             : null;
     @endphp
 
-    <div class="scrollbar" id="scrollbar"></div>
+    @if ($theme->on('scroll_progress'))
+        <div class="scrollbar" id="scrollbar"></div>
+    @endif
 
     @if ($csAnnouncement['enabled'] && $csAnnouncement['text'] !== '')
         <div class="marquee">

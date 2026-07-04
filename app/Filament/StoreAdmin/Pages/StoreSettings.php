@@ -164,7 +164,12 @@ class StoreSettings extends Page implements HasForms
                     ->icon(Heroicon::OutlinedSwatch)
                     ->schema([
                 Section::make('Theme')
-                    ->description('Pick a starting point for your storefront.')
+                    ->description('Pick a starting point for your storefront. Every theme can then be made your own — palette presets, font pairings, sections and signature details — under Customize Theme.')
+                    ->headerActions([
+                        Action::make('customizeTheme')
+                            ->label('Customize Theme →')
+                            ->url(fn () => CustomizeTheme::getUrl()),
+                    ])
                     ->schema([
                         Radio::make('theme')
                             ->options(ThemeRegistry::options())

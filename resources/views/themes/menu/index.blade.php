@@ -31,7 +31,7 @@
             margin: 0 0 .75rem;
         }
         .menu-heading {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-weight: 700;
             font-style: italic;
             font-size: clamp(2rem, 4vw, 2.75rem);
@@ -71,7 +71,7 @@
             min-width: 0;
         }
         .menu-name {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-weight: 600;
             font-size: 1.375rem;
             letter-spacing: -0.005em;
@@ -95,7 +95,7 @@
         }
         .menu-price {
             grid-column: 3;
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-weight: 600;
             font-size: 1.375rem;
             color: var(--ink);
@@ -145,16 +145,20 @@
         </section>
     @endif
 
-    @if (! $isFiltered && (isset($featuredCollections) ? $featuredCollections->isNotEmpty() : false))
+    @if (! $isFiltered && $theme->on('collections') && (isset($featuredCollections) ? $featuredCollections->isNotEmpty() : false))
         <section class="menu-sheet">
             @include('storefront.partials.collection-strips')
         </section>
     @endif
 
     <section class="menu-sheet" id="menu">
-        <p class="menu-eyebrow">{{ __('site.storefront.shop_all.eyebrow') }}</p>
-        <h2 class="menu-heading">{{ __('site.storefront.shop_all.h2') }}</h2>
-        <div class="menu-ornament" aria-hidden="true"><span class="dot">●</span></div>
+        @if ($theme->on('menu_header'))
+            <p class="menu-eyebrow">{{ $theme->copy('menu_eyebrow') }}</p>
+            <h2 class="menu-heading">{{ $theme->copy('menu_heading') }}</h2>
+        @endif
+        @if ($theme->on('ornament'))
+            <div class="menu-ornament" aria-hidden="true"><span class="dot">●</span></div>
+        @endif
 
         @include('storefront.partials.catalog-controls')
 
@@ -166,8 +170,8 @@
                     <div class="menu-row-text">
                         <h3 class="menu-name">
                             {{ $product->name }}
-                            @if ($product->stock_quantity <= 0)
-                                <span class="menu-out">{{ __('site.storefront.product.out_of_stock') ?? 'Out' }}</span>
+                            @if ($product->stock_quantity <= 0 && $theme->on('out_stamp'))
+                                <span class="menu-out">{{ $theme->label('out_stamp') }}</span>
                             @endif
                         </h3>
                         @if ($product->description)

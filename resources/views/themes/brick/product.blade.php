@@ -222,7 +222,7 @@
                 </div>
             </div>
 
-            @if ($related->isNotEmpty())
+            @if ($related->isNotEmpty() && $theme->on('related'))
                 <div class="sec-head rv">
                     <h2>{{ __('site.storefront.product.wear_it_with') }}</h2>
                     <a href="/">{{ __('site.storefront.featured.browse_all') }} →</a>

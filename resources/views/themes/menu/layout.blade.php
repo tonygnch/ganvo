@@ -37,6 +37,7 @@
             --ink-soft: #5e4a32;
             --rule: #d8c8a8;
             --accent: var(--primary);
+            --display: 'Playfair Display', Georgia, serif;
         }
         * { box-sizing: border-box; }
         html { scroll-behavior: smooth; }
@@ -49,7 +50,7 @@
             -webkit-font-smoothing: antialiased;
         }
         a { color: inherit; text-decoration: none; }
-        .serif { font-family: 'Playfair Display', Georgia, serif; }
+        .serif { font-family: var(--display); }
 
         /* -------- Announce -------- */
         .announce {
@@ -73,7 +74,7 @@
             display: inline-flex;
             align-items: center;
             gap: .75rem;
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-weight: 700;
             font-size: 2.5rem;
             letter-spacing: -0.01em;
@@ -169,7 +170,7 @@
         }
         .custom-hero-inner { position: relative; max-width: 600px; margin: 0 auto; z-index: 1; }
         .custom-hero h2 {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-weight: 700;
             font-style: italic;
             font-size: clamp(2rem, 4.5vw, 3rem);
@@ -216,7 +217,7 @@
             background: var(--paper);
         }
         .footer-brand {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-style: italic;
             font-size: 1.5rem;
             color: var(--ink);
@@ -244,6 +245,7 @@
         }
         .footer-bottom a { color: var(--ink); }
     </style>
+    {!! $theme->headExtras() !!}
 </head>
 <body>
     @php

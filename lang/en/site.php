@@ -625,6 +625,7 @@ return [
             'lead'      => 'Share the link, invite your first customers, and refine from the admin whenever.',
             'url_label' => 'Storefront',
             'visit'     => 'Visit storefront',
+            'customize' => 'Make it yours',
             'admin'     => 'Open admin',
         ],
     ],

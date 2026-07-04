@@ -42,6 +42,7 @@
         .hero .eyebrow { display: inline-flex; align-self: flex-start; background: var(--ink); color: var(--accent); font-family: var(--display); font-weight: 800; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; padding: 6px 12px; margin-bottom: 20px; flex-shrink: 0; }
         .hero h1 { font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: clamp(32px, 4.2vw, 62px); line-height: .92; letter-spacing: -.03em; }
         .hero h1 .hl { background: var(--accent); padding: 0 .12em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+        .hero h1.no-hl .hl { background: transparent; padding: 0; }
         .hero p { font-size: 16px; max-width: 42ch; margin: 20px 0 26px; color: var(--text-muted); }
         .hero .cta { display: flex; gap: 14px; flex-wrap: wrap; flex-shrink: 0; }
         .hero .vis { position: relative; min-height: 360px; background: var(--soft); }
@@ -380,8 +381,8 @@
                 <section class="hero">
                     <div class="copy">
                         <span class="eyebrow">{{ $csHero['title'] !== '' ? $csHero['title'] : __('site.storefront.hero.eyebrow', ['year' => date('Y')]) }}</span>
-                        <h1>@if ($csHero['subtitle'] !== ''){{ $csHero['subtitle'] }}@else{!! __('site.storefront.hero.headline', ['tenant' => '<span class="hl">' . e($tenant->name) . '</span>']) !!}@endif</h1>
-                        <p>{{ __('site.storefront.hero.sub') }}</p>
+                        <h1 class="{{ $theme->on('hl_mark') ? '' : 'no-hl' }}">@if ($csHero['subtitle'] !== ''){{ $csHero['subtitle'] }}@else{!! __('site.storefront.hero.headline', ['tenant' => '<span class="hl">' . e($tenant->name) . '</span>']) !!}@endif</h1>
+                        <p>{{ $theme->copy('hero_sub') }}</p>
                         <div class="cta">
                             <a class="btn accent" href="#shop">{{ $csHero['cta_label'] !== '' ? $csHero['cta_label'] : __('site.storefront.hero.cta_primary') }} <span class="arc">→</span></a>
                             <a class="btn" href="#shop">{{ __('site.storefront.hero.cta_secondary') }}</a>
@@ -393,18 +394,20 @@
                         @else
                             <span>{{ $tenant->name }}</span>
                         @endif
-                        @if ($heroProduct)
+                        @if ($heroProduct && $theme->on('pricetag'))
                             <span class="pricetag">@money($heroProduct->price_cents)</span>
                         @endif
                     </div>
                 </section>
 
                 {{-- ===== SELLING POINTS ===== --}}
-                <div class="ticker">
-                    <div class="t"><span class="num">01</span>{{ __('site.storefront.value_props.shipping_title') }}</div>
-                    <div class="t"><span class="num">02</span>{{ __('site.storefront.value_props.returns_title') }}</div>
-                    <div class="t"><span class="num">03</span>{{ __('site.storefront.value_props.checkout_title') }}</div>
-                </div>
+                @if ($theme->on('ticker'))
+                    <div class="ticker">
+                        <div class="t"><span class="num">01</span>{{ __('site.storefront.value_props.shipping_title') }}</div>
+                        <div class="t"><span class="num">02</span>{{ __('site.storefront.value_props.returns_title') }}</div>
+                        <div class="t"><span class="num">03</span>{{ __('site.storefront.value_props.checkout_title') }}</div>
+                    </div>
+                @endif
             @endif
 
             {{-- ===== COLLECTION STRIPS (only when the merchant curates them) ===== --}}

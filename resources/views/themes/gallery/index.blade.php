@@ -72,7 +72,7 @@
                     </div>
                     <div class="imgwrap rv">
                         <div class="main ph">@if ($heroImg)<img src="{{ $heroImg }}" alt="">@else<span>{{ __('site.storefront.product.no_image') }}</span>@endif</div>
-                        @if ($floatP)
+                        @if ($floatP && $theme->on('hero_float'))
                             <a class="float" href="/products/{{ $floatP->slug }}">
                                 <div class="mini">@if ($floatP->image_path)<img src="{{ \Illuminate\Support\Facades\Storage::url($floatP->image_path) }}" alt="">@endif</div>
                                 <div class="nm">{{ $floatP->name }}</div><div class="pr">@money($floatP->price_cents)</div>
@@ -81,18 +81,20 @@
                     </div>
                 </section>
 
+                @if ($theme->on('value_strip'))
                 <div class="marq2 rv">
                     <span><b>{{ __('site.storefront.value_props.shipping_title') }}</b> · {{ __('site.storefront.value_props.shipping_sub') }}</span>
                     <span><b>{{ __('site.storefront.value_props.returns_title') }}</b> · {{ __('site.storefront.value_props.returns_sub') }}</span>
                     <span><b>{{ __('site.storefront.value_props.checkout_title') }}</b> · {{ __('site.storefront.value_props.checkout_sub') }}</span>
                 </div>
-
-                @if ($featured->isNotEmpty())
-                    <div class="sec-head rv" id="featured"><h2>{{ __('site.storefront.featured.h2') }}</h2><a href="#shop">{{ __('site.storefront.featured.browse_all') }} →</a></div>
-                    <div class="pgrid">@foreach ($featured->take(4) as $i => $product)@include('themes.gallery._card', ['badge' => $i === 0 ? __('site.storefront.featured.badge') : null])@endforeach</div>
                 @endif
 
-                @if ($topCategories->count() >= 1)
+                @if ($featured->isNotEmpty() && $theme->on('featured_grid'))
+                    <div class="sec-head rv" id="featured"><h2>{{ __('site.storefront.featured.h2') }}</h2><a href="#shop">{{ __('site.storefront.featured.browse_all') }} →</a></div>
+                    <div class="pgrid">@foreach ($featured->take(4) as $i => $product)@include('themes.gallery._card', ['badge' => $i === 0 && $theme->on('featured_badge') ? $theme->label('featured_badge') : null])@endforeach</div>
+                @endif
+
+                @if ($topCategories->count() >= 1 && $theme->on('category_splits'))
                     <div class="splits">
                         @foreach ($topCategories as $cat)
                             <a class="split rv" href="/categories/{{ $cat->slug }}">@if ($cat->image_path)<img src="{{ \Illuminate\Support\Facades\Storage::url($cat->image_path) }}" alt="">@endif<div class="ov"><h3>{{ $cat->name }}</h3></div></a>
@@ -100,22 +102,24 @@
                     </div>
                 @endif
 
+                @if ($theme->on('story_band'))
                 <section class="story">
                     <div class="img">@if ($storyImg)<img src="{{ $storyImg }}" alt="">@endif</div>
                     <div class="txt">
                         <div class="k rv">{{ __('site.storefront.featured.eyebrow') }}</div>
                         <h3 class="rv">{{ __('site.storefront.promo.h2_prefix', ['tenant' => $tenant->name]) }}</h3>
-                        <p class="rv">{{ __('site.storefront.promo.p') }}</p>
+                        <p class="rv">{{ $theme->copy('story_body') }}</p>
                         <a class="btn outline rv" href="#shop" style="align-self:flex-start">{{ __('site.storefront.promo.btn') }}</a>
                     </div>
                 </section>
+                @endif
             @endif
 
             @if (! $isFiltered && (isset($featuredCollections) ? $featuredCollections->isNotEmpty() : false))
                 <section class="rv">@include('storefront.partials.collection-strips')</section>
             @endif
 
-            <div class="sec-head rv" id="shop"><h2>{{ __('site.storefront.shop_all.h2') }}</h2></div>
+            <div class="sec-head rv" id="shop"><h2>{{ $theme->copy('shop_heading') }}</h2></div>
             @include('storefront.partials.catalog-controls')
             @if ($products->isEmpty())
                 <div class="empty">{{ __('site.storefront.no_products') }}</div>
@@ -124,10 +128,10 @@
                 @include('storefront.partials.pagination')
             @endif
 
-            @if (! $isFiltered)
+            @if (! $isFiltered && $theme->on('newsletter'))
                 <section class="news rv">
                     <h3>{{ __('site.storefront.footer.subscribe') }}</h3>
-                    <p>{{ __('site.storefront.footer.tagline') }}</p>
+                    <p>{{ $theme->copy('news_body') }}</p>
                     <form data-subscribed-label="{{ __('site.storefront.footer.subscribed') }}" onsubmit="event.preventDefault(); this.querySelector('input').value=''; this.querySelector('button').textContent=this.dataset.subscribedLabel;">
                         <input type="email" placeholder="{{ __('site.storefront.footer.newsletter_placeholder') }}" required>
                         <button type="submit" class="btn">{{ __('site.storefront.footer.subscribe') }}</button>

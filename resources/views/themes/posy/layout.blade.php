@@ -82,6 +82,8 @@
         /* washi tape strip — florist signature on cards */
         .tape { position: absolute; width: 88px; height: 26px; background: var(--tape); backdrop-filter: blur(1px); transform: rotate(-4deg); top: -12px; left: 50%; margin-left: -44px; z-index: 5; border-radius: 1px; box-shadow: 0 2px 6px rgba(0, 0, 0, .06); pointer-events: none; }
         .tape.r { transform: rotate(5deg); }
+        /* merchant kill-switch (manifest motif "washi_tape") */
+        body.no-tape .tape { display: none; }
 
         /* reveal on scroll */
         .reveal { opacity: 0; transform: translateY(28px); transition: opacity .9s ease, transform 1s cubic-bezier(.19, .7, .16, 1); }
@@ -165,6 +167,11 @@
         .bcard h3 { font-family: var(--display); font-size: 23px; text-align: center; margin: 2px 0 4px; font-weight: 400; }
         .bcard .pr { font-family: var(--body); font-weight: 600; font-size: 20px; font-variant-numeric: tabular-nums; text-align: center; color: var(--accent); }
         @media (prefers-reduced-motion: reduce) { .bcard, .bcard:hover { transform: none; } }
+        /* merchant kill-switch (manifest motif "polaroid_tilt") — cards sit
+           straight; the hover lift is kept (minus the straightening rotate). */
+        body.no-tilt .bcard:nth-child(3n+1), body.no-tilt .bcard:nth-child(3n+2), body.no-tilt .bcard:nth-child(3n) { transform: none; }
+        body.no-tilt .bcard:hover { transform: translateY(-6px); }
+        @media (prefers-reduced-motion: reduce) { body.no-tilt .bcard:hover { transform: none; } }
 
         /* footer */
         footer.site { background: var(--soft); padding: 62px 0 34px; margin-top: 90px; }
@@ -195,8 +202,9 @@
             .nav .right .lbl { display: none; }
         }
     </style>
+    {!! $theme->headExtras() !!}
 </head>
-<body>
+<body class="{{ trim(($theme->on('washi_tape') ? '' : 'no-tape ') . ($theme->on('polaroid_tilt') ? '' : 'no-tilt')) }}">
     @php
         $csAnnouncement = $store->announcementBar();
         $csNavMenu = $store->navMenuItems();

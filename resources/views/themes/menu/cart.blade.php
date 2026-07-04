@@ -19,7 +19,7 @@
             margin: 0 0 .75rem;
         }
         .cart-heading {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-weight: 700;
             font-style: italic;
             font-size: clamp(2rem, 4vw, 2.75rem);
@@ -30,7 +30,7 @@
         .cart-summary-line {
             text-align: center;
             color: var(--ink-soft);
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-style: italic;
             font-size: 1rem;
             margin: 0 0 1rem;
@@ -55,7 +55,7 @@
         }
         .cart-row-left { min-width: 0; }
         .cart-name {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-weight: 600;
             font-size: 1.375rem;
             letter-spacing: -0.005em;
@@ -86,7 +86,7 @@
         .qty-step:hover:not(:disabled) { border-color: var(--ink); }
         .qty-step:disabled { opacity: .35; cursor: not-allowed; }
         .qty-display {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-weight: 600;
             font-size: 1rem;
             min-width: 1.5ch;
@@ -105,7 +105,7 @@
         .remove-btn:hover { color: var(--ink); }
 
         .cart-price {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-weight: 600;
             font-size: 1.375rem;
             color: var(--ink);
@@ -127,7 +127,7 @@
             color: var(--ink);
             font-size: 0.9375rem;
         }
-        .totals-row .label { color: var(--ink-soft); font-style: italic; font-family: 'Playfair Display', Georgia, serif; }
+        .totals-row .label { color: var(--ink-soft); font-style: italic; font-family: var(--display); }
         .totals-row .leader { border-bottom: 1px dotted var(--rule); margin: 0 .75rem .375rem; align-self: end; min-height: 1px; }
         .totals-row .num { font-variant-numeric: tabular-nums; }
         .totals-row.free .num { color: var(--primary-strong); font-weight: 600; }
@@ -146,7 +146,7 @@
             color: var(--ink);
         }
         .totals-row.total .num {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-weight: 700;
             font-size: 1.875rem;
         }
@@ -182,7 +182,7 @@
             font-size: 0.875rem;
             color: var(--ink-soft);
             font-style: italic;
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
         }
         .keep-shopping a { color: var(--ink); border-bottom: 1px solid currentColor; }
 
@@ -190,7 +190,7 @@
             text-align: center;
             padding: 4rem 0;
             color: var(--ink-soft);
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-style: italic;
             font-size: 1.25rem;
         }

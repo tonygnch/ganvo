@@ -1,7 +1,7 @@
 @php
     $title = __('site.common.create_account');
     $csSignup = $store->signupFieldsConfig();
-    $reqMarker = fn (bool $req) => $req ? '' : ' <span style="color: var(--ink-soft); font-family: \'Playfair Display\', Georgia, serif; font-style: italic;">(' . __('site.auth.optional') . ')</span>';
+    $reqMarker = fn (bool $req) => $req ? '' : ' <span style="color: var(--ink-soft); font-family: var(--display); font-style: italic;">(' . __('site.auth.optional') . ')</span>';
 @endphp
 @extends('themes.menu.layout')
 
@@ -17,7 +17,7 @@
             margin: 0 0 .5rem;
         }
         .auth-page h1 {
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-style: italic;
             font-weight: 700;
             font-size: clamp(2rem, 4vw, 2.75rem);
@@ -32,7 +32,7 @@
             font-style: italic;
             font-size: 1rem;
             margin: 0 0 2.5rem;
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
         }
         .errors {
             border: 1px solid var(--rule);
@@ -64,7 +64,7 @@
             transition: border-color .2s ease;
         }
         .field-input:focus { outline: none; border-color: var(--ink); }
-        .field-hint { display: block; margin-top: .375rem; font-size: 0.75rem; color: var(--ink-soft); font-style: italic; font-family: 'Playfair Display', Georgia, serif; }
+        .field-hint { display: block; margin-top: .375rem; font-size: 0.75rem; color: var(--ink-soft); font-style: italic; font-family: var(--display); }
 
         .shipping-group { border-top: 1px dashed var(--rule); padding-top: 1.5rem; margin-top: 1.5rem; }
         .shipping-group .field-label { margin-bottom: .5rem; }
@@ -75,7 +75,7 @@
             display: flex; align-items: flex-start; gap: .625rem;
             cursor: pointer; font-size: 0.875rem; line-height: 1.5;
             color: var(--ink);
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-style: italic;
         }
         .marketing-label input { margin-top: .15rem; flex-shrink: 0; }
@@ -103,7 +103,7 @@
             margin-top: 2rem;
             font-size: 0.875rem;
             color: var(--ink-soft);
-            font-family: 'Playfair Display', Georgia, serif;
+            font-family: var(--display);
             font-style: italic;
         }
         .auth-footer a { color: var(--ink); border-bottom: 1px solid currentColor; padding-bottom: 1px; }

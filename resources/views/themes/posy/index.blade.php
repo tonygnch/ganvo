@@ -88,6 +88,7 @@
         @if (! $isFiltered)
             <div class="wrap">
                 <section class="hero">
+                    @if ($theme->on('hero_collage'))
                     <div class="collage" aria-hidden="true">
                         @foreach (['c1', 'c2', 'c3', 'c4'] as $i => $cls)
                             @php
@@ -103,10 +104,11 @@
                         @endforeach
                         <div class="cdot cd1 reveal s1"></div><div class="cdot cd2 reveal s3"></div>
                     </div>
+                    @endif
                     <div class="lead">
                         <div class="kicker reveal">{{ $csHero['title'] !== '' ? $csHero['title'] : __('site.storefront.hero.eyebrow', ['year' => date('Y')]) }}</div>
                         <h1 class="reveal s1">@if ($csHero['subtitle'] !== ''){{ $csHero['subtitle'] }}@else{!! __('site.storefront.hero.headline', ['tenant' => '<em>' . e($tenant->name) . '</em>']) !!}@endif</h1>
-                        <p class="reveal s2">{{ __('site.storefront.hero.sub') }}</p>
+                        <p class="reveal s2">{{ $theme->copy('hero_sub') }}</p>
                         <div class="cta reveal s2">
                             <a class="btn" href="#shop">{{ $csHero['cta_label'] !== '' ? $csHero['cta_label'] : __('site.storefront.hero.cta_primary') }}</a>
                             <a class="btn outline" href="#shop">{{ __('site.storefront.hero.cta_secondary') }}</a>
@@ -115,11 +117,13 @@
                 </section>
             </div>
 
-            <div class="seasonal">
-                <span><b>{{ __('site.storefront.value_props.shipping_title') }}</b></span>
-                <span><b>{{ __('site.storefront.value_props.returns_title') }}</b></span>
-                <span><b>{{ __('site.storefront.value_props.checkout_title') }}</b></span>
-            </div>
+            @if ($theme->on('seasonal_strip'))
+                <div class="seasonal">
+                    <span><b>{{ $theme->copy('seasonal_1') }}</b></span>
+                    <span><b>{{ $theme->copy('seasonal_2') }}</b></span>
+                    <span><b>{{ $theme->copy('seasonal_3') }}</b></span>
+                </div>
+            @endif
         @endif
 
         <div class="wrap">

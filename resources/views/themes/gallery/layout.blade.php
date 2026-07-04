@@ -113,6 +113,7 @@
             .fgrid { grid-template-columns: 1fr 1fr; }
         }
     </style>
+    {!! $theme->headExtras() !!}
 </head>
 <body>
     @php

@@ -279,9 +279,16 @@
         @media (max-width: 375px) {
             .wrap { padding: 0 12px; }
         }
+
+        /* Numbered-chip motif OFF (Customize theme): hide the ticker stamps,
+           the collection-card corner ordinals and the drawer index chips. */
+        body.no-nums .ticker .t .num,
+        body.no-nums .wrap .cs-card::before,
+        body.no-nums .m-drawer nav a .ix { display: none; }
     </style>
+    {!! $theme->headExtras() !!}
 </head>
-<body>
+<body class="{{ $theme->on('num_chips') ? '' : 'no-nums' }}">
     @php
         $csAnnouncement = $store->announcementBar();
         $csNavMenu = $store->navMenuItems();
@@ -453,7 +460,7 @@
                 <div>
                     <div class="wm">{{ $tenant->name }}</div>
                     <p style="color: rgba(253,251,240,.75); max-width: 32ch; margin-top: 14px; font-size: 14px;">
-                        {{ __('site.storefront.footer.tagline') }}
+                        {{ $theme->copy('footer_tagline') }}
                     </p>
                 </div>
                 <div class="fcol">

@@ -118,6 +118,7 @@
             <a href="{{ $storefrontUrl }}" target="_blank" rel="noopener" class="btn btn-primary btn-big">
                 {{ __('site.onboarding.launched.visit') }} ↗
             </a>
+            <a href="/store/customize-theme" class="btn btn-ghost btn-big">{{ __('site.onboarding.launched.customize') }} →</a>
             <a href="/store" class="btn btn-ghost btn-big">{{ __('site.onboarding.launched.admin') }} →</a>
         </div>
     </div>
