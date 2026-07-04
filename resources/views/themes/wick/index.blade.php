@@ -257,7 +257,13 @@
                 {{-- Editorial ticket — the manifesto, framed two-up. --}}
                 @if ($theme->on('explain'))
                     <section class="explain reveal">
-                        <div class="art"><div class="stamp">{{ $tenant->name }}<br>★</div></div>
+                        <div class="art" style="overflow: hidden;">
+                            @if ($explainImg = $theme->image('explain_image'))
+                                <img src="{{ $explainImg }}" alt="" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                            @else
+                                <div class="stamp">{{ $tenant->name }}<br>★</div>
+                            @endif
+                        </div>
                         <div class="txt">
                             <div class="k">{{ __('site.storefront.featured.eyebrow') }}</div>
                             <h3>{!! __('site.storefront.hero.headline', ['tenant' => '<em>' . e($tenant->name) . '</em>']) !!}</h3>

@@ -6,7 +6,13 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
     plugins: [
         laravel({
-            input: ['resources/css/app.css', 'resources/js/app.js'],
+            input: [
+                'resources/css/app.css',
+                'resources/js/app.js',
+                // Storefront kit — motion + commerce UX layer shared by themes.
+                'resources/css/storefront.css',
+                'resources/js/storefront.js',
+            ],
             refresh: true,
             fonts: [
                 bunny('Instrument Sans', {

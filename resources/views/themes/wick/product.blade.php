@@ -163,7 +163,7 @@
                         <li>{{ __('site.storefront.value_props.checkout_sub') }}</li>
                     </ul>
 
-                    <form method="post" action="/cart/add/{{ $product->slug }}">
+                    <form method="post" action="/cart/add/{{ $product->slug }}" data-gv-add>
                         @csrf
                         @if ($product->hasVariants())
                             <div class="opt">
@@ -175,6 +175,8 @@
                             {{ __('site.storefront.product.add_to_cart') }} — <span data-vp-submit-price>@money($product->price_cents)</span>
                         </button>
                     </form>
+
+                    @include('storefront.partials.sticky-atc', ['product' => $product])
                 </div>
             </div>
 

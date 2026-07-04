@@ -5,6 +5,7 @@ namespace App\Filament\StoreAdmin\Pages;
 use App\Models\Store;
 use App\Themes\ThemeRegistry;
 use BackedEnum;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
@@ -70,6 +71,10 @@ class CustomizeTheme extends Page implements HasForms
         foreach (($manifest['content'] ?? []) as $key => $field) {
             $data["content_{$key}"] = (string) data_get($saved, "content.{$key}", '');
         }
+        foreach (array_keys($manifest['images'] ?? []) as $slot) {
+            $path = data_get($saved, "images.{$slot}");
+            $data["image_{$slot}"] = $path ? [$path] : [];
+        }
 
         $this->form->fill($data);
     }
@@ -134,6 +139,22 @@ class CustomizeTheme extends Page implements HasForms
             $tabs[] = Tab::make('Content')->schema($contentFields);
         }
 
+        // — Images: merchant photos for the theme's image slots —
+        $imageFields = [];
+        foreach (($manifest['images'] ?? []) as $slot => $field) {
+            $help = trim(($field['hint'] ?? '') . (isset($field['size']) ? " Recommended: {$field['size']}." : ''));
+            $imageFields[] = FileUpload::make("image_{$slot}")
+                ->label($field['label'] ?? $slot)
+                ->image()
+                ->disk('public')
+                ->directory('theme-images')
+                ->maxSize(4096)
+                ->helperText($help !== '' ? $help : 'Leave empty to use the theme default.');
+        }
+        if ($imageFields !== []) {
+            $tabs[] = Tab::make('Images')->schema($imageFields);
+        }
+
         return $schema->statePath('data')->components([
             Tabs::make('customize')->tabs($tabs)->persistTabInQueryString(),
         ]);
@@ -168,6 +189,16 @@ class CustomizeTheme extends Page implements HasForms
             $text = trim((string) ($state["content_{$key}"] ?? ''));
             if ($text !== '') {
                 $settings['content'][$key] = $text;
+            }
+        }
+        foreach (array_keys($manifest['images'] ?? []) as $slot) {
+            $path = $state["image_{$slot}"] ?? null;
+            // FileUpload state may be a string or a single-item array.
+            if (is_array($path)) {
+                $path = array_values($path)[0] ?? null;
+            }
+            if (is_string($path) && $path !== '') {
+                $settings['images'][$slot] = $path;
             }
         }
 

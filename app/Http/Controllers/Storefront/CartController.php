@@ -45,6 +45,15 @@ class CartController extends Controller
                 'line_id'         => $row['line_id'],
                 'quantity'        => $row['quantity'],
                 'subtotal'        => $fmt($row['subtotal_cents']),
+                // Extended fields for the slide-out cart drawer; the cart
+                // page's own JS patches by line_id and ignores these.
+                'name'            => $row['product']->name,
+                'variant'         => $row['variant']->label ?? null,
+                'unit'            => $fmt($row['unit_price_cents']),
+                'image'           => $row['product']->image_path
+                    ? \Illuminate\Support\Facades\Storage::url($row['product']->image_path)
+                    : null,
+                'url'             => '/products/' . $row['product']->slug,
             ])->values()->all(),
             'subtotal'        => $fmt($subtotal),
             'discount'        => ($discount && $discountCents > 0) ? [
@@ -137,7 +146,7 @@ class CartController extends Controller
         return redirect('/cart')->with('cart.flash', $flash);
     }
 
-    public function add(Request $request): RedirectResponse
+    public function add(Request $request): RedirectResponse|JsonResponse
     {
         $slug = $request->route('slug');
         $tenant = app('current_tenant');
@@ -155,6 +164,13 @@ class CartController extends Controller
         // variants — otherwise the customer would be ordering an
         // ambiguous "default" version.
         if ($product->hasVariants() && ! $variantId) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'ok'    => false,
+                    'flash' => __('site.storefront.cart.pick_a_variant'),
+                ], 422);
+            }
+
             return back()->with('cart.flash', __('site.storefront.cart.pick_a_variant'));
         }
 
@@ -170,13 +186,20 @@ class CartController extends Controller
             }
         }
 
-        Cart::forCurrent()->add($product->id, $variantId);
+        $cart = Cart::forCurrent();
+        $cart->add($product->id, $variantId);
 
         $flashName = $variantId
             ? sprintf('%s — %s', $product->name, $variant->label)
             : $product->name;
+        $flash = __('site.storefront.added_to_cart', ['name' => $flashName]);
 
-        return back()->with('cart.flash', __('site.storefront.added_to_cart', ['name' => $flashName]));
+        // Async path — the slide-out cart drawer adds without navigation.
+        if ($request->wantsJson()) {
+            return response()->json($this->cartState($cart, $flash));
+        }
+
+        return back()->with('cart.flash', $flash);
     }
 
     public function update(Request $request): RedirectResponse|JsonResponse

@@ -82,6 +82,23 @@ class ThemeCustomizer
         return (bool) $def;
     }
 
+    /**
+     * A themed image slot's URL: merchant upload → theme demo default → null.
+     * Templates keep their designed placeholder as the final fallback:
+     *
+     *   @if ($url = $theme->image('story_band')) <img src="{{ $url }}"> @else …placeholder… @endif
+     */
+    public function image(string $slot): ?string
+    {
+        $override = trim((string) data_get($this->settings, "images.{$slot}", ''));
+        if ($override !== '') {
+            return \Illuminate\Support\Facades\Storage::disk('public')->url($override);
+        }
+        $default = $this->manifest['images'][$slot]['default'] ?? null;
+
+        return $default ? asset($default) : null;
+    }
+
     /** A motif's text label (e.g. what the roast pips or BATCH stamp say). */
     public function label(string $motifId): string
     {
