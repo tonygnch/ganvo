@@ -17,6 +17,16 @@ class ResolveStorefrontTenant
 
         $tenant = $this->resolveByCustomDomain($host) ?? $this->resolveBySubdomain($host, $centralDomain);
 
+        // Website clients are hosted OUTSIDE the platform — their subdomain
+        // here is just a courtesy pointer to the live site.
+        if ($tenant?->isWebsite()) {
+            $url = $tenant->website?->url;
+
+            return $url
+                ? redirect()->away($url, 302)
+                : abort(404);
+        }
+
         if (! $tenant || ! $tenant->store?->is_live || $tenant->status !== Tenant::STATUS_ACTIVE) {
             abort(404);
         }

@@ -22,6 +22,24 @@ class Tenant extends Model
         self::STATUS_SUSPENDED => 'Suspended',
     ];
 
+    /**
+     * What kind of client this tenant is: a self-serve storefront (the
+     * classic flow) or a hand-built custom website hosted outside the
+     * platform, managed here as a hub (registry + billing + status).
+     */
+    public const TYPE_STORE = 'store';
+    public const TYPE_WEBSITE = 'website';
+
+    public const TYPES = [
+        self::TYPE_STORE => 'Storefront',
+        self::TYPE_WEBSITE => 'Custom website',
+    ];
+
+    public function isWebsite(): bool
+    {
+        return $this->type === self::TYPE_WEBSITE;
+    }
+
     public const PLAN_STARTER = 'starter';
     public const PLAN_PRO = 'pro';
     public const PLAN_BUSINESS = 'business';
@@ -35,6 +53,7 @@ class Tenant extends Model
     protected $fillable = [
         'name',
         'slug',
+        'type',
         'business_type',
         'contact_email',
         'contact_phone',
@@ -147,6 +166,11 @@ class Tenant extends Model
     public function store(): HasOne
     {
         return $this->hasOne(Store::class);
+    }
+
+    public function website(): HasOne
+    {
+        return $this->hasOne(Website::class);
     }
 
     public function users(): HasMany

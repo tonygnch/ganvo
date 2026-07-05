@@ -1,7 +1,10 @@
-# Ganvo — White-Label E-Commerce SaaS Platform
+# Ganvo — White-Label E-Commerce & Web Platform
 
 ## Project Overview
-Ganvo is a white-label SaaS platform where clients self-onboard through a guided wizard, pick a storefront theme, customize their store, manage products, and go live — all managed through a permission-based admin system.
+Ganvo is a white-label SaaS platform with two client types under one roof:
+
+1. **Storefronts** — clients self-onboard through a guided wizard, pick a storefront theme, customize their store, manage products, and go live — all managed through a permission-based admin system.
+2. **Custom websites (hub)** — hand-built client sites that live in their **own repos and hosting**; Ganvo manages the client relationship only: registry (live URL, repo, stack, notes), billing via the shared tenant/subscription stack, up/down checks, and SA oversight (Super Admin → Clients → Websites). Tenants carry a `type` (`store` | `website`); website tenants have no Store row, and their platform subdomain 302-redirects to the live site once a URL is set. Currently registered: Kass Photography, Midi BG, ASG (repos under ~/Projects/PHP/, untouched by the platform).
 
 > **Domain note:** the platform runs on **ganvo.bg** as the primary domain.
 
