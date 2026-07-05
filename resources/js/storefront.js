@@ -231,6 +231,26 @@ function initAddForms() {
     });
 }
 
+/* ─── visitor light/dark toggle (native theme mode = no attribute) ─────── */
+
+function initModeToggle() {
+    document.querySelectorAll('[data-gv-mode-alt]').forEach((btn) => {
+        const alt = btn.dataset.gvModeAlt;
+        const sync = () => btn.setAttribute('aria-pressed', document.documentElement.dataset.mode === alt ? 'true' : 'false');
+        sync();
+        btn.addEventListener('click', () => {
+            const on = document.documentElement.dataset.mode === alt;
+            if (on) {
+                delete document.documentElement.dataset.mode;
+            } else {
+                document.documentElement.dataset.mode = alt;
+            }
+            try { localStorage.setItem('gv-mode', on ? '' : alt); if (on) localStorage.removeItem('gv-mode'); } catch { /* private mode */ }
+            sync();
+        });
+    });
+}
+
 /* ─── boot ─────────────────────────────────────────────────────────────── */
 
 window.gv = { gsap, ScrollTrigger, lenis, motion, refresh: () => ScrollTrigger.refresh() };
@@ -242,6 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initEmblas();
     initCounters();
     initAddForms();
+    initModeToggle();
     Alpine.start();
     // Split AFTER webfonts land — line boxes measured on fallback metrics
     // would mask/break in the wrong places once the real font swaps in.

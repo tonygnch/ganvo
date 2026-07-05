@@ -139,15 +139,49 @@ class ThemeCustomizer
             }
         }
 
-        if ($vars !== []) {
-            $css = '';
-            foreach ($vars as $var => $value) {
-                $css .= e($var) . ':' . str_replace(['<', '>', '{', '}'], '', $value) . ';';
-            }
-            $out .= "<style>:root{{$css}}</style>";
+        $css = '';
+        foreach ($vars as $var => $value) {
+            $css .= e($var) . ':' . str_replace(['<', '>', '{', '}'], '', $value) . ';';
+        }
+        if ($css !== '') {
+            $css = ":root{{$css}}";
+        }
+        // Alternate color-mode token map (visitor sun/moon toggle).
+        $css .= $this->modeCss();
+        if ($css !== '') {
+            $out .= "<style>{$css}</style>";
         }
 
         return new HtmlString($out);
+    }
+
+    /**
+     * The theme's alternate color mode ('light' or 'dark'), if its manifest
+     * declares one under 'modes'. The theme's own :root is its native mode;
+     * the visitor toggle switches <html data-mode="…"> to the alternate.
+     */
+    public function alternateMode(): ?string
+    {
+        $modes = array_keys($this->manifest['modes'] ?? []);
+
+        return $modes[0] ?? null;
+    }
+
+    /** CSS for the alternate mode: html[data-mode="X"] { --token: value; } */
+    public function modeCss(): string
+    {
+        $out = '';
+        foreach (($this->manifest['modes'] ?? []) as $mode => $def) {
+            $css = '';
+            foreach (($def['vars'] ?? []) as $var => $value) {
+                $css .= e($var) . ':' . str_replace(['<', '>', '{', '}'], '', $value) . ';';
+            }
+            if ($css !== '') {
+                $out .= 'html[data-mode="' . e($mode) . '"]{' . $css . '}';
+            }
+        }
+
+        return $out;
     }
 
     public function manifest(): array

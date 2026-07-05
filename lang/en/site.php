@@ -100,6 +100,7 @@ return [
 
     'storefront' => [
         'announce' => 'Free shipping on orders over :amount — and easy returns within :days days.',
+        'mode_toggle' => 'Switch light/dark mode',
         'nav' => [
             'shop' => 'Shop',
             'featured' => 'Featured',

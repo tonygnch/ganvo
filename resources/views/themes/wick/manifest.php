@@ -77,6 +77,26 @@ return [
         ],
     ],
 
+    // Visitor-toggle alternate color mode. Wick is dark-native; "Daylight
+    // bench" retunes the core tokens to warm parchment (aliases + shared
+    // partials cascade automatically; --deep stays dark so the ticker and
+    // footer keep their slab contrast; --accent stays the merchant's knob).
+    'modes' => [
+        'light' => [
+            'name' => 'Daylight bench',
+            'vars' => [
+                '--bg' => '#f5eee1',
+                '--surface' => '#fcf7ed',
+                '--surface2' => '#ece1cd',
+                '--line' => '#dcccb0',
+                '--line2' => '#c3ad8a',
+                '--txt' => '#2b2013',
+                '--muted' => '#77664d',
+                '--faint' => '#99876c',
+            ],
+        ],
+    ],
+
     'images' => [
         'explain_image' => [
             'label' => 'Story band image',

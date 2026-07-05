@@ -10,6 +10,34 @@
 /* Alpine: hide bound markup until the framework boots (prevents flash). */
 [x-cloak] { display: none !important; }
 
+/* ─── visitor light/dark mode toggle ────────────────────────────────────── */
+
+.gv-mode {
+    display: inline-grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 99px;
+    color: inherit;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.gv-mode:hover { border-color: var(--border, currentColor); }
+
+/* Show the icon of the mode you'd switch TO. Dark-native themes (alternate
+   = light) start with a sun; light-native themes (alternate = dark) start
+   with a moon. Once the alternate is active, the icon flips back. */
+.gv-mode[data-gv-mode-alt='light'] .gv-moon { display: none; }
+html[data-mode='light'] .gv-mode[data-gv-mode-alt='light'] .gv-sun { display: none; }
+html[data-mode='light'] .gv-mode[data-gv-mode-alt='light'] .gv-moon { display: block; }
+.gv-mode[data-gv-mode-alt='dark'] .gv-sun { display: none; }
+html[data-mode='dark'] .gv-mode[data-gv-mode-alt='dark'] .gv-moon { display: none; }
+html[data-mode='dark'] .gv-mode[data-gv-mode-alt='dark'] .gv-sun { display: block; }
+
 /* ─── slide-out cart drawer ─────────────────────────────────────────────── */
 
 .gv-drawer-veil {

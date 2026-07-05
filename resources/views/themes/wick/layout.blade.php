@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     @include('partials.favicon')
     <title>{{ ($title ?? null) ? $title . ' — ' . $tenant->name : $tenant->name }}</title>
+    @include('storefront.partials.mode-boot')
 
     {{-- Wick hard-codes its typography: Fraunces (soft, wonky old-style serif —
          the display AND accent voice of the apothecary) + Space Mono (batch
@@ -89,6 +90,20 @@
             background: radial-gradient(135% 105% at 50% 38%, rgba(9, 6, 3, 0) 58%, rgba(9, 6, 3, .38) 100%);
         }
         ::selection { background: var(--accent); color: var(--deep); }
+
+        /* ===== Daylight bench — the visitor-toggle light mode. Token map
+           lives in manifest.php ('modes'); these rules retune the dark-baked
+           atmosphere layers that tokens alone can't flip. ===== */
+        html[data-mode="light"] body {
+            background:
+                radial-gradient(1100px 720px at 80% -12%, #fff8ea 0%, rgba(255, 248, 234, 0) 62%),
+                radial-gradient(1300px 900px at 50% 118%, #efe0c8 0%, rgba(239, 224, 200, 0) 62%),
+                var(--bg);
+        }
+        html[data-mode="light"] body::after { background: radial-gradient(135% 105% at 50% 38%, rgba(60, 42, 20, 0) 66%, rgba(60, 42, 20, .12) 100%); }
+        html[data-mode="light"] header.site { background: rgba(250, 243, 231, .86); }
+        html[data-mode="light"] .hero .stage .glow { opacity: .55; }
+        html[data-mode="light"] .hero::before { -webkit-text-stroke-color: rgba(155, 108, 42, .18); }
         img { display: block; max-width: 100%; }
         a { color: inherit; text-decoration: none; }
         button { font-family: inherit; cursor: pointer; }
@@ -348,6 +363,7 @@
                     @endif
                 </div>
                 <div class="right">
+                    @include('storefront.partials.mode-toggle')
                     <details class="menu">
                         <summary aria-label="{{ __('site.lang.switch') }}"><span>{{ strtoupper($currentLocale) }}</span><svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg></summary>
                         <div class="menu-items" role="menu">
