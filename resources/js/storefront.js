@@ -43,7 +43,16 @@ try {
 
 let lenis = null;
 if (!reduced && document.body.dataset.gvSmooth !== 'off') {
-    lenis = new Lenis({ autoRaf: false });
+    // Scroll feel is tunable per theme via data-gv-motion's "scroll" block:
+    // lerp = catch-up speed (higher = snappier), wheelMultiplier = travel per
+    // wheel tick. Kit defaults already lean quicker than Lenis stock — smooth
+    // should never read as sluggish.
+    const scroll = motion.scroll ?? {};
+    lenis = new Lenis({
+        autoRaf: false,
+        lerp: scroll.lerp ?? 0.14,
+        wheelMultiplier: scroll.wheelMultiplier ?? 1.3,
+    });
     lenis.on('scroll', ScrollTrigger.update);
     gsap.ticker.add((t) => lenis.raf(t * 1000));
     gsap.ticker.lagSmoothing(0);

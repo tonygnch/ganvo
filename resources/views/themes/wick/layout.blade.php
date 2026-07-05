@@ -292,7 +292,9 @@
     {{-- Storefront kit — motion (GSAP/Lenis) + cart drawer / quick-view (Alpine). --}}
     @vite(['resources/css/storefront.css', 'resources/js/storefront.js'])
 </head>
-<body data-gv-motion='{"duration":1.35,"ease":"power2.out","distance":34,"stagger":0.12}'>
+{{-- Reveals stay slow and candlelit; SCROLL stays responsive — the two are
+     separate feels (sluggish scrolling reads as jank, not mood). --}}
+<body data-gv-motion='{"duration":1.35,"ease":"power2.out","distance":34,"stagger":0.12,"scroll":{"lerp":0.18,"wheelMultiplier":1.6}}'>
     @php
         $csAnnouncement = $store->announcementBar();
         $csNavMenu = $store->navMenuItems();
