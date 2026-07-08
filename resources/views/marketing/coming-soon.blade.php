@@ -53,6 +53,23 @@
         }
         .cs-headline .accent { color: #3b82f6; }
 
+        /* Logo — scales down on narrow phones instead of staying pinned at
+           its desktop size; `!important` is needed because the lockup
+           component sets height inline. Unchanged above ~600px. */
+        .cs-logo img { height: clamp(40px, 16vw, 96px) !important; width: auto !important; }
+
+        /* -------- Entrance: logo settles in first, headline follows -------- */
+        .cs-logo, .cs-headline {
+            opacity: 0;
+            animation: csRise 0.9s cubic-bezier(.16, .84, .44, 1) both;
+        }
+        .cs-logo     { animation-delay: .1s; }
+        .cs-headline { animation-delay: .35s; }
+        @keyframes csRise {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
         /* -------- Footer: copyright + language switch only -------- */
         footer.cs-foot {
             flex-shrink: 0;
@@ -72,6 +89,7 @@
         @media (prefers-reduced-motion: reduce) {
             .cs-bg video { display: none; }
             .cs-bg { background: url('{{ asset('images/marketing/hero.png') }}') center / cover no-repeat; }
+            .cs-logo, .cs-headline { animation: none; opacity: 1; transform: none; }
         }
     </style>
 </head>
@@ -100,7 +118,9 @@
     </script>
 
     <main class="cs-main">
-        <x-brand-lockup size="xl" />
+        <div class="cs-logo">
+            <x-brand-lockup size="xl" />
+        </div>
         <h1 class="cs-headline">
             {{ $cs['headline_1'] ?? __('site.marketing.coming_soon.headline_1') }}
             <span class="accent">{{ $cs['headline_2'] ?? __('site.marketing.coming_soon.headline_2') }}</span>
