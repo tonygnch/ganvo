@@ -1,0 +1,22 @@
+# Dev front proxy — single entry on :8000 for the whole platform.
+#
+# Host-routes the custom-website clients (which run as their own containers
+# from their own repos — see docker-compose.yml `sites`) and sends everything
+# else (central domain + all storefront subdomains) to the Ganvo app.
+
+http://kass.ganvo.lvh.me:8000 {
+	reverse_proxy kass:8000
+}
+
+http://midibg.ganvo.lvh.me:8000 {
+	reverse_proxy midibg:8000
+}
+
+http://asg.ganvo.lvh.me:8000 {
+	reverse_proxy asg:8000
+}
+
+# Catch-all: Ganvo (marketing site, admin panels, every storefront tenant).
+http://:8000 {
+	reverse_proxy app:8000
+}

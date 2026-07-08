@@ -22,23 +22,26 @@ class WebsiteClientsSeeder extends Seeder
             [
                 'name' => 'Kass Photography',
                 'slug' => 'kass',
+                'url' => 'https://kass.photography',
                 'repo_url' => 'https://github.com/tonygnch/kass',
                 'stack' => 'Laravel + Blade',
                 'notes' => 'Photography portfolio site. Local repo: ~/Projects/PHP/kass.',
             ],
             [
-                'name' => 'Midi BG',
+                'name' => 'MidiBG',
                 'slug' => 'midibg',
+                'url' => 'https://midibg.com',
                 'repo_url' => 'https://github.com/tonygnch/midibg',
                 'stack' => 'Laravel + Blade',
-                'notes' => 'Local repo: ~/Projects/PHP/midibg.',
+                'notes' => 'Black Sea seafood brand site. Local repo: ~/Projects/PHP/midibg.',
             ],
             [
-                'name' => 'ASG',
+                'name' => 'Acoustic Sound Group',
                 'slug' => 'asg',
+                'url' => 'https://acoustic-sound-group.com',
                 'repo_url' => 'https://github.com/tonygnch/asg',
                 'stack' => 'Laravel + Blade',
-                'notes' => 'Local repo: ~/Projects/PHP/asg.',
+                'notes' => 'Sound & events company. Local repo: ~/Projects/PHP/asg.',
             ],
         ];
 
@@ -53,9 +56,12 @@ class WebsiteClientsSeeder extends Seeder
                     'onboarded_at' => now(),
                 ]
             );
-            Website::firstOrCreate(
+            // updateOrCreate so re-seeding backfills the live URL onto rows that
+            // predate it (firstOrCreate would skip the update).
+            Website::updateOrCreate(
                 ['tenant_id' => $tenant->id],
                 [
+                    'url' => $site['url'],
                     'repo_url' => $site['repo_url'],
                     'stack' => $site['stack'],
                     'notes' => $site['notes'],

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Billing\BillingController;
 use App\Http\Controllers\ImpersonateController;
+use App\Http\Controllers\Marketing\InquiryController;
 use App\Http\Controllers\Marketing\SignupController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\Onboarding\AuthController as OnboardingAuthController;
@@ -63,22 +64,28 @@ Route::domain($centralDomain)->group(function () {
             }
         }
 
-        // Plans are DB-driven and configurable in the SA panel; the marketing
-        // pricing section reads from the same source as the wizard so any
-        // edits there (new plan, discount, popular flag) show up on the
-        // homepage without redeploy.
-        $plans = \App\Models\Plan::query()
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->get();
-
-        // SA-editable text content (title, hero, section headings, CTA strip).
+        // SA-editable text content (title, hero, section headings, contact).
         // Falls back to i18n catalog for any field not overridden in DB.
         $cs = \App\Models\SitePage::bulk(
             \App\Services\SitePageSchemas::PAGE_MARKETING_HOME
         );
 
-        return view('marketing.home', compact('plans', 'cs'));
+        // Live URLs for the "selected work" reel. Prefer the registered
+        // production URL from the websites hub; otherwise link to the client's
+        // platform subdomain on the current host (keeps the demo links working
+        // in dev on :8000 and in prod on ganvo.bg alike).
+        $scheme = $request->getScheme();
+        $hostWithPort = $request->getHttpHost();
+        $siteUrls = \App\Models\Tenant::query()
+            ->where('type', \App\Models\Tenant::TYPE_WEBSITE)
+            ->with('website')
+            ->get()
+            ->mapWithKeys(fn ($t) => [
+                $t->slug => ($t->website?->url) ?: "{$scheme}://{$t->slug}.{$hostWithPort}",
+            ])
+            ->all();
+
+        return view('marketing.home', compact('cs', 'siteUrls'));
     })->name('marketing.home');
 
     Route::get('/lang/{locale}', [LanguageController::class, 'switch'])->name('lang.switch');
@@ -87,6 +94,10 @@ Route::domain($centralDomain)->group(function () {
     // off (the form still appears on the main marketing page in some
     // flows). Throttling + honeypot + dupe handling live in the controller.
     Route::post('/coming-soon/signup', [SignupController::class, 'store'])->name('marketing.signup');
+
+    // "Start a project" inquiry from the marketing homepage — the studio lead
+    // form. Honeypot + throttle + validation live in the controller.
+    Route::post('/contact', [InquiryController::class, 'store'])->name('marketing.contact');
 
     Route::post('/stop-impersonating', [ImpersonateController::class, 'stop'])
         ->middleware('auth')

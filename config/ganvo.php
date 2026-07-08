@@ -5,6 +5,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Studio owner address
+    |--------------------------------------------------------------------------
+    |
+    | Where "Start a project" inquiries from the marketing homepage are emailed.
+    | Falls back to the global mail from-address. In local dev the mailer is
+    | `log`, so the notification is written to storage/logs — the inquiry is
+    | always persisted regardless of whether mail delivery is configured.
+    |
+    */
+    'owner_email' => env('GANVO_OWNER_EMAIL', env('MAIL_FROM_ADDRESS', 'hello@ganvo.bg')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Coming-soon mode
     |--------------------------------------------------------------------------
     |

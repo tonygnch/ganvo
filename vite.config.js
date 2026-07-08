@@ -12,6 +12,9 @@ export default defineConfig({
                 // Storefront kit — motion + commerce UX layer shared by themes.
                 'resources/css/storefront.css',
                 'resources/js/storefront.js',
+                // Cinematic marketing site — Lenis + GSAP scroll direction.
+                'resources/css/marketing.css',
+                'resources/js/marketing.js',
             ],
             refresh: true,
             fonts: [

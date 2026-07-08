@@ -123,101 +123,138 @@ class SitePageSchemas
             ],
 
             // ---- Nav ----
-            'nav_features' => [
-                'key' => 'nav_features', 'fallback' => 'site.marketing.nav.features',
-                'label' => 'Nav: Features link', 'help' => 'Top-bar link label that scrolls to the features section.',
+            'nav_services' => [
+                'key' => 'nav_services', 'fallback' => 'site.marketing.nav.services',
+                'label' => 'Nav: Services link', 'help' => 'Top-bar link that scrolls to the services section.',
                 'type' => 'text', 'max' => 32,
             ],
-            'nav_themes' => [
-                'key' => 'nav_themes', 'fallback' => 'site.marketing.nav.themes',
-                'label' => 'Nav: Themes link', 'help' => 'Top-bar link label that scrolls to the themes section.',
+            'nav_work' => [
+                'key' => 'nav_work', 'fallback' => 'site.marketing.nav.work',
+                'label' => 'Nav: Work link', 'help' => 'Top-bar link that scrolls to the work section.',
                 'type' => 'text', 'max' => 32,
             ],
-            'nav_pricing' => [
-                'key' => 'nav_pricing', 'fallback' => 'site.marketing.nav.pricing',
-                'label' => 'Nav: Pricing link', 'help' => 'Top-bar link label that scrolls to the pricing section.',
+            'nav_contact' => [
+                'key' => 'nav_contact', 'fallback' => 'site.marketing.nav.contact',
+                'label' => 'Nav: Contact link', 'help' => 'Top-bar link that scrolls to the contact section.',
                 'type' => 'text', 'max' => 32,
             ],
 
             // ---- Hero ----
-            'hero_pill' => [
-                'key' => 'hero_pill', 'fallback' => 'site.marketing.hero.pill',
-                'label' => 'Hero badge', 'help' => 'Small pill above the hero headline (e.g. "Built for indie brands").',
+            'hero_kicker' => [
+                'key' => 'hero_kicker', 'fallback' => 'site.marketing.hero.kicker',
+                'label' => 'Hero kicker', 'help' => 'Small mono label above the hero headline.',
                 'type' => 'text', 'max' => 80,
             ],
-            'hero_headline_1' => [
-                'key' => 'hero_headline_1', 'fallback' => 'site.marketing.hero.headline_1',
-                'label' => 'Hero headline — line 1', 'help' => 'First line of the big headline.',
+            'hero_headline' => [
+                'key' => 'hero_headline', 'fallback' => 'site.marketing.hero.headline',
+                'label' => 'Hero headline', 'help' => 'First part of the big headline.',
                 'type' => 'text', 'max' => 120,
             ],
-            'hero_headline_2' => [
-                'key' => 'hero_headline_2', 'fallback' => 'site.marketing.hero.headline_2',
-                'label' => 'Hero headline — line 2 (accent)', 'help' => 'Second line, rendered in the gradient accent.',
+            'hero_headline_accent' => [
+                'key' => 'hero_headline_accent', 'fallback' => 'site.marketing.hero.headline_accent',
+                'label' => 'Hero headline — accent', 'help' => 'Second part, rendered in the highlighted colour.',
                 'type' => 'text', 'max' => 120,
             ],
             'hero_sub' => [
                 'key' => 'hero_sub', 'fallback' => 'site.marketing.hero.sub',
-                'label' => 'Hero subheading', 'help' => 'One or two sentences describing what Ganvo does.',
+                'label' => 'Hero subheading', 'help' => 'One or two sentences describing the studio.',
                 'type' => 'textarea', 'max' => 400,
             ],
             'hero_cta_primary' => [
                 'key' => 'hero_cta_primary', 'fallback' => 'site.marketing.hero.cta_primary',
-                'label' => 'Hero primary button', 'help' => 'Main call-to-action — points to /onboarding/signup.',
+                'label' => 'Hero primary button', 'help' => 'Main call-to-action — scrolls to the contact form.',
                 'type' => 'text', 'max' => 32,
             ],
             'hero_cta_secondary' => [
                 'key' => 'hero_cta_secondary', 'fallback' => 'site.marketing.hero.cta_secondary',
-                'label' => 'Hero secondary button', 'help' => 'Secondary call-to-action — scrolls to features.',
+                'label' => 'Hero secondary button', 'help' => 'Secondary call-to-action — scrolls to the work.',
                 'type' => 'text', 'max' => 32,
             ],
 
-            // ---- Section headings ----
-            'features_eyebrow' => [
-                'key' => 'features_eyebrow', 'fallback' => 'site.marketing.features.eyebrow',
-                'label' => 'Features eyebrow', 'help' => 'Small uppercase label above the Features H2.',
+            // ---- Positioning statement ----
+            'statement' => [
+                'key' => 'statement', 'fallback' => 'site.marketing.statement',
+                'label' => 'Statement', 'help' => 'The short positioning statement under the hero (revealed line by line).',
+                'type' => 'textarea', 'max' => 400,
+            ],
+
+            // ---- Section headings (the items in each section live in the language files) ----
+            'services_eyebrow' => [
+                'key' => 'services_eyebrow', 'fallback' => 'site.marketing.services.eyebrow',
+                'label' => 'Services eyebrow', 'help' => 'Small label above the services heading.',
                 'type' => 'text', 'max' => 80,
             ],
-            'features_h2' => [
-                'key' => 'features_h2', 'fallback' => 'site.marketing.features.h2',
-                'label' => 'Features H2', 'help' => 'Heading for the features section.',
+            'services_heading' => [
+                'key' => 'services_heading', 'fallback' => 'site.marketing.services.heading',
+                'label' => 'Services heading', 'help' => 'Heading for the services section.',
                 'type' => 'text', 'max' => 160,
             ],
-            'themes_eyebrow' => [
-                'key' => 'themes_eyebrow', 'fallback' => 'site.marketing.themes.eyebrow',
-                'label' => 'Themes eyebrow', 'help' => 'Small uppercase label above the Themes H2.',
+            'work_eyebrow' => [
+                'key' => 'work_eyebrow', 'fallback' => 'site.marketing.work.eyebrow',
+                'label' => 'Work eyebrow', 'help' => 'Small label above the Work heading. The case studies themselves live in the language files.',
                 'type' => 'text', 'max' => 80,
             ],
-            'themes_h2' => [
-                'key' => 'themes_h2', 'fallback' => 'site.marketing.themes.h2',
-                'label' => 'Themes H2', 'help' => 'Heading for the themes preview section.',
+            'work_heading' => [
+                'key' => 'work_heading', 'fallback' => 'site.marketing.work.heading',
+                'label' => 'Work heading', 'help' => 'Heading for the selected-work section.',
                 'type' => 'text', 'max' => 160,
             ],
-            'pricing_eyebrow' => [
-                'key' => 'pricing_eyebrow', 'fallback' => 'site.marketing.pricing.eyebrow',
-                'label' => 'Pricing eyebrow', 'help' => 'Small uppercase label above the Pricing H2.',
+            'why_eyebrow' => [
+                'key' => 'why_eyebrow', 'fallback' => 'site.marketing.why.eyebrow',
+                'label' => 'Why Ganvo eyebrow', 'help' => 'Small label above the “why” heading.',
                 'type' => 'text', 'max' => 80,
             ],
-            'pricing_h2' => [
-                'key' => 'pricing_h2', 'fallback' => 'site.marketing.pricing.h2',
-                'label' => 'Pricing H2', 'help' => 'Heading for the pricing section. Plan cards themselves are edited via System → Plans.',
+            'why_heading' => [
+                'key' => 'why_heading', 'fallback' => 'site.marketing.why.heading',
+                'label' => 'Why Ganvo heading', 'help' => 'Heading for the differentiators section.',
+                'type' => 'text', 'max' => 160,
+            ],
+            'process_eyebrow' => [
+                'key' => 'process_eyebrow', 'fallback' => 'site.marketing.process.eyebrow',
+                'label' => 'Process eyebrow', 'help' => 'Small label above the process heading.',
+                'type' => 'text', 'max' => 80,
+            ],
+            'process_heading' => [
+                'key' => 'process_heading', 'fallback' => 'site.marketing.process.heading',
+                'label' => 'Process heading', 'help' => 'Heading for the process section.',
                 'type' => 'text', 'max' => 160,
             ],
 
-            // ---- Bottom CTA strip ----
-            'cta_strip_h2' => [
-                'key' => 'cta_strip_h2', 'fallback' => 'site.marketing.cta_strip.h2',
-                'label' => 'Bottom CTA — heading', 'help' => 'Heading on the dark band near the bottom of the page.',
+            // ---- Contact ----
+            'contact_eyebrow' => [
+                'key' => 'contact_eyebrow', 'fallback' => 'site.marketing.contact.eyebrow',
+                'label' => 'Contact eyebrow', 'help' => 'Small label above the contact heading.',
+                'type' => 'text', 'max' => 80,
+            ],
+            'contact_heading' => [
+                'key' => 'contact_heading', 'fallback' => 'site.marketing.contact.heading',
+                'label' => 'Contact heading', 'help' => 'Heading for the “start a project” section.',
                 'type' => 'text', 'max' => 160,
             ],
-            'cta_strip_p' => [
-                'key' => 'cta_strip_p', 'fallback' => 'site.marketing.cta_strip.p',
-                'label' => 'Bottom CTA — paragraph', 'help' => 'Short paragraph under the CTA heading.',
+            'contact_sub' => [
+                'key' => 'contact_sub', 'fallback' => 'site.marketing.contact.sub',
+                'label' => 'Contact subheading', 'help' => 'Short line under the contact heading.',
                 'type' => 'textarea', 'max' => 300,
             ],
-            'cta_strip_btn' => [
-                'key' => 'cta_strip_btn', 'fallback' => 'site.marketing.cta_strip.btn',
-                'label' => 'Bottom CTA — button', 'help' => 'Button label on the bottom CTA strip.',
-                'type' => 'text', 'max' => 32,
+            'contact_email' => [
+                'key' => 'contact_email', 'fallback' => 'site.marketing.contact.email',
+                'label' => 'Contact email', 'help' => 'Shown as a direct mailto link. Also where inquiry emails default to.',
+                'type' => 'text', 'max' => 120,
+            ],
+            'contact_phone' => [
+                'key' => 'contact_phone', 'fallback' => 'site.marketing.contact.phone',
+                'label' => 'Contact phone', 'help' => 'Shown as a tel link. Leave blank to hide.',
+                'type' => 'text', 'max' => 40,
+            ],
+            'contact_instagram' => [
+                'key' => 'contact_instagram', 'fallback' => 'site.marketing.contact.instagram',
+                'label' => 'Instagram URL', 'help' => 'Full link. Leave blank to hide.',
+                'type' => 'text', 'max' => 200,
+            ],
+            'contact_facebook' => [
+                'key' => 'contact_facebook', 'fallback' => 'site.marketing.contact.facebook',
+                'label' => 'Facebook URL', 'help' => 'Full link. Leave blank to hide.',
+                'type' => 'text', 'max' => 200,
             ],
         ];
     }

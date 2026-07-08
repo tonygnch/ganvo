@@ -1,12 +1,27 @@
 services:
+  # Front proxy — the single :8000 entry for the whole platform. Host-routes
+  # the custom-website clients' subdomains (kass/midibg/asg — served from
+  # their OWN repos by the site containers below) and sends everything else
+  # (central domain + all storefront subdomains) to the Ganvo app. If a site
+  # container is down you get a 502 on ITS host only; Ganvo is unaffected.
+  proxy:
+    image: caddy:2-alpine
+    container_name: ganvo-proxy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./docker/Caddyfile.proxy:/etc/caddy/Caddyfile:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+
   app:
     build:
       context: .
       dockerfile: Dockerfile
     image: ganvo-app
     container_name: ganvo
-    ports:
-      - "8000:8000"
+    # No published port — the proxy fronts everything on :8000.
     environment:
       APP_ENV: local
       APP_DEBUG: "true"
@@ -23,6 +38,92 @@ services:
       # (or that we don't want overwritten by the host's empty/dev state).
       - /var/www/html/vendor
       - /var/www/html/node_modules
+    restart: unless-stopped
+
+  # ── Custom-website clients ─────────────────────────────────────────────
+  # Each runs from its OWN repo (../../PHP/<name>, mounted live) in a plain
+  # php-cli container — no changes inside those repos: all config is injected
+  # via environment (env vars beat .env in Laravel), the throwaway sqlite DB
+  # lives in the container's /tmp, and logs go to stderr. The front proxy
+  # serves them at <name>.ganvo.lvh.me:8000. Dev-only convenience — these
+  # sites deploy to their own hosting in production.
+  # kass boots against the REAL local `kass` MySQL database on the host
+  # (its content — pages/menus/galleries — lives there). Password comes from
+  # ganvo/.env (gitignored): KASS_DB_PASSWORD=…  The ganvo-app image is used
+  # for its baked-in pdo_mysql; its entrypoint (migrate+seed) is bypassed so
+  # nothing ever writes to the real database.
+  kass:
+    image: ganvo-app
+    container_name: site-kass
+    # cwd = the repo's public/ dir: Laravel's server.php router resolves the
+    # front controller as `getcwd()/index.php`, and index.php lives in public/.
+    working_dir: /var/www/html/public
+    # php -S directly (not `artisan serve`): plain php -S inherits this
+    # container's env vars, so the DB_* overrides below win over the repo .env.
+    entrypoint: ["php", "-S", "0.0.0.0:8000", "/var/www/html/vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php"]
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://kass.ganvo.lvh.me:8000
+      DB_CONNECTION: mysql
+      DB_HOST: host.docker.internal
+      DB_PORT: 3306
+      DB_DATABASE: kass
+      DB_USERNAME: root
+      DB_PASSWORD: ${KASS_DB_PASSWORD:-}
+      LOG_CHANNEL: stderr
+      CACHE_DRIVER: array
+      SESSION_DRIVER: file
+    volumes:
+      - ../../PHP/kass:/var/www/html
+    restart: unless-stopped
+
+  midibg:
+    image: php:8.2-cli
+    container_name: site-midibg
+    working_dir: /var/www/html
+    command: sh -c "touch /tmp/database.sqlite; php artisan migrate --force || true; exec php artisan serve --host 0.0.0.0 --port 8000"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_KEY: base64:1vgJvG4yd04h8/G709znEFTUDUiONNt8IbleMpT+o/I=
+      APP_URL: http://midibg.ganvo.lvh.me:8000
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /tmp/database.sqlite
+      LOG_CHANNEL: stderr
+      CACHE_DRIVER: array
+      SESSION_DRIVER: file
+    volumes:
+      - ../../PHP/midibg:/var/www/html
+    restart: unless-stopped
+
+  # asg (DJ / events / sound-equipment site) is DB-backed like kass — its
+  # content (pages, menus, equipment) lives in the host `asg` MySQL database.
+  # Same recipe: ganvo-app image for baked pdo_mysql, php -S so container env
+  # DB_* wins over the repo .env, read-only against the real database.
+  asg:
+    image: ganvo-app
+    container_name: site-asg
+    # asg is Laravel 8: it ships a repo-root server.php that resolves the front
+    # controller relative to its own dir (__DIR__/public), so cwd = repo root.
+    working_dir: /var/www/html
+    entrypoint: ["php", "-S", "0.0.0.0:8000", "/var/www/html/server.php"]
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_KEY: base64:CEMcAg4IbxKndP6bm3Sjcui5HDXt8EZvxvtiIqYZgOY=
+      APP_URL: http://asg.ganvo.lvh.me:8000
+      DB_CONNECTION: mysql
+      DB_HOST: host.docker.internal
+      DB_PORT: 3306
+      DB_DATABASE: asg
+      DB_USERNAME: root
+      DB_PASSWORD: ${KASS_DB_PASSWORD:-}
+      LOG_CHANNEL: stderr
+      CACHE_DRIVER: array
+      SESSION_DRIVER: file
+    volumes:
+      - ../../PHP/asg:/var/www/html
     restart: unless-stopped
 
   # MySQL is opt-in via the `mysql` profile so a plain `docker compose up`
