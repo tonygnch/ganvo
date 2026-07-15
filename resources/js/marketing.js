@@ -81,7 +81,71 @@ if (reduced) {
         buildHero();
         buildSectionRail();
         ScrollTrigger.refresh();
+        buildSlideNav();      // one wheel gesture = one slide (after refresh: needs final pin positions)
     });
+}
+
+/* ─── slide navigation — one wheel gesture advances one frame ─────────────────
+   Desktop wheel input is captured (capture phase, before Lenis's own wheel
+   handler) and translated into discrete jumps between "frames": the hero, the
+   about slide, each stepper item, each timeline station, the work hold, contact
+   and the footer. Frames are derived from the live pin geometry, so a resize just
+   rebuilds them on ScrollTrigger refresh. Touch scrolling stays natural — swipe
+   hijacking on phones hurts more than it helps — and reduced-motion never runs
+   this (it lives in the Lenis-only boot path). */
+function buildSlideNav() {
+    let frames = [];
+
+    const rebuild = () => {
+        const max = ScrollTrigger.maxScroll(window);
+        const pts = new Set([0]);
+        ScrollTrigger.getAll().filter((t) => t.pin).forEach((t) => {
+            const steps = t.trigger.closest('[data-steps]');
+            const tl = t.trigger.closest('[data-timeline]');
+            if (steps) {
+                // stepper: item k is active for progress ∈ [k/n, (k+1)/n) — snap to
+                // each segment's middle so the frame is stable, not on a boundary
+                const n = steps.querySelectorAll('.step').length;
+                for (let k = 0; k < n; k++) pts.add(Math.round(t.start + (t.end - t.start) * ((k + 0.5) / n)));
+            } else if (tl) {
+                // timeline: station k is centred exactly at progress k/(n-1)
+                const n = tl.querySelectorAll('[data-tl-station]').length;
+                for (let k = 0; k < n; k++) pts.add(Math.round(t.start + (t.end - t.start) * (k / (n - 1))));
+            } else {
+                pts.add(Math.round(t.start + 1));   // static hold — its pinned frame
+            }
+        });
+        const contact = document.getElementById('contact');
+        if (contact) pts.add(Math.round(Math.min(window.scrollY + contact.getBoundingClientRect().top - 70, max)));
+        pts.add(max);   // footer
+        frames = [...pts].sort((a, b) => a - b).filter((v, i, arr) => i === 0 || v - arr[i - 1] > 40);
+    };
+    rebuild();
+    ScrollTrigger.addEventListener('refresh', rebuild);
+
+    let cooldownUntil = 0;
+    let acc = 0;
+    window.addEventListener('wheel', (e) => {
+        // let native behaviour live where it matters: form fields and the modal
+        if (e.target.closest('textarea, select, .work-modal')) return;
+        if (document.querySelector('.work-modal.is-open')) return;
+        e.preventDefault();
+        e.stopPropagation();   // capture phase — Lenis's own wheel handler never sees it
+        const now = performance.now();
+        if (now < cooldownUntil) return;
+        acc += e.deltaY;
+        if (Math.abs(acc) < 40) return;   // ignore trackpad micro-jitter
+        const dir = acc > 0 ? 1 : -1;
+        acc = 0;
+        // current frame = the last one at/above the present position
+        const y = Math.round(lenis.scroll);
+        let cur = 0;
+        for (let i = 0; i < frames.length; i++) if (frames[i] <= y + 2) cur = i;
+        const next = Math.max(0, Math.min(frames.length - 1, cur + dir));
+        if (frames[next] === y) return;
+        cooldownUntil = now + 1000;   // one gesture, one slide — swallow momentum tail
+        lenis.scrollTo(frames[next], { duration: 0.95, easing: (t) => 1 - Math.pow(1 - t, 3) });
+    }, { passive: false, capture: true });
 }
 
 buildContactForm();
