@@ -662,7 +662,11 @@ html.js .tl__station:nth-child(odd).is-active .tl__stem { background: linear-gra
    the glow hugs the digit's outline like a neon tube instead of blurring
    into a filled blob (which text-shadow would do). */
 html.js .tl__ghost {
-    display: block; position: absolute; left: 50%; transform: translateX(-50%);
+    display: block; position: absolute; left: 50%;
+    /* offset LEFT of the station axis so the centred playhead guide and the
+       node stem run beside the numeral, never through it — it reads as an
+       editorial chapter index tucked next to the card */
+    transform: translateX(calc(-50% - clamp(80px, 12vw, 170px)));
     font-family: var(--font-display); font-weight: 600; line-height: 0.78;
     font-size: clamp(100px, 22vh, 250px);
     color: rgba(77, 141, 255, 0.04);
