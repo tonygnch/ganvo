@@ -69,8 +69,7 @@ if (reduced) {
         // pin added above others shifts them down and they pin early.
         buildSplits();        // statement's masked line reveal
         // buildStatementZoom(); // statement → "o" dive: temporarily disabled (re-enable to bring it back)
-        buildSteps();         // stepper pins (services · why)
-        buildTimeline();      // process — horizontal scrub timeline (pins below the steppers)
+        buildPins();          // ALL pinned sections (holds · steppers · timeline), in document order
         buildReveals();
         buildParallax();
         buildHero();
@@ -289,28 +288,44 @@ function buildSplits() {
     });
 }
 
-/* ─── scroll stepper — pin a section, show one item at a time ────────────────
-   Scroll-driven at EVERY width: the section pins and scroll progress picks the
-   active .step, driving the folio counter + progress ticks. One mechanism for all
-   viewports — CSS lays it out single-column on phones, two-column ≥900px — so a
-   resize / device rotation is just a ScrollTrigger.refresh (GSAP does it), never a
-   mode swap. reduced-motion never calls this (CSS shows a static numbered list);
-   if the pin setup throws, .is-static forces that same plain list — never hidden. */
-function buildSteps() {
-    const groups = [...document.querySelectorAll('[data-steps]')];
-    if (!groups.length) return;
+/* ─── pinned sections — every big moment holds the screen ────────────────────
+   One dispatcher walks all pinnable sections in DOCUMENT ORDER (top → bottom) so
+   each pin's spacer is in place before the next measures its start — pins created
+   out of order shift later triggers and make them pin early. Three kinds:
+     [data-steps]     stepper — pins while scroll picks the active item
+     [data-timeline]  process — pins while the track scrubs horizontally
+     [data-hold]      static hold — pins centred for a beat (statement · work)
+   reduced-motion never calls this (CSS shows static layouts); if a pin setup
+   throws, .is-static forces the plain layout — nothing is ever hidden. */
+function buildPins() {
     // Pinning on touch: a mobile URL bar hiding/showing on scroll changes innerHeight
     // and would otherwise force a refresh that jitters the pin — ignore those. And own
     // scroll restoration so a reload / back-nav can't land on a stale offset before the
     // pin spacers are built (setup runs after fonts load).
     ScrollTrigger.config({ ignoreMobileResize: true });
     if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-    groups.forEach((group) => {
+    document.querySelectorAll('[data-steps], [data-timeline], [data-hold]').forEach((el) => {
         try {
-            stepPin(group);
+            if (el.hasAttribute('data-steps')) stepPin(el);
+            else if (el.hasAttribute('data-timeline')) timelinePin(el);
+            else holdPin(el);
         } catch (e) {
-            group.classList.add('is-static');
+            el.classList.add('is-static');
         }
+    });
+}
+
+/* static hold: the section pins centred in the viewport for a short stretch of
+   scroll, presenting as a framed full-screen moment like the steppers do. */
+function holdPin(section) {
+    ScrollTrigger.create({
+        trigger: section,
+        start: 'center center',
+        end: () => '+=' + Math.round(window.innerHeight * 0.55),
+        pin: true,
+        pinSpacing: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
     });
 }
 
@@ -347,27 +362,12 @@ function stepPin(group) {
 
 /* ─── process timeline — horizontal scrub ────────────────────────────────────
    The section pins and a horizontal track of phase "stations" scrubs sideways with
-   scroll. The track is offset so each station passes through the viewport centre
-   (the playhead): station i is centred at progress i/(n-1). A spine line spans the
-   first→last node; its fill is scaleX(progress) — because the geometry is set up so
-   the fill's leading edge lands exactly on the playhead at every progress, the line
-   appears to "draw" straight to screen centre while nodes ignite as they arrive.
-   reduced-motion never calls this (CSS shows the plain list); a throw → .is-static
-   forces that same list, so nothing is ever stranded off-screen. */
-function buildTimeline() {
-    const scopes = [...document.querySelectorAll('[data-timeline]')];
-    if (!scopes.length) return;
-    ScrollTrigger.config({ ignoreMobileResize: true });
-    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-    scopes.forEach((scope) => {
-        try {
-            timelinePin(scope);
-        } catch (e) {
-            scope.classList.add('is-static');
-        }
-    });
-}
-
+   scroll. The track is offset so each station passes through the viewport centre:
+   station i is centred at progress i/(n-1). A spine line spans the first→last node;
+   its fill is scaleX(progress) — the geometry makes the fill's leading edge land
+   exactly on the viewport centre at every progress, so the line appears to "draw"
+   straight to screen centre while nodes ignite as they arrive. Called by
+   buildPins(); reduced-motion / .is-static show the plain vertical list. */
 function timelinePin(scope) {
     const inner = scope.querySelector('.tl__inner') || scope;
     const viewport = scope.querySelector('.tl__viewport') || inner;

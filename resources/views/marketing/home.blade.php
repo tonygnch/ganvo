@@ -127,7 +127,7 @@
     </header>
 
     {{-- ─── Statement ───────────────────────────────────────────────────── --}}
-    <section class="wrap statement" data-statement-zoom>
+    <section class="wrap statement" data-statement-zoom data-hold>
         <p class="statement__text" data-split>{{ $cs['statement'] ?? __('site.marketing.statement') }}</p>
     </section>
 
@@ -160,7 +160,7 @@
     ])
 
     {{-- ─── Selected work — opens the projects modal ───────────────────────── --}}
-    <section class="section work" id="work">
+    <section class="section work" id="work" data-hold>
         <div class="wrap">
             <div class="section-head">
                 <p class="eyebrow" data-reveal="fade">{{ $cs['work_eyebrow'] ?? __('site.marketing.work.eyebrow') }}</p>
