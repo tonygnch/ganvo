@@ -34,7 +34,7 @@
                     <ol class="tl__stations" role="list">
                         @foreach ($items as $i => $it)
                             <li class="tl__station @if($i === 0) is-active @endif" data-tl-station>
-                                <span class="tl__ghost" aria-hidden="true">{{ $i + 1 }}</span>
+                                <span class="tl__ghost" aria-hidden="true">@include('marketing.partials.tl-digit', ['n' => $i + 1])</span>
                                 <span class="tl__stem" aria-hidden="true"></span>
                                 <span class="tl__node" aria-hidden="true"></span>
                                 <div class="tl__card">

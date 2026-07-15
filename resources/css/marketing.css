@@ -650,22 +650,28 @@ html.js .tl__station:nth-child(even) .tl__stem { top: 50%; height: 56px; }
 html.js .tl__station.is-active .tl__stem { background: linear-gradient(var(--accent), transparent); }
 html.js .tl__station:nth-child(odd).is-active .tl__stem { background: linear-gradient(0deg, transparent, var(--accent)); }
 
-/* giant ghost numeral behind the card — a luminous outlined digit. The fill
-   stays (near-)transparent and drop-shadow() traces the rendered stroke, so
-   the glow hugs the digit's outline like a neon tube instead of blurring
-   into a filled blob (which text-shadow would do). */
+/* giant ghost numeral behind the card — a luminous outlined digit rendered as
+   an inline SVG (see partials/tl-digit.blade.php: same Unbounded glyphs with
+   their overlapping contours boolean-unioned away, so no internal seams).
+   drop-shadow() traces the rendered stroke — the glow hugs the outline like a
+   neon tube instead of blurring into a filled blob. */
 html.js .tl__ghost {
     display: block; position: absolute; left: 50%;
     transform: translateX(-50%);
-    font-family: var(--font-display); font-weight: 600; line-height: 0.78;
-    font-size: clamp(100px, 22vh, 250px);
-    color: rgba(77, 141, 255, 0.04);
-    -webkit-text-stroke: 1px rgba(99, 141, 255, 0.42);
+    height: clamp(100px, 22vh, 250px);
     z-index: 0;
     pointer-events: none; user-select: none;
     filter: drop-shadow(0 0 14px rgba(77, 141, 255, 0.28));
-    transition: opacity .5s ease, -webkit-text-stroke-color .5s ease, filter .5s ease, color .5s ease;
+    transition: opacity .5s ease, filter .5s ease;
     opacity: 0.6;
+}
+html.js .tl__ghost svg { display: block; height: 100%; width: auto; overflow: visible; }
+html.js .tl__ghost path {
+    fill: rgba(77, 141, 255, 0.04);
+    stroke: rgba(99, 141, 255, 0.42);
+    stroke-width: 1.5px;
+    vector-effect: non-scaling-stroke;   /* constant hairline at any digit size */
+    transition: stroke .5s ease, fill .5s ease;
 }
 /* the digit mirrors its card across the spine — it owns the station's empty
    half (card above → digit below, card below → digit above), so no line or
@@ -674,9 +680,11 @@ html.js .tl__station:nth-child(odd)  .tl__ghost { top: calc(50% + 30px); }
 html.js .tl__station:nth-child(even) .tl__ghost { bottom: calc(50% + 30px); }
 html.js .tl__station.is-active .tl__ghost {
     opacity: 1;
-    color: rgba(77, 141, 255, 0.09);
-    -webkit-text-stroke-color: rgba(125, 211, 252, 0.9);
     filter: drop-shadow(0 0 10px rgba(125, 211, 252, 0.55)) drop-shadow(0 0 34px rgba(77, 141, 255, 0.4));
+}
+html.js .tl__station.is-active .tl__ghost path {
+    fill: rgba(77, 141, 255, 0.09);
+    stroke: rgba(125, 211, 252, 0.9);
 }
 
 /* card — dim off-centre, crisp when active */
@@ -699,7 +707,7 @@ html.js .tl__body { font-size: clamp(1rem, 0.95rem + 0.35vw, 1.18rem); max-width
     html.js .timeline-section .tl__head { flex-direction: column; align-items: flex-start; gap: 1.1rem; }
     html.js .tl__readout { flex-direction: row; align-items: center; gap: 1rem; align-self: stretch; }
     html.js .tl__station { width: 80vw; }
-    html.js .tl__ghost { font-size: clamp(96px, 20vh, 170px); }
+    html.js .tl__ghost { height: clamp(96px, 20vh, 170px); }
     html.js .tl__card { width: min(94%, 360px); }
     html.js .tl__station:nth-child(odd)  .tl__card  { bottom: calc(50% + 44px); }
     html.js .tl__station:nth-child(even) .tl__card  { top: calc(50% + 44px); }
