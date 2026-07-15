@@ -420,16 +420,32 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .hero__meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px rgba(77, 141, 255, 0.8); }
 @media (max-width: 900px) { .hero__meta { display: none; } }
 
-/* ─── statement ──────────────────────────────────────────────────────────── */
-.statement { padding-block: clamp(5rem, 13vh, 10rem); border-bottom: 1px solid var(--line); }
+/* ─── statement — "Who are we?" full-screen slide ────────────────────────── */
+.statement {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-block: clamp(5rem, 12vh, 8rem);
+}
+/* soft local glow so the slide has its own atmosphere in the void */
+.statement::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(52% 46% at 30% 55%, rgba(77, 141, 255, 0.07), transparent 70%);
+    pointer-events: none;
+}
 .statement__text {
     font-family: var(--font-display);
     font-weight: 400;
-    font-size: clamp(1.2rem, 0.8rem + 1.8vw, 2.2rem);
-    line-height: 1.38;
+    font-size: clamp(1.45rem, 0.95rem + 2.3vw, 2.9rem);
+    line-height: 1.32;
     letter-spacing: 0;
     margin: 0;
-    max-width: 28ch;
+    max-width: 26ch;
     color: var(--ink);
 }
 .statement__text .soft { color: var(--ink-faint); }
