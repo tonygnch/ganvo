@@ -123,8 +123,16 @@ function buildSlideNav() {
     rebuild();
     ScrollTrigger.addEventListener('refresh', rebuild);
 
-    let cooldownUntil = 0;
+    // Feel: respond instantly, chain fluidly. A short gate (not a long lockout)
+    // separates gestures; weak deltas — a trackpad's decaying momentum tail —
+    // are ignored per-event, so a deliberate second flick lands even right
+    // after the gate opens and retargets the glide mid-flight instead of dying.
+    const GATE_MS = 550;        // min spacing between slide triggers
+    const INTENT_DELTA = 25;    // per-event strength that counts as intent
+    const THRESHOLD = 50;       // accumulated intent that triggers a slide
+    let gateUntil = 0;
     let acc = 0;
+    let target = -1;
     window.addEventListener('wheel', (e) => {
         // let native behaviour live where it matters: form fields and the modal
         if (e.target.closest('textarea, select, .work-modal')) return;
@@ -132,19 +140,27 @@ function buildSlideNav() {
         e.preventDefault();
         e.stopPropagation();   // capture phase — Lenis's own wheel handler never sees it
         const now = performance.now();
-        if (now < cooldownUntil) return;
+        if (now < gateUntil) { acc = 0; return; }
+        if (Math.abs(e.deltaY) < INTENT_DELTA) return;   // momentum tail / micro-jitter
         acc += e.deltaY;
-        if (Math.abs(acc) < 40) return;   // ignore trackpad micro-jitter
+        if (Math.abs(acc) < THRESHOLD) return;
         const dir = acc > 0 ? 1 : -1;
         acc = 0;
-        // current frame = the last one at/above the present position
+        // current frame: mid-glide, continue from the frame we're heading to,
+        // so a chained flick advances rather than re-resolving from mid-air
         const y = Math.round(lenis.scroll);
         let cur = 0;
         for (let i = 0; i < frames.length; i++) if (frames[i] <= y + 2) cur = i;
+        if (target >= 0 && Math.abs(frames[target] - y) > 2) cur = dir > 0 ? Math.max(cur, target) : Math.min(cur, target);
         const next = Math.max(0, Math.min(frames.length - 1, cur + dir));
-        if (frames[next] === y) return;
-        cooldownUntil = now + 1000;   // one gesture, one slide — swallow momentum tail
-        lenis.scrollTo(frames[next], { duration: 0.95, easing: (t) => 1 - Math.pow(1 - t, 3) });
+        if (frames[next] === y) { target = -1; return; }
+        target = next;
+        gateUntil = now + GATE_MS;
+        lenis.scrollTo(frames[next], {
+            duration: 1.15,
+            easing: (t) => 1 - Math.pow(1 - t, 4),   // fast response, long soft landing
+            onComplete: () => { target = -1; },
+        });
     }, { passive: false, capture: true });
 }
 
