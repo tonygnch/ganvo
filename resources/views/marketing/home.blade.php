@@ -13,7 +13,7 @@
     ])
 
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=space-grotesk:400,500,600|inter:400,500,600|jetbrains-mono:400,500&display=swap" rel="stylesheet">
+    <link href="https://fonts.bunny.net/css?family=unbounded:400,500,600|manrope:400,500,600,700|jetbrains-mono:400,500&display=swap" rel="stylesheet">
     @vite(['resources/css/marketing.css', 'resources/js/marketing.js'])
 </head>
 <body>
@@ -50,6 +50,12 @@
     <div class="fx-grain" aria-hidden="true"></div>
     <div class="fx-vignette" aria-hidden="true"></div>
     <div class="fx-glow" aria-hidden="true"></div>
+
+    {{-- HUD viewport frame — luminous corner brackets + status readout. --}}
+    <div class="fx-hud" aria-hidden="true">
+        <i></i><i></i><i></i><i></i>
+        <span class="fx-hud__status">GANVO · <b>SIGNAL</b> · 42.69°N 23.32°E</span>
+    </div>
 
     <div class="m-progress" aria-hidden="true"></div>
 
@@ -91,8 +97,8 @@
             {{-- Cinematic loop; hero.png is the poster so the frame is instant and
                  stands in if the video is unsupported or reduced-motion is on. --}}
             <video class="hero__video" autoplay muted loop playsinline preload="auto"
-                   poster="{{ asset('images/marketing/hero.png') }}" aria-hidden="true" data-hero-video>
-                <source src="{{ asset('images/marketing/hero.mp4') }}" type="video/mp4">
+                   poster="{{ asset('images/marketing/v2/hero.png') }}" aria-hidden="true" data-hero-video>
+                <source src="{{ asset('images/marketing/v2/hero.mp4') }}" type="video/mp4">
             </video>
         </div>
         <div class="hero__veil" aria-hidden="true"></div>
@@ -110,6 +116,13 @@
 
         <div class="hero__cue" data-hero-cue aria-hidden="true">
             <span class="rail"></span>{{ __('site.marketing.hero.cue') }}
+        </div>
+
+        {{-- signal strip — quiet mono facts; the first "easy contact" cue --}}
+        <div class="hero__meta" aria-hidden="true">
+            <span><b>EST 2024</b> · {{ __('site.marketing.sections.studio') }}</span>
+            <span class="dot"></span>
+            <span>{{ __('site.marketing.contact.assurances.0') }}</span>
         </div>
     </header>
 
@@ -212,7 +225,7 @@
 
     {{-- ─── Contact / Book a call ───────────────────────────────────────── --}}
     <section class="section contact" id="contact">
-        <div class="contact__bg" aria-hidden="true"><img src="{{ asset('images/marketing/cta.png') }}" alt="" loading="lazy"></div>
+        <div class="contact__bg" aria-hidden="true"><img src="{{ asset('images/marketing/v2/horizon.png') }}" alt="" loading="lazy"></div>
         <div class="contact__veil" aria-hidden="true"></div>
         <div class="wrap">
             <div class="contact__grid">
