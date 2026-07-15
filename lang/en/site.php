@@ -46,6 +46,7 @@ return [
             'studio' => 'Studio',
             'process' => 'Process',
             'contact' => 'Contact',
+            'about' => 'About',
         ],
         'hero' => [
             'kicker' => 'Ganvo · Web development studio',
@@ -56,7 +57,10 @@ return [
             'cta_secondary' => 'View work',
             'cue' => 'Scroll',
         ],
-        'statement' => 'We offer redesign and build web that\'s fast, considered, deisgned and engineered precisely. No compromises.',
+        'about' => [
+            'eyebrow' => 'Who are we?',
+        ],
+        'statement' => 'We offer redesign and build web that\'s fast, considered, designed and engineered precisely. No compromises.',
         'services' => [
             'eyebrow' => 'Services',
             'heading' => 'What we build.',

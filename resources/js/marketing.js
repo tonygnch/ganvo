@@ -40,7 +40,13 @@ if (!reduced) {
         const target = document.querySelector(a.getAttribute('href'));
         if (!target) return;
         e.preventDefault();
-        lenis.scrollTo(target, { offset: -70 });
+        // Pinned sections "live" at their pin's start scroll position, not at the
+        // element's raw offset (the pin spacer stretches beneath them) — landing
+        // anywhere else shows the section off-centre. Jump to the pin start when
+        // the target owns one; plain sections keep the nav-height offset.
+        const st = ScrollTrigger.getAll().find((t) => t.pin && target.contains(t.trigger));
+        if (st) lenis.scrollTo(st.start + 1, { duration: 1.2 });
+        else lenis.scrollTo(target, { offset: -70 });
     });
 }
 

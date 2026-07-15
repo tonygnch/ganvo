@@ -38,6 +38,7 @@
     // rail doesn't show a dead tick. Re-add the line to bring it back.
     $rail = [
         'top'      => __('site.marketing.sections.home'),
+        'about'    => __('site.marketing.sections.about'),
         'services' => __('site.marketing.sections.services'),
         // 'studio'   => __('site.marketing.sections.studio'),
         'process'  => __('site.marketing.sections.process'),
@@ -126,8 +127,9 @@
         </div>
     </header>
 
-    {{-- ─── Statement ───────────────────────────────────────────────────── --}}
-    <section class="wrap statement" data-statement-zoom data-hold>
+    {{-- ─── Who are we? (statement) ─────────────────────────────────────── --}}
+    <section class="wrap statement" id="about" data-statement-zoom data-hold>
+        <p class="eyebrow" data-reveal="fade">{{ $cs['about_eyebrow'] ?? __('site.marketing.about.eyebrow') }}</p>
         <p class="statement__text" data-split>{{ $cs['statement'] ?? __('site.marketing.statement') }}</p>
     </section>
 
