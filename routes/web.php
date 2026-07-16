@@ -206,8 +206,11 @@ Route::domain($centralDomain)->group(function () {
 $storefrontRoutes = function () {
     Route::get('/', [StorefrontController::class, 'index']);
     Route::get('/products/{slug}', [StorefrontController::class, 'product']);
-    Route::get('/categories/{slug}', [StorefrontController::class, 'category'])->name('storefront.category');
-    Route::get('/collections/{slug}', [StorefrontController::class, 'collection'])->name('storefront.collection');
+    // No ->name() on any route in this closure — it is registered twice
+    // (subdomain group + custom-domain catch-all) and duplicate names break
+    // `php artisan route:cache`. Storefront links are literal paths.
+    Route::get('/categories/{slug}', [StorefrontController::class, 'category']);
+    Route::get('/collections/{slug}', [StorefrontController::class, 'collection']);
 
     Route::get('/cart', [CartController::class, 'show']);
     Route::post('/cart/add/{slug}', [CartController::class, 'add']);
