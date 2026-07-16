@@ -26,6 +26,12 @@ const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const root = document.documentElement;
 const EASE = 'expo.out';
 
+// Refreshes must land on the hero: claim scroll restoration NOW, before the
+// browser restores the previous position — the pin spacers don't exist yet at
+// that moment, so a restored offset would land somewhere arbitrary mid-page.
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+window.scrollTo(0, 0);
+
 /* ─── smooth scroll ──────────────────────────────────────────────────────── */
 let lenis = null;
 if (!reduced) {
@@ -82,6 +88,17 @@ if (reduced) {
         buildSectionRail();
         ScrollTrigger.refresh();
         buildSlideNav();      // one wheel gesture = one slide (after refresh: needs final pin positions)
+        // fresh load: honour an explicit #hash (pin-aware), otherwise start at the top
+        let hashTarget = null;
+        try { hashTarget = location.hash ? document.querySelector(location.hash) : null; } catch (e) { /* malformed hash */ }
+        if (hashTarget) {
+            const st = ScrollTrigger.getAll().find((t) => t.pin && hashTarget.contains(t.trigger));
+            if (st) lenis.scrollTo(st.start + 1, { immediate: true });
+            else lenis.scrollTo(hashTarget, { offset: -70, immediate: true });
+            ScrollTrigger.update();
+        } else {
+            lenis.scrollTo(0, { immediate: true });
+        }
     });
 }
 
@@ -389,7 +406,6 @@ function buildPins() {
     // scroll restoration so a reload / back-nav can't land on a stale offset before the
     // pin spacers are built (setup runs after fonts load).
     ScrollTrigger.config({ ignoreMobileResize: true });
-    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     document.querySelectorAll('[data-steps], [data-timeline], [data-hold]').forEach((el) => {
         try {
             if (el.hasAttribute('data-steps')) stepPin(el);
