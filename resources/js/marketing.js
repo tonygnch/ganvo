@@ -37,6 +37,21 @@ const EASE = 'expo.out';
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 window.scrollTo(0, 0);
 
+// Phones stream a 720p rendition of the hero loop and a lighter poster — the
+// 1080p file is desktop bandwidth. Swapped at module eval, before playback
+// begins, so load() restarts the fetch at most a few KB in.
+{
+    const hv = document.querySelector('[data-hero-video]');
+    if (hv && window.matchMedia('(max-width: 768px)').matches) {
+        const source = hv.querySelector('source');
+        if (source && source.src.includes('hero.mp4')) {
+            source.src = source.src.replace('hero.mp4', 'hero-720.mp4');
+            hv.poster = hv.poster.replace('hero.png', 'hero-mobile.jpg');
+            hv.load();
+        }
+    }
+}
+
 /* ─── smooth scroll ──────────────────────────────────────────────────────── */
 let lenis = null;
 if (!reduced) {

@@ -255,6 +255,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
     .rail-item__tick { width: 14px; }
     .rail-item.is-active .rail-item__tick { width: 22px; }
 }
+/* phones: hug the edge harder so the ticks never kiss the widest text lines */
+@media (max-width: 640px) {
+    .section-rail { right: 0.45rem; }
+    .rail-item__tick { width: 10px; }
+    .rail-item.is-active .rail-item__tick { width: 16px; }
+}
 
 /* ─── nav ────────────────────────────────────────────────────────────────── */
 .m-nav {
@@ -553,6 +559,15 @@ html.js .step__no { display: none; }
 html.js .step__title { font-size: clamp(1.45rem, 1.1rem + 1.6vw, 2.1rem); line-height: 1.16; letter-spacing: -0.01em; }
 html.js .step__body { font-size: clamp(1.05rem, 1rem + 0.4vw, 1.2rem); max-width: 42ch; margin-top: 1rem; }
 
+/* phones / small tablets: the pinned slide fills the viewport exactly, and the
+   step copy rides just under the masthead — the desktop centring left a dead
+   band between the heading and the step text on small screens */
+@media (max-width: 899px) {
+    html.js .steps__inner { min-height: 100svh; padding-block: 5.5rem 2.5rem; }
+    html.js .steps__stage { min-height: 38vh; margin-top: 2.2rem; }
+    html.js .step { justify-content: flex-start; }
+}
+
 @media (min-width: 900px) {
     /* two columns: masthead (left) + stepping stage (right), vertically centred */
     html.js .steps__inner {
@@ -577,7 +592,7 @@ html.js .step__body { font-size: clamp(1.05rem, 1rem + 0.4vw, 1.2rem); max-width
 /* fail-safe: if the pin setup throws, buildSteps() adds .is-static to force the
    plain numbered list at any width. Extra class specificity beats the pinned rules
    above, so no step can be stranded hidden. */
-html.js .steps.is-static .steps__inner { min-height: 0; display: block; }
+html.js .steps.is-static .steps__inner { min-height: 0; display: block; padding-block: 0; }
 html.js .steps.is-static .steps__masthead { margin: 0 0 2rem; }
 html.js .steps.is-static .steps__stage { position: static; min-height: 0; }
 html.js .steps.is-static .step { position: static; inset: auto; opacity: 1; transform: none; pointer-events: auto; padding: 1.5rem 0; border-top: 1px solid var(--line); }
@@ -726,19 +741,25 @@ html.js .tl__station.is-active .tl__card { opacity: 1; }
 html.js .tl__title { font-size: clamp(1.25rem, 1rem + 1.2vw, 1.9rem); line-height: 1.16; }
 html.js .tl__body { font-size: clamp(1rem, 0.95rem + 0.35vw, 1.18rem); max-width: 40ch; margin-top: 0.85rem; }
 
-/* phones: tighter track, calmer ghost, stacked head */
+/* phones: one station per screen, calmer ghost, stacked head */
 @media (max-width: 640px) {
     html.js .timeline-section .tl__head { flex-direction: column; align-items: flex-start; gap: 1.1rem; }
     html.js .tl__readout { flex-direction: row; align-items: center; gap: 1rem; align-self: stretch; }
-    html.js .tl__station { width: 80vw; }
+    /* full viewport width — at 80vw the neighbour's card bled in from the edge */
+    html.js .tl__station { width: 100vw; }
     html.js .tl__ghost { height: clamp(96px, 20vh, 170px); }
     html.js .tl__card { width: min(94%, 360px); }
     html.js .tl__station:nth-child(odd)  .tl__card  { bottom: calc(50% + 44px); }
-    html.js .tl__station:nth-child(even) .tl__card  { top: calc(50% + 44px); }
     html.js .tl__station:nth-child(odd)  .tl__ghost { top: calc(50% + 24px); }
-    html.js .tl__station:nth-child(even) .tl__ghost { bottom: calc(50% + 24px); }
     html.js .tl__station:nth-child(odd)  .tl__stem,
     html.js .tl__station:nth-child(even) .tl__stem { height: 44px; }
+    /* flatten the zig-zag: with one station per screen the alternation reads as
+       layout jumping between slides — keep every card above the spine and every
+       digit below it, a stable vertical rhythm */
+    html.js .tl__station:nth-child(even) .tl__card { top: auto; bottom: calc(50% + 44px); }
+    html.js .tl__station:nth-child(even) .tl__stem { top: auto; bottom: 50%; background: linear-gradient(0deg, transparent, var(--line-2)); }
+    html.js .tl__station:nth-child(even).is-active .tl__stem { background: linear-gradient(0deg, transparent, var(--accent)); }
+    html.js .tl__station:nth-child(even) .tl__ghost { bottom: auto; top: calc(50% + 24px); }
 }
 
 /* fail-safe: pin threw → .is-static reverts to the plain vertical numbered list */
@@ -1051,6 +1072,8 @@ html.js [data-split].is-in { visibility: visible; }
 @media (max-width: 900px) {
     .contact__grid { grid-template-columns: 1fr; }
     .m-nav__links { display: none; }
+    /* comfortable thumb target for the language switch */
+    .lang > summary { padding: 0.6rem 0.5rem; }
 }
 @media (max-width: 640px) {
     .form__row { grid-template-columns: 1fr; }
@@ -1068,7 +1091,7 @@ html.js [data-split].is-in { visibility: visible; }
     .hero__cue .rail::after { animation: none; }
     .fx-grain { animation: none; }
     /* the scroll stepper never pins for reduced-motion — show a numbered list */
-    html.js .steps__inner { min-height: 0 !important; display: block !important; }
+    html.js .steps__inner { min-height: 0 !important; display: block !important; padding-block: 0 !important; }
     html.js .steps__masthead { margin: 0 0 2rem !important; }
     html.js .steps__stage { position: static !important; min-height: 0 !important; margin-top: 0 !important; }
     html.js .step { position: static !important; inset: auto !important; opacity: 1 !important; transform: none !important; pointer-events: auto !important; padding: 1.5rem 0 !important; border-top: 1px solid var(--line) !important; }
