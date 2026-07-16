@@ -673,7 +673,11 @@ html.js .tl__station:nth-child(odd).is-active .tl__stem { background: linear-gra
    neon tube instead of blurring into a filled blob. */
 html.js .tl__ghost {
     display: block; position: absolute; left: 50%;
-    transform: translateX(-50%);
+    /* translateZ(0) + will-change: own composited layer — the digit (stroke,
+       glow and all) rasterizes once and MOVES as a unit while the track is
+       transformed every frame, instead of re-rendering and shimmering */
+    transform: translateX(-50%) translateZ(0);
+    will-change: transform, filter;
     height: clamp(100px, 22vh, 250px);
     z-index: 0;
     pointer-events: none; user-select: none;
@@ -685,8 +689,10 @@ html.js .tl__ghost svg { display: block; height: 100%; width: auto; overflow: vi
 html.js .tl__ghost path {
     fill: rgba(77, 141, 255, 0.04);
     stroke: rgba(99, 141, 255, 0.42);
-    stroke-width: 1.5px;
-    vector-effect: non-scaling-stroke;   /* constant hairline at any digit size */
+    /* geometry-space stroke (viewBox units ≈ 1.2–1.9px on screen) — unlike
+       non-scaling-stroke it is NOT recomputed against screen pixels every
+       frame, which is what made the outlines crawl during the scrub */
+    stroke-width: 6px;
     transition: stroke .5s ease, fill .5s ease;
 }
 /* the digit mirrors its card across the spine — it owns the station's empty
