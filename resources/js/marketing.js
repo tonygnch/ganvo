@@ -22,6 +22,11 @@ import Lenis from 'lenis';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
+// ScrollTrigger keeps its own scroll memory and re-applies the saved position
+// AFTER the load event — the second, late restorer that dumped refreshes
+// mid-page even with history.scrollRestoration set to manual. Clear it.
+ScrollTrigger.clearScrollMemory('manual');
+
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const root = document.documentElement;
 const EASE = 'expo.out';
