@@ -346,7 +346,7 @@ function buildStatementZoom() {
             trigger: sec,
             start: 'center center',
             end: () => '+=' + Math.round(window.innerHeight * 1.4),
-            pin: true, pinSpacing: true, scrub: 0.7, anticipatePin: 1,
+            pin: true, pinSpacing: true, scrub: 0.7,
             invalidateOnRefresh: true,
             onRefresh: layout,
         },
@@ -439,7 +439,6 @@ function holdPin(section) {
         end: () => '+=' + Math.round(window.innerHeight * 0.55),
         pin: true,
         pinSpacing: true,
-        anticipatePin: 1,
         invalidateOnRefresh: true,
     });
 }
@@ -467,7 +466,6 @@ function stepPin(group) {
         end: () => '+=' + Math.round(n * window.innerHeight * (window.innerWidth >= 900 ? 0.62 : 0.5)),
         pin: true,
         pinSpacing: true,
-        anticipatePin: 1,
         invalidateOnRefresh: true,
         onUpdate: (self) => setActive(Math.floor(self.progress * n * 0.999)),
         onRefreshInit: () => { cur = -1; },
@@ -553,7 +551,6 @@ function timelinePin(scope) {
         end: () => { measure(); return '+=' + Math.max(1, Math.round(cN - c0)); },
         pin: true,
         pinSpacing: true,
-        anticipatePin: 1,
         invalidateOnRefresh: true,
         onRefreshInit: () => { cur = -1; },
         onRefresh: () => { apply(prog); },
