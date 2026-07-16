@@ -52,7 +52,7 @@ if (!reduced) {
         // the target owns one; plain sections keep the nav-height offset.
         const st = ScrollTrigger.getAll().find((t) => t.pin && target.contains(t.trigger));
         if (st) lenis.scrollTo(st.start + 1, { duration: 1.2 });
-        else lenis.scrollTo(target, { offset: -70 });
+        else lenis.scrollTo(target, { offset: target.offsetHeight >= window.innerHeight ? 0 : -70 });
     });
 }
 
@@ -133,7 +133,7 @@ function buildSlideNav() {
             }
         });
         const contact = document.getElementById('contact');
-        if (contact) pts.add(Math.round(Math.min(window.scrollY + contact.getBoundingClientRect().top - 70, max)));
+        if (contact) pts.add(Math.round(Math.min(window.scrollY + contact.getBoundingClientRect().top, max)));
         pts.add(max);   // footer
         frames = [...pts].sort((a, b) => a - b).filter((v, i, arr) => i === 0 || v - arr[i - 1] > 40);
     };
@@ -180,7 +180,7 @@ function buildSlideNav() {
         const dist = Math.abs(frames[next] - y);
         const long = dist > 700;
         lenis.scrollTo(frames[next], {
-            duration: Math.min(1.9, Math.max(0.9, 0.5 + dist / 1000)),
+            duration: Math.min(1.9, Math.max(0.9, 1 + dist / 1000)),
             easing: long
                 ? (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
                 : (t) => 1 - Math.pow(1 - t, 4),
