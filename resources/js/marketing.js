@@ -173,9 +173,17 @@ function buildSlideNav() {
         if (frames[next] === y) { target = -1; return; }
         target = next;
         gateUntil = now + GATE_MS;
+        // constant PACE, not constant time: long section-to-section jumps take
+        // proportionally longer and ease in-out (gentle start while the pinned
+        // hold sits static, glide through, soft landing); short item hops keep
+        // a snappy quart-out so stepping through a list stays light.
+        const dist = Math.abs(frames[next] - y);
+        const long = dist > 700;
         lenis.scrollTo(frames[next], {
-            duration: 1.15,
-            easing: (t) => 1 - Math.pow(1 - t, 4),   // fast response, long soft landing
+            duration: Math.min(1.9, Math.max(0.9, 0.5 + dist / 1000)),
+            easing: long
+                ? (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
+                : (t) => 1 - Math.pow(1 - t, 4),
             onComplete: () => { target = -1; },
         });
     }, { passive: false, capture: true });
