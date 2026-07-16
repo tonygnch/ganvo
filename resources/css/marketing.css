@@ -1052,6 +1052,29 @@ html.js .timeline.is-static .tl__title { font-size: clamp(1.3rem, 1.05rem + 1vw,
 .direct__item span { font-size: 1.02rem; }
 
 @media (max-width: 940px) { .contact__grid { grid-template-columns: 1fr; } }
+/* phones: the whole Book-a-call moment fits one screen — the heading leads
+   straight into the form (the prose sub + assurances stay tablet-and-up,
+   where there's room; the form itself makes the same promises), the two
+   selects share a row, and gaps/paddings compress against viewport height */
+@media (max-width: 640px) {
+    .contact { padding-block: 4.5rem 1.25rem; }
+    .contact__grid { gap: clamp(0.9rem, 2.2svh, 1.5rem); }
+    .contact__sub, .contact__assurances { display: none; }
+    .form-card { padding: clamp(0.8rem, 1.8svh, 1.2rem); gap: clamp(0.5rem, 1.3svh, 0.85rem); }
+    .form__row { gap: clamp(0.5rem, 1.3svh, 0.85rem); }
+    .form__row:has(select) { grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+    .field input, .field select { padding-block: 0.55rem; }
+    .field textarea { min-height: clamp(52px, 7svh, 76px); }
+}
+/* very short phones (SE class): shave the type and paddings a touch more */
+@media (max-width: 640px) and (max-height: 700px) {
+    .contact { padding-block: 4.4rem 0.75rem; }
+    .contact__grid { gap: 0.7rem; }
+    .contact .eyebrow { margin-bottom: 0.9rem; }
+    .contact__title { font-size: 1.5rem; }
+    .field input, .field select { padding-block: 0.45rem; }
+    .field textarea { min-height: 48px; }
+}
 
 /* ─── footer ─────────────────────────────────────────────────────────────── */
 .m-footer { border-top: 1px solid var(--line); padding-block: 3rem; }
