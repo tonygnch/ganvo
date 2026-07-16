@@ -394,12 +394,37 @@ function buildSplits() {
             wrap.appendChild(line);
         });
         gsap.set(split.lines, { yPercent: 110 });
+        // Replays on EVERY entry, from either direction: reveal on enter, masked
+        // exit on leave so coming back re-runs it. Kill the old tween by hand —
+        // overwrite:'auto' misses staggered lines that haven't started yet, and
+        // those would rise again after a reset.
+        let tween = null;
+        const show = () => {
+            el.classList.add('is-in');
+            if (tween) tween.kill();
+            tween = gsap.fromTo(split.lines,
+                { yPercent: 110 },
+                { yPercent: 0, duration: 1.0, ease: 'power4.out', stagger: 0.08 });
+        };
+        const hide = () => {
+            if (tween) tween.kill();
+            tween = gsap.to(split.lines, { yPercent: 110, duration: 0.35, ease: 'power2.in', stagger: 0.04 });
+        };
+        // The statement sits inside a pinned hold: its real exit happens a full
+        // pin-span later than unpinned coords suggest. Push the end edge out by
+        // the hold's pin distance (function-based → re-measured on refresh).
+        const holdEl = el.closest('[data-hold]');
         ScrollTrigger.create({
-            trigger: el, start: 'top 82%', once: true,
-            onEnter: () => {
-                el.classList.add('is-in');
-                gsap.to(split.lines, { yPercent: 0, duration: 1.0, ease: 'power4.out', stagger: 0.08 });
+            trigger: el,
+            start: 'top 82%',
+            end: () => {
+                const hold = holdEl && ScrollTrigger.getAll().find((t) => t.pin && t.trigger === holdEl);
+                return 'bottom+=' + Math.round(hold ? hold.end - hold.start : 0) + ' top';
             },
+            onEnter: show,
+            onEnterBack: show,
+            onLeave: hide,
+            onLeaveBack: hide,
         });
     });
 }
