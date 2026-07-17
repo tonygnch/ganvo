@@ -225,25 +225,12 @@ html.js .loader { display: grid; place-items: center; }
 .fx-hud i:nth-child(2) { top: 14px; right: 14px; border-top-width: 1px; border-right-width: 1px; }
 .fx-hud i:nth-child(3) { bottom: 14px; left: 14px; border-bottom-width: 1px; border-left-width: 1px; }
 .fx-hud i:nth-child(4) { bottom: 14px; right: 14px; border-bottom-width: 1px; border-right-width: 1px; }
-.fx-hud__status {
-    position: absolute;
-    bottom: 22px; left: 50%;
-    transform: translateX(-50%);
-    font-family: var(--font-mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.3em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-    white-space: nowrap;
-}
-.fx-hud__status b { color: var(--accent); font-weight: 500; }
 @media (max-width: 720px) {
     .fx-hud i { width: 16px; height: 16px; }
     .fx-hud i:nth-child(1) { top: 10px; left: 10px; }
     .fx-hud i:nth-child(2) { top: 10px; right: 10px; }
     .fx-hud i:nth-child(3) { bottom: 10px; left: 10px; }
     .fx-hud i:nth-child(4) { bottom: 10px; right: 10px; }
-    .fx-hud__status { display: none; }
 }
 
 /* ─── section status rail — "you are here" ───────────────────────────────── */

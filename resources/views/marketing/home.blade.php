@@ -64,10 +64,9 @@
     <div class="fx-vignette" aria-hidden="true"></div>
     <div class="fx-glow" aria-hidden="true"></div>
 
-    {{-- HUD viewport frame — luminous corner brackets + status readout. --}}
+    {{-- HUD viewport frame — luminous corner brackets. --}}
     <div class="fx-hud" aria-hidden="true">
         <i></i><i></i><i></i><i></i>
-        <span class="fx-hud__status">GANVO · <b>SIGNAL</b> · 42.69°N 23.32°E</span>
     </div>
 
     <div class="m-progress" aria-hidden="true"></div>
