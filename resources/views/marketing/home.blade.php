@@ -121,10 +121,6 @@
             <h1 class="hero__title">{{ $cs['hero_headline'] ?? __('site.marketing.hero.headline') }}
                 <span class="accent">{{ $cs['hero_headline_accent'] ?? __('site.marketing.hero.headline_accent') }}</span></h1>
             <p class="hero__sub">{{ $cs['hero_sub'] ?? __('site.marketing.hero.sub') }}</p>
-            <div class="hero__cta">
-                <a href="#contact" class="btn btn--primary">{{ $cs['hero_cta_primary'] ?? __('site.marketing.hero.cta_primary') }} <span class="btn__arrow" aria-hidden="true">→</span></a>
-                <a href="#work" class="btn btn--ghost">{{ $cs['hero_cta_secondary'] ?? __('site.marketing.hero.cta_secondary') }}</a>
-            </div>
         </div>
 
         <div class="hero__cue" data-hero-cue aria-hidden="true">

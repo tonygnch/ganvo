@@ -453,7 +453,6 @@ html.js .loader { display: grid; place-items: center; }
     color: var(--titanium);
     line-height: 1.62;
 }
-.hero__cta { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-top: 2.7rem; }
 .hero__cue {
     position: absolute; left: var(--gutter); bottom: clamp(1.5rem, 4vh, 2.4rem);
     display: inline-flex; align-items: center; gap: 0.7rem;
