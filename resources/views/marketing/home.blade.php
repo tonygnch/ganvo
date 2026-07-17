@@ -12,6 +12,37 @@
         'description' => $cs['meta_description'] ?? __('site.marketing.meta_description'),
     ])
 
+    @php
+        $homeBg = route('marketing.home');
+        $homeEn = route('marketing.home.en');
+        $isEnPage = app()->getLocale() === 'en';
+    @endphp
+    {{-- one canonical per language variant + hreflang pairing; x-default sends
+         rest-of-world visitors to the English page --}}
+    <link rel="canonical" href="{{ $isEnPage ? $homeEn : $homeBg }}">
+    <link rel="alternate" hreflang="bg" href="{{ $homeBg }}">
+    <link rel="alternate" hreflang="en" href="{{ $homeEn }}">
+    <link rel="alternate" hreflang="x-default" href="{{ $homeEn }}">
+
+    {{-- structured data: who we are, where we are, what we do. Built in PHP
+         and json_encoded — a literal "@context" in the template collides with
+         Laravel's @context Blade directive and breaks compilation. --}}
+    @php
+        $ld = [
+            '@context' => 'https://schema.org',
+            '@type' => 'ProfessionalService',
+            'name' => 'Ganvo',
+            'url' => $isEnPage ? $homeEn : $homeBg,
+            'logo' => asset('images/brand/icon.png'),
+            'image' => asset('images/brand/og-image.png'),
+            'description' => $cs['meta_description'] ?? __('site.marketing.meta_description'),
+            'address' => ['@type' => 'PostalAddress', 'addressLocality' => 'Sofia', 'addressCountry' => 'BG'],
+            'areaServed' => 'BG',
+            'knowsLanguage' => ['bg', 'en'],
+        ];
+    @endphp
+    <script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
+
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=unbounded:400,500,600|manrope:400,500,600,700|jetbrains-mono:400,500&display=swap" rel="stylesheet">
     @vite(['resources/css/marketing.css', 'resources/js/marketing.js'])
@@ -92,7 +123,7 @@
                 <summary>{{ strtoupper($currentLocale) }} <svg width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></summary>
                 <div class="lang__menu" role="menu">
                     @foreach ($languages as $code => $name)
-                        <a role="menuitem" href="{{ route('lang.switch', ['locale' => $code]) }}" class="@if($currentLocale===$code) active @endif">
+                        <a role="menuitem" href="{{ $code === 'en' ? route('marketing.home.en') : route('marketing.home') }}" class="@if($currentLocale===$code) active @endif">
                             <span>{{ $name }}</span>
                             <svg class="check" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10l4 4 8-8"/></svg>
                         </a>
@@ -109,7 +140,7 @@
             {{-- Cinematic loop; hero.png is the poster so the frame is instant and
                  stands in if the video is unsupported or reduced-motion is on. --}}
             <video class="hero__video" autoplay muted loop playsinline preload="auto"
-                   poster="{{ asset('images/marketing/v2/hero.png') }}" aria-hidden="true" data-hero-video>
+                   poster="{{ asset('images/marketing/v2/hero.webp') }}" aria-hidden="true" data-hero-video>
                 <source src="{{ asset('images/marketing/v2/hero.mp4') }}" type="video/mp4">
             </video>
         </div>
@@ -297,7 +328,7 @@
                     @endif
                 </div>
 
-                <form class="form form-card" method="POST" action="{{ route('marketing.contact') }}" data-inquiry data-reveal="up" data-reveal-delay="0.08">
+                <form class="form form-card" method="POST" action="{{ route('marketing.contact') }}?lang={{ app()->getLocale() }}" data-inquiry data-reveal="up" data-reveal-delay="0.08">
                     @csrf
                     <div class="hp" aria-hidden="true">
                         <label>Website<input type="text" name="website" tabindex="-1" autocomplete="off"></label>

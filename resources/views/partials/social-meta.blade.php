@@ -33,7 +33,12 @@
 <meta property="og:image" content="{{ $ogImageUrl }}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:locale" content="{{ str_replace('-', '_', app()->getLocale()) }}">
+@php $ogLocales = ['en' => 'en_US', 'bg' => 'bg_BG']; $ogCur = $ogLocales[app()->getLocale()] ?? 'en_US'; @endphp
+<meta property="og:locale" content="{{ $ogCur }}">
+@foreach ($ogLocales as $l)
+    @if ($l !== $ogCur)<meta property="og:locale:alternate" content="{{ $l }}">
+    @endif
+@endforeach
 
 {{-- Twitter Card --}}
 <meta name="twitter:card" content="summary_large_image">

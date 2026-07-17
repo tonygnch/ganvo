@@ -46,7 +46,7 @@ window.scrollTo(0, 0);
         const source = hv.querySelector('source');
         if (source && source.src.includes('hero.mp4')) {
             source.src = source.src.replace('hero.mp4', 'hero-720.mp4');
-            hv.poster = hv.poster.replace('hero.png', 'hero-mobile.jpg');
+            hv.poster = hv.poster.replace('hero.webp', 'hero-mobile.jpg');
             hv.load();
         }
     }

@@ -30,7 +30,12 @@ Route::post('/webhooks/stripe/connect', [\App\Http\Controllers\Webhooks\StripeCo
     ->name('webhooks.stripe.connect');
 
 Route::domain($centralDomain)->group(function () {
-    Route::get('/', function (\Illuminate\Http\Request $request) {
+    // Marketing home, one handler per locale URL: Bulgarian is the default
+    // language at the root (the .bg audience Google geo-targets us to),
+    // English lives at /en. The URL — not a cookie — decides the language,
+    // so both variants are independently crawlable and indexable.
+    $marketingHome = function (\Illuminate\Http\Request $request, string $locale) {
+        app()->setLocale($locale);
         // Coming-soon gate. When config('ganvo.coming_soon.enabled') is true,
         // the public homepage shows a "Launching soon" splash instead of the
         // full marketing site. Bypass via ?preview=<bypass_token> for
@@ -86,7 +91,9 @@ Route::domain($centralDomain)->group(function () {
             ->all();
 
         return view('marketing.home', compact('cs', 'siteUrls'));
-    })->name('marketing.home');
+    };
+    Route::get('/', fn (\Illuminate\Http\Request $request) => $marketingHome($request, 'bg'))->name('marketing.home');
+    Route::get('/en', fn (\Illuminate\Http\Request $request) => $marketingHome($request, 'en'))->name('marketing.home.en');
 
     Route::get('/lang/{locale}', [LanguageController::class, 'switch'])->name('lang.switch');
 
