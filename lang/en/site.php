@@ -84,7 +84,7 @@ return [
             'scenes' => [
                 ['slug' => 'kass', 'name' => 'Kass Photography', 'type' => 'Photography · Portfolio', 'url' => 'https://kass.photography', 'tagline' => 'A dark, editorial portfolio that puts the photography first — galleries, campaigns and bookings, engineered to load instantly.'],
                 ['slug' => 'midibg', 'name' => 'MidiBG', 'type' => 'Seafood · Brand site', 'url' => 'https://midibg.com', 'tagline' => 'A cinematic, scroll-driven brand site for a Black Sea seafood producer — story, motion and performance held in balance.'],
-                ['slug' => 'asg', 'name' => 'Acoustic Sound Group', 'type' => 'Events · Web application', 'url' => 'https://acoustic-sound-group.com', 'tagline' => 'A precise site and booking experience for a sound and events company — clean architecture, built to scale with the business.'],
+                ['slug' => 'asg', 'name' => 'Acoustic Sound Group', 'type' => 'Events · Portfolio', 'url' => 'https://acoustic-sound-group.com', 'tagline' => 'A precise site and booking experience for a sound and events company — clean architecture, built to scale with the business.'],
             ],
         ],
         'why' => [
