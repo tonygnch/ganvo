@@ -86,14 +86,58 @@ ScrollTrigger.create({
     },
 });
 
+/* ─── loading screen — holds until the page is genuinely ready ───────────────
+   Progress creeps to ~82% while assets arrive (real progress is unknowable),
+   snaps to 100 once fonts + the hero loop are ready (or a 3.5s cap fires so a
+   stalled network never traps the page), then the overlay lifts away. The
+   hero entrance animation waits on the returned promise so it plays to a
+   visible stage, not behind the curtain. Reduced-motion/no-JS never see it. */
+let loaderDone = Promise.resolve();
+function runLoader() {
+    const el = document.querySelector('[data-loader]');
+    if (!el) return Promise.resolve();
+    if (reduced) { el.remove(); return Promise.resolve(); }
+    const bar = el.querySelector('[data-loader-bar]');
+    const pct = el.querySelector('[data-loader-pct]');
+    const state = { p: 0 };
+    const render = () => {
+        if (pct) pct.textContent = String(Math.round(state.p));
+        if (bar) bar.style.transform = 'scaleX(' + state.p / 100 + ')';
+    };
+    const creep = gsap.to(state, { p: 82, duration: 1.7, ease: 'power2.out', onUpdate: render });
+
+    const minTime = new Promise((r) => setTimeout(r, 900));   // never just a flash
+    const video = document.querySelector('[data-hero-video]');
+    const videoReady = new Promise((r) => {
+        if (!video || video.readyState >= 3) { r(); return; }
+        video.addEventListener('canplay', () => r(), { once: true });
+        setTimeout(r, 3500);
+    });
+    const fonts = document.fonts ? document.fonts.ready : Promise.resolve();
+
+    return Promise.all([minTime, videoReady, fonts]).then(() => new Promise((resolve) => {
+        creep.kill();
+        gsap.to(state, {
+            p: 100, duration: 0.35, ease: 'power1.in', onUpdate: render,
+            onComplete: () => {
+                el.classList.add('is-done');
+                resolve();                          // hero entrance starts as the veil lifts
+                setTimeout(() => el.remove(), 800); // clean up after the transition
+            },
+        });
+    }));
+}
+
 /* ─── boot ───────────────────────────────────────────────────────────────── */
 if (reduced) {
     document.querySelectorAll('[data-reveal], [data-split]').forEach((el) => el.classList.add('is-in'));
     document.body.classList.add('is-ready');
+    document.querySelector('[data-loader]')?.remove();
     // Honor reduced-motion: freeze the hero video on its poster frame.
     const hv = document.querySelector('[data-hero-video]');
     if (hv) { hv.removeAttribute('autoplay'); hv.pause(); }
 } else {
+    loaderDone = runLoader();
     (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
         document.body.classList.add('is-ready');
         // Create pinned triggers in DOCUMENT ORDER (top → bottom) so each one's
@@ -669,8 +713,11 @@ function buildHero() {
     }
 
     if (content) {
-        gsap.from(content.children, {
-            y: 22, opacity: 0, duration: 1.1, ease: EASE, stagger: 0.09, delay: 0.1,
+        gsap.set(content.children, { y: 22, opacity: 0 });
+        loaderDone.then(() => {
+            gsap.to(content.children, {
+                y: 0, opacity: 1, duration: 1.1, ease: EASE, stagger: 0.09, delay: 0.15,
+            });
         });
     }
     if (media) {

@@ -57,6 +57,7 @@ return [
             'cta_secondary' => 'View work',
             'cue' => 'Scroll',
         ],
+        'loader' => 'Loading',
         'about' => [
             'eyebrow' => 'Who are we?',
         ],

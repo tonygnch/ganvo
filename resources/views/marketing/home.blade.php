@@ -47,6 +47,18 @@
     ];
 @endphp
 
+    {{-- Loading screen — the G over the void with a hairline progress bar.
+         Shown only with JS (html.js gate) so no-JS visitors are never trapped;
+         reduced-motion skips it entirely; marketing.js drives progress and
+         removes it once fonts + the hero loop are ready. --}}
+    <div class="loader" data-loader aria-hidden="true">
+        <div class="loader__inner">
+            <x-brand-mark :size="46" class="loader__mark"/>
+            <div class="loader__bar"><i data-loader-bar></i></div>
+            <p class="loader__status">{{ __('site.marketing.loader') }} · <span data-loader-pct>0</span>%</p>
+        </div>
+    </div>
+
     {{-- Cinematic atmosphere: film grain, edge vignette, ambient blue glow. --}}
     <div class="fx-grain" aria-hidden="true"></div>
     <div class="fx-vignette" aria-hidden="true"></div>
