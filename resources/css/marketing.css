@@ -157,7 +157,7 @@ html.js .loader { display: grid; place-items: center; }
 }
 .loader__inner { display: grid; justify-items: center; gap: 1.5rem; }
 .loader__mark {
-    color: var(--accent);
+    height: 56px; width: auto; display: block;
     filter: drop-shadow(0 0 18px rgba(77, 141, 255, 0.45));
     animation: loader-pulse 2.2s ease-in-out infinite;
 }

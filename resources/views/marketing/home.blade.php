@@ -53,7 +53,7 @@
          removes it once fonts + the hero loop are ready. --}}
     <div class="loader" data-loader aria-hidden="true">
         <div class="loader__inner">
-            <x-brand-mark :size="46" class="loader__mark"/>
+            <img class="loader__mark" src="{{ asset('images/brand/icon.png') }}" alt="" width="56" height="56">
             <div class="loader__bar"><i data-loader-bar></i></div>
             <p class="loader__status">{{ __('site.marketing.loader') }} · <span data-loader-pct>0</span>%</p>
         </div>
