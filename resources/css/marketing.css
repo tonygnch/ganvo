@@ -146,6 +146,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .fx-grain, .fx-vignette, .fx-glow { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
 .fx-grain {
     z-index: 3;
+    /* oversized: the jitter animation translates this layer by up to 2%, and
+       at inset 0 that flashed a bare ungrained strip at the viewport edges
+       every step — read as "something moving" along the right side */
+    inset: -8%;
     /* no blend mode: overlay forced a full-screen re-composite against the
        moving content on every scroll frame — visible as page-wide flicker
        during slide glides. Plain low-alpha grain composites cheaply. */
