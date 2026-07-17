@@ -1024,6 +1024,49 @@ html.js .timeline.is-static .tl__title { font-size: clamp(1.3rem, 1.05rem + 1vw,
 /* the floating live preview must sit above the modal panel */
 .work-modal .proj-preview { z-index: 80; }
 
+/* ── branded mini-loader behind every live preview: the G pulses on the panel
+      until the iframe (opacity 0 → 1 on load) covers it ── */
+.preview-loader {
+    position: absolute; inset: 0; z-index: 0;
+    display: grid; place-items: center;
+    background: var(--panel);
+}
+.preview-loader img {
+    height: 26px; width: auto;
+    animation: loader-pulse 2.2s ease-in-out infinite;
+    filter: drop-shadow(0 0 12px rgba(77, 141, 255, 0.45));
+}
+.proj-preview__frame iframe { z-index: 1; }
+
+/* ── touch devices: inline live preview per project row (no hover exists) ──
+      mounted by JS when the modal opens; the iframe is display-only — taps
+      fall through to the row link */
+.proj-cell .proj { border-bottom: 0; }
+.proj-cell { border-bottom: 1px solid var(--line); }
+.proj-embed { display: none; }
+@media (hover: none) {
+    .proj-embed {
+        display: block;
+        position: relative;
+        margin-top: 1.1rem;
+        aspect-ratio: 16 / 10;
+        border: 1px solid var(--line-2);
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--panel);
+    }
+    .proj-embed iframe {
+        position: absolute; top: 0; left: 0; z-index: 1;
+        width: 1200px; height: 750px;
+        border: 0;
+        transform-origin: top left;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.45s ease;
+    }
+    .proj-embed.is-loaded iframe { opacity: 1; }
+}
+
 /* (services · why · process all share `.rowlist` above) */
 
 /* ─── contact / book a call ──────────────────────────────────────────────── */

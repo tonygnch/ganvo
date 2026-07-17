@@ -268,9 +268,32 @@ function buildWorkModal() {
     const panel = modal.querySelector('.work-modal__panel');
     let lastFocus = null;
 
+    // Touch devices get inline live previews per row (there is no hover):
+    // iframes mount on first open only, scaled to the row width, with the G
+    // loader pulsing behind until each site paints.
+    const mountEmbeds = () => {
+        modal.querySelectorAll('[data-proj-embed]:not(.is-mounted)').forEach((box) => {
+            if (getComputedStyle(box).display === 'none') return; // desktop: never load
+            box.classList.add('is-mounted');
+            const ifr = document.createElement('iframe');
+            ifr.title = '';
+            ifr.tabIndex = -1;
+            ifr.setAttribute('scrolling', 'no');
+            ifr.referrerPolicy = 'no-referrer';
+            ifr.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+            ifr.addEventListener('load', () => box.classList.add('is-loaded'));
+            ifr.src = box.dataset.src;
+            box.appendChild(ifr);
+            const size = () => { ifr.style.transform = 'scale(' + (box.clientWidth / 1200) + ')'; };
+            size();
+            new ResizeObserver(size).observe(box);
+        });
+    };
+
     const open = () => {
         lastFocus = document.activeElement;
         modal.hidden = false;
+        mountEmbeds();
         document.documentElement.style.overflow = 'hidden';
         lenis?.stop();
         // Force a reflow so the browser registers the hidden→shown state, then

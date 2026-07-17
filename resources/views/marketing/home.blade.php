@@ -208,6 +208,12 @@
                         $num = str_pad($i + 1, 2, '0', STR_PAD_LEFT);
                         $url = $scene['url'] ?? ($siteUrls[$scene['slug']] ?? '#');
                     @endphp
+                    <div class="proj-cell">
+                    {{-- touch devices: inline live preview (mounted when the modal
+                         opens) with the G loader behind it while the site loads --}}
+                    <div class="proj-embed" data-proj-embed data-src="{{ $url }}" aria-hidden="true">
+                        <span class="preview-loader"><img src="{{ asset('images/brand/icon.png') }}" alt=""></span>
+                    </div>
                     <a class="proj" href="{{ $url }}" target="_blank" rel="noopener noreferrer"
                        data-proj data-url="{{ $url }}"
                        aria-label="{{ $scene['name'] }} — {{ $scene['type'] }} ({{ __('site.marketing.work.visit') }})">
@@ -221,6 +227,7 @@
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M17 7H8M17 7v9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </span>
                     </a>
+                    </div>
                 @endforeach
             </div>
         </div>
@@ -228,6 +235,7 @@
         {{-- Floating live preview (desktop hover) — layered above the modal panel. --}}
         <div class="proj-preview" data-proj-preview aria-hidden="true">
             <div class="proj-preview__frame">
+                <span class="preview-loader"><img src="{{ asset('images/brand/icon.png') }}" alt=""></span>
                 <iframe title="" tabindex="-1" scrolling="no" loading="lazy" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin"></iframe>
             </div>
             <span class="proj-preview__hint">{{ __('site.marketing.work.visit') }} ↗</span>
