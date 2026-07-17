@@ -26,3 +26,7 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# compiled python bytecode (agent skill scripts)
+__pycache__/
+*.pyc
