@@ -192,7 +192,9 @@
          (Esc / focus-trap / restore focus). --}}
     <div class="work-modal" id="work-modal" data-work-modal hidden>
         <div class="work-modal__backdrop" data-work-close></div>
-        <div class="work-modal__panel" role="dialog" aria-modal="true" aria-labelledby="work-modal-title" tabindex="-1">
+        {{-- data-lenis-prevent: a stopped Lenis preventDefaults all touch/wheel
+             on the page — this opts the panel's own scrolling out of that --}}
+        <div class="work-modal__panel" role="dialog" aria-modal="true" aria-labelledby="work-modal-title" tabindex="-1" data-lenis-prevent>
             <div class="work-modal__head">
                 <div>
                     <p class="eyebrow">{{ $cs['work_eyebrow'] ?? __('site.marketing.work.eyebrow') }}</p>
