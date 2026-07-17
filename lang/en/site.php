@@ -43,7 +43,7 @@ return [
             'home' => 'Home',
             'services' => 'Services',
             'work' => 'Work',
-            'studio' => 'Studio',
+            'studio' => 'Web Studio',
             'process' => 'Process',
             'contact' => 'Contact',
             'about' => 'About',
