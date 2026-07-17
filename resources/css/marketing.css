@@ -441,17 +441,35 @@ html.js .loader { display: grid; place-items: center; }
     line-height: 1.62;
 }
 .hero__cue {
-    position: absolute; left: var(--gutter); bottom: clamp(1.5rem, 4vh, 2.4rem);
-    display: inline-flex; align-items: center; gap: 0.7rem;
-    font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
-    color: var(--ink-faint); z-index: 2;
+    position: absolute; left: 50%; bottom: clamp(1.6rem, 4vh, 2.6rem);
+    transform: translateX(-50%);
+    z-index: 2;
+    opacity: 0.9;
+    transition: opacity 0.5s ease;
 }
-.hero__cue .rail { position: relative; width: 1px; height: 40px; background: var(--line-2); overflow: hidden; }
-.hero__cue .rail::after {
-    content: ""; position: absolute; top: -50%; left: 0; width: 100%; height: 50%;
-    background: linear-gradient(var(--accent), transparent); animation: cue 2.4s ease-in-out infinite;
+/* the moment scrolling starts, the cue has done its job */
+.is-scrolled .hero__cue { opacity: 0; }
+.hero__cue .mouse {
+    display: block; width: 24px; height: 38px;
+    border: 1.5px solid rgba(157, 184, 232, 0.55);
+    border-radius: 13px;
+    position: relative;
+    box-shadow: 0 0 16px rgba(77, 141, 255, 0.18), 0 0 6px rgba(77, 141, 255, 0.12) inset;
 }
-@keyframes cue { 0% { top: -50%; } 100% { top: 100%; } }
+.hero__cue .mouse i {
+    position: absolute; left: 50%; top: 7px;
+    width: 3px; height: 7px; margin-left: -1.5px;
+    border-radius: 2px;
+    background: var(--accent-2);
+    box-shadow: 0 0 8px rgba(125, 211, 252, 0.85);
+    animation: cue-drop 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes cue-drop {
+    0% { transform: translateY(0); opacity: 0; }
+    18% { opacity: 1; }
+    72% { transform: translateY(14px); opacity: 0.9; }
+    100% { transform: translateY(18px); opacity: 0; }
+}
 
 /* signal strip — quiet mono facts anchored bottom-right of the hero;
    the first "easy contact" cue before the visitor ever scrolls */

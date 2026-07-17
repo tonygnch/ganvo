@@ -122,8 +122,10 @@
             <p class="hero__sub">{{ $cs['hero_sub'] ?? __('site.marketing.hero.sub') }}</p>
         </div>
 
+        {{-- scroll cue: mouse outline with a falling dot, bottom-centre;
+             fades out as soon as scrolling starts --}}
         <div class="hero__cue" data-hero-cue aria-hidden="true">
-            <span class="rail"></span>{{ __('site.marketing.hero.cue') }}
+            <span class="mouse"><i></i></span>
         </div>
 
         {{-- signal strip — quiet mono facts; the first "easy contact" cue --}}
