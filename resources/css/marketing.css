@@ -1213,6 +1213,16 @@ html.js [data-split].is-in { visibility: visible; }
     .lang > summary { padding: 0.6rem 0.5rem; }
 }
 @media (max-width: 640px) {
+    /* the kicker pill always fits one line: size tracks the viewport width
+       and wrapping is off — both locales stay a single row down to 320px */
+    .hero__kicker {
+        max-width: 100%;
+        white-space: nowrap;
+        font-size: clamp(0.55rem, 2.9vw, 0.72rem);
+        letter-spacing: 0.16em;
+        gap: 0.6em;
+        padding: 0.55em 1em;
+    }
     .form__row { grid-template-columns: 1fr; }
     .proj { grid-template-columns: 2.5rem 1fr; column-gap: 1rem; }
     .proj__go { display: none; }
