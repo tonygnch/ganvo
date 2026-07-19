@@ -57,7 +57,6 @@
     $why      = __('site.marketing.why.items');
     $steps    = __('site.marketing.process.steps');
     $types    = __('site.marketing.contact.types');
-    $budgets  = __('site.marketing.contact.budgets');
 
     $cEmail = $cs['contact_email'] ?? __('site.marketing.contact.email');
     $cPhone = $cs['contact_phone'] ?? '';
@@ -345,25 +344,14 @@
                         </div>
                     </div>
 
-                    <div class="form__row">
-                        <div class="field">
-                            <label for="f-type">{{ __('site.marketing.contact.form.project_type') }}</label>
-                            <select id="f-type" name="project_type">
-                                <option value="">{{ __('site.marketing.contact.form.choose') }}</option>
-                                @foreach ($types as $key => $label)
-                                    <option value="{{ $key }}" @selected(old('project_type')===$key)>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="field">
-                            <label for="f-budget">{{ __('site.marketing.contact.form.budget') }}</label>
-                            <select id="f-budget" name="budget">
-                                <option value="">{{ __('site.marketing.contact.form.choose') }}</option>
-                                @foreach ($budgets as $key => $label)
-                                    <option value="{{ $key }}" @selected(old('budget')===$key)>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                    <div class="field">
+                        <label for="f-type">{{ __('site.marketing.contact.form.project_type') }}</label>
+                        <select id="f-type" name="project_type">
+                            <option value="">{{ __('site.marketing.contact.form.choose') }}</option>
+                            @foreach ($types as $key => $label)
+                                <option value="{{ $key }}" @selected(old('project_type')===$key)>{{ $label }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
                     <div class="field">
