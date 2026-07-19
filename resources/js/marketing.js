@@ -154,14 +154,41 @@ if (reduced) {
         buildDropdowns();
         ScrollTrigger.refresh();
         buildSlideNav();      // one wheel gesture = one slide (after refresh: needs final pin positions)
-        // fresh load: honour an explicit #hash (pin-aware), otherwise start at the top
+        // fresh load: honour an explicit #hash (pin-aware), otherwise start at the top.
+        // Lenis clamps scrollTo against a cached page height that its ResizeObserver
+        // only updates a frame AFTER refresh() built the pin spacers — resize() first
+        // or the jump clamps to the pre-spacer limit and strands mid-page.
         let hashTarget = null;
         try { hashTarget = location.hash ? document.querySelector(location.hash) : null; } catch (e) { /* malformed hash */ }
-        if (hashTarget) {
+        const land = () => {
+            lenis.resize();
             const st = ScrollTrigger.getAll().find((t) => t.pin && hashTarget.contains(t.trigger));
             if (st) lenis.scrollTo(st.start + 1, { immediate: true });
             else lenis.scrollTo(hashTarget, { offset: -70, immediate: true });
             ScrollTrigger.update();
+        };
+        if (hashTarget) {
+            land();
+            // Late layout work still shifts positions under us: ScrollTrigger's own
+            // post-load refresh re-measures the pins, media finishes arriving, and
+            // Chrome re-runs its native fragment scroll when the load event fires
+            // (pin-blind, so it lands wrong on pinned sections). Keep re-landing on
+            // every refresh until the page has settled — loader lifted AND window
+            // loaded — then land once more and let go. A visitor who starts
+            // scrolling before that owns the viewport; stop immediately.
+            let settled = false;
+            const onRefresh = () => { if (!settled) land(); };
+            const takeover = () => { settled = true; ScrollTrigger.removeEventListener('refresh', onRefresh); };
+            ['wheel', 'touchstart', 'keydown'].forEach((ev) =>
+                window.addEventListener(ev, takeover, { once: true, passive: true, capture: true }));
+            ScrollTrigger.addEventListener('refresh', onRefresh);
+            const windowLoaded = document.readyState === 'complete'
+                ? Promise.resolve()
+                : new Promise((r) => window.addEventListener('load', r, { once: true }));
+            Promise.all([loaderDone, windowLoaded]).then(() => setTimeout(() => {
+                if (!settled) land();
+                takeover();
+            }, 250));
         } else {
             lenis.scrollTo(0, { immediate: true });
         }
