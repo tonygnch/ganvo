@@ -133,6 +133,7 @@ if (reduced) {
     document.querySelectorAll('[data-reveal], [data-split]').forEach((el) => el.classList.add('is-in'));
     document.body.classList.add('is-ready');
     document.querySelector('[data-loader]')?.remove();
+    buildDropdowns();
     // Honor reduced-motion: freeze the hero video on its poster frame.
     const hv = document.querySelector('[data-hero-video]');
     if (hv) { hv.removeAttribute('autoplay'); hv.pause(); }
@@ -150,6 +151,7 @@ if (reduced) {
         buildParallax();
         buildHero();
         buildSectionRail();
+        buildDropdowns();
         ScrollTrigger.refresh();
         buildSlideNav();      // one wheel gesture = one slide (after refresh: needs final pin positions)
         // fresh load: honour an explicit #hash (pin-aware), otherwise start at the top
@@ -749,6 +751,96 @@ function buildHero() {
             scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true },
         });
     }
+}
+
+/* ─── custom dropdowns — the contact form selects, in the site's design ──────
+   Progressive enhancement over the native <select>: the real element keeps
+   the name/value for submission (and is what no-JS visitors use); the custom
+   listbox mirrors it with full keyboard support (arrows / Enter / Esc) and
+   ARIA listbox semantics. */
+function buildDropdowns() {
+    document.querySelectorAll('[data-dropdown]').forEach((wrap) => {
+        const select = wrap.querySelector('select');
+        if (!select) return;
+
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'dropdown__toggle';
+        toggle.setAttribute('aria-haspopup', 'listbox');
+        toggle.setAttribute('aria-expanded', 'false');
+        if (select.id) toggle.setAttribute('aria-labelledby', select.id ? select.labels?.[0]?.id || '' : '');
+        const labelSpan = document.createElement('span');
+        const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        chevron.setAttribute('viewBox', '0 0 12 8');
+        chevron.setAttribute('class', 'dropdown__chevron');
+        chevron.setAttribute('aria-hidden', 'true');
+        chevron.innerHTML = '<path d="M1 1l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>';
+        toggle.append(labelSpan, chevron);
+
+        const menu = document.createElement('ul');
+        menu.className = 'dropdown__menu';
+        menu.setAttribute('role', 'listbox');
+        const options = [...select.options].map((opt, i) => {
+            const li = document.createElement('li');
+            li.className = 'dropdown__option';
+            li.setAttribute('role', 'option');
+            li.dataset.value = opt.value;
+            li.innerHTML = '<span></span><svg class="check" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10l4 4 8-8"/></svg>';
+            li.firstChild.textContent = opt.textContent;
+            li.addEventListener('click', () => { choose(i); close(); toggle.focus(); });
+            menu.appendChild(li);
+            return li;
+        });
+
+        let focusIdx = select.selectedIndex;
+        const sync = () => {
+            const cur = select.selectedIndex;
+            options.forEach((li, i) => li.setAttribute('aria-selected', i === cur ? 'true' : 'false'));
+            labelSpan.textContent = select.options[cur]?.textContent ?? '';
+            toggle.classList.toggle('is-placeholder', !select.value);
+        };
+        const choose = (i) => {
+            select.selectedIndex = i;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+            sync();
+        };
+        const setFocused = (i) => {
+            focusIdx = Math.max(0, Math.min(options.length - 1, i));
+            options.forEach((li, k) => li.classList.toggle('is-focused', k === focusIdx));
+        };
+        const open = () => {
+            wrap.classList.add('is-open');
+            toggle.setAttribute('aria-expanded', 'true');
+            setFocused(select.selectedIndex);
+        };
+        const close = () => {
+            wrap.classList.remove('is-open');
+            toggle.setAttribute('aria-expanded', 'false');
+        };
+        const isOpen = () => wrap.classList.contains('is-open');
+
+        toggle.addEventListener('click', () => (isOpen() ? close() : open()));
+        toggle.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isOpen()) { e.preventDefault(); close(); return; }
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!isOpen()) { open(); return; }
+                setFocused(focusIdx + (e.key === 'ArrowDown' ? 1 : -1));
+            }
+            if ((e.key === 'Enter' || e.key === ' ') && isOpen()) {
+                e.preventDefault();
+                choose(focusIdx); close();
+            }
+            if (e.key === 'Tab') close();
+        });
+        document.addEventListener('click', (e) => { if (isOpen() && !wrap.contains(e.target)) close(); });
+
+        wrap.append(toggle, menu);
+        wrap.classList.add('is-enhanced');
+        select.tabIndex = -1;
+        select.setAttribute('aria-hidden', 'true');
+        sync();
+    });
 }
 
 /* ─── contact form (progressive enhancement) ─────────────────────────────── */

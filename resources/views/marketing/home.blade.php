@@ -366,12 +366,16 @@
 
                     <div class="field">
                         <label for="f-type">{{ $cs['form_project_type'] ?? __('site.marketing.contact.form.project_type') }}</label>
-                        <select id="f-type" name="project_type">
-                            <option value="">{{ $cs['form_choose'] ?? __('site.marketing.contact.form.choose') }}</option>
-                            @foreach ($types as $key => $label)
-                                <option value="{{ $key }}" @selected(old('project_type')===$key)>{{ $label }}</option>
-                            @endforeach
-                        </select>
+                        {{-- JS upgrades this into the custom listbox; the native
+                             select stays in the form for submission + no-JS --}}
+                        <div class="dropdown" data-dropdown>
+                            <select id="f-type" name="project_type">
+                                <option value="">{{ $cs['form_choose'] ?? __('site.marketing.contact.form.choose') }}</option>
+                                @foreach ($types as $key => $label)
+                                    <option value="{{ $key }}" @selected(old('project_type')===$key)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
 
                     <div class="field">

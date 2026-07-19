@@ -1156,6 +1156,68 @@ html.js .timeline.is-static .tl__title { font-size: clamp(1.3rem, 1.05rem + 1vw,
 .form__note.is-ok { background: rgba(120, 200, 150, 0.1); border: 1px solid rgba(120, 200, 150, 0.35); color: #a9e6c1; }
 .form__note.is-err { background: rgba(255, 110, 110, 0.08); border: 1px solid rgba(255, 110, 110, 0.32); color: #ffb4b4; }
 
+/* ─── custom dropdown (contact form selects) ─────────────────────────────────
+   JS (buildDropdowns) hides the native select and renders a styled listbox in
+   the site's language: field-styled trigger, dark glass panel, azure hover,
+   check on the active option. Without JS the native select stays visible. */
+.dropdown { position: relative; }
+html.js .dropdown.is-enhanced > select {
+    position: absolute; inset: 0;
+    opacity: 0; pointer-events: none;
+}
+.dropdown__toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;
+    width: 100%;
+    background: rgba(2, 4, 9, 0.45);
+    border: 1px solid var(--line-2);
+    border-radius: 10px;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 1.02rem;
+    padding: clamp(0.6rem, 1.4vh, 0.85rem) 1rem;
+    text-align: left;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+.dropdown__toggle.is-placeholder { color: var(--ink-faint); }
+.dropdown__toggle:hover { border-color: rgba(125, 211, 252, 0.45); }
+.dropdown.is-open .dropdown__toggle,
+.dropdown__toggle:focus-visible {
+    outline: none; border-color: var(--accent);
+    background-color: rgba(77, 141, 255, 0.06);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.dropdown__chevron { flex: none; width: 12px; height: 8px; color: var(--ink-dim); transition: transform 0.25s ease; }
+.dropdown.is-open .dropdown__chevron { transform: rotate(180deg); }
+.dropdown__menu {
+    position: absolute; left: 0; right: 0; top: calc(100% + 6px);
+    z-index: 6;
+    margin: 0; padding: 0.35rem; list-style: none;
+    background: var(--panel);
+    border: 1px solid var(--line-2);
+    border-radius: 10px;
+    box-shadow: 0 0 0 1px rgba(77, 141, 255, 0.05) inset, 0 24px 60px -24px rgba(0, 0, 0, 0.9);
+    opacity: 0; transform: translateY(6px); pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+}
+.dropdown.is-open .dropdown__menu { opacity: 1; transform: none; pointer-events: auto; }
+.dropdown__option {
+    display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;
+    padding: 0.55rem 0.8rem;
+    border-radius: 7px;
+    font-size: 0.98rem;
+    color: var(--ink-dim);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.dropdown__option:hover, .dropdown__option.is-focused { background: rgba(255, 255, 255, 0.05); color: var(--ink); }
+.dropdown__option[aria-selected="true"] { color: var(--ink); }
+.dropdown__option .check { width: 15px; height: 15px; flex: none; opacity: 0; }
+.dropdown__option[aria-selected="true"] .check { opacity: 1; }
+.dropdown__option .check path { fill: none; stroke: var(--accent); stroke-width: 2; }
+@media (prefers-reduced-motion: reduce) {
+    .dropdown__menu, .dropdown__chevron { transition: none; }
+}
+
 /* direct channels — under the pitch (only render when set; empty for now) */
 .direct { margin-top: 2.4rem; padding-top: 2rem; border-top: 1px solid var(--line); }
 .direct__label { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 1.2rem; }
