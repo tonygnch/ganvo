@@ -95,7 +95,8 @@ class InquiryController extends Controller
         if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json([
                 'ok' => true,
-                'message' => __('site.marketing.contact.thanks'),
+                'message' => \App\Models\SitePage::bulk(\App\Services\SitePageSchemas::PAGE_MARKETING_HOME)['contact_thanks']
+                    ?? __('site.marketing.contact.thanks'),
             ]);
         }
         return back()->with('inquiry_status', 'ok')->withFragment('contact');

@@ -52,11 +52,31 @@
     $currentLocale = app()->getLocale();
     $languages     = \App\Http\Middleware\SetLocale::available();
 
-    $services = __('site.marketing.services.items');
-    $scenes   = __('site.marketing.work.scenes');
+    // Every list merges SA overrides (flat keys like services_item_1_title)
+    // over the i18n catalog, so the admin panel can edit any item while blank
+    // fields keep falling back to the translations.
+    $mergeItems = function (string $prefix, array $items, array $keys) use ($cs) {
+        return collect(array_values($items))->map(function ($item, $i) use ($prefix, $keys, $cs) {
+            foreach ($keys as $key) {
+                $item[$key] = $cs[$prefix . ($i + 1) . '_' . $key] ?? ($item[$key] ?? '');
+            }
+            return $item;
+        })->all();
+    };
+    $services = $mergeItems('services_item_', __('site.marketing.services.items'), ['title', 'body']);
+    $steps    = $mergeItems('process_step_', __('site.marketing.process.steps'), ['title', 'body']);
+    $scenes   = $mergeItems('work_scene_', __('site.marketing.work.scenes'), ['name', 'type', 'tagline', 'url']);
     $why      = __('site.marketing.why.items');
-    $steps    = __('site.marketing.process.steps');
-    $types    = __('site.marketing.contact.types');
+
+    $types = [];
+    foreach (__('site.marketing.contact.types') as $key => $label) {
+        $types[$key] = $cs['type_' . $key] ?? $label;
+    }
+    $assurances = [];
+    foreach (array_values(__('site.marketing.contact.assurances')) as $i => $line) {
+        $assurances[] = $cs['contact_assurance_' . ($i + 1)] ?? $line;
+    }
+    $workVisit = $cs['work_visit_label'] ?? __('site.marketing.work.visit');
 
     $cEmail = $cs['contact_email'] ?? __('site.marketing.contact.email');
     $cPhone = $cs['contact_phone'] ?? '';
@@ -85,7 +105,7 @@
         <div class="loader__inner">
             <img class="loader__mark" src="{{ asset('images/brand/icon.png') }}" alt="" width="56" height="56">
             <div class="loader__bar"><i data-loader-bar></i></div>
-            <p class="loader__status">{{ __('site.marketing.loader') }} · <span data-loader-pct>0</span>%</p>
+            <p class="loader__status">{{ $cs['loader_label'] ?? __('site.marketing.loader') }} · <span data-loader-pct>0</span>%</p>
         </div>
     </div>
 
@@ -129,7 +149,7 @@
                     @endforeach
                 </div>
             </details>
-            <a href="#contact" class="btn btn--primary btn--sm">{{ __('site.marketing.nav.book') }}</a>
+            <a href="#contact" class="btn btn--primary btn--sm">{{ $cs['nav_book'] ?? __('site.marketing.nav.book') }}</a>
         </div>
     </nav>
 
@@ -160,9 +180,9 @@
 
         {{-- signal strip — quiet mono facts; the first "easy contact" cue --}}
         <div class="hero__meta" aria-hidden="true">
-            <span><b>EST 2024</b> · {{ __('site.marketing.sections.studio') }}</span>
+            <span><b>{{ $cs['hero_meta_primary'] ?? __('site.marketing.hero.meta_primary') }}</b></span>
             <span class="dot"></span>
-            <span>{{ __('site.marketing.contact.assurances.0') }}</span>
+            <span>{{ $cs['hero_meta_secondary'] ?? __('site.marketing.contact.assurances.0') }}</span>
         </div>
     </header>
 
@@ -209,7 +229,7 @@
                 <p class="work__lead" data-reveal="up">{{ $cs['work_lead'] ?? __('site.marketing.work.lead') }}</p>
             </div>
             <button type="button" class="work-open" data-work-open aria-haspopup="dialog" aria-controls="work-modal" data-reveal="up">
-                <span class="work-open__label">{{ __('site.marketing.work.open') }}</span>
+                <span class="work-open__label">{{ $cs['work_open_label'] ?? __('site.marketing.work.open') }}</span>
                 <span class="work-open__cta">
                     <span class="work-open__count">{{ __('site.marketing.work.count', ['count' => count($scenes)]) }}</span>
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M17 7H8M17 7v9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -248,14 +268,14 @@
                     </div>
                     <a class="proj" href="{{ $url }}" target="_blank" rel="noopener noreferrer"
                        data-proj data-url="{{ $url }}"
-                       aria-label="{{ $scene['name'] }} — {{ $scene['type'] }} ({{ __('site.marketing.work.visit') }})">
+                       aria-label="{{ $scene['name'] }} — {{ $scene['type'] }} ({{ $workVisit }})">
                         <span class="proj__index">{{ $num }}</span>
                         <span class="proj__name">{{ $scene['name'] }}</span>
                         <span class="proj__type">{{ $scene['type'] }}</span>
                         @if (!empty($scene['tagline']))
                             <span class="proj__tagline">{{ $scene['tagline'] }}</span>
                         @endif
-                        <span class="proj__go">{{ __('site.marketing.work.visit') }}
+                        <span class="proj__go">{{ $workVisit }}
                             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M17 7H8M17 7v9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </span>
                     </a>
@@ -270,7 +290,7 @@
                 <span class="preview-loader"><img src="{{ asset('images/brand/icon.png') }}" alt=""></span>
                 <iframe title="" tabindex="-1" scrolling="no" loading="lazy" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin"></iframe>
             </div>
-            <span class="proj-preview__hint">{{ __('site.marketing.work.visit') }} ↗</span>
+            <span class="proj-preview__hint">{{ $workVisit }} ↗</span>
         </div>
     </div>
 
@@ -286,7 +306,7 @@
                     <p class="contact__sub" data-reveal="up">{{ $cs['contact_sub'] ?? __('site.marketing.contact.sub') }}</p>
 
                     <ul class="contact__assurances" data-reveal="up" data-reveal-delay="0.06">
-                        @foreach (__('site.marketing.contact.assurances') as $point)
+                        @foreach ($assurances as $point)
                             <li>
                                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                 <span>{{ $point }}</span>
@@ -335,19 +355,19 @@
 
                     <div class="form__row">
                         <div class="field">
-                            <label for="f-name">{{ __('site.marketing.contact.form.name') }}</label>
+                            <label for="f-name">{{ $cs['form_name'] ?? __('site.marketing.contact.form.name') }}</label>
                             <input id="f-name" type="text" name="name" required maxlength="120" value="{{ old('name') }}" autocomplete="name" placeholder="Jane Cooper">
                         </div>
                         <div class="field">
-                            <label for="f-email">{{ __('site.marketing.contact.form.email') }}</label>
+                            <label for="f-email">{{ $cs['form_email'] ?? __('site.marketing.contact.form.email') }}</label>
                             <input id="f-email" type="email" name="email" required maxlength="255" value="{{ old('email') }}" autocomplete="email" placeholder="jane@company.com">
                         </div>
                     </div>
 
                     <div class="field">
-                        <label for="f-type">{{ __('site.marketing.contact.form.project_type') }}</label>
+                        <label for="f-type">{{ $cs['form_project_type'] ?? __('site.marketing.contact.form.project_type') }}</label>
                         <select id="f-type" name="project_type">
-                            <option value="">{{ __('site.marketing.contact.form.choose') }}</option>
+                            <option value="">{{ $cs['form_choose'] ?? __('site.marketing.contact.form.choose') }}</option>
                             @foreach ($types as $key => $label)
                                 <option value="{{ $key }}" @selected(old('project_type')===$key)>{{ $label }}</option>
                             @endforeach
@@ -355,24 +375,24 @@
                     </div>
 
                     <div class="field">
-                        <label for="f-company">{{ __('site.marketing.contact.form.company') }}</label>
+                        <label for="f-company">{{ $cs['form_company'] ?? __('site.marketing.contact.form.company') }}</label>
                         <input id="f-company" type="text" name="company" maxlength="160" value="{{ old('company') }}" autocomplete="organization" placeholder="Company Inc.">
                     </div>
 
                     <div class="field">
-                        <label for="f-message">{{ __('site.marketing.contact.form.message') }}</label>
+                        <label for="f-message">{{ $cs['form_message'] ?? __('site.marketing.contact.form.message') }}</label>
                         <textarea id="f-message" name="message" required minlength="10" maxlength="4000" placeholder="What are you building, and what does success look like?">{{ old('message') }}</textarea>
                     </div>
 
                     @if (session('inquiry_status') === 'ok')
-                        <p class="form__note is-ok is-shown" data-inquiry-note role="status">{{ __('site.marketing.contact.thanks') }}</p>
+                        <p class="form__note is-ok is-shown" data-inquiry-note role="status">{{ $cs['contact_thanks'] ?? __('site.marketing.contact.thanks') }}</p>
                     @elseif (session('inquiry_error'))
                         <p class="form__note is-err is-shown" data-inquiry-note role="status">{{ session('inquiry_error') }}</p>
                     @else
                         <p class="form__note" data-inquiry-note role="status" aria-live="polite"></p>
                     @endif
 
-                    <button type="submit" class="btn btn--primary form__submit" data-inquiry-submit data-sending="{{ __('site.marketing.contact.form.sending') }}">{{ __('site.marketing.contact.form.submit') }} <span class="btn__arrow" aria-hidden="true">→</span></button>
+                    <button type="submit" class="btn btn--primary form__submit" data-inquiry-submit data-sending="{{ $cs['form_sending'] ?? __('site.marketing.contact.form.sending') }}">{{ $cs['form_submit'] ?? __('site.marketing.contact.form.submit') }} <span class="btn__arrow" aria-hidden="true">→</span></button>
                 </form>
             </div>
         </div>
@@ -383,7 +403,7 @@
         <div class="wrap m-footer__grid">
             <div>
                 <img class="m-footer__logo" src="{{ asset('images/brand/logo-full-white.png') }}" alt="Ganvo" width="89" height="20">
-                <p class="m-footer__tag">{{ __('site.marketing.footer.tagline') }}</p>
+                <p class="m-footer__tag">{{ $cs['footer_tagline'] ?? __('site.marketing.footer.tagline') }}</p>
             </div>
             <div class="m-footer__meta">
                 <span>© {{ date('Y') }} Ganvo</span>

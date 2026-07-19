@@ -55,6 +55,7 @@ return [
             'sub' => 'We create fast, distinctive and dependable websites and web applications built around your business goals.',
             'cta_primary' => 'Let’s talk',
             'cta_secondary' => 'Explore our work',
+            'meta_primary' => 'EST 2024 · Web Studio',
             'cue' => 'Explore',
         ],
         'loader' => 'Loading',

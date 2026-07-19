@@ -81,16 +81,30 @@ abstract class BaseSitePageEditor extends Page implements HasForms
     {
         $localeLabel = strtoupper($locale);
 
+        // One collapsible section per schema 'group', in first-seen order —
+        // pages without groups (e.g. coming-soon) fall into a single section.
+        $groups = [];
+        foreach ($schemaFields as $field) {
+            $groups[$field['group'] ?? 'Content'][] = $field;
+        }
+
+        $sections = [];
+        $first = true;
+        foreach ($groups as $groupLabel => $fields) {
+            $section = Section::make($groupLabel)
+                ->collapsible()
+                ->collapsed(! $first)
+                ->schema(array_map(fn (array $field) => $this->fieldComponent($locale, $field), $fields));
+            if ($first) {
+                $section->description("Leave any field blank to fall back to the default {$localeLabel} translation.");
+            }
+            $sections[] = $section;
+            $first = false;
+        }
+
         return Tab::make($localeLabel)
             ->icon(Heroicon::OutlinedLanguage)
-            ->schema([
-                Section::make("{$localeLabel} content")
-                    ->description("Leave a field blank to fall back to the default translation for {$localeLabel}.")
-                    ->schema(array_map(
-                        fn (array $field) => $this->fieldComponent($locale, $field),
-                        array_values($schemaFields)
-                    )),
-            ]);
+            ->schema($sections);
     }
 
     /**
