@@ -48,6 +48,12 @@ class InquiryController extends Controller
         RateLimiter::hit($ipKey . ':burst', 60);
         RateLimiter::hit($ipKey . ':hour', 3600);
 
+        // Cloudflare Turnstile — only enforced when keys are configured, so
+        // dev and keyless deploys keep working on honeypot + rate limits alone.
+        if (! $this->passesTurnstile($request)) {
+            return $this->respondError($request, __('site.marketing.contact.error_captcha'), 422);
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => ['required', 'string', 'max:120'],
             'email' => ['required', 'email:filter', 'max:255'],
@@ -88,6 +94,38 @@ class InquiryController extends Controller
         // }
 
         return $this->respondSuccess($request);
+    }
+
+    private function passesTurnstile(Request $request): bool
+    {
+        $secret = config('services.turnstile.secret');
+        if (! $secret) {
+            return true; // not configured — feature off
+        }
+
+        $token = (string) $request->input('cf-turnstile-response', '');
+        if ($token === '') {
+            return false;
+        }
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::asForm()
+                ->timeout(5)
+                ->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                    'secret' => $secret,
+                    'response' => $token,
+                    'remoteip' => $request->ip(),
+                ]);
+
+            return (bool) $response->json('success');
+        } catch (\Throwable $e) {
+            // Cloudflare unreachable: fail OPEN — losing a real lead to a
+            // third-party outage is worse than letting one bot through the
+            // honeypot + rate limits underneath.
+            report($e);
+
+            return true;
+        }
     }
 
     private function respondSuccess(Request $request): JsonResponse|RedirectResponse

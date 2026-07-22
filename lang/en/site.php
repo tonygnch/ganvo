@@ -128,6 +128,7 @@ return [
             'facebook' => '',
             'direct' => 'Prefer email?',
             'thanks' => 'Thanks — we’ve received your message. We’ll be in touch within one business day.',
+            'error_captcha' => 'We couldn\'t verify you\'re human. Please try again.',
             'error_throttled' => 'You’ve sent a few requests in a row. Please try again in a minute.',
             'error_generic' => 'Something went wrong. Please try again in a moment.',
             'form' => [

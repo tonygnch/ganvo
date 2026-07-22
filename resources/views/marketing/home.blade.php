@@ -46,6 +46,9 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=unbounded:400,500,600|manrope:400,500,600,700|jetbrains-mono:400,500&display=swap" rel="stylesheet">
     @vite(['resources/css/marketing.css', 'resources/js/marketing.js'])
+    @if (config('services.turnstile.site_key'))
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    @endif
 </head>
 <body>
 @php
@@ -396,6 +399,16 @@
                         <p class="form__note" data-inquiry-note role="status" aria-live="polite"></p>
                     @endif
 
+                    @if (config('services.turnstile.site_key'))
+                        {{-- invisible for most visitors; challenges only suspicious traffic.
+                             The widget drops a cf-turnstile-response input into the form. --}}
+                        <div class="cf-turnstile form__turnstile"
+                             data-sitekey="{{ config('services.turnstile.site_key') }}"
+                             data-theme="dark"
+                             data-size="flexible"
+                             data-appearance="interaction-only"
+                             data-refresh-expired="auto"></div>
+                    @endif
                     <button type="submit" class="btn btn--primary form__submit" data-inquiry-submit data-sending="{{ $cs['form_sending'] ?? __('site.marketing.contact.form.sending') }}">{{ $cs['form_submit'] ?? __('site.marketing.contact.form.submit') }} <span class="btn__arrow" aria-hidden="true">→</span></button>
                 </form>
             </div>

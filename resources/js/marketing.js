@@ -899,6 +899,8 @@ function buildContactForm() {
             showNote(note, 'Something went wrong. Please email us directly.', false);
         } finally {
             if (submit) { submit.disabled = false; submit.innerHTML = submitHtml; }
+            // Turnstile tokens are single-use — mint a fresh one for any retry.
+            window.turnstile?.reset?.();
         }
     });
 }
