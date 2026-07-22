@@ -23,10 +23,12 @@ return [
     ],
 
     // Cloudflare Turnstile — bot protection on the marketing contact form.
-    // Leave both empty to disable (the honeypot + rate limits still apply).
+    // The site key is public by design (it ships in the page HTML); the widget
+    // only activates when TURNSTILE_SECRET is set, so keyless environments
+    // keep the plain form (honeypot + rate limits still apply).
     'turnstile' => [
-        'site_key' => env('TURNSTILE_SITE_KEY'),
-        'secret' => env('TURNSTILE_SECRET_KEY'),
+        'site_key' => env('TURNSTILE_SITE_KEY', '0x4AAAAAAD7g5L9AuqpaHNuo'),
+        'secret' => env('TURNSTILE_SECRET'),
     ],
 
     'ses' => [
