@@ -2,6 +2,7 @@
 
 namespace App\Filament\SuperAdmin\Resources\Inquiries\Tables;
 
+use App\Filament\SuperAdmin\Resources\Inquiries\InquiryResource;
 use App\Models\ProjectInquiry;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -28,6 +29,13 @@ class InquiriesTable
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            // Filament's default row link authorizes via the update policy,
+            // which allows everyone here (no ProjectInquiryPolicy exists) —
+            // gate on the resource's real canEdit() so view-only roles
+            // (waitlist.view without waitlist.manage) don't click into a 403.
+            ->recordUrl(fn (ProjectInquiry $r) => InquiryResource::canEdit($r)
+                ? InquiryResource::getUrl('edit', ['record' => $r])
+                : null)
             ->columns([
                 TextColumn::make('name')
                     ->searchable()
@@ -70,7 +78,9 @@ class InquiriesTable
                     ->action(fn () => self::streamCsv(ProjectInquiry::query()->orderBy('created_at', 'desc')->get())),
             ])
             ->recordActions([
-                EditAction::make()->label('Open'),
+                EditAction::make()
+                    ->label('Open')
+                    ->visible(fn (ProjectInquiry $r) => InquiryResource::canEdit($r)),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

@@ -6,7 +6,9 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use App\Filament\SuperAdmin\Widgets\InquiryStats;
 use App\Filament\SuperAdmin\Widgets\PlatformStats;
+use App\Filament\SuperAdmin\Widgets\RecentInquiries;
 use App\Filament\SuperAdmin\Widgets\RecentOrders;
 use App\Filament\SuperAdmin\Widgets\RecentTenants;
 use Filament\Pages\Dashboard;
@@ -54,6 +56,8 @@ class SuperAdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/SuperAdmin/Widgets'), for: 'App\\Filament\\SuperAdmin\\Widgets')
             ->widgets([
+                InquiryStats::class,
+                RecentInquiries::class,
                 AccountWidget::class,
                 PlatformStats::class,
                 RecentTenants::class,
