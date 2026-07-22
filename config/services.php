@@ -22,6 +22,13 @@ return [
         'key' => env('RESEND_API_KEY'),
     ],
 
+    // Google Analytics (GA4). The measurement ID is public (it ships in the
+    // page HTML); the tag only renders in production so dev traffic never
+    // lands in the reports. Override with GOOGLE_ANALYTICS_ID, empty to disable.
+    'google_analytics' => [
+        'id' => env('GOOGLE_ANALYTICS_ID', 'G-HEM3KT4CK2'),
+    ],
+
     // Cloudflare Turnstile — bot protection on the marketing contact form.
     // The site key is public by design (it ships in the page HTML); the widget
     // only activates when TURNSTILE_SECRET is set, so keyless environments

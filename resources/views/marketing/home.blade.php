@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <script>document.documentElement.classList.add('js');</script>
     @include('partials.favicon')
+    @include('partials.analytics')
     <title>{{ $cs['page_title'] ?? __('site.marketing.title') }}</title>
     <meta name="description" content="{{ $cs['meta_description'] ?? __('site.marketing.meta_description') }}">
     @include('partials.social-meta', [
