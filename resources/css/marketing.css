@@ -376,7 +376,12 @@ html.js .loader { display: grid; place-items: center; }
     isolation: isolate;
 }
 .hero__media { position: absolute; inset: -4% 0; z-index: -2; will-change: transform; }
-.hero__media img, .hero__media video { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
+.hero__media img { width: 100%; height: 100%; object-fit: cover; opacity: 0.9; }
+/* live 3D G: canvas mounts over the poster and crossfades in on first frame */
+.hero__media canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; opacity: 0; transition: opacity 0.9s ease; }
+.hero__media .hero__poster { position: absolute; inset: 0; transition: opacity 0.9s ease; }
+.hero__media.is-live canvas { opacity: 1; }
+.hero__media.is-live .hero__poster { opacity: 0; }
 .hero__veil {
     position: absolute; inset: 0; z-index: -1;
     background:
@@ -1297,7 +1302,7 @@ html.js [data-split].is-in { visibility: visible; }
 @media (prefers-reduced-motion: reduce) {
     html.js [data-reveal], html.js [data-split] { opacity: 1 !important; visibility: visible !important; filter: none !important; }
     [data-split] .line { transform: none !important; }
-    .hero__media img, .hero__media video { transform: none !important; }
+    .hero__media img { transform: none !important; }
     .hero__cue .mouse i { animation: none; }
     .fx-grain { animation: none; }
     /* the scroll stepper never pins for reduced-motion — show a numbered list */

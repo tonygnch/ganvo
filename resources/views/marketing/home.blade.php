@@ -163,12 +163,11 @@
     {{-- ─── Hero ────────────────────────────────────────────────────────── --}}
     <header class="hero" id="top" data-hero>
         <div class="hero__media" data-hero-media>
-            {{-- Cinematic loop; hero.png is the poster so the frame is instant and
-                 stands in if the video is unsupported or reduced-motion is on. --}}
-            <video class="hero__video" autoplay muted loop playsinline preload="auto"
-                   poster="{{ asset('images/marketing/v2/hero.webp') }}" aria-hidden="true" data-hero-video>
-                <source src="{{ asset('images/marketing/v2/hero.mp4') }}" type="video/mp4">
-            </video>
+            {{-- Still of the 3D G — instant first paint, and the permanent
+                 backdrop for no-JS / no-WebGL / reduced-motion. The live
+                 three.js canvas mounts here and crossfades over it. --}}
+            <img class="hero__poster" src="{{ asset('images/marketing/v2/hero-g.webp') }}"
+                 alt="" width="1920" height="1080" fetchpriority="high" aria-hidden="true">
         </div>
         <div class="hero__veil" aria-hidden="true"></div>
 

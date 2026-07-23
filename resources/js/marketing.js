@@ -37,18 +37,18 @@ const EASE = 'expo.out';
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 window.scrollTo(0, 0);
 
-// Phones stream a 720p rendition of the hero loop and a lighter poster — the
-// 1080p file is desktop bandwidth. Swapped at module eval, before playback
-// begins, so load() restarts the fetch at most a few KB in.
+// The hero's live 3D G boots as early as possible so the loader can gate on
+// its first rendered frame. Dynamic import keeps three.js in its own chunk;
+// reduced-motion, missing WebGL, or a failed chunk all leave the poster up.
+let heroG = null; // kept reachable so the scene can be torn down (destroy())
+let heroGReady = Promise.resolve();
 {
-    const hv = document.querySelector('[data-hero-video]');
-    if (hv && window.matchMedia('(max-width: 768px)').matches) {
-        const source = hv.querySelector('source');
-        if (source && source.src.includes('hero.mp4')) {
-            source.src = source.src.replace('hero.mp4', 'hero-720.mp4');
-            hv.poster = hv.poster.replace('hero.webp', 'hero-mobile.jpg');
-            hv.load();
-        }
+    const media = document.querySelector('[data-hero-media]');
+    const saveData = navigator.connection?.saveData === true;
+    if (media && !reduced && !saveData) {
+        heroGReady = import('./marketing-hero-g.js')
+            .then((m) => { heroG = m.default(media); return heroG?.ready; })
+            .catch(() => {});
     }
 }
 
@@ -107,15 +107,15 @@ function runLoader() {
     const creep = gsap.to(state, { p: 82, duration: 1.7, ease: 'power2.out', onUpdate: render });
 
     const minTime = new Promise((r) => setTimeout(r, 900));   // never just a flash
-    const video = document.querySelector('[data-hero-video]');
-    const videoReady = new Promise((r) => {
-        if (!video || video.readyState >= 3) { r(); return; }
-        video.addEventListener('canplay', () => r(), { once: true });
+    // Gate on the 3D G's first rendered frame, capped — the poster is a fine
+    // backdrop if WebGL is slow or absent.
+    const sceneReady = new Promise((r) => {
+        heroGReady.then(r, r);
         setTimeout(r, 3500);
     });
     const fonts = document.fonts ? document.fonts.ready : Promise.resolve();
 
-    return Promise.all([minTime, videoReady, fonts]).then(() => new Promise((resolve) => {
+    return Promise.all([minTime, sceneReady, fonts]).then(() => new Promise((resolve) => {
         creep.kill();
         gsap.to(state, {
             p: 100, duration: 0.35, ease: 'power1.in', onUpdate: render,
@@ -134,9 +134,7 @@ if (reduced) {
     document.body.classList.add('is-ready');
     document.querySelector('[data-loader]')?.remove();
     buildDropdowns();
-    // Honor reduced-motion: freeze the hero video on its poster frame.
-    const hv = document.querySelector('[data-hero-video]');
-    if (hv) { hv.removeAttribute('autoplay'); hv.pause(); }
+    // Reduced-motion: the 3D G never boots (gated above) — the poster stays.
 } else {
     loaderDone = runLoader();
     (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
@@ -754,15 +752,6 @@ function buildHero() {
     if (!hero) return;
     const media = hero.querySelector('[data-hero-media]');
     const content = hero.querySelector('[data-hero-content]');
-
-    // Nudge the background loop to play — some browsers hold `autoplay` on
-    // muted video until asked, or until enough data is buffered.
-    const video = hero.querySelector('[data-hero-video]');
-    if (video) {
-        const kick = () => video.play().catch(() => {});
-        kick();
-        video.addEventListener('canplay', kick, { once: true });
-    }
 
     if (content) {
         gsap.set(content.children, { y: 22, opacity: 0 });
