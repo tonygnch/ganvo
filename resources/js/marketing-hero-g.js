@@ -261,6 +261,9 @@ export default function initHeroG(host) {
         blending: AdditiveBlending, depthWrite: false, sizeAttenuation: true,
     }));
     scene.add(dust);
+    // per-mote rise speed — the drift is slow but unmistakable
+    const dustSpeed = new Float32Array(nDust);
+    for (let i = 0; i < nDust; i++) dustSpeed[i] = 0.18 + Math.random() * 0.42;
 
     /* ── paint droplets: the colour that splashes off the letter ──
        An InstancedMesh of small camera-facing circles — deterministic sizing
@@ -464,7 +467,17 @@ export default function initHeroG(host) {
 
         halo.material.opacity = 0.26 + 0.05 * Math.sin(t * 0.5) + hoverT * 0.06;
         for (const n of nebulae) n.s.material.opacity = n.o * (0.8 + 0.2 * Math.sin(t * 0.2 + n.phase));
-        dust.rotation.y = t * 0.008;
+        {   // dust rises and sways; wraps back under the floor of its box
+            const arr = dustGeo.attributes.position.array;
+            for (let i = 0; i < nDust; i++) {
+                let y = arr[i * 3 + 1] + dustSpeed[i] * dt;
+                if (y > 12) y -= 12;
+                arr[i * 3 + 1] = y;
+                arr[i * 3] += Math.sin(t * 0.4 + i * 1.7) * 0.0025;
+            }
+            dustGeo.attributes.position.needsUpdate = true;
+            dust.rotation.y = t * 0.006;
+        }
 
         // ── the splash: wiping across the letter knocks its colour off ──
         if (finePointer && pointerSeen) {
