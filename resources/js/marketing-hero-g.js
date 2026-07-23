@@ -321,9 +321,17 @@ export default function initHeroG(host) {
         }
     };
 
-    /* ── layout: G right-of-centre on wide screens, centred on small ── */
+    /* ── layout: G right-of-centre on wide screens, centred on small ──
+       The camera itself is driven per-frame: it starts on the INTRO pose
+       (G huge, front and centre, while the loader lifts) and flies to the
+       final pose once begin() fires — layout() only maintains the targets. */
     let camX = 0;
+    let camYF = GY;
+    let camZF = 13.8;
     let baseScale = 1;
+    let introT = 0;   // 0 = big front-and-centre, 1 = resting pose
+    let begun = false;
+    const introZ = () => 8.2 * baseScale + 0.3;
     const layout = () => {
         small = (host.clientWidth || window.innerWidth) < 800;
         const wide = (host.clientWidth || window.innerWidth) >= 1024;
@@ -332,11 +340,13 @@ export default function initHeroG(host) {
         camX = wide ? -4.3 : 0;
         baseScale = wide ? 1 : (small ? 0.5 : 0.6);
         gGroup.scale.setScalar(baseScale);
-        // narrow layouts centre the headline, so the mark moves ABOVE it:
-        // aiming the camera below the G renders it in the top gap under the nav
-        const camY = wide ? GY : GY - 4.05;
-        camera.position.set(camX, camY, wide ? 13.8 : 15.5);
-        camera.lookAt(camX, camY, 0);
+        // narrow layouts centre the headline, so the mark rests ABOVE it
+        camYF = wide ? GY : GY - 4.05;
+        camZF = wide ? 13.8 : 15.5;
+        if (introT === 0) {
+            camera.position.set(0, GY, introZ());
+            camera.lookAt(0, GY, 0);
+        }
     };
 
     /* ── pointer: bleach follows the cursor; the mark leans gently ── */
@@ -438,6 +448,15 @@ export default function initHeroG(host) {
         const t = (now - start) / 1000;
         const dt = Math.min(0.05, Math.max(0.001, t - prevT));
         prevT = t;
+
+        // intro flight: big front-and-centre → resting pose (smootherstep)
+        if (begun && introT < 1) introT = Math.min(1, introT + dt / 1.4);
+        const ie = MathUtils.smootherstep(introT, 0, 1);
+        const cx = MathUtils.lerp(0, camX, ie);
+        const cy = MathUtils.lerp(GY, camYF, ie);
+        const cz = MathUtils.lerp(introZ(), camZF, ie);
+        camera.position.set(cx, cy, cz);
+        camera.lookAt(cx, cy, 0);
 
         // cursor proximity drives both the bleach and the lean; touch has no
         // cursor — taps drive `pulse` instead, so hover stays 0 there
@@ -543,6 +562,8 @@ export default function initHeroG(host) {
 
     return {
         ready,
+        // the loader calls this as its veil lifts — the flight starts then
+        begin() { begun = true; },
         destroy() {
             cancelAnimationFrame(raf);
             running = false;

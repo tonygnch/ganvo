@@ -137,6 +137,8 @@ if (reduced) {
     // Reduced-motion: the 3D G never boots (gated above) — the poster stays.
 } else {
     loaderDone = runLoader();
+    // veil lifts → the G flies from front-and-centre to its resting pose
+    loaderDone.then(() => heroG?.begin?.());
     (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
         document.body.classList.add('is-ready');
         // Create pinned triggers in DOCUMENT ORDER (top → bottom) so each one's
@@ -754,11 +756,16 @@ function buildHero() {
     const content = hero.querySelector('[data-hero-content]');
 
     if (content) {
+        // text and chrome hold back until the G has (almost) landed
+        const extras = hero.querySelectorAll('.hero__meta, .hero__cue');
         gsap.set(content.children, { y: 22, opacity: 0 });
+        gsap.set(extras, { opacity: 0 });
         loaderDone.then(() => {
             gsap.to(content.children, {
-                y: 0, opacity: 1, duration: 1.1, ease: EASE, stagger: 0.09, delay: 0.15,
+                y: 0, opacity: 1, duration: 1.1, ease: EASE, stagger: 0.09, delay: 0.95,
             });
+            // clearProps so the cue's own .is-scrolled CSS fade keeps working
+            gsap.to(extras, { opacity: 1, duration: 0.9, ease: 'power2.out', delay: 1.35, clearProps: 'opacity' });
         });
     }
     if (media) {
