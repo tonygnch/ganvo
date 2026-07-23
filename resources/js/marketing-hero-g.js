@@ -326,10 +326,13 @@ export default function initHeroG(host) {
         // shifting the camera left pushes the G (at x=0) right of centre,
         // clearing the left-aligned headline without moving the mark itself
         camX = wide ? -4.3 : 0;
-        baseScale = small ? 0.62 : 1;
+        baseScale = wide ? 1 : (small ? 0.5 : 0.6);
         gGroup.scale.setScalar(baseScale);
-        camera.position.set(camX, GY, wide ? 13.8 : 15.5);
-        camera.lookAt(camX, GY, 0);
+        // narrow layouts centre the headline, so the mark moves ABOVE it:
+        // aiming the camera below the G renders it in the top gap under the nav
+        const camY = wide ? GY : GY - 4.05;
+        camera.position.set(camX, camY, wide ? 13.8 : 15.5);
+        camera.lookAt(camX, camY, 0);
     };
 
     /* ── pointer: bleach follows the cursor; the mark leans gently ── */
