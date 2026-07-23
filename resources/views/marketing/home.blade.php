@@ -113,8 +113,8 @@
         <p class="loader__status">{{ $cs['loader_label'] ?? __('site.marketing.loader') }} · <span data-loader-pct>0</span>%</p>
     </div>
 
-    {{-- Cinematic atmosphere: film grain, edge vignette, ambient blue glow. --}}
-    <div class="fx-grain" aria-hidden="true"></div>
+    {{-- Cinematic atmosphere: edge vignette + ambient blue glow (the film
+         grain is gone — its colored noise read as a washed-out backdrop). --}}
     <div class="fx-vignette" aria-hidden="true"></div>
     <div class="fx-glow" aria-hidden="true"></div>
 

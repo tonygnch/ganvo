@@ -185,25 +185,7 @@ html.js .loader { display: grid; place-items: center; }
 @media (prefers-reduced-motion: reduce) { html.js .loader { display: none; } }
 
 /* ─── cinematic atmosphere (grain + vignette + ambient blue glow) ─────────── */
-.fx-grain, .fx-vignette, .fx-glow { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
-.fx-grain {
-    z-index: 3;
-    /* oversized: the jitter animation translates this layer by up to 2%, and
-       at inset 0 that flashed a bare ungrained strip at the viewport edges
-       every step — read as "something moving" along the right side */
-    inset: -8%;
-    /* no blend mode: overlay forced a full-screen re-composite against the
-       moving content on every scroll frame — visible as page-wide flicker
-       during slide glides. Plain low-alpha grain composites cheaply. */
-    opacity: 0.035;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 200px;
-    animation: fx-grain 5s steps(4) infinite;
-}
-@keyframes fx-grain {
-    0% { transform: translate(0, 0); } 25% { transform: translate(-2%, 1%); }
-    50% { transform: translate(1.5%, -1.5%); } 75% { transform: translate(-1%, 1.5%); } 100% { transform: translate(0, 0); }
-}
+.fx-vignette, .fx-glow { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
 .fx-vignette { background: radial-gradient(135% 115% at 50% 42%, transparent 58%, rgba(0, 0, 5, 0.55) 100%); }
 .fx-glow { background: radial-gradient(46% 38% at 88% -4%, rgba(77, 141, 255, 0.14), transparent 68%); }
 
@@ -1272,7 +1254,6 @@ html.js [data-split].is-in { visibility: visible; }
     [data-split] .line { transform: none !important; }
     .hero__media img { transform: none !important; }
     .hero__cue .mouse i { animation: none; }
-    .fx-grain { animation: none; }
     /* the scroll stepper never pins for reduced-motion — show a numbered list */
     html.js .steps__inner { min-height: 0 !important; display: block !important; padding-block: 0 !important; }
     html.js .steps__masthead { margin: 0 0 2rem !important; }

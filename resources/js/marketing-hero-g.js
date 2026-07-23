@@ -6,7 +6,7 @@
  | x∈[0,51] to the bottom, the arch's right end cut flat at y≈102 — plus the
  | crossbar (x∈[97,256], y∈[130,180]) and the right foot column (x∈[205,256],
  | y∈[181,256]). Three solid extruded pieces, matte-satin brand blue #2072fa,
- | floating in a void with drifting dust.
+ | floating in a pure deep void.
  |
  | Interaction: BLEACH + SPLASH. A shader patch mixes the surface toward
  | white in a soft radius around the cursor — and the colour that leaves the
@@ -106,7 +106,7 @@ export default function initHeroG(host) {
 
     let small = (host.clientWidth || window.innerWidth) < 800;
     const scene = new Scene();
-    scene.fog = new FogExp2(VOID, 0.014); // gives the dust depth in the void
+    scene.fog = new FogExp2(VOID, 0.014); // softens the far nebulae into the void
     const camera = new PerspectiveCamera(50, 1, 0.1, 120);
 
     /* ── soft studio environment: a gentle satin sheen on the mark ── */
@@ -255,25 +255,6 @@ export default function initHeroG(host) {
         scene.add(s);
         nebulae.push({ s, o: n.o, phase: Math.random() * Math.PI * 2 });
     }
-
-    /* ── drifting dust ── */
-    const nDust = small ? 70 : 120;
-    const dustPos = new Float32Array(nDust * 3);
-    for (let i = 0; i < nDust; i++) {
-        dustPos[i * 3] = (Math.random() - 0.5) * 30;
-        dustPos[i * 3 + 1] = Math.random() * 12;
-        dustPos[i * 3 + 2] = (Math.random() - 0.5) * 18;
-    }
-    const dustGeo = new BufferGeometry();
-    dustGeo.setAttribute('position', new Float32BufferAttribute(dustPos, 3));
-    const dust = new Points(dustGeo, new PointsMaterial({
-        color: 0x9db8e8, size: 0.045, transparent: true, opacity: 0.3,
-        blending: AdditiveBlending, depthWrite: false, sizeAttenuation: true,
-    }));
-    scene.add(dust);
-    // per-mote rise speed — the drift is slow but unmistakable
-    const dustSpeed = new Float32Array(nDust);
-    for (let i = 0; i < nDust; i++) dustSpeed[i] = 0.18 + Math.random() * 0.42;
 
     /* ── paint droplets: the colour that splashes off the letter ──
        An InstancedMesh of small camera-facing circles — deterministic sizing
@@ -511,17 +492,6 @@ export default function initHeroG(host) {
 
         halo.material.opacity = 0.15 + 0.03 * Math.sin(t * 0.5) + hoverT * 0.05;
         for (const n of nebulae) n.s.material.opacity = n.o * (0.8 + 0.2 * Math.sin(t * 0.2 + n.phase));
-        {   // dust rises and sways; wraps back under the floor of its box
-            const arr = dustGeo.attributes.position.array;
-            for (let i = 0; i < nDust; i++) {
-                let y = arr[i * 3 + 1] + dustSpeed[i] * dt;
-                if (y > 12) y -= 12;
-                arr[i * 3 + 1] = y;
-                arr[i * 3] += Math.sin(t * 0.4 + i * 1.7) * 0.0025;
-            }
-            dustGeo.attributes.position.needsUpdate = true;
-            dust.rotation.y = t * 0.006;
-        }
 
         // ── the splash: wiping across the letter knocks its colour off ──
         if (begun && finePointer && pointerSeen) {
