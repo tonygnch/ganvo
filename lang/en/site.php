@@ -12,6 +12,13 @@ return [
     ],
 
     'common' => [
+        'cookies' => [
+            'label' => 'Cookies',
+            'text' => 'We use optional Google Analytics cookies (kept for up to 13 months) to understand how the site is used. No ads, no cross-site tracking. You can change your choice anytime via the “Cookies” link in the footer.',
+            'accept' => 'Accept',
+            'decline' => 'Decline',
+            'settings' => 'Cookies',
+        ],
         'sign_in' => 'Sign in',
         'sign_out' => 'Sign out',
         'create_account' => 'Create account',

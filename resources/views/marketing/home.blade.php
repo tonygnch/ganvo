@@ -432,9 +432,11 @@
                 @if ($cEmail)
                     <a href="mailto:{{ $cEmail }}">{{ $cEmail }}</a>
                 @endif
+                <a href="#" data-cookie-settings>{{ __('site.common.cookies.settings') }}</a>
                 <span>© {{ date('Y') }} Ganvo</span>
             </div>
         </div>
     </footer>
+@include('partials.cookie-consent')
 </body>
 </html>

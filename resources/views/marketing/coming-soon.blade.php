@@ -131,11 +131,14 @@
     <footer class="cs-foot">
         © {{ date('Y') }} Ganvo
         <span class="sep">·</span>
+        <a href="#" data-cookie-settings>{{ __('site.common.cookies.settings') }}</a>
+        <span class="sep">·</span>
         @foreach ($languages as $code => $name)
             <a href="/lang/{{ $code }}"
                class="@if($currentLocale === $code) active @endif"
                aria-label="{{ $name }}">{{ strtoupper($code) }}</a>@if(! $loop->last) <span style="color: rgba(245,245,247,0.3)">/</span>@endif
         @endforeach
     </footer>
+@include('partials.cookie-consent')
 </body>
 </html>
