@@ -169,7 +169,6 @@
         <div class="hero__veil" aria-hidden="true"></div>
 
         <div class="wrap hero__inner" data-hero-content>
-            <p class="hero__kicker">{{ $cs['hero_kicker'] ?? __('site.marketing.hero.kicker') }}</p>
             <h1 class="hero__title">{{ $cs['hero_headline'] ?? __('site.marketing.hero.headline') }}
                 <span class="accent">{{ $cs['hero_headline_accent'] ?? __('site.marketing.hero.headline_accent') }}</span></h1>
             <p class="hero__sub">{{ $cs['hero_sub'] ?? __('site.marketing.hero.sub') }}</p>

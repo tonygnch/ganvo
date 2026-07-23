@@ -131,7 +131,6 @@ class SitePageSchemas
             'footer_tagline' => $f('footer_tagline', 'site.marketing.footer.tagline', 'Footer tagline', 'One line under the footer logo.', 'text', 200, 'Site chrome'),
 
             // ---- Hero ----
-            'hero_kicker' => $f('hero_kicker', 'site.marketing.hero.kicker', 'Kicker', 'Small mono label above the hero headline.', 'text', 80, 'Hero'),
             'hero_headline' => $f('hero_headline', 'site.marketing.hero.headline', 'Headline', 'First part of the big headline.', 'text', 120, 'Hero'),
             'hero_headline_accent' => $f('hero_headline_accent', 'site.marketing.hero.headline_accent', 'Headline — accent', 'Second part, rendered in the highlighted colour.', 'text', 120, 'Hero'),
             'hero_sub' => $f('hero_sub', 'site.marketing.hero.sub', 'Subheading', 'One or two sentences under the headline (currently empty by design).', 'textarea', 400, 'Hero'),
