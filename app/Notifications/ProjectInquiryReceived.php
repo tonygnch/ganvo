@@ -26,7 +26,7 @@ class ProjectInquiryReceived extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $i = $this->inquiry;
-        $adminUrl = 'http://' . config('ganvo.central_domain') . '/super';
+        $adminUrl = rtrim(config('app.url'), '/') . '/super';
 
         $mail = (new MailMessage)
             ->subject('New project inquiry — ' . $i->name)

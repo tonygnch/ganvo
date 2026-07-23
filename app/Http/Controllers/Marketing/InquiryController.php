@@ -82,16 +82,16 @@ class InquiryController extends Controller
             'user_agent' => substr((string) $request->userAgent(), 0, 500),
         ]);
 
-        // Owner mail notification temporarily disabled — the lead is still persisted
-        // to the DB (Super Admin → Inquiries). Re-enable once SMTP + owner_email are set:
-        // try {
-        //     $owner = config('ganvo.owner_email');
-        //     if ($owner) {
-        //         Notification::route('mail', $owner)->notify(new ProjectInquiryReceived($inquiry));
-        //     }
-        // } catch (\Throwable $e) {
-        //     report($e);
-        // }
+        // Notify the studio owner. The lead is already persisted (Super Admin →
+        // Inquiries), so a mail failure must never surface to the visitor.
+        try {
+            $owner = config('ganvo.owner_email');
+            if ($owner) {
+                Notification::route('mail', $owner)->notify(new ProjectInquiryReceived($inquiry));
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return $this->respondSuccess($request);
     }
