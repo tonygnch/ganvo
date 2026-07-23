@@ -361,9 +361,12 @@ html.js .loader { display: grid; place-items: center; }
 .hero__media.is-live .hero__poster { opacity: 0; }
 .hero__veil {
     position: absolute; inset: 0; z-index: -1;
+    /* the void is already pure black behind the left-aligned text, so the
+       old heavy left darkening is gone — it read as a black wash fading in
+       when the loader lifted. Only gentle vertical fades remain (top under
+       the nav, bottom under the meta strip). */
     background:
-        linear-gradient(90deg, var(--bg) 0%, rgba(2,4,9,0.82) 34%, rgba(2,4,9,0.3) 62%, transparent 100%),
-        linear-gradient(0deg, var(--bg) 0%, transparent 30%, transparent 70%, rgba(2,4,9,0.6) 100%);
+        linear-gradient(0deg, rgba(2,4,9,0.5) 0%, transparent 26%, transparent 74%, rgba(2,4,9,0.35) 100%);
 }
 /* narrow layouts: the G sits top-centre, so the left darkening gradient would
    shade it — keep only the vertical fades (text legibility rides on those) */
