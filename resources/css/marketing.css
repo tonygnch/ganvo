@@ -914,11 +914,13 @@ html:not(.js) .cardswap__pause { display: none; }
 .cs-card:hover .cs-card__go, .cs-card:focus-visible .cs-card__go { opacity: 1; transform: none; }
 
 @media (max-width: 900px) {
-    .work__grid { grid-template-columns: 1fr; gap: 1.4rem; }
-    .cardswap { height: clamp(240px, 34vh, 320px); }
-    .cs-card { width: min(20rem, 86%); }
-    .cs-card:nth-child(2) { transform: translate(calc(-50% + 34px), calc(-50% - 40px)) skewY(5deg); }
-    .cs-card:nth-child(3) { transform: translate(calc(-50% + 68px), calc(-50% - 80px)) skewY(5deg); }
+    .work__grid { grid-template-columns: 1fr; gap: 1.2rem; }
+    .cardswap { height: clamp(230px, 31vh, 300px); }
+    /* centre the FAN's bounding box, not the front card — the spread was
+       invading the copy above and the section rail on the right */
+    .cs-card { width: min(18.5rem, 80%); transform: translate(calc(-50% - 34px), calc(-50% + 40px)) skewY(5deg); }
+    .cs-card:nth-child(2) { transform: translate(-50%, -50%) skewY(5deg); }
+    .cs-card:nth-child(3) { transform: translate(calc(-50% + 34px), calc(-50% - 40px)) skewY(5deg); }
 }
 
 /* ─── contact / book a call ──────────────────────────────────────────────── */

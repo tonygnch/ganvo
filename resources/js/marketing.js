@@ -856,11 +856,17 @@ function buildCardSwap() {
         // heuristics left a 560-900px band with desktop offsets in the
         // mobile-height deck (cards escaped the clamp)
         const small = window.matchMedia('(max-width: 900px)').matches;
-        return { dx: small ? 34 : 56, dy: small ? 40 : 64, skew: 5 };
+        return { dx: small ? 34 : 56, dy: small ? 40 : 64, skew: 5, small };
     };
     let order = cards.map((_, i) => i);
     let activeTl = null;
-    const slot = (pos, m) => ({ x: pos * m.dx, y: -pos * m.dy, z: -pos * m.dx * 1.5, zIndex: cards.length - pos });
+    const slot = (pos, m) => {
+        // narrow layouts centre the whole fan's bounding box (not the front
+        // card) so the spread stays inside the deck's box
+        const ox = m.small ? ((cards.length - 1) * m.dx) / 2 : 0;
+        const oy = m.small ? ((cards.length - 1) * m.dy) / 2 : 0;
+        return { x: pos * m.dx - ox, y: -pos * m.dy + oy, z: -pos * m.dx * 1.5, zIndex: cards.length - pos };
+    };
     // only the front card's open-link is tabbable — rear cards are obscured;
     // the bars stay tabbable everywhere (their top edges peek out and they
     // are the keyboard way to switch cards)
