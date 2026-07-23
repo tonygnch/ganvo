@@ -97,12 +97,12 @@ function runLoader() {
     const el = document.querySelector('[data-loader]');
     if (!el) return Promise.resolve();
     if (reduced) { el.remove(); return Promise.resolve(); }
-    const bar = el.querySelector('[data-loader-bar]');
+    const fill = el.querySelector('[data-loader-fill]');
     const pct = el.querySelector('[data-loader-pct]');
     const state = { p: 0 };
     const render = () => {
         if (pct) pct.textContent = String(Math.round(state.p));
-        if (bar) bar.style.transform = 'scaleX(' + state.p / 100 + ')';
+        if (fill) fill.style.clipPath = 'inset(' + (100 - state.p) + '% 0 0 0)';
     };
     const creep = gsap.to(state, { p: 82, duration: 1.7, ease: 'power2.out', onUpdate: render });
 

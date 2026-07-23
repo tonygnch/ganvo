@@ -331,7 +331,15 @@ export default function initHeroG(host) {
     let baseScale = 1;
     let introT = 0;   // 0 = big front-and-centre, 1 = resting pose
     let begun = false;
-    const introZ = () => 8.2 * baseScale + 0.3;
+    // intro distance: the whole G fits (with margin) on ANY aspect ratio —
+    // portrait phones need the horizontal fit, not the vertical one
+    const introZ = () => {
+        const w = host.clientWidth || 1;
+        const h = host.clientHeight || 1;
+        const t = Math.tan(MathUtils.degToRad(25));
+        const half = 6.6 * baseScale * 0.58; // half-size + breathing margin
+        return Math.max(half / t, half / (t * (w / h))) + 0.3;
+    };
     const layout = () => {
         small = (host.clientWidth || window.innerWidth) < 800;
         const wide = (host.clientWidth || window.innerWidth) >= 1024;
