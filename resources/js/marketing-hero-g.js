@@ -233,7 +233,7 @@ export default function initHeroG(host) {
 
     // the faintest halo so the mark separates from the void
     const halo = new Sprite(new SpriteMaterial({
-        map: glowTex, color: AZURE, transparent: true, opacity: 0.26,
+        map: glowTex, color: AZURE, transparent: true, opacity: 0.15,
         blending: AdditiveBlending, depthWrite: false,
     }));
     halo.position.set(0, GY, -3.5);
@@ -243,9 +243,8 @@ export default function initHeroG(host) {
     // faint nebulae so the void has depth without stealing focus
     const nebulae = [];
     for (const n of [
-        { x: 6, y: 7, z: -26, sx: 46, sy: 24, o: 0.17, c: AZURE },
-        { x: -9, y: 2, z: -34, sx: 40, sy: 22, o: 0.11, c: ICE },
-        { x: 12, y: -4, z: -30, sx: 42, sy: 20, o: 0.12, c: AZURE },
+        { x: 6, y: 7, z: -30, sx: 46, sy: 24, o: 0.05, c: AZURE },
+        { x: -9, y: 2, z: -36, sx: 40, sy: 22, o: 0.035, c: AZURE },
     ]) {
         const s = new Sprite(new SpriteMaterial({
             map: glowTex, color: n.c, transparent: true, opacity: n.o,
@@ -258,7 +257,7 @@ export default function initHeroG(host) {
     }
 
     /* ── drifting dust ── */
-    const nDust = small ? 130 : 230;
+    const nDust = small ? 70 : 120;
     const dustPos = new Float32Array(nDust * 3);
     for (let i = 0; i < nDust; i++) {
         dustPos[i * 3] = (Math.random() - 0.5) * 30;
@@ -268,7 +267,7 @@ export default function initHeroG(host) {
     const dustGeo = new BufferGeometry();
     dustGeo.setAttribute('position', new Float32BufferAttribute(dustPos, 3));
     const dust = new Points(dustGeo, new PointsMaterial({
-        color: ICE, size: 0.07, transparent: true, opacity: 0.6,
+        color: 0x9db8e8, size: 0.045, transparent: true, opacity: 0.3,
         blending: AdditiveBlending, depthWrite: false, sizeAttenuation: true,
     }));
     scene.add(dust);
@@ -356,12 +355,12 @@ export default function initHeroG(host) {
         const wide = (host.clientWidth || window.innerWidth) >= 1024;
         // shifting the camera left pushes the G (at x=0) right of centre,
         // clearing the left-aligned headline without moving the mark itself
-        camX = wide ? -4.3 : 0;
+        camX = wide ? -4.9 : 0;
         baseScale = wide ? 1 : (small ? 0.5 : 0.6);
         gGroup.scale.setScalar(baseScale);
         // narrow layouts centre the headline, so the mark rests ABOVE it
         camYF = wide ? GY : GY - 4.05;
-        camZF = wide ? 13.8 : 15.5;
+        camZF = wide ? 16.4 : 15.5;
         if (introT === 0) {
             camera.position.set(0, GY, introZ());
             camera.lookAt(0, GY, 0);
@@ -508,7 +507,7 @@ export default function initHeroG(host) {
         // the fill line rides the glyph (and its idle float) bottom → top
         uFillY.value = gGroup.position.y - 3.3 * baseScale + progress01 * 6.6 * baseScale;
 
-        halo.material.opacity = 0.26 + 0.05 * Math.sin(t * 0.5) + hoverT * 0.06;
+        halo.material.opacity = 0.15 + 0.03 * Math.sin(t * 0.5) + hoverT * 0.05;
         for (const n of nebulae) n.s.material.opacity = n.o * (0.8 + 0.2 * Math.sin(t * 0.2 + n.phase));
         {   // dust rises and sways; wraps back under the floor of its box
             const arr = dustGeo.attributes.position.array;
