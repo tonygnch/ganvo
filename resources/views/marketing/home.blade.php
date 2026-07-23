@@ -222,79 +222,48 @@
         'items'   => $steps,
     ])
 
-    {{-- ─── Selected work — opens the projects modal ───────────────────────── --}}
+    {{-- ─── Selected work — card-swap deck (React Bits "Card Swap" port) ──── --}}
     <section class="section work" id="work" data-hold>
-        <div class="wrap">
-            <div class="section-head">
+        <div class="wrap work__grid">
+            <div class="work__copy">
                 <p class="eyebrow" data-reveal="fade">{{ $cs['work_eyebrow'] ?? __('site.marketing.work.eyebrow') }}</p>
                 <h2 class="h2" data-reveal="up">{{ $cs['work_heading'] ?? __('site.marketing.work.heading') }}</h2>
                 <p class="work__lead" data-reveal="up">{{ $cs['work_lead'] ?? __('site.marketing.work.lead') }}</p>
             </div>
-            <button type="button" class="work-open" data-work-open aria-haspopup="dialog" aria-controls="work-modal" data-reveal="up">
-                <span class="work-open__label">{{ $cs['work_open_label'] ?? __('site.marketing.work.open') }}</span>
-                <span class="work-open__cta">
-                    <span class="work-open__count">{{ __('site.marketing.work.count', ['count' => count($scenes)]) }}</span>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M17 7H8M17 7v9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </span>
-            </button>
-        </div>
-    </section>
 
-    {{-- Recent-projects modal — opened from the Work section; keyboard-accessible
-         (Esc / focus-trap / restore focus). --}}
-    <div class="work-modal" id="work-modal" data-work-modal hidden>
-        <div class="work-modal__backdrop" data-work-close></div>
-        {{-- data-lenis-prevent: a stopped Lenis preventDefaults all touch/wheel
-             on the page — this opts the panel's own scrolling out of that --}}
-        <div class="work-modal__panel" role="dialog" aria-modal="true" aria-labelledby="work-modal-title" tabindex="-1" data-lenis-prevent>
-            <div class="work-modal__head">
-                <div>
-                    <p class="eyebrow">{{ $cs['work_eyebrow'] ?? __('site.marketing.work.eyebrow') }}</p>
-                    <h2 id="work-modal-title" class="work-modal__title">{{ $cs['work_heading'] ?? __('site.marketing.work.heading') }}</h2>
-                </div>
-                <button type="button" class="work-modal__close" data-work-close aria-label="{{ __('site.marketing.work.close') }}">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            {{-- the deck: browser-framed LIVE previews in a skewed 3D stack that
+                 auto-cycles. Clicking a card's top bar brings it to the front;
+                 clicking the preview opens the live site. The screenshot sits
+                 under each iframe as an instant placeholder (and the no-JS /
+                 slow-network fallback). --}}
+            <div class="cardswap" data-cardswap>
+                <button type="button" class="cardswap__pause" data-cs-pause aria-pressed="false"
+                        aria-label="{{ __('site.marketing.work.pause') }}">
+                    <svg class="ic-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+                    <svg class="ic-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z" fill="currentColor"/></svg>
                 </button>
-            </div>
-            <div class="proj-list" data-proj-list>
                 @foreach ($scenes as $i => $scene)
-                    @php
-                        $num = str_pad($i + 1, 2, '0', STR_PAD_LEFT);
-                        $url = $scene['url'] ?? ($siteUrls[$scene['slug']] ?? '#');
-                    @endphp
-                    <div class="proj-cell">
-                    {{-- touch devices: inline live preview (mounted when the modal
-                         opens) with the G loader behind it while the site loads --}}
-                    <div class="proj-embed" data-proj-embed data-src="{{ $url }}" aria-hidden="true">
-                        <span class="preview-loader"><img src="{{ asset('images/brand/icon.png') }}" alt=""></span>
-                    </div>
-                    <a class="proj" href="{{ $url }}" target="_blank" rel="noopener noreferrer"
-                       data-proj data-url="{{ $url }}"
-                       aria-label="{{ $scene['name'] }} — {{ $scene['type'] }} ({{ $workVisit }})">
-                        <span class="proj__index">{{ $num }}</span>
-                        <span class="proj__name">{{ $scene['name'] }}</span>
-                        <span class="proj__type">{{ $scene['type'] }}</span>
-                        @if (!empty($scene['tagline']))
-                            <span class="proj__tagline">{{ $scene['tagline'] }}</span>
-                        @endif
-                        <span class="proj__go">{{ $workVisit }}
-                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M17 7H8M17 7v9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    @php $url = $scene['url'] ?? ($siteUrls[$scene['slug']] ?? '#'); @endphp
+                    <div class="cs-card" data-cs-card>
+                        <button type="button" class="cs-card__bar" data-cs-bar
+                                aria-label="{{ $scene['name'] }} — {{ $scene['type'] }}">
+                            <i></i><i></i><i></i>
+                            <span class="cs-card__url">{{ parse_url($url, PHP_URL_HOST) ?: $url }}</span>
+                        </button>
+                        <span class="cs-card__shot" data-cs-frame data-src="{{ $url }}" data-name="{{ $scene['name'] }}">
+                            <img src="{{ asset('images/marketing/work-' . ($scene['slug'] ?? 'kass') . '.png') }}" alt="{{ $scene['name'] }}" loading="lazy" width="1200" height="750">
+                            <a class="cs-card__open" href="{{ $url }}" target="_blank" rel="noopener noreferrer"
+                               aria-label="{{ $scene['name'] }} — {{ $scene['type'] }} ({{ $workVisit }})"></a>
                         </span>
-                    </a>
+                        <span class="cs-card__meta" aria-hidden="true">
+                            <span class="cs-card__name">{{ $scene['name'] }}</span>
+                            <span class="cs-card__go">{{ $workVisit }} ↗</span>
+                        </span>
                     </div>
                 @endforeach
             </div>
         </div>
-
-        {{-- Floating live preview (desktop hover) — layered above the modal panel. --}}
-        <div class="proj-preview" data-proj-preview aria-hidden="true">
-            <div class="proj-preview__frame">
-                <span class="preview-loader"><img src="{{ asset('images/brand/icon.png') }}" alt=""></span>
-                <iframe title="" tabindex="-1" scrolling="no" loading="lazy" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin"></iframe>
-            </div>
-            <span class="proj-preview__hint">{{ $workVisit }} ↗</span>
-        </div>
-    </div>
+    </section>
 
     {{-- ─── Contact / Book a call ───────────────────────────────────────── --}}
     <section class="section contact" id="contact">

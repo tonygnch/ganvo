@@ -247,9 +247,8 @@ function buildSlideNav() {
     let acc = 0;
     let target = -1;
     window.addEventListener('wheel', (e) => {
-        // let native behaviour live where it matters: form fields and the modal
-        if (e.target.closest('textarea, select, .work-modal')) return;
-        if (document.querySelector('.work-modal.is-open')) return;
+        // let native behaviour live where it matters: form fields
+        if (e.target.closest('textarea, select')) return;
         e.preventDefault();
         e.stopPropagation();   // capture phase — Lenis's own wheel handler never sees it
         const now = performance.now();
@@ -286,83 +285,7 @@ function buildSlideNav() {
 }
 
 buildContactForm();
-buildProjectPreview();
-buildWorkModal();
-
-/* ─── recent-projects modal ──────────────────────────────────────────────────
-   The Work section shows a trigger; clicking it opens an overlay listing the
-   projects. Accessible: Esc closes, focus is trapped inside and restored to the
-   trigger on close, background scroll is locked. */
-function buildWorkModal() {
-    const modal = document.querySelector('[data-work-modal]');
-    const openers = document.querySelectorAll('[data-work-open]');
-    if (!modal || !openers.length) return;
-    const panel = modal.querySelector('.work-modal__panel');
-    let lastFocus = null;
-
-    // Touch devices get inline live previews per row (there is no hover):
-    // iframes mount on first open only, scaled to the row width, with the G
-    // loader pulsing behind until each site paints.
-    const mountEmbeds = () => {
-        modal.querySelectorAll('[data-proj-embed]:not(.is-mounted)').forEach((box) => {
-            if (getComputedStyle(box).display === 'none') return; // desktop: never load
-            box.classList.add('is-mounted');
-            const ifr = document.createElement('iframe');
-            ifr.title = '';
-            ifr.tabIndex = -1;
-            ifr.setAttribute('scrolling', 'no');
-            ifr.referrerPolicy = 'no-referrer';
-            ifr.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-            ifr.addEventListener('load', () => box.classList.add('is-loaded'));
-            ifr.src = box.dataset.src;
-            box.appendChild(ifr);
-            const size = () => { ifr.style.transform = 'scale(' + (box.clientWidth / 1200) + ')'; };
-            size();
-            new ResizeObserver(size).observe(box);
-        });
-    };
-
-    const open = () => {
-        lastFocus = document.activeElement;
-        modal.hidden = false;
-        mountEmbeds();
-        document.documentElement.style.overflow = 'hidden';
-        lenis?.stop();
-        // Force a reflow so the browser registers the hidden→shown state, then
-        // flip to the open state — this drives the CSS transition reliably even
-        // when requestAnimationFrame is throttled (e.g. a backgrounded tab).
-        void modal.offsetWidth;
-        modal.classList.add('is-open');
-        panel.focus();
-        document.addEventListener('keydown', onKey);
-    };
-    const close = () => {
-        modal.classList.remove('is-open');
-        document.documentElement.style.overflow = '';
-        lenis?.start();
-        document.removeEventListener('keydown', onKey);
-        const done = (e) => {
-            if (e && e.target !== modal) return;
-            modal.hidden = true;
-            modal.removeEventListener('transitionend', done);
-        };
-        modal.addEventListener('transitionend', done);
-        setTimeout(() => { if (!modal.classList.contains('is-open')) modal.hidden = true; }, 450);
-        lastFocus?.focus?.();
-    };
-    function onKey(e) {
-        if (e.key === 'Escape') { close(); return; }
-        if (e.key !== 'Tab') return;
-        const f = [...modal.querySelectorAll('a[href], button:not([disabled])')].filter((el) => el.offsetParent !== null);
-        if (!f.length) return;
-        const first = f[0], last = f[f.length - 1];
-        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-    }
-
-    openers.forEach((o) => o.addEventListener('click', open));
-    modal.querySelectorAll('[data-work-close]').forEach((c) => c.addEventListener('click', close));
-}
+buildCardSwap();
 
 /* ─── section status rail — reflects which section you're in ──────────────── */
 function buildSectionRail() {
@@ -909,50 +832,155 @@ function showNote(note, message, ok) {
     note.className = 'form__note is-shown ' + (ok ? 'is-ok' : 'is-err');
 }
 
-/* ─── work: live hover preview ───────────────────────────────────────────────
-   Desktop (fine pointer) only. Hovering a project row lazy-loads a scaled live
-   iframe of the real site into a card that follows the cursor; the row itself
-   is a normal link that opens the site in a new tab. Purely decorative — touch
-   and keyboard users get the link with no preview. */
-function buildProjectPreview() {
-    const list = document.querySelector('[data-proj-list]');
-    const preview = document.querySelector('[data-proj-preview]');
-    if (!list || !preview) return;
-    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+/* ─── recent projects — card-swap deck (React Bits "Card Swap", GSAP port) ──
+   Browser-framed LIVE previews in a skewed 3D stack. The deck auto-cycles
+   (front card drops out, stack promotes elastically); clicking a card's top
+   bar brings that card to the front, clicking the preview opens the live
+   site (the iframe itself is pointer-events:none — an overlay link handles
+   it). Iframes mount only when the section approaches, over the screenshot
+   placeholders. CSS provides the static fan for no-JS; reduced-motion gets
+   instant re-ordering and no auto-cycle. */
+function buildCardSwap() {
+    const container = document.querySelector('[data-cardswap]');
+    if (!container) return;
+    const cards = [...container.querySelectorAll('[data-cs-card]')];
+    if (cards.length < 2) return;
 
-    const iframe = preview.querySelector('iframe');
-    let currentUrl = null, rafId = 0, px = 0, py = 0;
+    let busy = false;
+    let timer = 0;
+    const DELAY = 3200;
+    const schedule = () => { clearTimeout(timer); timer = setTimeout(tick, DELAY); };
 
-    iframe.addEventListener('load', () => { if (iframe.src) iframe.classList.add('is-loaded'); });
-
-    list.querySelectorAll('[data-proj]').forEach((row) => {
-        row.addEventListener('pointerenter', (e) => {
-            px = e.clientX; py = e.clientY;
-            const url = row.dataset.url;
-            if (url && url !== '#' && url !== currentUrl) {
-                currentUrl = url;
-                iframe.classList.remove('is-loaded');
-                iframe.src = url;
-            }
-            preview.classList.add('is-on');
-            place();
+    const metrics = () => {
+        // matches the CSS fan's 900px viewport switch — container-width
+        // heuristics left a 560-900px band with desktop offsets in the
+        // mobile-height deck (cards escaped the clamp)
+        const small = window.matchMedia('(max-width: 900px)').matches;
+        return { dx: small ? 34 : 56, dy: small ? 40 : 64, skew: 5 };
+    };
+    let order = cards.map((_, i) => i);
+    let activeTl = null;
+    const slot = (pos, m) => ({ x: pos * m.dx, y: -pos * m.dy, z: -pos * m.dx * 1.5, zIndex: cards.length - pos });
+    // only the front card's open-link is tabbable — rear cards are obscured;
+    // the bars stay tabbable everywhere (their top edges peek out and they
+    // are the keyboard way to switch cards)
+    const syncA11y = () => {
+        order.forEach((cardIdx, pos) => {
+            const link = cards[cardIdx].querySelector('.cs-card__open');
+            if (!link) return;
+            link.tabIndex = pos === 0 ? 0 : -1;
+            link.setAttribute('aria-hidden', pos === 0 ? 'false' : 'true');
         });
+    };
+    const placeAll = () => {
+        // a resize mid-swap: kill the running timeline or its cached end
+        // values stomp the fresh slots until the next cycle
+        if (activeTl) { activeTl.kill(); activeTl = null; busy = false; }
+        const m = metrics();
+        order.forEach((cardIdx, pos) => {
+            const sl = slot(pos, m);
+            // rotation/skewX/scale zeros: GSAP's first parse of the CSS fan's
+            // skewY(5deg) caches it as rotation+skewX+scale leftovers that
+            // would stack with our skewY into a double (~10°) slant
+            gsap.set(cards[cardIdx], { xPercent: -50, yPercent: -50, x: sl.x, y: sl.y, z: sl.z, skewY: m.skew, rotation: 0, skewX: 0, scaleX: 1, scaleY: 1, zIndex: sl.zIndex });
+        });
+        syncA11y();
+    };
+    placeAll();
+    new ResizeObserver(placeAll).observe(container);
+
+    /* live previews: mount once the deck nears the viewport, scaled from a
+       1200px logical width down to the card, fading over the screenshot */
+    const mountFrames = () => {
+        container.querySelectorAll('[data-cs-frame]:not(.is-mounted)').forEach((box) => {
+            box.classList.add('is-mounted');
+            const ifr = document.createElement('iframe');
+            ifr.title = box.dataset.name || '';
+            ifr.tabIndex = -1;
+            ifr.setAttribute('scrolling', 'no');
+            ifr.referrerPolicy = 'no-referrer';
+            ifr.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+            ifr.addEventListener('load', () => box.classList.add('is-live'));
+            ifr.src = box.dataset.src;
+            box.appendChild(ifr);
+            const size = () => {
+                const scale = box.clientWidth / 1200;
+                ifr.style.width = '1200px';
+                ifr.style.height = Math.ceil(box.clientHeight / scale) + 'px';
+                ifr.style.transform = 'scale(' + scale + ')';
+            };
+            size();
+            new ResizeObserver(size).observe(box);
+        });
+    };
+    const mountIO = new IntersectionObserver((es) => {
+        if (es.some((e) => e.isIntersecting)) { mountFrames(); mountIO.disconnect(); }
+    }, { rootMargin: '300px' });
+    mountIO.observe(container);
+
+    /* interaction: the top bar promotes its card to the front */
+    const promote = (cardIdx) => {
+        if (busy || order[0] === cardIdx) return;
+        order = [cardIdx, ...order.filter((i) => i !== cardIdx)];
+        if (reduced) { placeAll(); return; }
+        busy = true;
+        const m = metrics();
+        const tl = gsap.timeline({ onComplete: () => { busy = false; activeTl = null; } });
+        activeTl = tl;
+        order.forEach((idx, pos) => {
+            const sl = slot(pos, m);
+            tl.set(cards[idx], { zIndex: sl.zIndex }, 0);
+            tl.to(cards[idx], { x: sl.x, y: sl.y, z: sl.z, duration: 0.7, ease: 'elastic.out(0.65, 0.85)' }, pos * 0.04);
+        });
+        syncA11y();
+        schedule(); // a manual pick restarts the cycle from now
+    };
+    cards.forEach((card, i) => {
+        card.querySelector('[data-cs-bar]')?.addEventListener('click', () => promote(i));
     });
 
-    list.addEventListener('pointermove', (e) => {
-        px = e.clientX; py = e.clientY;
-        if (!rafId) rafId = requestAnimationFrame(place);
-    });
-    list.addEventListener('pointerleave', () => preview.classList.remove('is-on'));
+    if (reduced) return; // static fan + click-to-front only — no auto-cycling
 
-    function place() {
-        rafId = 0;
-        const w = preview.offsetWidth, h = preview.offsetHeight;
-        let x = px + 28;
-        if (x + w > window.innerWidth - 16) x = px - w - 28; // flip left of the cursor near the edge
-        x = Math.max(16, x);
-        const y = Math.max(16, Math.min(py - h / 2, window.innerHeight - h - 16));
-        preview.style.left = x + 'px';
-        preview.style.top = y + 'px';
-    }
+    const swap = () => {
+        if (busy) return;
+        busy = true;
+        const m = metrics();
+        const [front, ...rest] = order;
+        const el = cards[front];
+        const tl = gsap.timeline({ onComplete: () => { busy = false; activeTl = null; } });
+        activeTl = tl;
+        tl.to(el, { y: '+=440', duration: 0.42, ease: 'power2.in' });          // front drops out
+        rest.forEach((idx, pos) => {                                           // stack promotes
+            const sl = slot(pos, m);
+            tl.set(cards[idx], { zIndex: sl.zIndex }, 0.26);
+            tl.to(cards[idx], { x: sl.x, y: sl.y, z: sl.z, duration: 0.7, ease: 'elastic.out(0.65, 0.85)' }, 0.2 + pos * 0.05);
+        });
+        const back = slot(rest.length, m);                                     // dropped card returns to the back
+        tl.set(el, { zIndex: back.zIndex }, 0.42);
+        tl.to(el, { x: back.x, y: back.y, z: back.z, duration: 0.75, ease: 'elastic.out(0.65, 0.85)' }, 0.46);
+        order = [...rest, front];
+        syncA11y();
+    };
+
+    // cycle only while visible, unhovered, unfocused, not manually paused,
+    // and the tab is frontmost. The pause button is the WCAG 2.2.2 control
+    // for touch/keyboard users who cannot hover.
+    let paused = false;
+    let manualPause = false;
+    let inView = false;
+    container.addEventListener('pointerenter', () => { paused = true; });
+    container.addEventListener('pointerleave', () => { paused = false; });
+    container.addEventListener('focusin', () => { paused = true; });
+    container.addEventListener('focusout', (e) => {
+        if (!container.contains(e.relatedTarget)) paused = false;
+    });
+    const pauseBtn = container.querySelector('[data-cs-pause]');
+    pauseBtn?.addEventListener('click', () => {
+        manualPause = !manualPause;
+        pauseBtn.setAttribute('aria-pressed', String(manualPause));
+        pauseBtn.classList.toggle('is-paused', manualPause);
+    });
+    new IntersectionObserver((es) => { inView = es[es.length - 1]?.isIntersecting === true; }).observe(container);
+    function tick() { if (!paused && !manualPause && inView && !document.hidden) swap(); schedule(); }
+    schedule();
 }

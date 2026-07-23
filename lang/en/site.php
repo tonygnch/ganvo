@@ -86,6 +86,7 @@ return [
             'heading' => 'Work that delivers.',
             'lead' => 'A focused selection of projects delivered in-house, from the first idea to a successful launch.',
             'visit' => 'Visit site',
+            'pause' => 'Pause the project showcase',
             'open' => 'Explore our work',
             'count' => ':count projects',
             'close' => 'Close',

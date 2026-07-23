@@ -164,15 +164,13 @@ class SitePageSchemas
         $fields['why_heading'] = $f('why_heading', 'site.marketing.why.heading', 'Why Ganvo heading', 'For the currently hidden "Why Ganvo" section.', 'text', 160, 'Why Ganvo (hidden)');
 
         $fields['work_eyebrow'] = $f('work_eyebrow', 'site.marketing.work.eyebrow', 'Eyebrow', 'Small label above the Work heading.', 'text', 80, 'Work');
-        $fields['work_heading'] = $f('work_heading', 'site.marketing.work.heading', 'Heading', 'Heading for the selected-work section and its modal.', 'text', 160, 'Work');
+        $fields['work_heading'] = $f('work_heading', 'site.marketing.work.heading', 'Heading', 'Heading for the selected-work section.', 'text', 160, 'Work');
         $fields['work_lead'] = $f('work_lead', 'site.marketing.work.lead', 'Lead paragraph', 'Short paragraph under the Work heading.', 'textarea', 400, 'Work');
-        $fields['work_open_label'] = $f('work_open_label', 'site.marketing.work.open', 'Open-projects button', 'Label on the card that opens the projects modal.', 'text', 80, 'Work');
         $fields['work_visit_label'] = $f('work_visit_label', 'site.marketing.work.visit', 'Visit-site label', 'Label on each project link ("View site").', 'text', 40, 'Work');
         for ($i = 1; $i <= 3; $i++) {
             $n = $i - 1;
             $fields["work_scene_{$i}_name"] = $f("work_scene_{$i}_name", "site.marketing.work.scenes.{$n}.name", "Project {$i} — name", '', 'text', 80, 'Work');
             $fields["work_scene_{$i}_type"] = $f("work_scene_{$i}_type", "site.marketing.work.scenes.{$n}.type", "Project {$i} — type", 'e.g. "Photography · Portfolio".', 'text', 80, 'Work');
-            $fields["work_scene_{$i}_tagline"] = $f("work_scene_{$i}_tagline", "site.marketing.work.scenes.{$n}.tagline", "Project {$i} — tagline", '', 'textarea', 300, 'Work');
             $fields["work_scene_{$i}_url"] = $f("work_scene_{$i}_url", "site.marketing.work.scenes.{$n}.url", "Project {$i} — URL", 'Full https:// link to the live site.', 'text', 200, 'Work');
         }
 
