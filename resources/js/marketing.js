@@ -895,32 +895,49 @@ function buildCardSwap() {
     placeAll();
     new ResizeObserver(placeAll).observe(container);
 
-    /* live previews: mount once the deck nears the viewport, scaled from a
-       1200px logical width down to the card, fading over the screenshot */
-    const mountFrames = () => {
-        container.querySelectorAll('[data-cs-frame]:not(.is-mounted)').forEach((box) => {
-            box.classList.add('is-mounted');
-            const ifr = document.createElement('iframe');
-            ifr.title = box.dataset.name || '';
-            ifr.tabIndex = -1;
-            ifr.setAttribute('scrolling', 'no');
-            ifr.referrerPolicy = 'no-referrer';
-            ifr.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-            ifr.addEventListener('load', () => box.classList.add('is-live'));
-            ifr.src = box.dataset.src;
-            box.appendChild(ifr);
-            const size = () => {
-                const scale = box.clientWidth / 1200;
-                ifr.style.width = '1200px';
-                ifr.style.height = Math.ceil(box.clientHeight / scale) + 'px';
-                ifr.style.transform = 'scale(' + scale + ')';
-            };
-            size();
-            new ResizeObserver(size).observe(box);
-        });
+    /* live previews. Desktop mounts all three and auto-cycles. Touch devices
+       (pointer:coarse) are memory-constrained — three live cross-origin sites
+       make iOS Safari reload the page under memory pressure — so there we keep
+       only ONE live iframe (the front card) and switch it on tap, no autoplay. */
+    const lite = window.matchMedia('(pointer: coarse)').matches;
+
+    const buildIframe = (box) => {
+        if (box.classList.contains('is-mounted')) return;
+        box.classList.add('is-mounted');
+        const ifr = document.createElement('iframe');
+        ifr.title = box.dataset.name || '';
+        ifr.tabIndex = -1;
+        ifr.setAttribute('scrolling', 'no');
+        ifr.referrerPolicy = 'no-referrer';
+        ifr.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+        ifr.addEventListener('load', () => box.classList.add('is-live'));
+        ifr.src = box.dataset.src;
+        box.appendChild(ifr);
+        const size = () => {
+            const scale = box.clientWidth / 1200;
+            ifr.style.width = '1200px';
+            ifr.style.height = Math.ceil(box.clientHeight / scale) + 'px';
+            ifr.style.transform = 'scale(' + scale + ')';
+        };
+        size();
+        box.__ro = new ResizeObserver(size);
+        box.__ro.observe(box);
+    };
+    const unmountFrame = (box) => {
+        box.__ro?.disconnect();
+        box.querySelector('iframe')?.remove();
+        box.classList.remove('is-mounted', 'is-live');
+    };
+    const frameOf = (cardIdx) => cards[cardIdx].querySelector('[data-cs-frame]');
+    const mountAll = () => container.querySelectorAll('[data-cs-frame]').forEach(buildIframe);
+    // touch: keep only the front card live — unmount the others to free memory
+    const mountFront = () => {
+        const front = frameOf(order[0]);
+        container.querySelectorAll('[data-cs-frame].is-mounted').forEach((box) => { if (box !== front) unmountFrame(box); });
+        if (front) buildIframe(front);
     };
     const mountIO = new IntersectionObserver((es) => {
-        if (es.some((e) => e.isIntersecting)) { mountFrames(); mountIO.disconnect(); }
+        if (es.some((e) => e.isIntersecting)) { (lite ? mountFront : mountAll)(); mountIO.disconnect(); }
     }, { rootMargin: '300px' });
     mountIO.observe(container);
 
@@ -928,6 +945,7 @@ function buildCardSwap() {
     const promote = (cardIdx) => {
         if (busy || order[0] === cardIdx) return;
         order = [cardIdx, ...order.filter((i) => i !== cardIdx)];
+        if (lite) mountFront();
         if (reduced) { placeAll(); return; }
         busy = true;
         const m = metrics();
@@ -945,7 +963,7 @@ function buildCardSwap() {
         card.querySelector('[data-cs-bar]')?.addEventListener('click', () => promote(i));
     });
 
-    if (reduced) return; // static fan + click-to-front only — no auto-cycling
+    if (reduced || lite) return; // touch/reduced: click-to-front only, no auto-cycle
 
     const swap = () => {
         if (busy) return;

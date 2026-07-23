@@ -848,6 +848,7 @@ html.js .timeline.is-static .tl__title { font-size: clamp(1.3rem, 1.05rem + 1vw,
 .cardswap__pause.is-paused .ic-pause { display: none; }
 .cardswap__pause.is-paused .ic-play { display: block; }
 html:not(.js) .cardswap__pause { display: none; }
+@media (pointer: coarse) { .cardswap__pause { display: none; } }
 .cs-card {
     position: absolute; top: 50%; left: 50%;
     width: min(30rem, 92%); aspect-ratio: 16 / 10.6;
