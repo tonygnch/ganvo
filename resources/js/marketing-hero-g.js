@@ -347,20 +347,22 @@ export default function initHeroG(host) {
         const w = host.clientWidth || 1;
         const h = host.clientHeight || 1;
         const t = Math.tan(MathUtils.degToRad(25));
-        const half = 6.6 * baseScale * 0.58; // half-size + breathing margin
-        return Math.max(half / t, half / (t * (w / h))) + 0.3;
+        const size = 6.6 * baseScale;
+        // landscape: the loading mark holds ~62% of the height (calmer than
+        // full-bleed); portrait: ~86% of the width so phones stay filled
+        return Math.max((size * 0.80) / t, (size * 0.58) / (t * (w / h))) + 0.3;
     };
     const layout = () => {
         small = (host.clientWidth || window.innerWidth) < 800;
         const wide = (host.clientWidth || window.innerWidth) >= 1024;
         // shifting the camera left pushes the G (at x=0) right of centre,
         // clearing the left-aligned headline without moving the mark itself
-        camX = wide ? -4.9 : 0;
+        camX = wide ? -4.3 : 0;
         baseScale = wide ? 1 : (small ? 0.44 : 0.6);
         gGroup.scale.setScalar(baseScale);
         // narrow layouts centre the headline, so the mark rests ABOVE it
         camYF = wide ? GY : GY - 3.5;
-        camZF = wide ? 16.4 : 15.5;
+        camZF = wide ? 13.8 : 15.5;
         if (introT === 0) {
             camera.position.set(0, GY, introZ());
             camera.lookAt(0, GY, 0);
