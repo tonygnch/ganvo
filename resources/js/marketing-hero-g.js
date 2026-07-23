@@ -212,22 +212,15 @@ export default function initHeroG(host) {
         s.closePath();
         addPiece(s);
     }
-    {   // crossbar
+    {   // crossbar + right foot as ONE continuous L-piece — no internal seam
         const s = new Shape();
-        s.moveTo(wx(97), wy(180));
-        s.lineTo(wx(97), wy(130));
-        s.lineTo(wx(256), wy(130));
-        s.lineTo(wx(256), wy(180));
-        s.closePath();
-        addPiece(s);
-    }
-    {   // right foot
-        const s = new Shape();
-        s.moveTo(wx(205), wy(256));
-        s.lineTo(wx(205), wy(181));
-        s.lineTo(wx(256), wy(181));
-        s.lineTo(wx(256), wy(256));
-        s.closePath();
+        s.moveTo(wx(97), wy(180));    // crossbar underside, left end
+        s.lineTo(wx(97), wy(130));    // up to top-left
+        s.lineTo(wx(256), wy(130));   // across the top
+        s.lineTo(wx(256), wy(256));   // down the right edge, through the foot
+        s.lineTo(wx(205), wy(256));   // foot bottom, left corner
+        s.lineTo(wx(205), wy(180));   // up to the crossbar underside
+        s.closePath();                // back along the underside to the start
         addPiece(s);
     }
 
