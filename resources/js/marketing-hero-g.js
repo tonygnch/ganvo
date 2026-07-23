@@ -176,9 +176,9 @@ export default function initHeroG(host) {
             .replace('#include <color_fragment>', `#include <color_fragment>
                 float bleachD = distance(vBleachPos.xy, uPointer.xy);
                 float bleach = uBleach * smoothstep(uRadius, uRadius * 0.2, bleachD);
-                diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0), min(bleach, 1.0));`)
+                diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.76, 1.0), min(bleach, 1.0));`)
             .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-                totalEmissiveRadiance += vec3(0.5) * min(bleach, 1.0);`);
+                totalEmissiveRadiance += vec3(0.14, 0.32, 0.68) * min(bleach, 1.0);`);
     };
 
     const gMeshes = [];
