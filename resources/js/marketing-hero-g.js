@@ -6,7 +6,7 @@
  | x∈[0,51] to the bottom, the arch's right end cut flat at y≈102 — plus the
  | crossbar (x∈[97,256], y∈[130,180]) and the right foot column (x∈[205,256],
  | y∈[181,256]). Three solid extruded pieces, matte-satin brand blue #2072fa,
- | floating in a pure deep void.
+ | floating in a deep void with fine dust rising from below.
  |
  | Interaction: BLEACH + SPLASH. A shader patch mixes the surface toward
  | white in a soft radius around the cursor — and the colour that leaves the
@@ -247,6 +247,25 @@ export default function initHeroG(host) {
         nebulae.push({ s, o: n.o, phase: Math.random() * Math.PI * 2 });
     }
 
+    /* ── drifting dust: fine motes rising from the bottom ── */
+    const nDust = small ? 70 : 120;
+    const dustPos = new Float32Array(nDust * 3);
+    for (let i = 0; i < nDust; i++) {
+        dustPos[i * 3] = (Math.random() - 0.5) * 30;
+        dustPos[i * 3 + 1] = Math.random() * 12;
+        dustPos[i * 3 + 2] = (Math.random() - 0.5) * 18;
+    }
+    const dustGeo = new BufferGeometry();
+    dustGeo.setAttribute('position', new Float32BufferAttribute(dustPos, 3));
+    const dust = new Points(dustGeo, new PointsMaterial({
+        color: 0xbcd0f0, size: 0.075, transparent: true, opacity: 0.55,
+        blending: AdditiveBlending, depthWrite: false, sizeAttenuation: true,
+    }));
+    scene.add(dust);
+    // per-mote rise speed — the drift is slow but unmistakable
+    const dustSpeed = new Float32Array(nDust);
+    for (let i = 0; i < nDust; i++) dustSpeed[i] = 0.18 + Math.random() * 0.42;
+
     /* ── paint droplets: the colour that splashes off the letter ──
        An InstancedMesh of small camera-facing circles — deterministic sizing
        on every GPU (gl_PointSize caps vary wildly), still one draw call.
@@ -482,6 +501,18 @@ export default function initHeroG(host) {
         uFillY.value = gGroup.position.y - 3.3 * baseScale + progress01 * 6.6 * baseScale;
 
         for (const n of nebulae) n.s.material.opacity = n.o * (0.8 + 0.2 * Math.sin(t * 0.2 + n.phase));
+
+        {   // dust rises and sways; wraps back under the floor of its box
+            const arr = dustGeo.attributes.position.array;
+            for (let i = 0; i < nDust; i++) {
+                let y = arr[i * 3 + 1] + dustSpeed[i] * dt;
+                if (y > 12) y -= 12;
+                arr[i * 3 + 1] = y;
+                arr[i * 3] += Math.sin(t * 0.4 + i * 1.7) * 0.0025;
+            }
+            dustGeo.attributes.position.needsUpdate = true;
+            dust.rotation.y = t * 0.006;
+        }
 
         // ── the splash: wiping across the letter knocks its colour off ──
         if (begun && finePointer && pointerSeen) {
