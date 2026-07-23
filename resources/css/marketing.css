@@ -388,6 +388,14 @@ html.js .loader { display: grid; place-items: center; }
         linear-gradient(90deg, var(--bg) 0%, rgba(2,4,9,0.82) 34%, rgba(2,4,9,0.3) 62%, transparent 100%),
         linear-gradient(0deg, var(--bg) 0%, transparent 30%, transparent 70%, rgba(2,4,9,0.6) 100%);
 }
+/* narrow layouts: the G sits top-centre, so the left darkening gradient would
+   shade it — keep only the vertical fades (text legibility rides on those) */
+@media (max-width: 799px) {
+    .hero__veil {
+        background:
+            linear-gradient(0deg, var(--bg) 0%, rgba(2,4,9,0.35) 26%, transparent 45%, transparent 75%, rgba(2,4,9,0.5) 100%);
+    }
+}
 .hero__inner { position: relative; padding-top: 4rem; }
 /* kicker = a live HUD line: pulsing status dot + mono label */
 .hero__kicker {
