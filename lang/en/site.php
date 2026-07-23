@@ -122,7 +122,7 @@ return [
                 'A direct line to your specialist',
                 'A clear quote, tailored to your project',
             ],
-            'email' => '',
+            'email' => 'hello@ganvo.bg',
             'phone' => '',
             'instagram' => '',
             'facebook' => '',

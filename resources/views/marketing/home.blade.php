@@ -41,6 +41,9 @@
             'areaServed' => 'BG',
             'knowsLanguage' => ['bg', 'en'],
         ];
+        if ($ldEmail = $cs['contact_email'] ?? __('site.marketing.contact.email')) {
+            $ld['email'] = $ldEmail;
+        }
     @endphp
     <script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 
@@ -426,6 +429,9 @@
                 <p class="m-footer__tag">{{ $cs['footer_tagline'] ?? __('site.marketing.footer.tagline') }}</p>
             </div>
             <div class="m-footer__meta">
+                @if ($cEmail)
+                    <a href="mailto:{{ $cEmail }}">{{ $cEmail }}</a>
+                @endif
                 <span>© {{ date('Y') }} Ganvo</span>
             </div>
         </div>
