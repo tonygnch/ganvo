@@ -104,19 +104,12 @@
     ];
 @endphp
 
-    {{-- Loading screen — the brand G itself is the progress bar: its outline
-         sits front-and-centre (matching the 3D G's intro pose behind it) and
-         fills bottom-up with the brand blue as loading advances; the overlay
-         then dissolves straight into the live 3D mark, which flies to its
-         resting pose. Shown only with JS (html.js gate) so no-JS visitors are
-         never trapped; reduced-motion skips it entirely. --}}
+    {{-- Loading screen — just a transparent stage with the progress readout:
+         the 3D G itself (rendering behind this overlay from its first frame)
+         is the loading vessel, materialising out of the void and filling with
+         brand blue as progress advances. One element, no handoffs. Shown only
+         with JS (html.js gate); reduced-motion skips it entirely. --}}
     <div class="loader" data-loader aria-hidden="true">
-        <div class="loader__g">
-            <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M 0 256 L 0 129 A 129 129 0 0 1 255.1 102 L 200 102 A 76 76 0 0 0 53 129 L 53 256 Z M 97 130 H 256 V 180 H 97 Z M 205 181 H 256 V 256 H 205 Z"/></svg>
-            <div class="loader__g-fill" data-loader-fill>
-                <svg viewBox="0 0 256 256" aria-hidden="true"><path d="M 0 256 L 0 129 A 129 129 0 0 1 255.1 102 L 200 102 A 76 76 0 0 0 53 129 L 53 256 Z M 97 130 H 256 V 180 H 97 Z M 205 181 H 256 V 256 H 205 Z"/></svg>
-            </div>
-        </div>
         <p class="loader__status">{{ $cs['loader_label'] ?? __('site.marketing.loader') }} · <span data-loader-pct>0</span>%</p>
     </div>
 

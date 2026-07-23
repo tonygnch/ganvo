@@ -49,8 +49,6 @@ let heroGReady = Promise.resolve();
         heroGReady = import('./marketing-hero-g.js')
             .then((m) => {
                 heroG = m.default(media);
-                // first rendered frame → the 3D vessel replaces the DOM one
-                heroG?.ready?.then(() => document.querySelector('[data-loader]')?.classList.add('is-3d'));
                 return heroG?.ready;
             })
             .catch(() => {});
@@ -102,13 +100,11 @@ function runLoader() {
     const el = document.querySelector('[data-loader]');
     if (!el) return Promise.resolve();
     if (reduced) { el.remove(); return Promise.resolve(); }
-    const fill = el.querySelector('[data-loader-fill]');
     const pct = el.querySelector('[data-loader-pct]');
     const state = { p: 0 };
     const render = () => {
         if (pct) pct.textContent = String(Math.round(state.p));
-        if (fill) fill.style.clipPath = 'inset(' + (100 - state.p) + '% 0 0 0)';
-        heroG?.setProgress?.(state.p); // the 3D vessel fills in lockstep
+        heroG?.setProgress?.(state.p); // the 3D vessel IS the progress bar
     };
     const creep = gsap.to(state, { p: 82, duration: 1.7, ease: 'power2.out', onUpdate: render });
 
