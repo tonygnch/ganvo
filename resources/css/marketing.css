@@ -874,8 +874,7 @@ html:not(.js) .cardswap__pause { display: none; }
 .cs-card__bar:hover .cs-card__url { color: var(--accent); }
 .cs-card__bar i { width: 8px; height: 8px; border-radius: 50%; background: var(--line-2); }
 .cs-card__url { margin-left: 8px; font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.06em; color: var(--ink-dim); transition: color 0.25s; }
-.cs-card__shot { display: block; flex: 1; min-height: 0; position: relative; overflow: hidden; }
-.cs-card__shot img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.cs-card__shot { display: block; flex: 1; min-height: 0; position: relative; overflow: hidden; background: var(--bg-2); }
 /* live preview: mounted at 1200px logical width and scaled down by JS; it is
    a non-interactive picture of the site — the overlay link handles clicks */
 .cs-card__shot iframe {
@@ -889,10 +888,10 @@ html:not(.js) .cardswap__pause { display: none; }
 .cs-card__loader {
     position: absolute; inset: 0; z-index: 1; display: grid; place-items: center;
     background: rgba(2, 4, 9, 0.55);
-    opacity: 0; pointer-events: none;
+    pointer-events: none;
     transition: opacity 0.4s ease;
 }
-.cs-card__shot.is-mounted:not(.is-live) .cs-card__loader { opacity: 1; }
+.cs-card__shot.is-live .cs-card__loader { opacity: 0; }
 .cs-card__loader img {
     width: 42px; height: 42px;
     filter: drop-shadow(0 0 14px rgba(77, 141, 255, 0.45));
