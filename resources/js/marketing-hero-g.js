@@ -8,11 +8,12 @@
  | y∈[181,256]). Three solid extruded pieces, matte-satin brand blue #2072fa,
  | floating in a void with drifting dust.
  |
- | Interaction: BLEACH. A shader patch mixes the surface toward white in a
- | soft radius around the cursor's projected position — passing the mouse
- | through the mark washes its colour out locally, and it soaks back in when
- | the cursor leaves. A gentle damped tilt toward the cursor keeps the piece
- | feeling physical. Touch devices: a tap on the mark fires a bleach pulse.
+ | Interaction: BLEACH + SPLASH. A shader patch mixes the surface toward
+ | white in a soft radius around the cursor — and the colour that leaves the
+ | letter SPLASHES out as paint droplets: wiping the cursor across the mark
+ | sprays brand-blue drops in the stroke's direction (rate scales with
+ | cursor speed), which arc under gravity and fade. A gentle damped tilt
+ | keeps the piece physical. Touch: a tap on the mark bursts a radial splash.
  |
  | Degradation: reduced-motion never boots this module; WebGL failure returns
  | null and the poster <img> stays; a lost GL context brings the poster back
@@ -26,13 +27,17 @@ import {
     AdditiveBlending,
     BufferGeometry,
     CanvasTexture,
+    CircleGeometry,
     Color,
     DirectionalLight,
+    DynamicDrawUsage,
     ExtrudeGeometry,
     Float32BufferAttribute,
     FogExp2,
     Group,
+    InstancedMesh,
     MathUtils,
+    Matrix4,
     Mesh,
     MeshBasicMaterial,
     MeshStandardMaterial,
@@ -41,10 +46,12 @@ import {
     PMREMGenerator,
     Points,
     PointsMaterial,
+    Raycaster,
     Scene,
     Shape,
     Sprite,
     SpriteMaterial,
+    Vector2,
     Vector3,
     WebGLRenderer,
 } from 'three';
@@ -254,6 +261,62 @@ export default function initHeroG(host) {
     }));
     scene.add(dust);
 
+    /* ── paint droplets: the colour that splashes off the letter ──
+       An InstancedMesh of small camera-facing circles — deterministic sizing
+       on every GPU (gl_PointSize caps vary wildly), still one draw call.
+       Droplets live in WORLD space — once the paint has left the letter it
+       no longer rides the group's tilt. Fade = shrink + darken toward the
+       void (per-instance alpha isn't a thing; on this backdrop it reads
+       identically). */
+    const MAX_P = 420;
+    const pVel = new Float32Array(MAX_P * 3);
+    const pPosArr = new Float32Array(MAX_P * 3);
+    const pSize = new Float32Array(MAX_P);
+    const pTtl = new Float32Array(MAX_P);       // seconds remaining
+    const pMax = new Float32Array(MAX_P);       // initial ttl
+    const pCol = []; for (let i = 0; i < MAX_P; i++) pCol.push(new Color());
+    let pNext = 0;
+    const drops = new InstancedMesh(
+        new CircleGeometry(1, 12),
+        new MeshBasicMaterial({ transparent: true, opacity: 0.95, depthWrite: false }),
+        MAX_P,
+    );
+    drops.instanceMatrix.setUsage(DynamicDrawUsage);
+    drops.frustumCulled = false;
+    const _m4 = new Matrix4();
+    const _zero = new Matrix4().makeScale(0, 0, 0);
+    for (let i = 0; i < MAX_P; i++) { drops.setMatrixAt(i, _zero); drops.setColorAt(i, new Color(BRAND)); }
+    scene.add(drops);
+
+    const _brandCol = new Color(BRAND);
+    const _iceCol = new Color(ICE);
+    const _voidCol = new Color(VOID);
+    const _fadeCol = new Color();
+    const spawnDrop = (x, y, z, vx, vy, vz) => {
+        const i = pNext;
+        pNext = (pNext + 1) % MAX_P;
+        pPosArr[i * 3] = x; pPosArr[i * 3 + 1] = y; pPosArr[i * 3 + 2] = z;
+        pVel[i * 3] = vx; pVel[i * 3 + 1] = vy; pVel[i * 3 + 2] = vz;
+        pCol[i].copy(_brandCol).lerp(_iceCol, Math.random() * 0.35);
+        // mostly fine spray with the occasional fat blob
+        pSize[i] = Math.random() < 0.18 ? 0.14 + Math.random() * 0.09 : 0.05 + Math.random() * 0.07;
+        pMax[i] = pTtl[i] = 0.9 + Math.random() * 0.7;
+    };
+
+    // a radial burst (touch taps / hard crossings)
+    const burst = (p, n, power) => {
+        for (let i = 0; i < n; i++) {
+            const a = Math.random() * Math.PI * 2;
+            const r = (0.5 + Math.random()) * power;
+            spawnDrop(
+                p.x, p.y, p.z + 0.2,
+                Math.cos(a) * r,
+                Math.sin(a) * r * 0.8 + 0.6,
+                0.4 + Math.random() * 1.2,
+            );
+        }
+    };
+
     /* ── layout: G right-of-centre on wide screens, centred on small ── */
     let camX = 0;
     let baseScale = 1;
@@ -272,10 +335,12 @@ export default function initHeroG(host) {
     /* ── pointer: bleach follows the cursor; the mark leans gently ── */
     const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
     const pointerWorld = new Vector3(0, GY, 99); // parked far until first move
+    const pointerNdc = new Vector2();
     let pointerSeen = false;
     let pulse = 0;    // tap surge on touch devices
     const _origin = new Vector3();
     const _dir = new Vector3();
+    const raycaster = new Raycaster();
 
     // project the pointer onto the G's mid-depth plane (z = 0 world)
     const projectPointer = (clientX, clientY) => {
@@ -283,6 +348,7 @@ export default function initHeroG(host) {
         if (!rect.width || !rect.height) return;
         const nx = ((clientX - rect.left) / rect.width) * 2 - 1;
         const ny = -((clientY - rect.top) / rect.height) * 2 + 1;
+        pointerNdc.set(nx, ny);
         _origin.setFromMatrixPosition(camera.matrixWorld);
         _dir.set(nx, ny, 0.5).unproject(camera).sub(_origin).normalize();
         const t = (0 - _origin.z) / _dir.z;
@@ -294,12 +360,16 @@ export default function initHeroG(host) {
     const onMove = (e) => projectPointer(e.clientX, e.clientY);
     if (finePointer) window.addEventListener('pointermove', onMove, { passive: true });
 
-    // touch: a tap ON the mark fires a bleach pulse from the tap point
+    // touch: a tap ON the mark bleach-pulses and bursts a splash from it
     const onDown = (e) => {
         if (finePointer) return;
         projectPointer(e.clientX, e.clientY);
-        const d = Math.hypot(pointerWorld.x - gGroup.position.x, pointerWorld.y - gGroup.position.y);
-        if (d < 4.6) pulse = 1;
+        raycaster.setFromCamera(pointerNdc, camera);
+        const hit = raycaster.intersectObjects(gMeshes, false)[0];
+        if (hit) {
+            pulse = 1;
+            burst(hit.point, 44, 2.4);
+        }
     };
     window.addEventListener('pointerdown', onDown, { passive: true });
 
@@ -335,7 +405,10 @@ export default function initHeroG(host) {
     let shown = false;
     let last = -Infinity;
     let hoverT = 0;
+    let prevT = 0;
     const tilt = { x: 0, y: 0 };
+    const prevPointer = new Vector3();
+    let prevPointerValid = false;
 
     // the loop fully STOPS while the tab is hidden or the hero is scrolled
     // away — kick() restarts it, so a parked hero costs zero rAF wakeups
@@ -356,6 +429,8 @@ export default function initHeroG(host) {
         if (now - last < minFrame) return;
         last = now;
         const t = (now - start) / 1000;
+        const dt = Math.min(0.05, Math.max(0.001, t - prevT));
+        prevT = t;
 
         // cursor proximity drives both the bleach and the lean; touch has no
         // cursor — taps drive `pulse` instead, so hover stays 0 there
@@ -386,6 +461,59 @@ export default function initHeroG(host) {
         halo.material.opacity = 0.2 + 0.04 * Math.sin(t * 0.5) + hoverT * 0.06;
         for (const n of nebulae) n.s.material.opacity = n.o * (0.8 + 0.2 * Math.sin(t * 0.2 + n.phase));
         dust.rotation.y = t * 0.008;
+
+        // ── the splash: wiping across the letter knocks its colour off ──
+        if (finePointer && pointerSeen) {
+            raycaster.setFromCamera(pointerNdc, camera);
+            const hit = raycaster.intersectObjects(gMeshes, false)[0];
+            if (hit) {
+                const sx = (pointerWorld.x - prevPointer.x) / dt;
+                const sy = (pointerWorld.y - prevPointer.y) / dt;
+                const speed = prevPointerValid ? Math.hypot(sx, sy) : 0;
+                // faster wipe → bigger splash, sprayed along the whole swept
+                // path so a quick stroke leaves a trail, not one clump
+                const n = speed > 0.4 ? Math.min(14, 1 + Math.floor(speed * 1.1)) : 0;
+                for (let i = 0; i < n; i++) {
+                    const along = Math.random();
+                    spawnDrop(
+                        hit.point.x - (pointerWorld.x - prevPointer.x) * along + (Math.random() - 0.5) * 0.25,
+                        hit.point.y - (pointerWorld.y - prevPointer.y) * along + (Math.random() - 0.5) * 0.25,
+                        hit.point.z + 0.15,
+                        sx * (0.16 + Math.random() * 0.18) + (Math.random() - 0.5) * 0.9,
+                        sy * (0.16 + Math.random() * 0.18) + (Math.random() - 0.25) * 0.9,
+                        0.5 + Math.random() * 1.6,
+                    );
+                }
+            }
+        }
+        prevPointer.copy(pointerWorld);
+        prevPointerValid = pointerSeen;
+
+        // advance the droplets: gravity, drag, shrink-and-darken fade
+        let dropsAlive = false;
+        for (let i = 0; i < MAX_P; i++) {
+            if (pTtl[i] <= 0) continue;
+            dropsAlive = true;
+            pTtl[i] -= dt;
+            if (pTtl[i] <= 0) { drops.setMatrixAt(i, _zero); continue; }
+            pVel[i * 3 + 1] -= 6.5 * dt;
+            const drag = 1 - 1.4 * dt;
+            pVel[i * 3] *= drag; pVel[i * 3 + 1] *= drag; pVel[i * 3 + 2] *= drag;
+            pPosArr[i * 3] += pVel[i * 3] * dt;
+            pPosArr[i * 3 + 1] += pVel[i * 3 + 1] * dt;
+            pPosArr[i * 3 + 2] += pVel[i * 3 + 2] * dt;
+            const life = pTtl[i] / pMax[i];
+            const sc = pSize[i] * (0.45 + 0.55 * life);
+            _m4.makeScale(sc, sc, sc);
+            _m4.setPosition(pPosArr[i * 3], pPosArr[i * 3 + 1], pPosArr[i * 3 + 2]);
+            drops.setMatrixAt(i, _m4);
+            _fadeCol.copy(pCol[i]).lerp(_voidCol, (1 - life) * 0.8);
+            drops.setColorAt(i, _fadeCol);
+        }
+        if (dropsAlive) {
+            drops.instanceMatrix.needsUpdate = true;
+            if (drops.instanceColor) drops.instanceColor.needsUpdate = true;
+        }
 
         renderer.render(scene, camera);
         if (!shown) {
