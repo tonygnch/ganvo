@@ -222,7 +222,7 @@ export default function initHeroG(host) {
 
     // the faintest halo so the mark separates from the void
     const halo = new Sprite(new SpriteMaterial({
-        map: glowTex, color: AZURE, transparent: true, opacity: 0.2,
+        map: glowTex, color: AZURE, transparent: true, opacity: 0.26,
         blending: AdditiveBlending, depthWrite: false,
     }));
     halo.position.set(0, GY, -3.5);
@@ -232,8 +232,9 @@ export default function initHeroG(host) {
     // faint nebulae so the void has depth without stealing focus
     const nebulae = [];
     for (const n of [
-        { x: 6, y: 7, z: -26, sx: 46, sy: 24, o: 0.09, c: AZURE },
-        { x: -9, y: 2, z: -34, sx: 40, sy: 22, o: 0.06, c: ICE },
+        { x: 6, y: 7, z: -26, sx: 46, sy: 24, o: 0.17, c: AZURE },
+        { x: -9, y: 2, z: -34, sx: 40, sy: 22, o: 0.11, c: ICE },
+        { x: 12, y: -4, z: -30, sx: 42, sy: 20, o: 0.12, c: AZURE },
     ]) {
         const s = new Sprite(new SpriteMaterial({
             map: glowTex, color: n.c, transparent: true, opacity: n.o,
@@ -246,7 +247,7 @@ export default function initHeroG(host) {
     }
 
     /* ── drifting dust ── */
-    const nDust = small ? 90 : 160;
+    const nDust = small ? 130 : 230;
     const dustPos = new Float32Array(nDust * 3);
     for (let i = 0; i < nDust; i++) {
         dustPos[i * 3] = (Math.random() - 0.5) * 30;
@@ -256,7 +257,7 @@ export default function initHeroG(host) {
     const dustGeo = new BufferGeometry();
     dustGeo.setAttribute('position', new Float32BufferAttribute(dustPos, 3));
     const dust = new Points(dustGeo, new PointsMaterial({
-        color: ICE, size: 0.05, transparent: true, opacity: 0.45,
+        color: ICE, size: 0.07, transparent: true, opacity: 0.6,
         blending: AdditiveBlending, depthWrite: false, sizeAttenuation: true,
     }));
     scene.add(dust);
@@ -461,7 +462,7 @@ export default function initHeroG(host) {
         gGroup.rotation.y = Math.sin(t * 0.11) * 0.05 + tilt.y;
         gGroup.scale.setScalar(baseScale * (1 + pulse * 0.02));
 
-        halo.material.opacity = 0.2 + 0.04 * Math.sin(t * 0.5) + hoverT * 0.06;
+        halo.material.opacity = 0.26 + 0.05 * Math.sin(t * 0.5) + hoverT * 0.06;
         for (const n of nebulae) n.s.material.opacity = n.o * (0.8 + 0.2 * Math.sin(t * 0.2 + n.phase));
         dust.rotation.y = t * 0.008;
 
