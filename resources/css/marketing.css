@@ -835,7 +835,7 @@ html.js .timeline.is-static .tl__title { font-size: clamp(1.3rem, 1.05rem + 1vw,
 .work__grid { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(2rem, 5vw, 5rem); align-items: center; }
 .cardswap { position: relative; height: clamp(340px, 46vh, 480px); perspective: 900px; }
 .cardswap__pause {
-    position: absolute; top: -0.4rem; right: 0; z-index: 10;
+    position: absolute; top: -2.6rem; right: 0; z-index: 10;
     width: 32px; height: 32px; display: grid; place-items: center;
     border: 1px solid var(--line-2); border-radius: 50%;
     background: rgba(10, 16, 32, 0.7); color: var(--ink-dim);
@@ -914,13 +914,14 @@ html:not(.js) .cardswap__pause { display: none; }
 .cs-card:hover .cs-card__go, .cs-card:focus-visible .cs-card__go { opacity: 1; transform: none; }
 
 @media (max-width: 900px) {
-    .work__grid { grid-template-columns: 1fr; gap: 1.2rem; }
-    .cardswap { height: clamp(230px, 31vh, 300px); }
-    /* centre the FAN's bounding box, not the front card — the spread was
-       invading the copy above and the section rail on the right */
-    .cs-card { width: min(18.5rem, 80%); transform: translate(calc(-50% - 34px), calc(-50% + 40px)) skewY(5deg); }
+    .section.work { padding-block-start: 3.2rem; }
+    .work__grid { grid-template-columns: 1fr; gap: 1rem; }
+    .cardswap { height: clamp(280px, 37vh, 360px); margin-top: 2.3rem; }
+    /* centre the FAN's bounding box, not the front card — bigger cards get a
+       tighter fan so the right edge still clears the section rail */
+    .cs-card { width: min(21rem, 84%); transform: translate(calc(-50% - 16px), calc(-50% + 30px)) skewY(5deg); }
     .cs-card:nth-child(2) { transform: translate(-50%, -50%) skewY(5deg); }
-    .cs-card:nth-child(3) { transform: translate(calc(-50% + 34px), calc(-50% - 40px)) skewY(5deg); }
+    .cs-card:nth-child(3) { transform: translate(calc(-50% + 16px), calc(-50% - 30px)) skewY(5deg); }
 }
 
 /* ─── contact / book a call ──────────────────────────────────────────────── */

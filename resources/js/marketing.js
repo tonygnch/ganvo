@@ -856,7 +856,7 @@ function buildCardSwap() {
         // heuristics left a 560-900px band with desktop offsets in the
         // mobile-height deck (cards escaped the clamp)
         const small = window.matchMedia('(max-width: 900px)').matches;
-        return { dx: small ? 34 : 56, dy: small ? 40 : 64, skew: 5, small };
+        return { dx: small ? 16 : 56, dy: small ? 30 : 64, skew: 5, small };
     };
     let order = cards.map((_, i) => i);
     let activeTl = null;
