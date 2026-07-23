@@ -252,6 +252,9 @@
                         </button>
                         <span class="cs-card__shot" data-cs-frame data-src="{{ $url }}" data-name="{{ $scene['name'] }}">
                             <img src="{{ asset('images/marketing/work-' . ($scene['slug'] ?? 'kass') . '.png') }}" alt="{{ $scene['name'] }}" loading="lazy" width="1200" height="750">
+                            {{-- pulsing G while the live preview loads (shown
+                                 from mount until the iframe paints) --}}
+                            <span class="cs-card__loader" aria-hidden="true"><img src="{{ asset('images/brand/icon.png') }}" alt=""></span>
                             <a class="cs-card__open" href="{{ $url }}" target="_blank" rel="noopener noreferrer"
                                aria-label="{{ $scene['name'] }} — {{ $scene['type'] }} ({{ $workVisit }})"></a>
                         </span>

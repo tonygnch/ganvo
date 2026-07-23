@@ -848,7 +848,7 @@ function buildCardSwap() {
 
     let busy = false;
     let timer = 0;
-    const DELAY = 3200;
+    const DELAY = 1500;
     const schedule = () => { clearTimeout(timer); timer = setTimeout(tick, DELAY); };
 
     const metrics = () => {
