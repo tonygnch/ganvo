@@ -231,15 +231,6 @@ export default function initHeroG(host) {
         addPiece(s);
     }
 
-    // the faintest halo so the mark separates from the void
-    const halo = new Sprite(new SpriteMaterial({
-        map: glowTex, color: AZURE, transparent: true, opacity: 0.15,
-        blending: AdditiveBlending, depthWrite: false,
-    }));
-    halo.position.set(0, GY, -3.5);
-    halo.scale.set(16, 12, 1);
-    scene.add(halo);
-
     // faint nebulae so the void has depth without stealing focus
     const nebulae = [];
     for (const n of [
@@ -425,7 +416,6 @@ export default function initHeroG(host) {
     let hoverT = 0;
     let prevT = 0;
     let progress01 = 0;
-    let haloT = 0; // halo stays off while loading, eases in with the flight
     const tilt = { x: 0, y: 0 };
     const prevPointer = new Vector3();
     let prevPointerValid = false;
@@ -491,8 +481,6 @@ export default function initHeroG(host) {
         // the fill line rides the glyph (and its idle float) bottom → top
         uFillY.value = gGroup.position.y - 3.3 * baseScale + progress01 * 6.6 * baseScale;
 
-        haloT += ((begun ? 1 : 0) - haloT) * 0.04;
-        halo.material.opacity = haloT * (0.15 + 0.03 * Math.sin(t * 0.5) + hoverT * 0.05);
         for (const n of nebulae) n.s.material.opacity = n.o * (0.8 + 0.2 * Math.sin(t * 0.2 + n.phase));
 
         // ── the splash: wiping across the letter knocks its colour off ──
