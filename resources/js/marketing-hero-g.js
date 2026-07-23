@@ -356,10 +356,10 @@ export default function initHeroG(host) {
         // shifting the camera left pushes the G (at x=0) right of centre,
         // clearing the left-aligned headline without moving the mark itself
         camX = wide ? -4.9 : 0;
-        baseScale = wide ? 1 : (small ? 0.5 : 0.6);
+        baseScale = wide ? 1 : (small ? 0.44 : 0.6);
         gGroup.scale.setScalar(baseScale);
         // narrow layouts centre the headline, so the mark rests ABOVE it
-        camYF = wide ? GY : GY - 4.05;
+        camYF = wide ? GY : GY - 3.5;
         camZF = wide ? 16.4 : 15.5;
         if (introT === 0) {
             camera.position.set(0, GY, introZ());
