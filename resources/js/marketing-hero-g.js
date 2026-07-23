@@ -158,6 +158,11 @@ export default function initHeroG(host) {
     const uPointer = { value: new Vector3(0, GY, 99) };
     const uBleach = { value: 0 };
     const uRadius = { value: 1.7 };
+    // loading vessel: while uVessel is 1, everything above the fill line
+    // (uFillY, world) renders as the dark empty glyph — the 3D mark IS the
+    // loading bar, filling with brand blue as setProgress() advances
+    const uFillY = { value: -99 };
+    const uVessel = { value: 1 };
     const logoMat = new MeshStandardMaterial({
         color: BRAND,
         roughness: 0.38,
@@ -168,17 +173,23 @@ export default function initHeroG(host) {
         shader.uniforms.uPointer = uPointer;
         shader.uniforms.uBleach = uBleach;
         shader.uniforms.uRadius = uRadius;
+        shader.uniforms.uFillY = uFillY;
+        shader.uniforms.uVessel = uVessel;
         shader.vertexShader = shader.vertexShader
             .replace('#include <common>', '#include <common>\nvarying vec3 vBleachPos;')
             .replace('#include <project_vertex>', '#include <project_vertex>\nvBleachPos = (modelMatrix * vec4(transformed, 1.0)).xyz;');
         shader.fragmentShader = shader.fragmentShader
-            .replace('#include <common>', '#include <common>\nvarying vec3 vBleachPos;\nuniform vec3 uPointer;\nuniform float uBleach;\nuniform float uRadius;')
+            .replace('#include <common>', '#include <common>\nvarying vec3 vBleachPos;\nuniform vec3 uPointer;\nuniform float uBleach;\nuniform float uRadius;\nuniform float uFillY;\nuniform float uVessel;')
             .replace('#include <color_fragment>', `#include <color_fragment>
                 float bleachD = distance(vBleachPos.xy, uPointer.xy);
                 float bleach = uBleach * smoothstep(uRadius, uRadius * 0.2, bleachD);
-                diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.76, 1.0), min(bleach, 1.0));`)
+                diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.55, 0.76, 1.0), min(bleach, 1.0));
+                float vesselAbove = smoothstep(uFillY - 0.02, uFillY + 0.02, vBleachPos.y) * uVessel;
+                diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.030, 0.048, 0.11), vesselAbove);`)
             .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-                totalEmissiveRadiance += vec3(0.14, 0.32, 0.68) * min(bleach, 1.0);`);
+                totalEmissiveRadiance += vec3(0.14, 0.32, 0.68) * min(bleach, 1.0);
+                float fillLine = max(1.0 - abs(vBleachPos.y - uFillY) / 0.07, 0.0);
+                totalEmissiveRadiance += vec3(0.10, 0.28, 0.85) * fillLine * uVessel;`);
     };
 
     const gMeshes = [];
@@ -431,6 +442,7 @@ export default function initHeroG(host) {
     let last = -Infinity;
     let hoverT = 0;
     let prevT = 0;
+    let progress01 = 0;
     const tilt = { x: 0, y: 0 };
     const prevPointer = new Vector3();
     let prevPointerValid = false;
@@ -476,8 +488,9 @@ export default function initHeroG(host) {
         pulse *= 0.955;
 
         // the bleach: full strength under the cursor, a wide soft ring on tap
+        // (parked while still loading — the vessel owns the surface then)
         uPointer.value.copy(pointerWorld);
-        uBleach.value = hoverT + pulse * 1.2;
+        uBleach.value = begun ? hoverT + pulse * 1.2 : 0;
         uRadius.value = 1.7 + pulse * 2.6;
 
         // a gentle lean toward the cursor — the piece feels physical
@@ -491,6 +504,9 @@ export default function initHeroG(host) {
         gGroup.rotation.x = tilt.x;
         gGroup.rotation.y = Math.sin(t * 0.11) * 0.05 + tilt.y;
         gGroup.scale.setScalar(baseScale * (1 + pulse * 0.02));
+
+        // the fill line rides the glyph (and its idle float) bottom → top
+        uFillY.value = gGroup.position.y - 3.3 * baseScale + progress01 * 6.6 * baseScale;
 
         halo.material.opacity = 0.26 + 0.05 * Math.sin(t * 0.5) + hoverT * 0.06;
         for (const n of nebulae) n.s.material.opacity = n.o * (0.8 + 0.2 * Math.sin(t * 0.2 + n.phase));
@@ -507,7 +523,7 @@ export default function initHeroG(host) {
         }
 
         // ── the splash: wiping across the letter knocks its colour off ──
-        if (finePointer && pointerSeen) {
+        if (begun && finePointer && pointerSeen) {
             raycaster.setFromCamera(pointerNdc, camera);
             const hit = raycaster.intersectObjects(gMeshes, false)[0];
             if (hit) {
@@ -570,8 +586,10 @@ export default function initHeroG(host) {
 
     return {
         ready,
+        // loader progress drives the vessel fill (0-100)
+        setProgress(p) { progress01 = MathUtils.clamp(p / 100, 0, 1); },
         // the loader calls this as its veil lifts — the flight starts then
-        begin() { begun = true; },
+        begin() { begun = true; progress01 = 1; uVessel.value = 0; },
         destroy() {
             cancelAnimationFrame(raf);
             running = false;

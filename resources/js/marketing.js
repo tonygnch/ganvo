@@ -47,7 +47,12 @@ let heroGReady = Promise.resolve();
     const saveData = navigator.connection?.saveData === true;
     if (media && !reduced && !saveData) {
         heroGReady = import('./marketing-hero-g.js')
-            .then((m) => { heroG = m.default(media); return heroG?.ready; })
+            .then((m) => {
+                heroG = m.default(media);
+                // first rendered frame → the 3D vessel replaces the DOM one
+                heroG?.ready?.then(() => document.querySelector('[data-loader]')?.classList.add('is-3d'));
+                return heroG?.ready;
+            })
             .catch(() => {});
     }
 }
@@ -103,6 +108,7 @@ function runLoader() {
     const render = () => {
         if (pct) pct.textContent = String(Math.round(state.p));
         if (fill) fill.style.clipPath = 'inset(' + (100 - state.p) + '% 0 0 0)';
+        heroG?.setProgress?.(state.p); // the 3D vessel fills in lockstep
     };
     const creep = gsap.to(state, { p: 82, duration: 1.7, ease: 'power2.out', onUpdate: render });
 
@@ -137,8 +143,9 @@ if (reduced) {
     // Reduced-motion: the 3D G never boots (gated above) — the poster stays.
 } else {
     loaderDone = runLoader();
+    lenis?.stop(); // the stage is the loader's until it finishes
     // veil lifts → the G flies from front-and-centre to its resting pose
-    loaderDone.then(() => heroG?.begin?.());
+    loaderDone.then(() => { heroG?.begin?.(); lenis?.start(); });
     (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
         document.body.classList.add('is-ready');
         // Create pinned triggers in DOCUMENT ORDER (top → bottom) so each one's
