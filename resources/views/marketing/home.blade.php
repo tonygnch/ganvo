@@ -174,10 +174,12 @@
             <p class="hero__sub">{{ $cs['hero_sub'] ?? __('site.marketing.hero.sub') }}</p>
         </div>
 
-        {{-- scroll cue: mouse outline with a falling dot, bottom-centre;
-             fades out as soon as scrolling starts --}}
+        {{-- scroll cue: a light pulse falling down a hairline into a chevron
+             (echoes the G's paint drip), bottom-centre; fades out as soon as
+             scrolling starts --}}
         <div class="hero__cue" data-hero-cue aria-hidden="true">
-            <span class="mouse"><i></i></span>
+            <span class="cue__line"><i></i></span>
+            <svg class="cue__chev" viewBox="0 0 12 7" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
 
         {{-- signal strip — quiet mono facts; the first "easy contact" cue --}}

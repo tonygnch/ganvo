@@ -412,31 +412,41 @@ html.js .loader { display: grid; place-items: center; }
     position: absolute; left: 50%; bottom: clamp(1.6rem, 4vh, 2.6rem);
     transform: translateX(-50%);
     z-index: 2;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
     opacity: 0.9;
     transition: opacity 0.5s ease;
 }
 /* the moment scrolling starts, the cue has done its job */
 .is-scrolled .hero__cue { opacity: 0; }
-.hero__cue .mouse {
-    display: block; width: 24px; height: 38px;
-    border: 1.5px solid rgba(157, 184, 232, 0.55);
-    border-radius: 13px;
-    position: relative;
-    box-shadow: 0 0 16px rgba(77, 141, 255, 0.18), 0 0 6px rgba(77, 141, 255, 0.12) inset;
+.hero__cue .cue__line {
+    display: block; width: 1.5px; height: 44px;
+    border-radius: 1px;
+    background: linear-gradient(to bottom, rgba(157, 184, 232, 0), rgba(157, 184, 232, 0.4));
+    position: relative; overflow: hidden;
 }
-.hero__cue .mouse i {
-    position: absolute; left: 50%; top: 7px;
-    width: 3px; height: 7px; margin-left: -1.5px;
+.hero__cue .cue__line i {
+    position: absolute; left: 50%; top: 0;
+    width: 3px; height: 12px; margin-left: -1.5px;
     border-radius: 2px;
     background: var(--accent-2);
-    box-shadow: 0 0 8px rgba(125, 211, 252, 0.85);
-    animation: cue-drop 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    box-shadow: 0 0 10px rgba(125, 211, 252, 0.9);
+    animation: cue-fall 2.1s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
-@keyframes cue-drop {
-    0% { transform: translateY(0); opacity: 0; }
-    18% { opacity: 1; }
-    72% { transform: translateY(14px); opacity: 0.9; }
-    100% { transform: translateY(18px); opacity: 0; }
+.hero__cue .cue__chev {
+    width: 12px; height: 7px;
+    color: rgba(157, 184, 232, 0.8);
+    filter: drop-shadow(0 0 5px rgba(77, 141, 255, 0.45));
+    animation: cue-nudge 2.1s ease-in-out infinite;
+}
+@keyframes cue-fall {
+    0% { transform: translateY(-14px); opacity: 0; }
+    22% { opacity: 1; }
+    78% { transform: translateY(46px); opacity: 0.9; }
+    100% { transform: translateY(46px); opacity: 0; }
+}
+@keyframes cue-nudge {
+    0%, 100% { transform: translateY(0); opacity: 0.55; }
+    62% { transform: translateY(3px); opacity: 1; }
 }
 
 /* signal strip — quiet mono facts anchored bottom-right of the hero;
@@ -1142,7 +1152,9 @@ html.js [data-split].is-in { visibility: visible; }
     html.js [data-reveal], html.js [data-split] { opacity: 1 !important; visibility: visible !important; filter: none !important; }
     [data-split] .line { transform: none !important; }
     .hero__media img { transform: none !important; }
-    .hero__cue .mouse i { animation: none; }
+    /* static cue: hairline + chevron stay, the traveling pulse goes */
+    .hero__cue .cue__line i { display: none; }
+    .hero__cue .cue__chev { animation: none; }
     /* the scroll stepper never pins for reduced-motion — show a numbered list */
     html.js .steps__inner { min-height: 0 !important; display: block !important; padding-block: 0 !important; }
     html.js .steps__masthead { margin: 0 0 2rem !important; }
