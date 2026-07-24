@@ -38,9 +38,12 @@ ganvo.bg, www.ganvo.bg {
         -Server
     }
 
-    # Block direct access to dotfiles + sensitive paths.
+    # Block direct access to dotfiles + sensitive paths. NOTE: /storage/* is
+    # NOT blocked — it is the public-disk symlink (public/storage) that serves
+    # merchant logos and product images; the app's private storage/ dir sits
+    # outside the web root and is unreachable anyway.
     @blocked {
-        path /.env* /.git* /storage/* /.htaccess /composer.* /artisan /docker-compose.yml
+        path /.env* /.git* /.htaccess /composer.* /artisan /docker-compose.yml
     }
     respond @blocked 404
 
@@ -57,18 +60,59 @@ ganvo.bg, www.ganvo.bg {
     }
 }
 
-# When you're ready for tenant storefronts on subdomains (acme.ganvo.bg),
-# add the wildcard block below. Requires a wildcard DNS record (*.ganvo.bg
-# A → server IP) AND the DNS-01 ACME challenge enabled (Caddy can't use
-# HTTP-01 for wildcards). See https://caddyserver.com/docs/automatic-https
-# for the DNS provider plugin matching your registrar.
+# ── Tenant storefronts: *.ganvo.bg ─────────────────────────────────────────
+# The zone is proxied through Cloudflare (orange cloud) with a wildcard DNS
+# record, so browsers get TLS from Cloudflare's Universal SSL at the edge —
+# this block only has to satisfy the Cloudflare→origin leg. Caddy can't get a
+# wildcard cert via HTTP-01, so instead of ACME it uses a free 15-year
+# Cloudflare Origin CA certificate (trusted by Cloudflare, never shown to
+# browsers). One-time setup — see DEPLOY.md "Tenant storefronts on subdomains":
 #
-# *.ganvo.bg {
-#     root * /var/www/ganvo/public
-#     encode zstd gzip
-#     php_fastcgi unix//run/php/php8.4-fpm.sock
-#     file_server
-#     tls {
-#         dns <your_dns_provider> {env.YOUR_DNS_API_TOKEN}
-#     }
-# }
+#   1. Cloudflare dashboard → SSL/TLS → Origin Server → Create Certificate
+#      (defaults are fine; hosts must include ganvo.bg and *.ganvo.bg).
+#   2. sudo mkdir -p /etc/caddy/certs
+#      Save the certificate as /etc/caddy/certs/ganvo-bg-origin.pem
+#      and the private key as  /etc/caddy/certs/ganvo-bg-origin.key
+#      sudo chmod 600 /etc/caddy/certs/ganvo-bg-origin.key
+#   3. sudo systemctl reload caddy
+#
+# Unknown slugs still 404 — the app's ResolveStorefrontTenant middleware only
+# serves live, active stores. Note Universal SSL covers ONE label deep
+# (slug.ganvo.bg yes, a.b.ganvo.bg no) — fine for tenant slugs.
+
+*.ganvo.bg {
+    tls /etc/caddy/certs/ganvo-bg-origin.pem /etc/caddy/certs/ganvo-bg-origin.key
+
+    root * /var/www/ganvo/public
+    encode zstd gzip
+    php_fastcgi unix//run/php/php8.4-fpm.sock
+    file_server
+
+    # Vite-fingerprinted assets + theme images cache forever; /storage/* stays
+    # unblocked and uncached (merchant uploads keep their filenames).
+    @immutable {
+        path /build/* /images/* /favicon.ico
+    }
+    header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+    header {
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=31536000"
+        X-Frame-Options "SAMEORIGIN"
+        -Server
+    }
+
+    @blocked {
+        path /.env* /.git* /.htaccess /composer.* /artisan /docker-compose.yml
+    }
+    respond @blocked 404
+
+    log {
+        output file /var/log/caddy/tenants.ganvo.bg.log {
+            roll_size 50mb
+            roll_keep 7
+        }
+        format console
+    }
+}

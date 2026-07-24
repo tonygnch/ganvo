@@ -256,18 +256,62 @@ cd /var/www/ganvo
 bash deploy/deploy.sh
 ```
 
-Which does: maintenance mode on → `git pull` → composer install → npm build → migrate → cache rebuild → maintenance mode off. Idempotent. Safe to re-run.
+Which does: fetch latest master → composer install → npm build → migrate → cache rebuild — with the app **live the whole time** (zero-downtime; no maintenance mode). Idempotent. Safe to re-run.
 
 ---
 
-## When tenant storefronts go live (later)
+## Tenant storefronts on subdomains (`slug.ganvo.bg`)
 
-The platform is designed for `acme.ganvo.bg` style tenant subdomains. To enable that you'll need:
+Current state: the zone is proxied through Cloudflare and a **wildcard DNS
+record already exists** — any `slug.ganvo.bg` resolves to Cloudflare's edge,
+and Cloudflare's Universal SSL gives browsers valid TLS for it. What's missing
+until you do the one-time setup below is the **origin side**: without a
+`*.ganvo.bg` vhost, Cloudflare's connection to the server fails and visitors
+see **error 525** (SSL handshake failed).
 
-1. **Wildcard DNS** — add `*.ganvo.bg A → <server IP>` at your registrar.
-2. **DNS-01 ACME challenge** in Caddy — required for wildcard TLS certs. Uncomment the `*.ganvo.bg` block in `deploy/Caddyfile.ganvo.bg` and configure the DNS provider plugin matching your registrar (see https://caddyserver.com/docs/automatic-https).
+One-time setup (~10 minutes):
 
-Until then, tenants can use **custom domains** (where the merchant maps their own domain at their registrar pointing at this server's IP — already supported by the storefront routing).
+1. **Create the Origin CA certificate** — Cloudflare dashboard → your
+   `ganvo.bg` zone → **SSL/TLS → Origin Server → Create Certificate**. Keep
+   the defaults (RSA, 15 years); hostnames must include `ganvo.bg` and
+   `*.ganvo.bg` (they do by default). You get two PEM blobs: the certificate
+   and the private key. **Copy the key now — it is shown only once.**
+2. **Install it on the server:**
+
+   ```bash
+   sudo mkdir -p /etc/caddy/certs
+   sudo nano /etc/caddy/certs/ganvo-bg-origin.pem   # paste the certificate
+   sudo nano /etc/caddy/certs/ganvo-bg-origin.key   # paste the private key
+   sudo chmod 600 /etc/caddy/certs/ganvo-bg-origin.key
+   sudo chown caddy:caddy /etc/caddy/certs/ganvo-bg-origin.*
+   ```
+
+3. **Pull latest master** (brings the `*.ganvo.bg` block in
+   `deploy/Caddyfile.ganvo.bg`) and reload Caddy:
+
+   ```bash
+   cd /var/www/ganvo && git pull
+   sudo systemctl reload caddy
+   ```
+
+   If you pasted the site blocks into `/etc/caddy/Caddyfile` instead of using
+   `import /var/www/ganvo/deploy/Caddyfile.ganvo.bg`, copy the new
+   `*.ganvo.bg` block over manually before reloading.
+
+4. **Check the Cloudflare SSL mode** — SSL/TLS → Overview should be **Full
+   (strict)**. The Origin CA cert satisfies strict mode; if the zone is on
+   "Flexible", switch it to Full (strict) or the app will see http and
+   generate mixed-scheme URLs.
+
+Verify: `curl -I https://<a-live-store-slug>.ganvo.bg` → 200 (an unknown slug
+correctly 404s — that's the app refusing non-existent stores, not a config
+problem). Also confirm `SESSION_DOMAIN=null` in the server's `.env` (host-only
+cookies — one store's customer login must not leak into another store).
+
+**Custom domains** (merchant's own domain) still need manual ops per domain
+today: the merchant points DNS at this server, and you add a site block for
+that hostname to the Caddyfile and reload. Automating this with Caddy
+on-demand TLS is a separate follow-up.
 
 ---
 
