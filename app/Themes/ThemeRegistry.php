@@ -65,6 +65,11 @@ class ThemeRegistry
                 'description' => 'Single-product showcase — cobalt accent on light grey, Sora geometric sans, configurator-style hero with spec rows. Built for one hero product: gadgets, bottles, design objects.',
                 'screenshot' => '/images/themes/forma.svg',
             ],
+            'timber' => [
+                'name' => 'Timber',
+                'description' => 'Daylight lumber yard — sanded-pine paper, resin-amber accent, Barlow Condensed signage caps with mono grading stamps, plank-stack hero and a UC1–UC4 treatment guide. Built for treated wood, building materials, and trade supply.',
+                'screenshot' => '/images/themes/timber.svg',
+            ],
         ];
     }
 

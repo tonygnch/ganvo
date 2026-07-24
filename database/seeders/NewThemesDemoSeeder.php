@@ -278,6 +278,36 @@ class NewThemesDemoSeeder extends Seeder
                 ],
                 'collection' => ['on-the-bench', 'On the bench', 'What we are pouring this month.'],
             ],
+            'timber' => [
+                'name' => 'Timberline', 'accent' => '#b57a34', 'currency' => 'EUR',
+                // No demo photography — the theme renders its own plank-mark
+                // placeholder + spec plates, so blank products show the design.
+                'announce' => 'Kiln-dried & pressure-treated · Cut to length · Trade accounts welcome',
+                'hero' => ['Pressure-treated timber', 'Built to last outdoors.', 'Shop the yard'],
+                // Timber sells by length — variants are the stocked lengths.
+                'sizes' => [['2.4 m', 0.8, 60], ['3.0 m', 1.0, 45], ['3.6 m', 1.2, 30], ['4.8 m', 1.6, 16]],
+                'cats' => [
+                    'decking' => ['Decking', 'Pressure-treated deck boards, joists and balustrade.'],
+                    'fencing' => ['Fencing & Posts', 'Posts, rails and boards for garden fencing.'],
+                    'structural' => ['Structural Timber', 'Graded C16/C24 carcassing and CLS studwork.'],
+                    'cladding' => ['Cladding & Sleepers', 'Exterior cladding, sleepers and landscaping timber.'],
+                ],
+                'products' => [
+                    ['decking', 'Treated Decking Board 28×145', 'Smooth-faced pressure-treated deck board, UC3, ready to lay. Reversible: smooth or grooved.', 1250, true],
+                    ['decking', 'Grooved Deck Board 32×150', 'Anti-slip grooved profile in tanalised softwood, UC3, 15-year warranty against rot.', 1490, true],
+                    ['decking', 'Deck Joist 47×100 C16', 'Treated structural joist for deck sub-frames, UC4, take-up to 600 mm centres.', 890, true],
+                    ['fencing', 'Fence Post 75×75 UC4', 'Incised, pressure-treated to Use Class 4 for direct ground contact. 15-year desired service life.', 1800, true],
+                    ['fencing', 'Feather Edge Board 100×11', 'Tapered treated board for closeboard fencing, UC3. Sold per board.', 340, true],
+                    ['fencing', 'Gravel Board 150×22', 'Treated base board keeps fence panels off the wet ground.', 760, true],
+                    ['structural', 'CLS Stud 38×63 C16', 'Planed, eased-edge stud for internal partitions and studwork.', 520, true],
+                    ['structural', 'C24 Carcassing 47×100', 'Kiln-dried, strength-graded C24 for floor joists and roof structures.', 940, true],
+                    ['structural', 'C24 Carcassing 47×150', 'Heavier C24 section for wider spans and load-bearing work.', 1380, true],
+                    ['cladding', 'Shiplap Cladding 19×125', 'Treated shiplap profile for sheds, garden rooms and facades, UC3.', 680, true],
+                    ['cladding', 'Railway Sleeper 200×100', 'New brown treated softwood sleeper, UC4 — beds, steps and retaining walls.', 3200, false],
+                    ['cladding', 'Log Roll Border 1.8 m', 'Half-round treated log roll for edging beds and paths.', 1450, false],
+                ],
+                'collection' => ['new-in-the-yard', 'New in the yard', 'Fresh stock, just off the delivery.'],
+            ],
             'forma' => [
                 'name' => 'Forma', 'accent' => '#2f4fe0', 'currency' => 'EUR',
                 'announce' => 'One product, done properly · Free shipping worldwide · 30-day returns',
