@@ -421,7 +421,7 @@ html.js .loader { display: grid; place-items: center; }
 .hero__cue .cue__line {
     display: block; width: 1.5px; height: 44px;
     border-radius: 1px;
-    background: linear-gradient(to bottom, rgba(157, 184, 232, 0), rgba(157, 184, 232, 0.4));
+    background: linear-gradient(to bottom, rgba(157, 184, 232, 0), rgba(157, 184, 232, 0.6));
     position: relative; overflow: hidden;
 }
 .hero__cue .cue__line i {
@@ -433,9 +433,9 @@ html.js .loader { display: grid; place-items: center; }
     animation: cue-fall 2.1s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 .hero__cue .cue__chev {
-    width: 12px; height: 7px;
-    color: rgba(157, 184, 232, 0.8);
-    filter: drop-shadow(0 0 5px rgba(77, 141, 255, 0.45));
+    width: 15px; height: 9px;
+    color: rgba(183, 205, 244, 0.95);
+    filter: drop-shadow(0 0 6px rgba(77, 141, 255, 0.6));
     animation: cue-nudge 2.1s ease-in-out infinite;
 }
 @keyframes cue-fall {
@@ -445,7 +445,7 @@ html.js .loader { display: grid; place-items: center; }
     100% { transform: translateY(46px); opacity: 0; }
 }
 @keyframes cue-nudge {
-    0%, 100% { transform: translateY(0); opacity: 0.55; }
+    0%, 100% { transform: translateY(0); opacity: 0.7; }
     62% { transform: translateY(3px); opacity: 1; }
 }
 
@@ -459,12 +459,14 @@ html.js .loader { display: grid; place-items: center; }
 }
 .hero__meta b { color: var(--ink-dim); font-weight: 500; }
 .hero__meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px rgba(77, 141, 255, 0.8); }
-/* small screens: the meta strip centres just above the scroll cue */
+/* small screens: the meta strip centres just above the scroll cue
+   (the cue is 56px tall — keep enough bottom clearance that the strip
+   never sits on the hairline) */
 @media (max-width: 900px) {
     .hero__meta {
         right: 50%;
         transform: translateX(50%);
-        bottom: clamp(4.8rem, 10vh, 6rem);
+        bottom: clamp(6rem, 12vh, 7.2rem);
         width: max-content;
         max-width: calc(100vw - 2 * var(--gutter));
         justify-content: center;
