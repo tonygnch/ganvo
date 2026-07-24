@@ -2,9 +2,12 @@
 #
 # Re-deploys ganvo to production. Idempotent — safe to re-run.
 #
-# Run as the user that owns /var/www/ganvo (NOT root). The script puts
-# the app into maintenance mode, fetches latest master, installs deps,
-# runs migrations, rebuilds caches, then drops out of maintenance.
+# Run as the user that owns /var/www/ganvo (NOT root). The script
+# fetches latest master, installs deps, runs migrations, rebuilds
+# caches — all with the app live (no maintenance mode). Requests that
+# land mid-deploy may briefly see a half-updated app; acceptable at
+# current traffic. Migrations must stay backward-compatible with the
+# previous release for that window.
 #
 # First-time setup is in DEPLOY.md; this script is for everything after.
 
@@ -17,10 +20,10 @@ NPM_BIN="${NPM_BIN:-npm}"
 
 cd "$APP_DIR"
 
-echo "==> Putting app into maintenance mode"
-$PHP_BIN artisan down --render="errors::503" || true
-
-trap '$PHP_BIN artisan up || true' EXIT  # always come back up, even on script failure
+# Belt-and-braces: if a previous run left the app in maintenance mode,
+# bring it back up before (and after) deploying.
+$PHP_BIN artisan up || true
+trap '$PHP_BIN artisan up || true' EXIT
 
 echo "==> Fetching latest master"
 git fetch --prune origin master
