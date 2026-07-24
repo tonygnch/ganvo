@@ -78,7 +78,11 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    // Bulgarian is the platform's primary language. English stays the
+    // fallback on purpose: if a key is ever missing from the Bulgarian
+    // catalogue, a BG visitor sees English copy rather than a raw
+    // translation key.
+    'locale' => env('APP_LOCALE', 'bg'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 

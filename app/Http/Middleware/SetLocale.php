@@ -11,8 +11,15 @@ use Symfony\Component\HttpFoundation\Response;
 class SetLocale
 {
     public const COOKIE = 'ganvo_locale';
-    public const SUPPORTED = ['en', 'bg'];
-    public const DEFAULT = 'en';
+
+    /**
+     * Bulgarian first: it is the platform's primary language, and the order
+     * here is load-bearing twice over — it drives the language switcher's
+     * listing, and Symfony's getPreferredLanguage() falls back to the FIRST
+     * entry when a request carries no usable Accept-Language header.
+     */
+    public const SUPPORTED = ['bg', 'en'];
+    public const DEFAULT = 'bg';
 
     /**
      * @return array<string, string> [code => native display name]
