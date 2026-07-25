@@ -30,6 +30,18 @@
     $minPriceInput = $filters['min_price'] !== null ? number_format($filters['min_price'] / 100, 2, '.', '') : '';
     $maxPriceInput = $filters['max_price'] !== null ? number_format($filters['max_price'] / 100, 2, '.', '') : '';
     $activeCategory = $filters['category'] ?? null;
+
+    // The page is a section of the book when a family is chosen, so it takes
+    // that family's name — in the browser tab, the masthead and the crumb.
+    // Leaving the generic heading up made every section look like the same
+    // page and told the tab nothing.
+    $activeCat = $activeCategory ? $categories->firstWhere('slug', $activeCategory) : null;
+    $isSearch = filled($filters['q'] ?? null);
+    if ($activeCat) {
+        $title = $activeCat->name;
+    } elseif ($isSearch) {
+        $title = __('site.storefront.controls.search') . ': ' . $filters['q'];
+    }
     $activeSort = $filters['sort'] ?? 'newest';
     $hasActiveFilters = $filters['q']
         || $activeCategory
@@ -292,11 +304,30 @@
                         <span class="gx" aria-hidden="true"><b>{{ $theme->label('gutter_index') }}</b> {{ __('site.storefront.sankevi.shop_eyebrow') }}</span>
                     @endif
                     <div class="crumb">
-                        <a href="/">{{ $tenant->name }}</a> / {{ __('site.storefront.product.breadcrumb_shop') }}
+                        <a href="/">{{ $tenant->name }}</a> /
+                        @if ($activeCat)
+                            <a href="{{ $chipUrl(null) }}">{{ __('site.storefront.product.breadcrumb_shop') }}</a> / {{ $activeCat->name }}
+                        @else
+                            {{ __('site.storefront.product.breadcrumb_shop') }}
+                        @endif
                     </div>
                     <span class="kicker">{{ __('site.storefront.sankevi.shop_eyebrow') }}</span>
-                    <h1 class="rise" style="--d: .1s;">{!! __('site.storefront.sankevi.shop_h1_html') !!}</h1>
-                    <p class="rise" style="--d: .22s;">{{ __('site.storefront.sankevi.shop_intro') }}</p>
+                    {{-- The heading is the family when one is chosen; the house
+                         line only stands in for "everything". --}}
+                    <h1 class="rise" style="--d: .1s;">
+                        @if ($activeCat)
+                            {{ $activeCat->name }}
+                        @elseif ($isSearch)
+                            {!! __('site.storefront.sankevi.shop_h1_search_html', ['q' => '<em>' . e($filters['q']) . '</em>']) !!}
+                        @else
+                            {!! __('site.storefront.sankevi.shop_h1_html') !!}
+                        @endif
+                    </h1>
+                    <p class="rise" style="--d: .22s;">
+                        {{ $activeCat && filled($activeCat->description)
+                            ? $activeCat->description
+                            : __('site.storefront.sankevi.shop_intro') }}
+                    </p>
                 </div>
             </div>
         </section>

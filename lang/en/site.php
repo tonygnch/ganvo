@@ -357,10 +357,19 @@ return [
             'marquee_sr'          => ':name — a family sawmill in the Rhodope mountains.',
             'families_eyebrow'    => 'What we cut',
             'families_h2_html'    => 'Everything that leaves <em>the yard</em>',
-            'families_hint'       => 'Every row opens the yard',
+            // The hint now describes the gesture, not a row: the full-width
+            // flowing menu became a compact option wheel.
+            'families_hint'       => 'Turn the wheel · ↑ ↓',
             'families_all'        => 'The whole yard',
+            // The wheel's accessible name, and what is spoken politely when it
+            // is turned by pointer or scroll with focus outside the control.
+            'wheel_label'         => 'Product families',
+            'wheel_selected'      => 'Selected: :name',
             'stat_years_label'    => 'Years in one clearing',
             'stat_radius_label'   => 'Km sourcing radius',
+            // pickup_* are no longer referenced: the "off the stack" trio is
+            // gone and the landing page shows no products at all. The keys
+            // stay so a theme or translation still reading them cannot break.
             'pickup_eyebrow'      => 'Off the stack this week',
             'pickup_all'          => 'See everything in the yard',
             'closing_eyebrow'     => 'Next step',
@@ -372,6 +381,7 @@ return [
             // mill's own book runs — photograph, sizes, availability, price.
             'shop_eyebrow'        => 'The stock book',
             'shop_h1_html'        => 'Everything off the <em>saw</em>',
+            'shop_h1_search_html'  => 'Search for :q',
             'shop_intro'          => 'One row, one item in the yard: the sizes we mill it in, and the price of the smallest section. Open a row for the full specification.',
             'shop_refine'         => 'Refine',
             'shop_all'            => 'The whole yard',
