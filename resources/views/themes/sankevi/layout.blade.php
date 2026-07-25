@@ -256,8 +256,13 @@
         .logo { display: inline-flex; align-items: center; gap: 11px; flex-shrink: 0; font-family: var(--display); font-weight: 600; font-size: 27px; letter-spacing: .2em; text-transform: uppercase; color: var(--txt); white-space: nowrap; }
         /* The seal is painted as a background so a single rule can swap the
            colourway on mode change; as an <img> the src would need JS. */
-        .seal, .fseal { background-image: var(--seal); background-size: contain; background-repeat: no-repeat; background-position: center; }
-        html[data-mode="light"] .seal, html[data-mode="light"] .fseal { background-image: var(--seal-day); }
+        .seal { background-image: var(--seal); background-size: contain; background-repeat: no-repeat; background-position: center; }
+        /* Only the seal in the HEADER follows the mode. The header is the one
+           piece of chrome that actually turns pale in Daylight; the footer stays
+           a dark slab in both modes (see --deep below), so its mark keeps the
+           cream colourway. Swapping it to the walnut master put a dark mark on
+           a dark ground and was half of why the footer logo vanished. */
+        html[data-mode="light"] header.site .seal { background-image: var(--seal-day); }
         .logo .seal { display: block; width: 26px; height: 26px; flex-shrink: 0; }
         .logo img.brand { height: 30px; width: auto; }
         .nav .links { display: flex; gap: 28px; align-items: center; font-size: 12px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
@@ -389,7 +394,32 @@
 
         /* ===== footer — the yard at closing time ===== */
         footer.site { position: relative; overflow: hidden; margin-top: 110px; padding: 74px 0 34px; background: var(--deep); border-top: 1px solid var(--line); }
-        footer.site .fseal { position: absolute; right: -60px; bottom: -70px; width: 320px; aspect-ratio: 1; opacity: .05; pointer-events: none; filter: grayscale(1); }
+
+        /* DARK SLABS IN A PALE PAGE. The footer and the mobile drawer are both
+           painted with --deep, which stays dark in Daylight ON PURPOSE so they
+           rise off the cream page. Everything inside them therefore has to keep
+           DARK-mode ink: the global --txt/--muted/--line flip to dark values in
+           Daylight and put dark ink on a dark slab — the footer wordmark
+           measured 1.05:1 against its own background, i.e. invisible, and every
+           link in the mobile drawer had exactly the same problem, unnoticed
+           only because it takes a tap to open.
+
+           Re-pinning the tokens on the two containers fixes every descendant at
+           once, and keeps working for any rule added inside them later. */
+        html[data-mode="light"] footer.site,
+        html[data-mode="light"] .m-drawer {
+            --txt: #f1ebdd;
+            --muted: #b3aa97;
+            /* Lifted from the bark value: the Daylight slab is #221e16 rather
+               than #100e0a, and the same faint left the small letterspaced
+               labels at 4.26:1 on it — under AA. #948a76 gives 4.87:1 there
+               (and 5.65:1 if a merchant's palette darkens the slab). */
+            --faint: #948a76;
+            --line: #332c21;
+            --line2: #473e2f;
+            --accent-ink: var(--accent);
+            color: var(--txt);
+        }
         .fgrid { display: grid; grid-template-columns: 2.2fr 1fr 1fr 1fr; gap: 46px; }
         .fgrid .logo { font-size: 23px; }
         .fgrid .ftag { color: var(--muted); max-width: 32ch; margin-top: 18px; font-size: 14.5px; }
@@ -619,7 +649,6 @@
     @yield('content')
 
     <footer class="site">
-        @if ($csSeal)<span class="fseal" aria-hidden="true" style="--seal: url('{{ $csSeal }}'); --seal-day: url('{{ $csSealDaylight }}');"></span>@endif
         <div class="wrap">
             <div class="fgrid">
                 <div>
