@@ -40,7 +40,7 @@
            sign — keep the merchant's line breaks instead of collapsing them. */
         .ct-row .v.lines { white-space: pre-line; }
         .ct-row a.v { width: fit-content; border-bottom: 1px solid transparent; transition: color .25s ease, border-color .25s ease; }
-        .ct-row a.v:hover { color: var(--accent); border-color: currentColor; }
+        .ct-row a.v:hover { color: var(--accent-ink); border-color: currentColor; }
 
         /* the merchant pastes their own <iframe>; the ratio box is ours, so a
            pasted width/height cannot blow the rail apart */

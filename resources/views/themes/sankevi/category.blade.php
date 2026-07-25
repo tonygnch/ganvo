@@ -33,7 +33,7 @@
         .filters .check input { width: 16px; height: 16px; accent-color: var(--accent); }
         .filters .actions { padding: 22px 0 0; display: flex; flex-direction: column; gap: 14px; }
         .filters .clear { align-self: center; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid transparent; padding-bottom: 2px; transition: color .25s ease, border-color .25s ease; }
-        .filters .clear:hover { color: var(--accent); border-color: currentColor; }
+        .filters .clear:hover { color: var(--accent-ink); border-color: currentColor; }
 
         /* the tally above the grid */
         .toolbar { display: flex; align-items: center; gap: 16px; margin-bottom: 26px; }

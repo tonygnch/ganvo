@@ -46,7 +46,7 @@
         /* ===== the years, standing in the margin ===== */
         .tl { list-style: none; }
         .tl li { display: grid; grid-template-columns: 180px 1fr; gap: 34px; padding: 30px 0; border-bottom: 1px solid var(--line); }
-        .tl .tl-year { font-family: var(--display); font-weight: 500; font-size: 28px; line-height: 1.1; color: var(--accent); font-variant-numeric: tabular-nums; }
+        .tl .tl-year { font-family: var(--display); font-weight: 500; font-size: 28px; line-height: 1.1; color: var(--accent-ink); font-variant-numeric: tabular-nums; }
         .tl .tl-title { font-family: var(--display); font-weight: 500; font-size: 25px; line-height: 1.15; margin-bottom: 10px; }
         .tl .tl-text { color: var(--muted); max-width: 60ch; }
 

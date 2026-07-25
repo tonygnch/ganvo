@@ -22,6 +22,13 @@
                primary_color. Default is Sankevi's lichen — the pale grey-green
                that grows on the north face of a Rhodope pine. */
             --accent: {{ $store->primary_color ?: '#9dae86' }};
+            /* Accent used as TEXT. The moss reads at 5.9:1 on the bark ground
+               but only 2.8:1 on Daylight — below even the 3.0 large-text floor —
+               so it has to be darkened per mode. Darkening it globally instead
+               would drop the bark case to 3.7:1, which is why this is a separate
+               token rather than a tweak to --accent. Derived with color-mix so it
+               still follows the merchant's own primary_color. */
+            --accent-ink: var(--accent);
             /* Darkened accent for ink on a pale ground. The mix ratio is tuned
                so ONE value clears AA on the daylight mode and still reads as a
                border/edge on the bark ground — no second knob for merchants. */
@@ -106,6 +113,7 @@
            in manifest.php ('modes'); only what tokens cannot carry is retuned
            here. Moss stays a dark slab in both modes: it is a material, not a
            background. ===== */
+        html[data-mode="light"] { --accent-ink: color-mix(in srgb, var(--accent) 64%, #12160b); }
         html[data-mode="light"] body::before {
             opacity: .7;
             background:
@@ -144,13 +152,13 @@
             display: flex; align-items: center; gap: 14px;
         }
         .gx::after { content: ""; width: 1px; height: 62px; background: linear-gradient(180deg, var(--line2), transparent); }
-        .gx b { color: var(--accent); font-weight: 500; }
+        .gx b { color: var(--accent-ink); font-weight: 500; }
         body.no-gx .gx { display: none; }
         @media (max-width: 1180px) { .gx { display: none; } }
 
         /* label voice — the spec register: wide tracking, small, quiet */
         .kicker, .spec { font-family: var(--body); font-size: 11px; font-weight: 500; letter-spacing: .26em; text-transform: uppercase; color: var(--faint); }
-        .kicker em { font-style: normal; color: var(--accent); }
+        .kicker em { font-style: normal; color: var(--accent-ink); }
         .num { font-variant-numeric: tabular-nums; }
 
         /* buttons — filled accent with a cut corner; the outline sibling is a
@@ -165,7 +173,7 @@
         }
         .btn:hover { background: color-mix(in srgb, var(--accent) 78%, var(--txt)); border-color: color-mix(in srgb, var(--accent) 78%, var(--txt)); }
         .btn.outline { background: transparent; color: var(--txt); border-color: var(--line2); }
-        .btn.outline:hover { background: transparent; border-color: var(--accent); color: var(--accent); }
+        .btn.outline:hover { background: transparent; border-color: var(--accent); color: var(--accent-ink); }
         .btn.block { width: 100%; }
         .btn:disabled { opacity: .45; cursor: not-allowed; }
         body.no-cut .btn { clip-path: none; }
@@ -216,7 +224,7 @@
            above the fold */
         .tick { background: var(--moss); color: #f1ebdd; overflow: hidden; white-space: nowrap; }
         .tick .track { display: inline-flex; gap: 34px; padding: 9px 0; animation: tick var(--tick-dur, 28s) linear infinite; font-size: 11px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; will-change: transform; }
-        .tick .track .s { color: var(--accent); }
+        .tick .track .s { color: var(--accent-ink); }
         .tick.link a { color: inherit; }
         @keyframes tick { to { transform: translateX(-50%); } }
         .tick[data-static="1"] .track { animation: none; }
@@ -243,7 +251,7 @@
         .nav .right a, .nav .right summary { white-space: nowrap; }
         .nav .right a:hover { color: var(--txt); }
         .bag { color: var(--txt); display: inline-flex; align-items: baseline; gap: 7px; }
-        .bag .n { color: var(--accent); font-variant-numeric: tabular-nums; }
+        .bag .n { color: var(--accent-ink); font-variant-numeric: tabular-nums; }
         .bag .ico { display: none; width: 17px; height: 17px; align-self: center; }
         .menu-toggle { display: none; background: none; border: none; color: var(--txt); font-size: 20px; line-height: 1; padding: 6px; z-index: 80; }
 
@@ -259,13 +267,13 @@
         @media (prefers-reduced-motion: reduce) { .menu-items { animation: none; } }
         .menu-items a { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; font-size: 13px; letter-spacing: .06em; text-transform: none; color: var(--txt); }
         .menu-items a:hover { background: var(--surface2); }
-        .menu-items a.active { color: var(--accent); }
+        .menu-items a.active { color: var(--accent-ink); }
         .menu-items .check { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
         .menu-items a:not(.active) .check { visibility: hidden; }
         .menu.nav-menu .menu-items { left: 0; right: auto; min-width: 230px; }
         .menu.nav-menu summary { font-size: 12px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; }
         .menu.nav-menu .menu-items a[data-depth]:not([data-depth="0"]) { padding-left: calc(12px + 14px * var(--d, 0)); color: var(--muted); }
-        .menu.nav-menu .menu-items a.view-all { color: var(--accent); }
+        .menu.nav-menu .menu-items a.view-all { color: var(--accent-ink); }
 
         /* mobile drawer — the whole forest floor, links set big in the serif */
         .m-drawer { position: fixed; inset: 0; z-index: 90; background: var(--deep); color: var(--txt); display: flex; flex-direction: column; justify-content: center; padding: 0 26px; opacity: 0; visibility: hidden; transition: opacity .45s ease, visibility .45s; }
@@ -279,7 +287,7 @@
         .m-drawer.open nav a:nth-child(1) { transition-delay: .07s; } .m-drawer.open nav a:nth-child(2) { transition-delay: .13s; }
         .m-drawer.open nav a:nth-child(3) { transition-delay: .19s; } .m-drawer.open nav a:nth-child(4) { transition-delay: .25s; }
         .m-drawer.open nav a:nth-child(5) { transition-delay: .31s; } .m-drawer.open nav a:nth-child(6) { transition-delay: .37s; }
-        .m-drawer nav a .ix { font-family: var(--body); font-size: 11px; font-weight: 500; letter-spacing: .2em; color: var(--accent); }
+        .m-drawer nav a .ix { font-family: var(--body); font-size: 11px; font-weight: 500; letter-spacing: .2em; color: var(--accent-ink); }
         .m-drawer .mfoot { position: absolute; bottom: 30px; left: 26px; right: 26px; z-index: 2; font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); opacity: 0; transition: opacity .5s ease .4s; }
         .m-drawer.open .mfoot { opacity: 1; }
         @media (prefers-reduced-motion: reduce) { .m-drawer nav a, .m-drawer .mfoot { opacity: 1 !important; transform: none !important; transition: none !important; } }
@@ -289,14 +297,14 @@
         .sec-head { position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin: 96px 0 34px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
         .sec-head .kicker { display: block; margin-bottom: 14px; }
         .sec-head h2 { font-family: var(--display); font-weight: 500; font-size: clamp(32px, 4.6vw, 58px); line-height: 1.02; letter-spacing: -.01em; }
-        .sec-head h2 em { font-style: italic; color: var(--accent); }
+        .sec-head h2 em { font-style: italic; color: var(--accent-ink); }
         .sec-head .more { font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line2); padding-bottom: 4px; transition: color .25s ease, border-color .25s ease; }
-        .sec-head .more:hover { color: var(--accent); border-color: var(--accent); }
+        .sec-head .more:hover { color: var(--accent-ink); border-color: var(--accent); }
         .page-head { position: relative; padding: 54px 0 28px; border-bottom: 1px solid var(--line); }
         .page-head .crumb { font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
-        .page-head .crumb a:hover { color: var(--accent); }
+        .page-head .crumb a:hover { color: var(--accent-ink); }
         .page-head h1 { font-family: var(--display); font-weight: 500; font-size: clamp(38px, 5.4vw, 70px); line-height: 1.02; letter-spacing: -.015em; margin-top: 14px; }
-        .page-head h1 em { font-style: italic; color: var(--accent); }
+        .page-head h1 em { font-style: italic; color: var(--accent-ink); }
         .page-head p { color: var(--muted); max-width: 52ch; margin-top: 12px; font-size: 15.5px; }
 
         /* ===== product card — a photograph, a sheet number, a name in the
@@ -314,16 +322,16 @@
         /* the sheet number — set beside the category like a plate number in a
            catalogue, never stamped over the photograph */
         .pcard .line { display: flex; align-items: baseline; gap: 11px; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
-        .shelf .pcard .sheet { color: var(--accent); }
+        .shelf .pcard .sheet { color: var(--accent-ink); }
         .shelf .pcard .sheet::after { content: var(--sheet-label, "№ ") counter(sheet, decimal-leading-zero); }
         .shelf.no-sheet .pcard .sheet { display: none; }
         .pcard .badge { position: absolute; top: 12px; right: 13px; z-index: 3; font-size: 10px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; padding: 5px 10px; background: var(--accent); color: var(--on-accent); }
         .pcard h3 { font-family: var(--display); font-weight: 500; font-size: 23px; line-height: 1.15; margin: 6px 0 12px; transition: color .3s ease; }
-        .pcard:hover h3 { color: var(--accent); }
+        .pcard:hover h3 { color: var(--accent-ink); }
         .pcard .foot { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); }
         .pcard .pr { font-family: var(--display); font-weight: 500; font-size: 19px; font-variant-numeric: tabular-nums; }
         .pcard .add { font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); transition: color .3s ease; }
-        .pcard:hover .add { color: var(--accent); }
+        .pcard:hover .add { color: var(--accent-ink); }
         @media (prefers-reduced-motion: reduce) { .pcard .pic img, .pcard:hover .pic img { transform: none; transition: none; } }
 
         /* ===== footer — the yard at closing time ===== */
@@ -334,10 +342,10 @@
         .fgrid .ftag { color: var(--muted); max-width: 32ch; margin-top: 18px; font-size: 14.5px; }
         .fcol h4 { font-size: 10.5px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--faint); margin-bottom: 18px; }
         .fcol a { display: block; font-size: 14.5px; margin-bottom: 11px; color: var(--muted); transition: color .25s ease; }
-        .fcol a:hover { color: var(--accent); }
+        .fcol a:hover { color: var(--accent-ink); }
         .fbot { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-top: 58px; padding-top: 24px; border-top: 1px solid var(--line); font-size: 11px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
         .fbot a { color: var(--muted); }
-        .fbot a:hover { color: var(--accent); }
+        .fbot a:hover { color: var(--accent-ink); }
 
         /* toast */
         .toast { position: fixed; top: calc(var(--header-height) + 20px); right: 24px; z-index: 100; display: flex; align-items: center; gap: 12px; background: var(--surface); color: var(--txt); border: 1px solid var(--line2); border-left: 2px solid var(--accent); padding: 15px 22px; font-size: 14px; box-shadow: 0 26px 50px -26px rgba(0, 0, 0, .85); animation: toastIn .28s ease-out, toastOut .3s ease-in 3.2s forwards; }

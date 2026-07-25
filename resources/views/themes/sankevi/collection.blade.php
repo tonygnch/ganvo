@@ -23,14 +23,14 @@
         .coll-hero .overlay { position: relative; z-index: 2; margin: -78px 0 0 44px; max-width: 700px; }
         .coll-hero .overlay .kicker { display: block; margin-bottom: 14px; }
         .coll-hero .overlay h1 { font-family: var(--display); font-weight: 500; font-size: clamp(38px, 5.4vw, 72px); line-height: 1.02; letter-spacing: -.02em; }
-        .coll-hero .overlay h1 em { font-style: italic; color: var(--accent); }
+        .coll-hero .overlay h1 em { font-style: italic; color: var(--accent-ink); }
         .coll-hero .overlay p { color: var(--muted); max-width: 54ch; margin-top: 14px; font-size: 15.5px; }
 
         .toolbar { display: flex; align-items: center; gap: 16px; margin: 46px 0 26px; }
         .toolbar .count { font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; }
         .toolbar .rule { flex: 1; height: 1px; background: var(--line); }
         .toolbar .crumb { font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
-        .toolbar .crumb a:hover { color: var(--accent); }
+        .toolbar .crumb a:hover { color: var(--accent-ink); }
 
         .coll-empty { padding: 90px 24px; text-align: center; font-family: var(--display); font-style: italic; font-size: 24px; color: var(--muted); border: 1px solid var(--line); }
 

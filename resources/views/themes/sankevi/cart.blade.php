@@ -78,25 +78,25 @@
         /* ===== nothing on the list yet ===== */
         .req-empty { position: relative; overflow: hidden; text-align: center; padding: 92px 28px; margin-top: 34px; border: 1px solid var(--line); background: var(--surface); }
         .req-empty h2 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 3.6vw, 42px); line-height: 1.06; margin-bottom: 12px; }
-        .req-empty h2 em { font-style: italic; color: var(--accent); }
+        .req-empty h2 em { font-style: italic; color: var(--accent-ink); }
         .req-empty p { color: var(--muted); max-width: 46ch; margin: 0 auto 30px; }
 
         /* ===== the ledger. Column heads set in the spec register, ruled off
            above the first line the way a yard docket is ruled. ===== */
         .ledger-head { display: grid; grid-template-columns: 86px minmax(0, 1fr) 132px 132px; gap: 22px; align-items: end; padding-bottom: 11px; border-bottom: 1px solid var(--line2); font-size: 10px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--faint); }
         .ledger-head .c-qty { text-align: center; }
-        .ledger-head .c-est { text-align: right; color: var(--accent); }
+        .ledger-head .c-est { text-align: right; color: var(--accent-ink); }
 
         .lines { counter-reset: plate; }
         .line { display: grid; grid-template-columns: 86px minmax(0, 1fr) 132px 132px; gap: 22px; align-items: center; padding: 22px 0; border-bottom: 1px solid var(--line); counter-increment: plate; }
         .line .img { position: relative; width: 86px; aspect-ratio: 4 / 5; overflow: hidden; background: linear-gradient(150deg, var(--surface2), #191510); display: grid; place-items: center; }
         .line .img img { width: 100%; height: 100%; object-fit: cover; }
-        .line .plate { display: block; font-size: 10px; font-weight: 500; letter-spacing: .2em; color: var(--accent); margin-bottom: 7px; }
+        .line .plate { display: block; font-size: 10px; font-weight: 500; letter-spacing: .2em; color: var(--accent-ink); margin-bottom: 7px; }
         .line .plate::after { content: var(--plate-label, "№ ") counter(plate, decimal-leading-zero); }
         .lines.no-sheet .line .plate { display: none; }
         .line .t { font-family: var(--display); font-weight: 500; font-size: 23px; line-height: 1.15; }
         .line .t a { transition: color .25s ease; }
-        .line .t a:hover { color: var(--accent); }
+        .line .t a:hover { color: var(--accent-ink); }
 
         /* the cut — the axes the customer chose, each one legible on its own.
            This is the difference between a basket and a cutting list. */
@@ -112,13 +112,13 @@
         .line .qty-cell { display: flex; justify-content: center; }
         .qty form { display: inline-flex; }
         .qty button { width: 34px; background: none; border: none; color: var(--muted); font-size: 15px; transition: color .2s ease, background-color .2s ease; }
-        .qty button:hover { color: var(--accent); background: var(--surface2); }
+        .qty button:hover { color: var(--accent-ink); background: var(--surface2); }
         .qty .n { width: 42px; display: grid; place-items: center; font-size: 13px; font-variant-numeric: tabular-nums; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
 
         .line .actions { text-align: right; }
         .line .pr { font-family: var(--display); font-weight: 500; font-size: 22px; font-variant-numeric: tabular-nums; }
         .line .rm { display: block; margin: 10px 0 0 auto; background: none; border: none; font-size: 10px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); transition: color .2s ease; }
-        .line .rm:hover { color: var(--accent); }
+        .line .rm:hover { color: var(--accent-ink); }
 
         .req-actions { margin-top: 28px; }
 
@@ -133,9 +133,9 @@
         .req-sum .promo input:focus { outline: none; border-color: var(--accent); }
         .req-sum .promo .btn { padding: 12px 16px; font-size: 10.5px; letter-spacing: .14em; }
         .req-sum .applied { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 11px 14px; background: var(--surface2); border: 1px solid var(--line); font-size: 11.5px; letter-spacing: .1em; }
-        .req-sum .applied .code { font-weight: 600; text-transform: uppercase; color: var(--accent); }
+        .req-sum .applied .code { font-weight: 600; text-transform: uppercase; color: var(--accent-ink); }
         .req-sum .applied form button { background: none; border: none; font-size: 10px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); text-decoration: underline; }
-        .req-sum .applied form button:hover { color: var(--accent); }
+        .req-sum .applied form button:hover { color: var(--accent-ink); }
         .promo-msg { margin-top: 9px; font-size: 11.5px; color: var(--muted); }
         /* The `hidden` attribute toggles the promo form / applied chip / discount
            row, but a class selector out-specifies the UA [hidden] rule — without
@@ -147,9 +147,9 @@
         .req-sum .r > span:first-child { font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; }
         .req-sum .r > span:last-child { font-variant-numeric: tabular-nums; color: var(--txt); }
         .req-sum .r small { font-size: 10.5px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
-        .req-sum .r.discount > span { color: var(--accent); }
+        .req-sum .r.discount > span { color: var(--accent-ink); }
         .req-sum .tot { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-top: 18px; margin: 18px 0 0; border-top: 1px solid var(--line2); font-family: var(--display); font-weight: 500; font-size: 20px; }
-        .req-sum .tot .v { font-size: 26px; font-variant-numeric: tabular-nums; color: var(--accent); }
+        .req-sum .tot .v { font-size: 26px; font-variant-numeric: tabular-nums; color: var(--accent-ink); }
         /* The tilde lives OUTSIDE [data-cart-total] on purpose: the animation
            engine overwrites that node's textContent wholesale. */
         .req-sum .tot .approx { margin-right: 4px; font-size: 20px; color: var(--faint); }

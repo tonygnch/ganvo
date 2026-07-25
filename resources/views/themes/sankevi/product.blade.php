@@ -50,9 +50,9 @@
 
         /* ===== the specification column ===== */
         .pinfo .crumb { font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); margin-bottom: 22px; }
-        .pinfo .crumb a:hover { color: var(--accent); }
+        .pinfo .crumb a:hover { color: var(--accent-ink); }
         .pinfo h1 { font-family: var(--display); font-weight: 500; font-size: clamp(36px, 4.6vw, 62px); line-height: 1.02; letter-spacing: -.02em; margin-bottom: 18px; }
-        .pinfo .price { font-family: var(--display); font-weight: 500; font-size: 30px; font-variant-numeric: tabular-nums; color: var(--accent); }
+        .pinfo .price { font-family: var(--display); font-weight: 500; font-size: 30px; font-variant-numeric: tabular-nums; color: var(--accent-ink); }
         .pinfo .stock { display: inline-flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
         .pinfo .stock .dot { width: 6px; height: 6px; background: var(--accent); animation: stockpulse 3s ease-in-out infinite; }
         @keyframes stockpulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent); } 60% { box-shadow: 0 0 0 7px transparent; } }
@@ -90,7 +90,7 @@
         .pdp-lightbox .lb-close { position: absolute; top: 26px; right: 28px; width: 46px; height: 46px; background: transparent; border: 1px solid var(--line2); color: var(--txt); font-size: 16px; display: grid; place-items: center; transition: border-color .25s ease, color .25s ease; }
         .pdp-lightbox .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); width: 52px; height: 52px; background: transparent; border: 1px solid var(--line2); color: var(--txt); font-family: var(--display); font-size: 26px; line-height: 1; display: grid; place-items: center; transition: border-color .25s ease, color .25s ease; }
         .pdp-lightbox .lb-prev { left: 26px; } .pdp-lightbox .lb-next { right: 26px; }
-        .pdp-lightbox .lb-close:hover, .pdp-lightbox .lb-nav:hover { border-color: var(--accent); color: var(--accent); }
+        .pdp-lightbox .lb-close:hover, .pdp-lightbox .lb-nav:hover { border-color: var(--accent); color: var(--accent-ink); }
         @media (prefers-reduced-motion: reduce) { .pdp-lightbox, .pdp-lightbox .lb-stage { animation: none; } }
 
         @media (max-width: 900px) {

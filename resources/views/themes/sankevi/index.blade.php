@@ -10,19 +10,32 @@
          | shop and the main page and it looks like an e-commerce". So the yard
          | now has two front doors:
          |
-         |   /       this file — six cinematic acts, no grid, no add-to-cart
+         |   /       this file — six acts, no grid, NO PRODUCTS AT ALL
          |   /shop   themes.sankevi.shop — the catalogue, filters, pagination
          |
          | StorefrontController@index already re-routes a visitor who is
          | searching/filtering/paginating to the shop view, so nothing here has
-         | to double as a product list. The only products on this page are ONE
-         | restrained editorial trio that hands off to /shop.
+         | to double as a product list. Not one SKU appears below: the merchant
+         | asked for the mill, not the stock, and every road out of this page
+         | leads to /shop. ($products is therefore untouched here.)
          |
-         | Every act is full- or near-full-viewport and separated by generous
-         | space. Motion comes from the shared storefront kit (Lenis smooth
-         | scroll, data-gv-reveal / -parallax / -counter) plus two ReactBits
-         | ports written in vanilla JS at the foot of the file. All of it
-         | surrenders to prefers-reduced-motion.
+         | The running order, and why:
+         |
+         |   1  HERO           the yard, once, at full height
+         |   2  MARQUEE        scroll-velocity bands — the name, moving
+         |   3  STORY          who we are, BEFORE we ask what you want
+         |   4  OPTION WHEEL   the families, as a compact index (id="shop")
+         |   5  FOREST         where the wood comes from
+         |   6  CLOSING        the one ask on the page
+         |
+         | Acts 1–3 and 5 are full- or near-full-viewport and separated by
+         | generous space; act 4 is deliberately NOT — it is a control, and a
+         | control that eats a screen is a menu, which is what it replaced.
+         |
+         | Motion comes from the shared storefront kit (Lenis smooth scroll,
+         | data-gv-reveal / -parallax / -counter) plus two ReactBits ports
+         | written in vanilla JS at the foot of the file. All of it surrenders
+         | to prefers-reduced-motion.
          */
 
         $csHero = $store->heroBanner();
@@ -48,7 +61,7 @@
         $forestImageUrl = $theme->image('forest_image');
         $csSeal = $theme->on('brand_seal') ? $theme->image('seal_image') : null;
 
-        // The flowing menu's photography, mapped by category ORDER. A category
+        // The option wheel's photography, mapped by category ORDER. A category
         // that carries its own image uses that instead — a merchant who
         // photographs their own families should see their own families.
         //
@@ -83,13 +96,27 @@
             __('site.storefront.sankevi.marquee_place'),
         ]));
 
-        // The editorial trio — three boards, photographed. Prefer the ones that
-        // actually have a photograph; a trio of placeholders is not an act.
-        $pickup = $products->getCollection()->filter(fn ($p) => $p->image_path);
-        if ($pickup->count() < 3) {
-            $pickup = $products->getCollection();
+        // THE WHEEL'S ITEMS — one per family, then one that opens the whole
+        // yard. Built once, here, so the wheel, its plates and the no-JS list
+        // all read from the same array and can never disagree about order,
+        // artwork or destination.
+        $wheelItems = [];
+        foreach ($categories->values() as $i => $cat) {
+            $wheelItems[] = [
+                'name' => $cat->name,
+                'href' => '/shop?category=' . $cat->slug,
+                'art' => $cat->image_path
+                    ? \Illuminate\Support\Facades\Storage::url($cat->image_path)
+                    : $familyArt[$i % count($familyArt)],
+            ];
         }
-        $pickup = $pickup->take(3);
+        $wheelItems[] = [
+            'name' => __('site.storefront.sankevi.families_all'),
+            'href' => '/shop',
+            // The establishing shot of the whole yard — the only place on this
+            // page it still earns its keep now that the hero shows end-grain.
+            'art' => asset('/images/demo/sankevi/yard.webp'),
+        ];
 
         $aboutOn = $store->aboutPage()['enabled'];
         $contactOn = $store->contactPage()['enabled'];
@@ -229,62 +256,15 @@
         .vel-row.ghost .vel-item i { color: color-mix(in srgb, var(--accent) 55%, transparent); -webkit-text-stroke: 0; }
 
         /* =================================================================
-           ACT 3 — FLOWING MENU. The signature. One full-width row per product
-           family; on hover/focus/tap the row fills with a running marquee of
-           that family's photograph, entering from the edge the pointer
-           crossed. Rows are plain links: with JS off nothing is revealed and
-           nothing is lost.
-           ================================================================= */
-        .families { position: relative; padding: clamp(90px, 15vh, 170px) 0 0; }
-        .families .head { position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding-bottom: 26px; }
-        .families .head h2 { font-family: var(--display); font-weight: 500; font-size: clamp(34px, 5.2vw, 76px); line-height: 1; letter-spacing: -.022em; margin-top: 16px; }
-        .families .head h2 em { font-style: italic; color: var(--accent); }
-        .families .head .hint { font-size: 11px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--faint); padding-bottom: 6px; }
-
-        .fm { border-top: 1px solid var(--line2); }
-        .fm-row {
-            position: relative; display: flex; align-items: center; gap: 22px; overflow: hidden;
-            height: clamp(104px, 17vh, 178px); padding: 0 clamp(6px, 2vw, 26px);
-            border-bottom: 1px solid var(--line2); color: inherit;
-            --fm-idle: 101%;
-        }
-        .fm-row .ix { flex-shrink: 0; font-size: 11px; font-weight: 500; letter-spacing: .22em; color: var(--accent); font-variant-numeric: tabular-nums; }
-        .fm-row .name { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 5.4vw, 74px); line-height: 1; letter-spacing: -.02em; transition: transform .5s cubic-bezier(.19, .74, .16, 1), color .35s ease; }
-        .fm-row .ix, .fm-row .name, .fm-row .go, .fm-row .thumb { position: relative; z-index: 1; }
-        .fm-row .go { margin-left: auto; flex-shrink: 0; font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); display: inline-flex; align-items: center; gap: 10px; transition: color .35s ease; }
-        .fm-row .go svg { width: 26px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.2; transition: transform .5s cubic-bezier(.19, .74, .16, 1); }
-        .fm-row:hover .name, .fm-row:focus-visible .name { transform: translateX(14px); }
-        .fm-row:hover .go svg, .fm-row:focus-visible .go svg { transform: translateX(8px); }
-        /* the still that carries the family on touch, where there is no hover
-           to reveal the marquee with */
-        .fm-row .thumb { display: none; width: 84px; height: 58px; object-fit: cover; margin-left: auto; }
-
-        /* the reveal itself: a full-bleed accent panel that slides in from the
-           side the pointer crossed and runs its own horizontal marquee */
-        /* The panel sits ABOVE the row's own type and covers it outright, the
-           way the reference does: while the family is revealed, the marquee IS
-           the row. Layering it underneath instead would leave the static title
-           colliding with the running one. */
-        .fm-marquee {
-            position: absolute; inset: 0; z-index: 2; overflow: hidden; pointer-events: none;
-            background: var(--accent); color: var(--on-accent);
-            transform: translate3d(0, var(--fm-idle), 0);
-            transition: transform .62s cubic-bezier(.19, .74, .16, 1);
-            will-change: transform;
-        }
-        .fm-row.is-on .fm-marquee { transform: translate3d(0, 0, 0); }
-        .fm-track { display: flex; align-items: center; height: 100%; width: max-content; animation: fmRun 34s linear infinite; animation-play-state: paused; }
-        .fm-row.is-on .fm-track { animation-play-state: running; }
-        @keyframes fmRun { to { transform: translate3d(-50%, 0, 0); } }
-        .fm-cell { display: flex; align-items: center; gap: clamp(20px, 3vw, 44px); padding-right: clamp(20px, 3vw, 44px); }
-        .fm-cell .w { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 4vw, 56px); line-height: 1; letter-spacing: -.02em; white-space: nowrap; }
-        .fm-cell .p { width: clamp(130px, 17vw, 240px); height: clamp(64px, 11vh, 116px); background-size: cover; background-position: center; flex-shrink: 0; }
-
-        /* =================================================================
-           ACT 4 — STORY. The workshop beside the manifesto, and the three
+           ACT 3 — STORY. The workshop beside the manifesto, and the three
            facts that matter, counted up.
+
+           The top margin used to close a gap under a full-bleed menu; the
+           story now follows the marquee, which already ends on a hairline
+           rule, so it takes the SAME opening breath the families act used to
+           take there — one rhythm after the band, whichever act arrives.
            ================================================================= */
-        .story { position: relative; display: grid; grid-template-columns: 1.02fr .98fr; align-items: center; margin: clamp(96px, 17vh, 190px) 0 0; }
+        .story { position: relative; display: grid; grid-template-columns: 1.02fr .98fr; align-items: center; margin: clamp(90px, 15vh, 170px) 0 0; }
         .story .art { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: var(--surface2); }
         .story .art img { width: 100%; height: 100%; object-fit: cover; }
         .story .art img.mounted { transform: scale(1.14); }
@@ -302,27 +282,106 @@
         .story .stats .lb { display: block; margin-top: 10px; font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); }
 
         /* =================================================================
-           THE EDITORIAL TRIO — the only products on this page. No prices, no
-           cards, no add-to-cart: three photographs, three names, and a door
-           to the yard. If this ever grows a fourth column it has become a
-           grid again, which is the thing we removed.
+           ACT 4 — THE OPTION WHEEL. A ReactBits port in vanilla JS.
+
+           What it replaced: seven full-width rows, ~850px of page, to say
+           seven words. The merchant's brief was "i don't want to take too
+           much space", so the families now live on a turning arc no taller
+           than a paragraph, with the chosen family's plate beside it. Read
+           it as a stock-book index being turned — a hinge on the left, one
+           line on the read-line, the rest curving away.
+
+           GEOMETRY (all of it lives in the JS; the CSS only consumes it):
+           the radius is derived so that the ARC between two neighbours is
+           exactly one row height — R = rowH / tiltRad. Every item then gets
+           --ow-x / --ow-y / --ow-r for its place on the arc, and --ow-p, its
+           normalised distance from the centre, which is what drives the fade
+           and the blur below. One custom property per axis means the whole
+           look is tunable here without touching a line of script.
+
+           WITHOUT JS none of that applies: .ow has no .is-live class, so the
+           rules below never match and the markup renders as what it is — a
+           plain vertical list of links beside a photograph.
            ================================================================= */
-        .pickup { margin: clamp(90px, 15vh, 168px) 0 0; }
-        .pickup .head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding-bottom: 22px; border-bottom: 1px solid var(--line); }
-        .pickup .head .more { font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line2); padding-bottom: 4px; transition: color .25s ease, border-color .25s ease; }
-        .pickup .head .more:hover { color: var(--accent); border-color: var(--accent); }
-        .pickup .trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(22px, 4vw, 58px); margin-top: 44px; }
-        .pickup .it { display: flex; flex-direction: column; color: inherit; }
-        .pickup .it .pic { position: relative; aspect-ratio: 3 / 4; overflow: hidden; background: linear-gradient(150deg, var(--surface2), #191510); display: grid; place-items: center; }
-        .pickup .it .pic img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s cubic-bezier(.19, .74, .16, 1); }
-        .pickup .it:hover .pic img { transform: scale(1.05); }
-        .pickup .it .cat { margin-top: 16px; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
-        .pickup .it h3 { font-family: var(--display); font-weight: 500; font-size: clamp(20px, 1.9vw, 27px); line-height: 1.14; margin-top: 8px; transition: color .3s ease; }
-        .pickup .it:hover h3 { color: var(--accent); }
-        /* the second/third items step down the page — an editorial rhythm the
-           eye reads as a spread, not a row of SKUs */
-        .pickup .trio .it:nth-child(2) { margin-top: clamp(20px, 5vw, 64px); }
-        .pickup .trio .it:nth-child(3) { margin-top: clamp(40px, 9vw, 118px); }
+        .families { position: relative; padding: clamp(56px, 8vh, 92px) 0 0; }
+        .families .head { position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding-bottom: 20px; }
+        /* Smaller than the other acts' headings ON PURPOSE: the display
+           moment in this act belongs to the family name on the plate, and
+           two 76px lines stacked would put the whole thing back over 600px. */
+        .families .head h2 { font-family: var(--display); font-weight: 500; font-size: clamp(27px, 3.3vw, 44px); line-height: 1.04; letter-spacing: -.022em; margin-top: 12px; }
+        .families .head h2 em { font-style: italic; color: var(--accent); }
+        .families .head .hint { font-size: 11px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--faint); padding-bottom: 6px; }
+
+        .ow {
+            --ow-row: 46px;                       /* JS reads this — one row */
+            display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+            gap: clamp(22px, 3.4vw, 56px); align-items: center;
+            margin-top: clamp(14px, 2vh, 24px);
+        }
+
+        /* ── the wheel ─────────────────────────────────────────────────── */
+        .ow-list { list-style: none; margin: 0; padding: 0; }
+        .ow-item a { display: inline-flex; align-items: baseline; gap: 13px; padding: 6px 0; color: var(--txt); font-family: var(--display); font-weight: 500; font-size: 19px; line-height: 1.3; transition: color .3s ease; }
+        .ow-item a:hover { color: var(--accent); }
+        .ow-ix { font-family: var(--body); font-size: 10.5px; font-weight: 500; letter-spacing: .2em; color: var(--faint); font-variant-numeric: tabular-nums; transition: color .3s ease; }
+
+        .ow.is-live .ow-wheel {
+            position: relative; height: calc(var(--ow-row) * 5.5); overflow: hidden;
+            /* the drag owns the vertical gesture inside this one small box;
+               everywhere else on the section the page scrolls normally */
+            touch-action: none; cursor: grab;
+            -webkit-user-select: none; user-select: none;
+            /* Items two rows out are already tilted ~48°, so their tails run
+               well past the box. Dissolve the top and bottom edges instead of
+               cutting them: the far rows should curve away out of sight, not
+               get guillotined — the same trick the velocity band uses on its
+               left and right edges. */
+            -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 17%, #000 83%, transparent 100%);
+            mask-image: linear-gradient(180deg, transparent 0, #000 17%, #000 83%, transparent 100%);
+        }
+        .ow.is-live .ow-wheel.is-drag { cursor: grabbing; }
+        /* the binding, and the read-line the chosen family sits on */
+        .ow.is-live .ow-wheel::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: linear-gradient(180deg, transparent, var(--line2) 24%, var(--line2) 76%, transparent); }
+        .ow.is-live .ow-wheel::after { content: ""; position: absolute; left: 0; top: 50%; width: 14px; height: 1px; background: var(--accent); }
+        .ow.is-live .ow-list { position: absolute; inset: 0; }
+        .ow.is-live .ow-item {
+            position: absolute; left: 24px; top: 50%; width: max-content;
+            height: var(--ow-row); margin-top: calc(var(--ow-row) / -2);
+            /* hinged at the spine, like a page — not spun about its middle */
+            transform-origin: 0 50%;
+            transform: translate3d(var(--ow-x, 0px), var(--ow-y, 0px), 0) rotate(var(--ow-r, 0deg));
+            opacity: calc(1.04 - var(--ow-p, 0) * 1.04);
+            filter: blur(calc(var(--ow-p, 0) * var(--ow-p, 0) * 3.2px));
+            will-change: transform, opacity;
+        }
+        .ow.is-live .ow-item a { height: 100%; padding: 0; align-items: center; white-space: nowrap; font-size: clamp(18px, 1.55vw, 22px); }
+        .ow.is-live .ow-item.is-sel a, .ow.is-live .ow-item.is-sel .ow-ix { color: var(--accent); }
+
+        /* ── the plate ─────────────────────────────────────────────────── */
+        .ow-plate { position: relative; height: calc(var(--ow-row) * 5.5); overflow: hidden; background: var(--surface2); }
+        .ow-pl { position: absolute; inset: 0; display: block; color: #f4efe2; opacity: 0; transition: opacity .5s ease; }
+        .ow-pl img { width: 100%; height: 100%; object-fit: cover; }
+        .ow-pl::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11, 9, 6, .04) 0%, rgba(11, 9, 6, .22) 40%, rgba(11, 9, 6, .84) 100%); }
+        /* with JS off nothing is "selected", so the first family stands in */
+        .ow:not(.is-live) .ow-pl:first-child { opacity: 1; }
+        .ow.is-live .ow-pl.is-sel { opacity: 1; }
+        .ow-pl .cap { position: absolute; z-index: 2; left: clamp(18px, 2.2vw, 30px); right: clamp(18px, 2.2vw, 30px); bottom: clamp(15px, 2vw, 24px); display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; }
+        .ow-pl .nm { font-family: var(--display); font-weight: 500; font-size: clamp(27px, 3.4vw, 50px); line-height: 1.02; letter-spacing: -.022em; text-shadow: 0 2px 26px rgba(9, 7, 4, .6); }
+        .ow-pl .go { flex-shrink: 0; display: inline-flex; align-items: center; gap: 10px; padding-bottom: 6px; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: rgba(244, 239, 226, .78); }
+        .ow-pl .go svg { width: 26px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.2; transition: transform .5s cubic-bezier(.19, .74, .16, 1); }
+        .ow-pl:hover .go svg { transform: translateX(8px); }
+
+        /* ── REDUCED MOTION. Not "the wheel without the animation" — a wheel
+           that snaps has no arc to read. JS flags .is-flat and switches the
+           geometry to a plain vertical stack: no curve, no rotation, no
+           blur, no smoothing, and every visible item at full legibility.
+           The cubic on the fade only takes the very outermost row to zero. */
+        .ow.is-flat .ow-item { filter: none; opacity: calc(1 - var(--ow-p, 0) * var(--ow-p, 0) * var(--ow-p, 0)); }
+        .ow.is-flat .ow-pl { transition: none; }
+        /* the edge fade exists to soften the tails of ROTATED rows; a stack
+           has none, and dimming its outer rows would be the opposite of the
+           point */
+        .ow.is-flat .ow-wheel { -webkit-mask-image: none; mask-image: none; }
 
         /* =================================================================
            ACT 5 — FOREST. Full bleed, one line of type, nothing else.
@@ -356,17 +415,16 @@
            REDUCED MOTION — the whole page holds still. Nothing here is
            decoration-with-meaning, so every one of these can simply stop:
            the grain freezes, the hero stops pushing in, the scroll bead
-           stops falling, the velocity bands sit where they were rendered,
-           and the flowing menu trades its slide for a plain cross-fade.
+           stops falling, and the velocity bands sit where they were
+           rendered. The wheel's own reduced-motion behaviour is .is-flat,
+           declared with the act; the rules here are only the belt-and-braces
+           for a browser that reports "reduce" after the script has run.
            ================================================================= */
         @media (prefers-reduced-motion: reduce) {
             .grain { animation: none; }
             .hero .cue .rail::after { animation: none; top: 8px; }
-            .fm-marquee { transform: none; opacity: 0; transition: opacity .18s linear; }
-            .fm-row.is-on .fm-marquee { opacity: 1; }
-            .fm-track { animation: none; }
-            .fm-row .name, .fm-row .go svg, .fm-row:hover .name, .fm-row:hover .go svg { transform: none; transition: none; }
-            .pickup .it .pic img, .pickup .it:hover .pic img { transform: none; transition: none; }
+            .ow.is-live .ow-item { filter: none; }
+            .ow-pl, .ow-pl .go svg { transition: none; }
         }
 
         @media (max-width: 1100px) {
@@ -378,29 +436,24 @@
             .hero .cue { flex-direction: row; align-items: center; gap: 14px; }
             .hero .cue .rail { width: 46px; height: 1px; }
             .hero .cue .rail::after { width: 18px; height: 3px; left: auto; top: -1px; animation-name: cueSlide; }
-            /* on a phone the whole row hands its reveal to the still, which is
-               always visible — nothing about the family is hover-only */
-            .fm-row .go span { display: none; }
             .story { grid-template-columns: 1fr; }
             .story .tx { margin-left: 0; margin-top: -44px; width: 93%; }
-            .pickup .trio { grid-template-columns: 1fr 1fr; }
-            .pickup .trio .it:nth-child(3) { display: none; }
             .closing .in { grid-template-columns: 1fr; align-items: start; }
             .forest { min-height: 62vh; }
         }
         @keyframes cueSlide { 0% { left: -20px; } 100% { left: 48px; } }
-        @media (hover: none) {
-            .fm-row .thumb { display: block; }
-            .fm-row .go { margin-left: 18px; }
+        /* One column below 760: the plate leads, the index follows it. Two
+           240px columns side by side would give the arc no room to curve
+           into and the photograph no room to be a photograph. */
+        @media (max-width: 760px) {
+            .ow { --ow-row: 40px; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+            .ow-plate { order: -1; height: 200px; }
+            .ow-pl .nm { font-size: clamp(25px, 6.4vw, 34px); }
+            .ow-pl .go span { display: none; }
         }
         @media (max-width: 620px) {
             .hero h1 { max-width: none; }
             .story .tx { width: 100%; }
-            .pickup .trio { grid-template-columns: 1fr; gap: 34px; }
-            .pickup .trio .it:nth-child(2), .pickup .trio .it:nth-child(3) { margin-top: 0; }
-            .pickup .trio .it:nth-child(3) { display: flex; }
-            .fm-row { height: clamp(88px, 14vh, 120px); gap: 14px; }
-            .fm-row .thumb { width: 62px; height: 44px; }
         }
     </style>
 
@@ -461,81 +514,14 @@
             </div>
         </section>
 
-        {{-- ============ ACT 3 — FLOWING MENU ============
-             id="shop" so the layout's stock "#shop" links (nav + footer, which
-             this view must not edit) land on the families rather than nowhere. --}}
-        <section class="families" id="shop">
-            <div class="wrap">
-                <div class="head" data-gv-reveal>
-                    @if ($theme->on('gutter_index'))
-                        <span class="gx" aria-hidden="true"><b>{{ $theme->label('gutter_index') }} 01</b> {{ __('site.storefront.sankevi.gx_home') }}</span>
-                    @endif
-                    <div>
-                        <span class="kicker">{{ __('site.storefront.sankevi.families_eyebrow') }}</span>
-                        <h2>{!! __('site.storefront.sankevi.families_h2_html') !!}</h2>
-                    </div>
-                    <span class="hint">{{ __('site.storefront.sankevi.families_hint') }}</span>
-                </div>
-            </div>
-
-            <nav class="fm" aria-label="{{ __('site.storefront.sankevi.families_eyebrow') }}">
-                @forelse ($categories as $cat)
-                    @php
-                        $art = $cat->image_path
-                            ? \Illuminate\Support\Facades\Storage::url($cat->image_path)
-                            : $familyArt[$loop->index % count($familyArt)];
-                    @endphp
-                    <a class="fm-row" data-fm-row href="/shop?category={{ $cat->slug }}">
-                        <span class="fm-marquee" data-fm-marquee aria-hidden="true">
-                            <span class="fm-track">
-                                {{-- Twelve cells: six that fill the row and six identical
-                                     ones behind them, so the -50% loop is seamless. --}}
-                                @for ($i = 0; $i < 12; $i++)
-                                    <span class="fm-cell">
-                                        <span class="w">{{ $cat->name }}</span>
-                                        <span class="p" style="background-image: url('{{ $art }}');"></span>
-                                    </span>
-                                @endfor
-                            </span>
-                        </span>
-                        <span class="ix">{{ sprintf('%02d', $loop->iteration) }}</span>
-                        <span class="name">{{ $cat->name }}</span>
-                        <img class="thumb cut cut-sm" src="{{ $art }}" alt="" loading="lazy" aria-hidden="true">
-                        <span class="go">
-                            <span>{{ __('site.storefront.sankevi.card_action') }}</span>
-                            <svg viewBox="0 0 26 10" aria-hidden="true"><path d="M0 5h24M20 1l4 4-4 4"/></svg>
-                        </span>
-                    </a>
-                @empty
-                    {{-- No families yet — one row, straight to the yard. --}}
-                    <a class="fm-row" data-fm-row href="/shop">
-                        <span class="fm-marquee" data-fm-marquee aria-hidden="true">
-                            <span class="fm-track">
-                                @for ($i = 0; $i < 12; $i++)
-                                    <span class="fm-cell">
-                                        <span class="w">{{ __('site.storefront.sankevi.families_all') }}</span>
-                                        <span class="p" style="background-image: url('{{ $familyArt[0] }}');"></span>
-                                    </span>
-                                @endfor
-                            </span>
-                        </span>
-                        <span class="ix">01</span>
-                        <span class="name">{{ __('site.storefront.sankevi.families_all') }}</span>
-                        <span class="go">
-                            <span>{{ __('site.storefront.sankevi.card_action') }}</span>
-                            <svg viewBox="0 0 26 10" aria-hidden="true"><path d="M0 5h24M20 1l4 4-4 4"/></svg>
-                        </span>
-                    </a>
-                @endforelse
-            </nav>
-        </section>
-
         <div class="wrap">
-            {{-- ============ ACT 4 — STORY ============ --}}
+            {{-- ============ ACT 3 — STORY ============
+                 Moved ahead of the families at the merchant's request: say who
+                 you are before you ask what the visitor wants. --}}
             @if ($theme->on('story_band'))
                 <section class="story">
                     @if ($theme->on('gutter_index'))
-                        <span class="gx" aria-hidden="true" style="top: 40px;"><b>{{ $theme->label('gutter_index') }} 02</b> {{ __('site.storefront.sankevi.story_eyebrow') }}</span>
+                        <span class="gx" aria-hidden="true" style="top: 40px;"><b>{{ $theme->label('gutter_index') }} 01</b> {{ __('site.storefront.sankevi.story_eyebrow') }}</span>
                     @endif
                     <div class="art cut cut-lg" data-gv-reveal="scale">
                         @if ($storyImageUrl)
@@ -566,40 +552,79 @@
                     </div>
                 </section>
             @endif
+        </div>
 
-            {{-- ============ THE EDITORIAL TRIO ============ --}}
-            @if ($pickup->isNotEmpty())
-                <section class="pickup">
-                    <div class="head" data-gv-reveal>
-                        <span class="kicker">{{ __('site.storefront.sankevi.pickup_eyebrow') }}</span>
-                        <a class="more" href="/shop">{{ __('site.storefront.sankevi.pickup_all') }}</a>
+        {{-- ============ ACT 4 — THE OPTION WHEEL ============
+             id="shop" so the layout's stock "#shop" links (nav + footer, which
+             this view must not edit) land on the families rather than nowhere.
+
+             Everything below is the NO-JS truth: a <nav> with an accessible
+             name, a real list, real <a> elements, one photograph. The script
+             adds .is-live and turns that same list into the arc — it adds no
+             markup, no href and no destination of its own, so if it never
+             runs the visitor loses a flourish and nothing else. --}}
+        <section class="families" id="shop">
+            <div class="wrap">
+                <div class="head" data-gv-reveal>
+                    @if ($theme->on('gutter_index'))
+                        <span class="gx" aria-hidden="true"><b>{{ $theme->label('gutter_index') }} 02</b> {{ __('site.storefront.sankevi.gx_home') }}</span>
+                    @endif
+                    <div>
+                        <span class="kicker">{{ __('site.storefront.sankevi.families_eyebrow') }}</span>
+                        <h2>{!! __('site.storefront.sankevi.families_h2_html') !!}</h2>
                     </div>
-                    <div class="trio">
-                        @foreach ($pickup as $product)
-                            @php
-                                $picUrl = $product->image_path
-                                    ? \Illuminate\Support\Facades\Storage::url($product->image_path)
-                                    : null;
-                                $catLabel = $product->relationLoaded('categories') && $product->categories->isNotEmpty()
-                                    ? $product->categories->first()->name
-                                    : null;
-                            @endphp
-                            <a class="it" href="/products/{{ $product->slug }}" data-gv-reveal data-gv-delay="{{ $loop->index * 0.1 }}">
-                                <div class="pic cut {{ $picUrl ? '' : 'ph' }}">
-                                    @if ($picUrl)
-                                        <img src="{{ $picUrl }}" alt="{{ $product->name }}" loading="lazy">
-                                    @else
-                                        <span class="board-glyph" aria-hidden="true"><i></i></span>
-                                    @endif
-                                </div>
-                                @if ($catLabel)<span class="cat">{{ $catLabel }}</span>@endif
-                                <h3>{{ $product->name }}</h3>
+                    <span class="hint">{{ __('site.storefront.sankevi.families_hint') }}</span>
+                </div>
+
+                <div class="ow" data-ow data-gv-reveal data-gv-delay="0.1">
+                    {{-- data-lenis-prevent: the storefront kit's smooth scroll
+                         listens on the window and does not honour a nested
+                         preventDefault, so without this the wheel would turn
+                         AND the page would slide out from under it. Scoped to
+                         this one 300px box; the rest of the act scrolls. --}}
+                    <nav class="ow-wheel" data-ow-wheel data-lenis-prevent
+                         aria-label="{{ __('site.storefront.sankevi.wheel_label') }}">
+                        <ul class="ow-list">
+                            @foreach ($wheelItems as $w)
+                                <li class="ow-item" data-ow-item>
+                                    <a href="{{ $w['href'] }}">
+                                        <span class="ow-ix" aria-hidden="true">{{ sprintf('%02d', $loop->iteration) }}</span>
+                                        <span class="ow-nm">{{ $w['name'] }}</span>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </nav>
+
+                    {{-- The plates. Every one of them repeats a link the wheel
+                         already exposes by name, so they are a pointer
+                         affordance only and stay out of the a11y tree — a
+                         screen reader should hear seven families, not
+                         fourteen. All are rendered up front so turning the
+                         wheel never waits on an image. --}}
+                    <div class="ow-plate cut cut-lg" data-ow-plate>
+                        @foreach ($wheelItems as $w)
+                            <a class="ow-pl" data-ow-pl href="{{ $w['href'] }}" tabindex="-1" aria-hidden="true">
+                                <img src="{{ $w['art'] }}" alt="" loading="{{ $loop->first ? 'eager' : 'lazy' }}">
+                                <span class="cap">
+                                    <span class="nm">{{ $w['name'] }}</span>
+                                    <span class="go">
+                                        <span>{{ __('site.storefront.sankevi.card_action') }}</span>
+                                        <svg viewBox="0 0 26 10" aria-hidden="true"><path d="M0 5h24M20 1l4 4-4 4"/></svg>
+                                    </span>
+                                </span>
                             </a>
                         @endforeach
                     </div>
-                </section>
-            @endif
-        </div>
+
+                    {{-- Politely spoken when the wheel is turned by pointer or
+                         scroll. Suppressed while focus is inside the wheel,
+                         where the focused link is announced already. --}}
+                    <p class="sr-only" role="status" aria-live="polite"
+                       data-ow-status data-ow-tpl="{{ __('site.storefront.sankevi.wheel_selected', ['name' => '%s']) }}"></p>
+                </div>
+            </div>
+        </section>
 
         {{-- ============ ACT 5 — FOREST ============ --}}
         @if ($theme->on('forest_band') && $forestImageUrl)
@@ -643,9 +668,11 @@
 /*
  | Sankevi landing — the two ReactBits ports, in vanilla JS.
  |
- | Both read prefers-reduced-motion once and simply do not start when it is
- | set: the markup they enhance is already legible and complete without them
- | (the bands render as static type, the menu rows stay plain links).
+ | Both read prefers-reduced-motion once. The velocity bands simply never
+ | start (they render as static type and lose nothing); the option wheel does
+ | still run — it is a control, not decoration — but in a flat, snapping mode
+ | with no arc and no blur. Neither one adds markup or destinations of its
+ | own, so with JS off the page is a plain, complete document.
  */
 (function () {
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -758,68 +785,305 @@
         }
     })();
 
-    /* ── ACT 3 — Flowing Menu ─────────────────────────────────────────────
-     | ReactBits animates the panel in from whichever horizontal edge of the
-     | row the cursor crossed. A full-width row is far wider than it is tall,
-     | so the honest edge here is the vertical one: we compare the pointer's
-     | Y against the row's mid-line and enter from the nearer side, then
-     | leave toward whichever side the pointer left by.
+    /* ── ACT 4 — Option Wheel ─────────────────────────────────────────────
+     | A ReactBits "Option Wheel" port. The items sit on a circular arc whose
+     | radius is DERIVED rather than picked: we want the arc length between
+     | two neighbours to be exactly one row height, so with `tilt` degrees of
+     | arc per row,  R = rowH / tiltRad.  An item d rows from the read-line is
+     | then at angle d·tiltRad, and:
      |
-     | The side lives in a custom property (--fm-idle) that the idle
-     | transform reads. Switching sides while the panel is hidden would
-     | otherwise transition it right across the row, so the transition is
-     | suppressed for exactly one reflow while we move it.
+     |     y = R·sin(angle)                        along the arc
+     |     x = -R·(1 - cos(angle))·curve           pulled back toward the axis
+     |     r = angle in degrees                    tangent to the curve
      |
-     | Touch and keyboard get the same reveal, from the bottom, on
-     | touchstart / focus — the row is never hover-only. Without JS the panel
-     | simply stays off-canvas and the row is a plain link.
+     | `curve` is the 0..1 knob for how far the arc leans away; at 1 the items
+     | follow the true circle, at 0 they ride a straight column.
+     |
+     | Distance from the centre also becomes --ow-p, and the stylesheet turns
+     | that one number into the fade and the blur. Anything past RANGE rows is
+     | pinned at the edge with p = 1 (invisible) and taken out of the pointer
+     | path, but NOT out of the document: these are navigation links and they
+     | stay in the accessibility tree.
+     |
+     | This is a NAVIGATION control, not a form field. The centred item is the
+     | active one; clicking it (or Enter/Space on it) follows its href, and
+     | clicking any other item turns the wheel to it first, by the short way
+     | round. Without JS none of this exists and the same markup is a list.
      */
-    [].forEach.call(document.querySelectorAll('[data-fm-row]'), function (row) {
-        var panel = row.querySelector('[data-fm-marquee]');
-        if (!panel) return;
+    (function () {
+        var root = document.querySelector('[data-ow]');
+        if (!root) return;
 
-        function edge(e) {
-            var r = row.getBoundingClientRect();
-            var y = (e && typeof e.clientY === 'number' && e.clientY) ? e.clientY : r.top + r.height / 2;
-            return (y - r.top) < r.height / 2 ? '-101%' : '101%';
-        }
-        function show(from) {
-            panel.style.transition = 'none';
-            row.style.setProperty('--fm-idle', from);
-            void panel.offsetHeight;          // commit the move before animating
-            panel.style.transition = '';
-            row.classList.add('is-on');
-        }
-        function hide(to) {
-            // No suppression here: setting the exit side and dropping the class
-            // in the same tick resolves to one transition, out that way.
-            row.style.setProperty('--fm-idle', to);
-            row.classList.remove('is-on');
-        }
+        var wheel = root.querySelector('[data-ow-wheel]');
+        var items = [].slice.call(root.querySelectorAll('[data-ow-item]'));
+        var plates = [].slice.call(root.querySelectorAll('[data-ow-pl]'));
+        var status = root.querySelector('[data-ow-status]');
+        var n = items.length;
+        // A yard with one door needs no wheel to choose between doors.
+        if (!wheel || n < 2) return;
 
-        row.addEventListener('pointerenter', function (e) {
-            if (e.pointerType === 'touch') return;   // touch is handled below
-            show(edge(e));
+        var links = items.map(function (li) { return li.querySelector('a'); });
+        if (links.indexOf(null) > -1) return;
+        // The plate number is aria-hidden decoration; only the family's own
+        // name is worth saying out loud.
+        var names = items.map(function (li) {
+            var el = li.querySelector('.ow-nm') || li;
+            return el.textContent.replace(/\s+/g, ' ').trim();
         });
-        row.addEventListener('pointerleave', function (e) {
-            if (e.pointerType === 'touch') return;
-            hide(edge(e));
-        });
-        row.addEventListener('focus', function () { show('101%'); });
-        row.addEventListener('blur', function () { hide('101%'); });
 
-        // On touch the reveal plays under the finger while the tap resolves
-        // into a navigation; if the tap is abandoned it retracts.
-        var back;
-        row.addEventListener('touchstart', function () {
-            clearTimeout(back);
-            show('101%');
+        // ── parameters ────────────────────────────────────────────────────
+        // TILT   degrees of arc per row. Lower curls less and shows more of
+        //        the list; higher turns the far rows almost side-on. 24° puts
+        //        the first neighbour at a readable slant and the third row
+        //        past 70°, by which point the fade has already taken it.
+        // CURVE  0.55 — enough lean that the arc reads as an arc, not so much
+        //        that the second row swims out of its own column.
+        // RANGE  3 rows either side. The arc turns back on itself past 90°
+        //        (90/24 ≈ 3.7), so this is a geometric ceiling, not a taste.
+        //        In flat mode it is also what fits: rows 1 and 2 land inside
+        //        the box, row 3 is already at opacity 0.
+        // TAU    0.11s — the smoothing time constant. A page being turned,
+        //        not a reel coming to rest.
+        // No arc, no rotation, no blur and no smoothing when the visitor has
+        // asked for less motion — a plain stack that jumps between states.
+        var flat = reduced;
+
+        var TILT = 24;
+        var CURVE = 0.55;
+        var RANGE = 3;
+        var TAU = 0.11;
+        var DRAG_PX = 4;      // below this a pointer gesture is still a click
+        var LOOP = true;      // a handful of families read better as a ring
+        var SETTLE = 0.001;   // stop the rAF when the wheel is this close
+
+        var tiltRad = TILT * Math.PI / 180;
+        var rowH = 46;
+        var R = rowH / tiltRad;
+
+        // The row height is a CSS decision (it changes at the phone
+        // breakpoint), so the geometry reads it back rather than duplicating
+        // the media query in here.
+        function measure() {
+            var v = parseFloat(getComputedStyle(wheel).getPropertyValue('--ow-row'));
+            rowH = v > 0 ? v : 46;
+            R = rowH / tiltRad;
+        }
+
+        var cur = 0, target = 0, sel = -1, raf = 0, lastT = 0, onScreen = true;
+
+        function norm(i) { return ((i % n) + n) % n; }
+        // Signed rows from the read-line, wrapped to the SHORT way round.
+        function offset(i, c) {
+            var d = i - c;
+            if (LOOP) d -= n * Math.round(d / n);
+            return d;
+        }
+
+        function select(i) {
+            if (i === sel) return;
+            if (sel > -1) {
+                items[sel].classList.remove('is-sel');
+                links[sel].tabIndex = -1;
+                links[sel].removeAttribute('aria-current');
+                if (plates[sel]) plates[sel].classList.remove('is-sel');
+            }
+            sel = i;
+            items[i].classList.add('is-sel');
+            // Roving tabindex: the wheel is ONE tab stop, and the arrow keys
+            // move within it — the composite-widget contract. Tabbing through
+            // eight links that are 90% invisible would be the worse trade.
+            links[i].tabIndex = 0;
+            links[i].setAttribute('aria-current', 'true');
+            if (plates[i]) plates[i].classList.add('is-sel');
+        }
+
+        function announce() {
+            if (!status) return;
+            // Focus inside the wheel means the browser has just read the
+            // focused link out; a live region here would say it all again.
+            if (wheel.contains(document.activeElement)) return;
+            var tpl = status.getAttribute('data-ow-tpl') || '%s';
+            status.textContent = tpl.replace('%s', names[sel]);
+        }
+
+        function render() {
+            for (var i = 0; i < n; i++) {
+                var d = offset(i, cur);
+                var out = Math.abs(d) > RANGE;
+                var cd = out ? (d < 0 ? -RANGE : RANGE) : d;
+                var p = Math.min(1, Math.abs(d) / RANGE);
+                var x = 0, y, r = 0;
+                if (flat) {
+                    // Reduced motion: a plain stack. No arc to read means no
+                    // reason to rotate, lean or blur anything.
+                    y = cd * rowH;
+                } else {
+                    var a = cd * tiltRad;
+                    y = R * Math.sin(a);
+                    x = -R * (1 - Math.cos(a)) * CURVE;
+                    r = a * 180 / Math.PI;
+                }
+                var s = items[i].style;
+                s.setProperty('--ow-x', x.toFixed(2) + 'px');
+                s.setProperty('--ow-y', y.toFixed(2) + 'px');
+                s.setProperty('--ow-r', r.toFixed(2) + 'deg');
+                s.setProperty('--ow-p', p.toFixed(3));
+                s.pointerEvents = out ? 'none' : '';
+            }
+            select(norm(Math.round(cur)));
+        }
+
+        /* Frame-rate independent exponential smoothing: over dt seconds the
+           gap closes by 1 - e^(-dt/tau), which is the same journey at 60Hz
+           and at 144Hz. A fixed per-frame lerp is not. */
+        function tick(t) {
+            var dt = lastT ? Math.min((t - lastT) / 1000, 0.05) : 1 / 60;
+            lastT = t;
+            cur += (target - cur) * (1 - Math.exp(-dt / TAU));
+            if (Math.abs(target - cur) < SETTLE) {
+                cur = target;
+                raf = 0;
+                render();
+                announce();
+                return;                       // arrived — no more frames
+            }
+            render();
+            raf = requestAnimationFrame(tick);
+        }
+
+        function run() {
+            // Nothing to animate toward when motion is off or nobody is
+            // looking: land on the answer and stay there.
+            if (flat || !onScreen || document.hidden) {
+                if (raf) { cancelAnimationFrame(raf); raf = 0; }
+                cur = target;
+                render();
+                announce();
+                return;
+            }
+            if (!raf) { lastT = 0; raf = requestAnimationFrame(tick); }
+        }
+
+        function goTo(i) {
+            var base = Math.round(target);
+            var d = i - norm(base);
+            if (LOOP) d -= n * Math.round(d / n);   // the short way round
+            target = base + d;
+            run();
+        }
+
+        function clampTarget() {
+            if (!LOOP) target = Math.max(0, Math.min(n - 1, target));
+        }
+
+        // ── wheel / touchpad ──────────────────────────────────────────────
+        // Scoped to the wheel box alone (~300 × 250) and not to the section,
+        // so the page still scrolls everywhere else in this act.
+        var snapT;
+        wheel.addEventListener('wheel', function (e) {
+            var d = e.deltaY;
+            if (e.deltaMode === 1) d *= 16;                    // lines
+            else if (e.deltaMode === 2) d *= wheel.clientHeight; // pages
+            if (!d) return;
+            e.preventDefault();
+            target += d / (rowH * 1.35);
+            clampTarget();
+            // A wheel that stops between two families has chosen neither.
+            clearTimeout(snapT);
+            snapT = setTimeout(function () { target = Math.round(target); run(); }, 140);
+            run();
+        }, { passive: false });
+
+        // ── pointer drag ──────────────────────────────────────────────────
+        var down = false, moved = false, sy = 0, st = 0, pid = -1, dragEnd = 0;
+        wheel.addEventListener('pointerdown', function (e) {
+            if (e.button > 0) return;
+            down = true; moved = false; sy = e.clientY; st = target; pid = e.pointerId;
+            clearTimeout(snapT);
+        });
+        wheel.addEventListener('pointermove', function (e) {
+            if (!down) return;
+            var dy = e.clientY - sy;
+            if (!moved) {
+                if (Math.abs(dy) < DRAG_PX) return;   // still a click
+                moved = true;
+                wheel.classList.add('is-drag');
+                // Capture only once it IS a drag: capturing on pointerdown
+                // would retarget the click away from the item's own <a>.
+                try { wheel.setPointerCapture(pid); } catch (err) {}
+            }
+            target = st - dy / rowH;
+            clampTarget();
+            run();
+        });
+        function release() {
+            if (!down) return;
+            down = false;
+            wheel.classList.remove('is-drag');
+            if (pid > -1) { try { wheel.releasePointerCapture(pid); } catch (err) {} pid = -1; }
+            if (moved) { dragEnd = Date.now(); target = Math.round(target); run(); }
+        }
+        wheel.addEventListener('pointerup', release);
+        wheel.addEventListener('pointercancel', release);
+        wheel.addEventListener('lostpointercapture', release);
+
+        // ── clicking an item ──────────────────────────────────────────────
+        links.forEach(function (a, i) {
+            a.addEventListener('click', function (e) {
+                // The click that ends a drag is not a click.
+                if (Date.now() - dragEnd < 260) { e.preventDefault(); return; }
+                if (i !== sel) { e.preventDefault(); goTo(i); }
+                // The centred item IS the active one: let its href do the rest.
+            });
+            // Roving tabindex normally keeps focus on the centred item, but a
+            // screen reader's virtual cursor or a find-link can still land
+            // elsewhere. Turn the wheel to whatever has focus.
+            a.addEventListener('focus', function () { if (i !== sel) goTo(i); });
+        });
+
+        // ── keyboard ──────────────────────────────────────────────────────
+        wheel.addEventListener('keydown', function (e) {
+            if (e.altKey || e.ctrlKey || e.metaKey) return;
+            var to = -1;
+            if (e.key === 'ArrowDown') to = norm(sel + 1);
+            else if (e.key === 'ArrowUp') to = norm(sel - 1);
+            else if (e.key === 'Home') to = 0;
+            else if (e.key === 'End') to = n - 1;
+            else if (e.key === ' ' || e.key === 'Spacebar') {
+                // A link ignores Space; on a wheel it should open the centred
+                // family exactly the way Enter does.
+                e.preventDefault();
+                links[sel].click();
+                return;
+            } else {
+                return;
+            }
+            e.preventDefault();
+            goTo(to);
+            links[to].focus();          // focus follows selection, never traps
+        });
+
+        // ── lifecycle ─────────────────────────────────────────────────────
+        var rz;
+        window.addEventListener('resize', function () {
+            clearTimeout(rz);
+            rz = setTimeout(function () { measure(); render(); }, 160);
         }, { passive: true });
-        row.addEventListener('touchend', function () {
-            back = setTimeout(function () { hide('101%'); }, 700);
-        }, { passive: true });
-        row.addEventListener('touchcancel', function () { hide('101%'); }, { passive: true });
-    });
+
+        if ('IntersectionObserver' in window) {
+            new IntersectionObserver(function (en) {
+                onScreen = en[0].isIntersecting;
+                if (!onScreen) run();       // snaps and cancels the rAF
+            }, { rootMargin: '80px 0px' }).observe(root);
+        }
+        document.addEventListener('visibilitychange', function () { run(); });
+
+        measure();
+        links.forEach(function (a) { a.tabIndex = -1; });
+        root.classList.add('is-live');
+        if (flat) root.classList.add('is-flat');
+        render();
+    })();
 })();
 </script>
 @endpush

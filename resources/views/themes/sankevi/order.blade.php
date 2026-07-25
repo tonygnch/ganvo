@@ -39,9 +39,9 @@
             60% { box-shadow: 0 0 0 12px transparent; }
         }
         .ord-hero h1 { font-family: var(--display); font-weight: 500; font-size: clamp(34px, 5vw, 60px); line-height: 1.02; letter-spacing: -.02em; margin-bottom: 16px; }
-        .ord-hero h1 em { font-style: italic; color: var(--accent); }
+        .ord-hero h1 em { font-style: italic; color: var(--accent-ink); }
         .ord-hero p { color: var(--muted); max-width: 56ch; margin: 0 auto; }
-        .ord-hero .num { display: inline-flex; align-items: baseline; gap: 12px; margin-top: 24px; padding: 10px 18px; border: 1px solid var(--line2); font-size: 11px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--accent); }
+        .ord-hero .num { display: inline-flex; align-items: baseline; gap: 12px; margin-top: 24px; padding: 10px 18px; border: 1px solid var(--line2); font-size: 11px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--accent-ink); }
         .ord-hero .num b { font-weight: 500; color: var(--faint); }
 
         /* ===== dispatch note ===== */
@@ -63,12 +63,12 @@
         .ord-card .addr { font-size: 15px; line-height: 1.75; color: var(--txt); }
 
         .ord-badge { display: inline-flex; padding: 5px 11px; border: 1px solid var(--line2); font-size: 10px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
-        .ord-badge.paid, .ord-badge.shipped { border-color: var(--accent); color: var(--accent); }
+        .ord-badge.paid, .ord-badge.shipped { border-color: var(--accent); color: var(--accent-ink); }
         .ord-badge.pending { border-color: var(--ord-wait); background: var(--ord-wait-soft); color: var(--ord-wait); }
         .ord-badge.refunded, .ord-badge.cancelled, .ord-badge.failed { border-color: var(--ord-bad); background: var(--ord-bad-soft); color: var(--ord-bad); }
         /* An enquiry sitting at 'pending' is not a stalled payment — it is a
            request in the queue, and it gets the yard's own colour, not a warning. */
-        .ord-badge.req { border-color: var(--accent); color: var(--accent); }
+        .ord-badge.req { border-color: var(--accent); color: var(--accent-ink); }
 
         /* ===== what happens next — the enquiry's promise, ruled ===== */
         .ord-next { background: var(--surface); border: 1px solid var(--line); padding: 26px 26px 22px; margin-bottom: 22px; }
@@ -76,13 +76,13 @@
         .ord-next ol { list-style: none; counter-reset: nx; }
         .ord-next li { counter-increment: nx; display: grid; grid-template-columns: 34px 1fr; gap: 16px; align-items: start; padding: 14px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; color: var(--muted); }
         .ord-next li:last-child { border-bottom: none; padding-bottom: 0; }
-        .ord-next li::before { content: counter(nx, decimal-leading-zero); font-size: 10.5px; font-weight: 500; letter-spacing: .18em; color: var(--accent); padding-top: 5px; }
+        .ord-next li::before { content: counter(nx, decimal-leading-zero); font-size: 10.5px; font-weight: 500; letter-spacing: .18em; color: var(--accent-ink); padding-top: 5px; }
 
         /* ===== the list + the tally ===== */
         .ord-items { background: var(--surface); border: 1px solid var(--line); counter-reset: ordline; }
         .ord-items > h3 { font-family: var(--display); font-weight: 500; font-size: 21px; padding: 20px 26px; border-bottom: 1px solid var(--line2); }
         .ord-item { display: grid; grid-template-columns: auto 1fr auto; gap: 18px; align-items: center; padding: 17px 26px; border-bottom: 1px solid var(--line); counter-increment: ordline; }
-        .ord-item::before { content: counter(ordline, decimal-leading-zero); font-size: 10.5px; font-weight: 500; letter-spacing: .18em; color: var(--accent); }
+        .ord-item::before { content: counter(ordline, decimal-leading-zero); font-size: 10.5px; font-weight: 500; letter-spacing: .18em; color: var(--accent-ink); }
         .ord-items.no-sheet .ord-item { grid-template-columns: 1fr auto; }
         .ord-items.no-sheet .ord-item::before { display: none; }
         .ord-item .name { font-family: var(--display); font-weight: 500; font-size: 20px; line-height: 1.15; }
@@ -94,11 +94,11 @@
         .ord-tot { padding: 22px 26px 24px; background: var(--surface2); border-top: 1px solid var(--line); }
         .ord-tot .row { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 7px 0; font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
         .ord-tot .row .num { font-family: var(--display); font-weight: 500; font-size: 17px; letter-spacing: 0; text-transform: none; color: var(--txt); font-variant-numeric: tabular-nums; }
-        .ord-tot .row.disc .num { color: var(--accent); }
+        .ord-tot .row.disc .num { color: var(--accent-ink); }
         .ord-tot .row code { padding: 1px 7px; background: var(--surface); border: 1px solid var(--line); font-family: var(--body); font-size: 11px; color: var(--txt); }
         .ord-tot .grand { padding-top: 16px; margin-top: 14px; border-top: 1px solid var(--line2); }
         .ord-tot .grand .label { font-family: var(--display); font-weight: 500; font-size: 19px; letter-spacing: 0; text-transform: none; color: var(--txt); }
-        .ord-tot .grand .num { font-size: 27px; color: var(--accent); }
+        .ord-tot .grand .num { font-size: 27px; color: var(--accent-ink); }
         .ord-tot .grand .approx { color: var(--faint); font-size: 20px; margin-right: 3px; }
         .ord-tot .est-note { margin-top: 14px; padding-left: 13px; border-left: 1px solid var(--line2); font-size: 12.5px; line-height: 1.6; letter-spacing: 0; text-transform: none; color: var(--muted); }
 

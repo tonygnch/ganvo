@@ -97,7 +97,7 @@
         .co-main .sm-option input { accent-color: var(--accent); }
         .co-main .sm-option:has(input:checked) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 9%, var(--surface2)); }
         .co-main .sm-label { font-family: var(--body); font-size: 11px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; }
-        .co-main .sm-cost { font-family: var(--display); font-size: 17px; font-variant-numeric: tabular-nums; color: var(--accent); }
+        .co-main .sm-cost { font-family: var(--display); font-size: 17px; font-variant-numeric: tabular-nums; color: var(--accent-ink); }
         .co-main .sm-desc { color: var(--muted); font-size: 12.5px; }
         .co-main .ce-label { font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
         .co-main .ce-label small { color: var(--faint); text-transform: none; letter-spacing: .02em; }
@@ -108,7 +108,7 @@
 
         .co-signed-in { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); border: 1px solid var(--line2); padding: 12px 15px; margin-bottom: 20px; font-size: 12.5px; letter-spacing: .04em; }
         .co-signin-banner { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; background: var(--surface); border: 1px solid var(--line); padding: 15px 22px; margin-bottom: 30px; font-size: 11px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
-        .co-signin-banner a { color: var(--accent); border-bottom: 1px solid currentColor; padding-bottom: 1px; }
+        .co-signin-banner a { color: var(--accent-ink); border-bottom: 1px solid currentColor; padding-bottom: 1px; }
 
         .errors { border: 1px solid #b4614a; border-left-width: 3px; background: color-mix(in srgb, #b4614a 12%, var(--surface)); padding: 15px 20px; margin-bottom: 28px; font-size: 13.5px; }
         .errors ul { list-style: none; }
@@ -118,14 +118,14 @@
         .stub-notice { display: flex; gap: 16px; align-items: flex-start; background: var(--surface2); border: 1px solid var(--line2); padding: 18px 22px; font-size: 13.5px; color: var(--muted); }
         .stub-notice .icon { flex-shrink: 0; width: 28px; height: 28px; display: grid; place-items: center; background: var(--accent); color: var(--on-accent); font-size: 14px; font-weight: 600; }
         .stub-notice strong { display: block; margin-bottom: 5px; font-family: var(--display); font-weight: 500; font-size: 19px; color: var(--txt); }
-        .stub-notice em { font-style: italic; color: var(--accent); }
+        .stub-notice em { font-style: italic; color: var(--accent-ink); }
 
         /* ===== ENQUIRY — the send sheet ===== */
         /* what happens next: three ruled steps, numbered in the margin */
         .nx { list-style: none; counter-reset: nx; }
         .nx li { position: relative; counter-increment: nx; display: grid; grid-template-columns: 34px 1fr; gap: 16px; align-items: start; padding: 15px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; color: var(--muted); }
         .nx li:last-child { border-bottom: none; padding-bottom: 0; }
-        .nx li::before { content: counter(nx, decimal-leading-zero); font-family: var(--body); font-size: 10.5px; font-weight: 500; letter-spacing: .18em; color: var(--accent); padding-top: 5px; }
+        .nx li::before { content: counter(nx, decimal-leading-zero); font-family: var(--body); font-size: 10.5px; font-weight: 500; letter-spacing: .18em; color: var(--accent-ink); padding-top: 5px; }
 
         /* the no-payment slab — the one place on the page allowed to be loud */
         .nopay { display: flex; gap: 18px; align-items: flex-start; background: var(--moss); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--moss)); padding: 22px 26px; margin-bottom: 22px; color: #f1ebdd; }
@@ -137,7 +137,7 @@
         .rv + .rv { margin-top: 26px; }
         .rv-h { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; padding-bottom: 10px; margin-bottom: 4px; border-bottom: 1px solid var(--line2); }
         .rv-h span { font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
-        .rv-h button { background: none; border: none; padding: 0; font-family: var(--body); font-size: 10px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); transition: border-color .25s ease; }
+        .rv-h button { background: none; border: none; padding: 0; font-family: var(--body); font-size: 10px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-ink); border-bottom: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); transition: border-color .25s ease; }
         .rv-h button:hover { border-color: var(--accent); }
         .rv-row { display: grid; grid-template-columns: 148px 1fr; gap: 18px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 14.5px; }
         .rv-row:last-child { border-bottom: none; }
@@ -160,9 +160,9 @@
         .osum .r { display: flex; justify-content: space-between; gap: 12px; margin: 11px 0; font-size: 13.5px; color: var(--muted); }
         .osum .r span:first-child { font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; }
         .osum .r span:last-child { font-variant-numeric: tabular-nums; color: var(--txt); }
-        .osum .r.discount span, .osum .r.discount span:last-child { color: var(--accent); }
+        .osum .r.discount span, .osum .r.discount span:last-child { color: var(--accent-ink); }
         .osum .tot { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-top: 18px; margin: 18px 0 16px; border-top: 1px solid var(--line2); font-family: var(--display); font-weight: 500; font-size: 21px; }
-        .osum .tot .v { font-size: 25px; font-variant-numeric: tabular-nums; color: var(--accent); }
+        .osum .tot .v { font-size: 25px; font-variant-numeric: tabular-nums; color: var(--accent-ink); }
         /* outside [data-sm-grand]: the shipping-method JS rewrites that node */
         .osum .tot .approx { margin-right: 4px; font-size: 19px; color: var(--faint); }
         .osum .est-note { margin: -4px 0 16px; padding-left: 13px; border-left: 1px solid var(--line2); font-size: 12.5px; line-height: 1.6; color: var(--muted); }
@@ -177,7 +177,7 @@
         .wz-steps li.is-current { color: var(--txt); }
         .wz-steps li.is-current .dot { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
         .wz-steps li.is-done { color: var(--muted); cursor: pointer; }
-        .wz-steps li.is-done .dot { border-color: var(--accent); color: var(--accent); }
+        .wz-steps li.is-done .dot { border-color: var(--accent); color: var(--accent-ink); }
         .wz-steps li.is-done .dot::after { content: "✓"; }
         .wz-steps li.is-done .dot .n { display: none; }
         .wz-steps .label { white-space: nowrap; }

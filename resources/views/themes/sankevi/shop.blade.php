@@ -88,10 +88,10 @@
            so it lands in the page margin exactly as it does elsewhere */
         .cover .head { position: relative; }
         .cover .crumb { font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
-        .cover .crumb a:hover { color: var(--accent); }
+        .cover .crumb a:hover { color: var(--accent-ink); }
         .cover .kicker { display: block; margin: 22px 0 12px; }
         .cover h1 { font-family: var(--display); font-weight: 500; font-size: clamp(40px, 6vw, 82px); line-height: .98; letter-spacing: -.02em; max-width: 16ch; }
-        .cover h1 em { font-style: italic; color: var(--accent); }
+        .cover h1 em { font-style: italic; color: var(--accent-ink); }
         .cover p { color: var(--muted); max-width: 54ch; margin-top: 16px; font-size: 15.5px; }
 
         /* ===== THE RAIL — sections, tally and the order form. No panel: a
@@ -100,10 +100,10 @@
         .rail .sections { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
         .rail .chips { display: flex; gap: 9px; flex-wrap: wrap; min-width: 0; }
         .rail .chips .pill { transition: color .25s ease, border-color .25s ease, background-color .25s ease; }
-        .rail .chips .pill:hover { border-color: var(--accent); color: var(--accent); }
+        .rail .chips .pill:hover { border-color: var(--accent); color: var(--accent-ink); }
         .rail .chips .pill.on, .rail .chips .pill.on:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
         .rail .tally { margin-left: auto; display: flex; align-items: baseline; gap: 12px; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-        .rail .tally .q { color: var(--accent); text-transform: none; letter-spacing: .04em; font-size: 12px; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; }
+        .rail .tally .q { color: var(--accent-ink); text-transform: none; letter-spacing: .04em; font-size: 12px; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; }
 
         /* the order form — bare fields on hairlines, labels in the spec voice */
         .sift { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(0, 1.15fr) minmax(0, .62fr) minmax(0, .62fr) auto auto; gap: 0 22px; align-items: end; margin-top: 26px; padding: 22px 0 24px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line2); }
@@ -124,7 +124,7 @@
         .sift .go { display: flex; align-items: center; gap: 16px; }
         .sift .btn { padding: 12px 24px; }
         .sift .clear { font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid transparent; padding-bottom: 3px; white-space: nowrap; transition: color .25s ease, border-color .25s ease; }
-        .sift .clear:hover { color: var(--accent); border-color: currentColor; }
+        .sift .clear:hover { color: var(--accent-ink); border-color: currentColor; }
 
         /*
          | ===== THE BOOK — one band per item, full width of the page.
@@ -178,7 +178,7 @@
         .entry .body { grid-column: 2; padding: clamp(34px, 3.4vw, 54px) clamp(24px, 3vw, 48px); display: flex; flex-direction: column; justify-content: center; min-width: 0; }
         .entry .body .sec { font-size: 10.5px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--faint); }
         .entry .body h2 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 3.3vw, 48px); line-height: 1.04; letter-spacing: -.015em; margin: 12px 0 0; transition: color .3s ease; }
-        .entry:hover .body h2 { color: var(--accent); }
+        .entry:hover .body h2 { color: var(--accent-ink); }
         .entry .body .desc { color: var(--muted); font-size: 14.5px; line-height: 1.6; margin-top: 12px; max-width: 46ch; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
         /* the spec column — the tight ruled register, the yard's own hand */
@@ -193,13 +193,13 @@
            chosen before there is a real one */
         .entry .ask { grid-column: 3; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 10px; padding: clamp(34px, 3.4vw, 54px) 0; text-align: right; }
         .entry.rev .ask { grid-column: 1; align-items: flex-start; text-align: left; padding: clamp(34px, 3.4vw, 54px) 0; }
-        .entry .ask .choice { font-size: 9.5px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); padding: 5px 10px; clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px); }
+        .entry .ask .choice { font-size: 9.5px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-ink); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); padding: 5px 10px; clip-path: polygon(7px 0, 100% 0, 100% calc(100% - 7px), calc(100% - 7px) 100%, 0 100%, 0 7px); }
         body.no-cut .entry .ask .choice { clip-path: none; }
         .entry .ask .from { display: block; font-size: 10px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--faint); }
         .entry .ask .pr { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 2.6vw, 38px); line-height: 1; font-variant-numeric: tabular-nums; }
         .entry .ask .open { display: inline-flex; align-items: center; gap: 9px; margin-top: 4px; font-size: 10px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); transition: color .3s ease; }
         .entry .ask .open i { font-style: normal; transition: transform .4s cubic-bezier(.19, .74, .16, 1); }
-        .entry:hover .ask .open { color: var(--accent); }
+        .entry:hover .ask .open { color: var(--accent-ink); }
         .entry:hover .ask .open i { transform: translateX(5px); }
 
         @media (prefers-reduced-motion: reduce) {
@@ -210,7 +210,7 @@
         /* ===== the empty page of the book ===== */
         .book-empty { margin: 64px 0 0; padding: clamp(54px, 7vw, 96px) clamp(24px, 4vw, 60px); border: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 18px; }
         .book-empty h2 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 4vw, 52px); line-height: 1.04; letter-spacing: -.015em; }
-        .book-empty h2 em { font-style: italic; color: var(--accent); }
+        .book-empty h2 em { font-style: italic; color: var(--accent-ink); }
         .book-empty p { color: var(--muted); max-width: 48ch; }
         .book-empty .acts { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
 
@@ -226,7 +226,7 @@
             font-weight: 500; letter-spacing: .16em; text-transform: uppercase;
             transition: color .25s ease, border-color .25s ease, background-color .25s ease;
         }
-        .book-foot .sp-pager-link:hover { background: transparent; border-color: var(--accent); color: var(--accent); }
+        .book-foot .sp-pager-link:hover { background: transparent; border-color: var(--accent); color: var(--accent-ink); }
         .book-foot .sp-pager-current .sp-pager-link { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
         .book-foot .sp-pager-disabled .sp-pager-link { opacity: .3; border-color: var(--line); color: var(--muted); }
 
