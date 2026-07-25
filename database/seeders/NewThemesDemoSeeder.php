@@ -32,6 +32,15 @@ use Spatie\Permission\Models\Role;
  */
 class NewThemesDemoSeeder extends Seeder
 {
+    /**
+     * Create the demo owner + shopper accounts (both with the password
+     * "password"). TRUE for local demo seeding; the production provisioning
+     * command turns it OFF, because planting a known-password store admin on
+     * a public site is a live vulnerability, and the real owner already has
+     * an account created through onboarding.
+     */
+    public bool $createAccounts = true;
+
     public function run(): void
     {
         foreach ($this->stores() as $slug => $cfg) {
@@ -41,6 +50,27 @@ class NewThemesDemoSeeder extends Seeder
         // Sankevi is the option-matrix showcase: its boards are chosen by
         // length AND width, and the two interact.
         $this->seedSankeviMatrix();
+    }
+
+    /** Console output that survives being run outside `db:seed`. */
+    private function say(string $msg): void
+    {
+        if ($this->command) {
+            $this->command->info($msg);
+        }
+    }
+
+    /** Build ONE demo store by slug — the entry point the provisioning command uses. */
+    public function seedOnly(string $slug): void
+    {
+        $all = $this->stores();
+        if (! isset($all[$slug])) {
+            throw new \InvalidArgumentException("No demo config for store '{$slug}'.");
+        }
+        $this->seedStore($slug, $all[$slug]);
+        if ($slug === 'sankevi') {
+            $this->seedSankeviMatrix();
+        }
     }
 
     private function seedStore(string $slug, array $cfg): void
@@ -59,24 +89,26 @@ class NewThemesDemoSeeder extends Seeder
 
         $store = Store::firstOrCreate(['tenant_id' => $tenant->id], ['currency' => $cfg['currency']]);
 
-        $owner = User::firstOrCreate(
-            ['email' => "owner@{$slug}.test"],
-            [
-                'tenant_id' => $tenant->id,
-                'name' => $cfg['name'] . ' Studio',
-                'password' => Hash::make('password'),
-                'email_verified_at' => now(),
-            ]
-        );
-        if (($role = Role::where('name', 'store_admin')->first()) && ! $owner->hasRole($role)) {
-            $owner->assignRole($role);
+        if ($this->createAccounts) {
+            $owner = User::firstOrCreate(
+                ['email' => "owner@{$slug}.test"],
+                [
+                    'tenant_id' => $tenant->id,
+                    'name' => $cfg['name'] . ' Studio',
+                    'password' => Hash::make('password'),
+                    'email_verified_at' => now(),
+                ]
+            );
+            if (($role = Role::where('name', 'store_admin')->first()) && ! $owner->hasRole($role)) {
+                $owner->assignRole($role);
+            }
+            Customer::firstOrCreate(
+                ['tenant_id' => $tenant->id, 'email' => "shopper@{$slug}.test"],
+                ['name' => 'Demo Shopper', 'password' => Hash::make('password'), 'email_verified_at' => now()]
+            );
         }
-        Customer::firstOrCreate(
-            ['tenant_id' => $tenant->id, 'email' => "shopper@{$slug}.test"],
-            ['name' => 'Demo Shopper', 'password' => Hash::make('password'), 'email_verified_at' => now()]
-        );
 
-        $this->command->info("Seeding {$cfg['name']} ({$slug})…");
+        $this->say("Seeding {$cfg['name']} ({$slug})…");
         $this->wipe($tenant);
 
         // Categories
@@ -155,7 +187,7 @@ class NewThemesDemoSeeder extends Seeder
         }
 
         $this->configureStore($store, $slug, $cfg);
-        $this->command->info('  → http://' . $slug . '.' . config('ganvo.central_domain') . ':8000  (' . count($products) . ' products)');
+        $this->say('  → http://' . $slug . '.' . config('ganvo.central_domain') . ':8000  (' . count($products) . ' products)');
     }
 
     /**
@@ -233,7 +265,7 @@ class NewThemesDemoSeeder extends Seeder
             }
         }
 
-        $this->command->info('  → Sankevi option matrix: ' . count($matrix) . ' lengths × varying widths on ' . $products->count() . ' products');
+        $this->say('  → Sankevi option matrix: ' . count($matrix) . ' lengths × varying widths on ' . $products->count() . ' products');
     }
 
     private function configureStore(Store $store, string $slug, array $cfg): void
