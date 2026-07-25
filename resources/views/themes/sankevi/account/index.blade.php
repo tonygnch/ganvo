@@ -20,7 +20,7 @@
         .acct-side a.on { color: var(--accent); border-color: var(--line2); }
         .acct-side form { margin: 0; }
 
-        .acct-main h2 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 3.4vw, 42px); line-height: 1.04; letter-spacing: -.015em; padding-bottom: 18px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+        .acct-main h2 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 3.4vw, 42px); line-height: 1.04; letter-spacing: 0; padding-bottom: 18px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
 
         /* ===== delivery notes ===== */
         .order { background: var(--surface); border: 1px solid var(--line); margin-bottom: 16px; transition: border-color .3s ease; }
@@ -37,7 +37,7 @@
         .order .act a:hover { color: var(--accent); border-color: var(--accent); }
 
         .acct-empty { padding: 70px 24px; text-align: center; border: 1px solid var(--line); background: var(--surface); }
-        .acct-empty p { font-family: var(--display); font-style: italic; font-size: 24px; line-height: 1.2; color: var(--muted); margin-bottom: 26px; }
+        .acct-empty p { font-family: var(--display); font-weight: 300; letter-spacing: .012em; font-size: 24px; line-height: 1.2; color: var(--muted); margin-bottom: 26px; }
 
         @media (max-width: 900px) {
             .account { grid-template-columns: 1fr; gap: 30px; }

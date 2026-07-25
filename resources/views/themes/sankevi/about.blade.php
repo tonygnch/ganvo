@@ -61,8 +61,8 @@
         .heritage .art img.mounted { transform: scale(1.14); }
         .heritage .tx { position: relative; z-index: 2; margin-left: -13%; background: var(--surface); border: 1px solid var(--line); padding: clamp(34px, 4.4vw, 62px); }
         .heritage .tx .k { display: block; margin-bottom: 18px; }
-        .heritage .tx h2 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 3.8vw, 54px); line-height: 1.03; letter-spacing: -.018em; margin-bottom: 22px; }
-        .heritage .tx h2 em { font-style: italic; color: var(--accent-ink); }
+        .heritage .tx h2 { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 3.1vw, 41px); line-height: 1.03; letter-spacing: 0; margin-bottom: 22px; }
+        .heritage .tx h2 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
         .heritage .tx p { color: var(--muted); max-width: 46ch; font-size: 15.5px; }
         /* No photograph in the slot: the manifesto is a pull-quote instead of
            half of an overlap, and centres on its own. */
@@ -70,7 +70,7 @@
         .heritage.solo .tx { margin-left: 0; }
 
         .ab-sec { margin-top: 104px; }
-        .ab-sec > h2 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 3.6vw, 48px); line-height: 1.04; letter-spacing: -.015em; padding-bottom: 18px; margin-bottom: 34px; border-bottom: 1px solid var(--line); }
+        .ab-sec > h2 { font-family: var(--display); font-weight: 500; font-size: clamp(25px, 3vw, 38px); line-height: 1.04; letter-spacing: 0; padding-bottom: 18px; margin-bottom: 34px; border-bottom: 1px solid var(--line); }
 
         /* ===== the years, standing in the margin ===== */
         .tl { list-style: none; }
@@ -82,7 +82,7 @@
         /* ===== the numbers ===== */
         .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 24px; }
         .stats .stat { background: var(--surface); border: 1px solid var(--line); padding: 30px 26px; }
-        .stats .stat-value { display: block; font-family: var(--display); font-weight: 500; font-size: 44px; line-height: 1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+        .stats .stat-value { display: block; font-family: var(--display); font-weight: 500; font-size: 44px; line-height: 1; letter-spacing: 0; font-variant-numeric: tabular-nums; }
         .stats .stat-label { display: block; margin-top: 12px; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
 
         /* ===== the plates ===== */

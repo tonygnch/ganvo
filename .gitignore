@@ -30,3 +30,6 @@ Thumbs.db
 # compiled python bytecode (agent skill scripts)
 __pycache__/
 *.pyc
+
+# graphify — local knowledge-graph output (rebuildable with `/graphify .`)
+graphify-out/

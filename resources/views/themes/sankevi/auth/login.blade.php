@@ -17,8 +17,8 @@
 
         .auth .head { padding-bottom: 22px; margin-bottom: 26px; border-bottom: 1px solid var(--line2); }
         .auth .card .k { display: block; margin-bottom: 14px; }
-        .auth .card h1 { font-family: var(--display); font-weight: 500; font-size: clamp(32px, 4.2vw, 46px); line-height: 1.02; letter-spacing: -.02em; margin-bottom: 10px; }
-        .auth .card h1 em { font-style: italic; color: var(--accent); }
+        .auth .card h1 { font-family: var(--display); font-weight: 500; font-size: clamp(27px, 3.4vw, 37px); line-height: 1.02; letter-spacing: 0; margin-bottom: 10px; }
+        .auth .card h1 em { font-style: normal; font-weight: 600; color: var(--accent); }
         .auth .card .lede { color: var(--muted); font-size: 14.5px; }
 
         .auth .errors { border: 1px solid #b4614a; border-left-width: 3px; background: color-mix(in srgb, #b4614a 12%, var(--surface)); padding: 13px 16px; margin-bottom: 22px; font-size: 13px; line-height: 1.55; }

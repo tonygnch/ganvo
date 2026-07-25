@@ -38,8 +38,8 @@
             0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 40%, transparent); }
             60% { box-shadow: 0 0 0 12px transparent; }
         }
-        .ord-hero h1 { font-family: var(--display); font-weight: 500; font-size: clamp(34px, 5vw, 60px); line-height: 1.02; letter-spacing: -.02em; margin-bottom: 16px; }
-        .ord-hero h1 em { font-style: italic; color: var(--accent-ink); }
+        .ord-hero h1 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 3.8vw, 45px); line-height: 1.02; letter-spacing: 0; margin-bottom: 16px; }
+        .ord-hero h1 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
         .ord-hero p { color: var(--muted); max-width: 56ch; margin: 0 auto; }
         .ord-hero .num { display: inline-flex; align-items: baseline; gap: 12px; margin-top: 24px; padding: 10px 18px; border: 1px solid var(--line2); font-size: 11px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--accent-ink); }
         .ord-hero .num b { font-weight: 500; color: var(--faint); }

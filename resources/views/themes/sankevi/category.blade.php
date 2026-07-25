@@ -44,7 +44,7 @@
         .spec-pills { display: flex; flex-wrap: wrap; gap: 9px; margin: 22px 0 30px; }
         .spec-pills .pill.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
-        .cat-empty { padding: 90px 24px; text-align: center; font-family: var(--display); font-style: italic; font-size: 24px; color: var(--muted); border: 1px solid var(--line); }
+        .cat-empty { padding: 90px 24px; text-align: center; font-family: var(--display); font-weight: 300; letter-spacing: .012em; font-size: 24px; color: var(--muted); border: 1px solid var(--line); }
 
         /* the grid loses a column to the rail — three plates, not four */
         .catalog .shelf { grid-template-columns: repeat(3, 1fr); }

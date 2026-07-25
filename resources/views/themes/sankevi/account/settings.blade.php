@@ -23,7 +23,7 @@
         .acct-side a.on { color: var(--accent); border-color: var(--line2); }
         .acct-side form { margin: 0; }
 
-        .acct-main h2 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 3.4vw, 42px); line-height: 1.04; letter-spacing: -.015em; padding-bottom: 18px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+        .acct-main h2 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 3.4vw, 42px); line-height: 1.04; letter-spacing: 0; padding-bottom: 18px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
 
         .flash { background: color-mix(in srgb, var(--accent) 12%, var(--surface)); border: 1px solid var(--accent); padding: 14px 17px; margin-bottom: 22px; font-size: 13px; letter-spacing: .04em; }
         .errors { border: 1px solid #b4614a; border-left-width: 3px; background: color-mix(in srgb, #b4614a 12%, var(--surface)); padding: 13px 17px; margin-bottom: 20px; font-size: 13px; }

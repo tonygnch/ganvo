@@ -227,7 +227,7 @@
         .hero .h1w { overflow: hidden; padding-bottom: .06em; }
         .hero h1 {
             font-family: var(--display); font-weight: 500;
-            font-size: clamp(50px, 10.6vw, 168px); line-height: .9; letter-spacing: -.032em;
+            font-size: clamp(36px, 6.1vw, 88px); line-height: .9; letter-spacing: 0;
             max-width: 15ch; text-wrap: balance;
             text-shadow: 0 2px 40px rgba(9, 7, 4, .5);
             transform: translateY(104%);
@@ -235,7 +235,7 @@
             animation-delay: var(--d, 0s);
         }
         @keyframes h1Rise { to { transform: none; } }
-        .hero h1 em { font-style: italic; color: var(--accent-ink); }
+        .hero h1 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
         .hero .sub { max-width: 46ch; margin-top: clamp(18px, 3vh, 30px); font-size: 16.5px; color: rgba(244, 239, 226, .92); text-shadow: 0 1px 12px rgba(9, 7, 4, .8); }
 
         /* THE CAPABILITY PLATES. One merchant-editable line, broken on its own
@@ -294,8 +294,8 @@
         .vel-seq { display: flex; }
         .vel-item {
             display: flex; align-items: center; gap: .3em; padding-right: .3em; white-space: nowrap;
-            font-family: var(--display); font-weight: 500; font-size: clamp(42px, 8.4vw, 132px);
-            line-height: 1.06; letter-spacing: -.02em; text-transform: uppercase;
+            font-family: var(--display); font-weight: 500; font-size: clamp(32px, 5.4vw, 78px);
+            line-height: 1.06; letter-spacing: 0; text-transform: uppercase;
         }
         .vel-item i { font-style: normal; color: var(--accent-ink); font-size: .6em; transform: translateY(-.06em); }
         /* the second band is the same words cut out of the ground — outline
@@ -319,8 +319,8 @@
            ================================================================= */
         .offer { position: relative; padding: clamp(96px, 16vh, 180px) 0 0; }
         .offer .head { max-width: 64ch; }
-        .offer h2 { font-family: var(--display); font-weight: 500; font-size: clamp(32px, 4.6vw, 68px); line-height: 1.01; letter-spacing: -.026em; margin-top: 14px; }
-        .offer h2 em { font-style: italic; color: var(--accent-ink); }
+        .offer h2 { font-family: var(--display); font-weight: 500; font-size: clamp(27px, 3.6vw, 50px); line-height: 1.01; letter-spacing: 0; margin-top: 14px; }
+        .offer h2 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
         .offer .lead { margin-top: 22px; max-width: 56ch; color: var(--muted); font-size: 16px; }
 
         .offer .grid {
@@ -332,7 +332,7 @@
         .offer .cell:hover { background: var(--surface); }
         .offer .cell .n { display: block; font-size: 10.5px; font-weight: 500; letter-spacing: .24em; color: var(--faint); font-variant-numeric: tabular-nums; }
         .offer .cell .rule { display: block; width: 44px; height: 2px; margin: 20px 0 22px; background: var(--accent); transform-origin: 0 50%; }
-        .offer .cell h3 { font-family: var(--display); font-weight: 500; font-size: clamp(19px, 1.7vw, 25px); line-height: 1.16; letter-spacing: -.012em; }
+        .offer .cell h3 { font-family: var(--display); font-weight: 500; font-size: clamp(19px, 1.7vw, 25px); line-height: 1.16; letter-spacing: 0; }
         .offer .cell p { margin-top: 13px; color: var(--muted); font-size: 14.5px; line-height: 1.62; }
 
         /* The rule's RESTING state is full width — that is what a browser
@@ -361,8 +361,8 @@
         .why { position: relative; padding: clamp(96px, 16vh, 180px) 0 0; }
         .why .in { display: grid; grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr); gap: clamp(34px, 6vw, 92px); align-items: start; }
         .why .aside { position: sticky; top: calc(var(--header-height) + 46px); }
-        .why h2 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 4vw, 58px); line-height: 1.02; letter-spacing: -.026em; margin-top: 14px; }
-        .why h2 em { font-style: italic; color: var(--accent-ink); }
+        .why h2 { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 3.3vw, 44px); line-height: 1.02; letter-spacing: 0; margin-top: 14px; }
+        .why h2 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
 
         /* The counted facts. The value lives in its own <span> because the kit
            rewrites that element's text — the label rule below is scoped to
@@ -383,7 +383,7 @@
         .why .list li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: clamp(16px, 2vw, 28px); padding: clamp(24px, 3.2vh, 34px) 0; border-top: 1px solid var(--line); }
         .why .list li:last-child { border-bottom: 1px solid var(--line); }
         .why .list .ix { font-size: 10.5px; font-weight: 500; letter-spacing: .18em; color: var(--accent-ink); font-variant-numeric: tabular-nums; padding-top: .5em; }
-        .why .list h3 { font-family: var(--display); font-weight: 500; font-size: clamp(21px, 2vw, 29px); line-height: 1.12; letter-spacing: -.016em; }
+        .why .list h3 { font-family: var(--display); font-weight: 500; font-size: clamp(21px, 2vw, 29px); line-height: 1.12; letter-spacing: 0; }
         .why .list p { margin-top: 11px; color: var(--muted); font-size: 15px; max-width: 52ch; }
 
         /* =================================================================
@@ -421,8 +421,8 @@
         /* Sized with the other acts now that this one opens the page. The
            plate's family name still runs larger — the photograph is where the
            display moment belongs — but the heading no longer whispers. */
-        .families .head h2 { font-family: var(--display); font-weight: 500; font-size: clamp(32px, 4.4vw, 64px); line-height: 1.02; letter-spacing: -.026em; margin-top: 14px; }
-        .families .head h2 em { font-style: italic; color: var(--accent-ink); }
+        .families .head h2 { font-family: var(--display); font-weight: 500; font-size: clamp(27px, 3.5vw, 48px); line-height: 1.02; letter-spacing: 0; margin-top: 14px; }
+        .families .head h2 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
         .families .head .hint { font-size: 11px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--faint); padding-bottom: 6px; }
         /* The hint describes a gesture that only exists once the wheel is
            live. With JS off it would be instructions for a control that
@@ -477,7 +477,7 @@
             filter: blur(calc(var(--ow-p, 0) * var(--ow-p, 0) * 3.2px));
             will-change: transform, opacity;
         }
-        .ow.is-live .ow-item a { height: 100%; padding: 0; align-items: center; white-space: nowrap; font-size: clamp(22px, 2.1vw, 31px); }
+        .ow.is-live .ow-item a { height: 100%; padding: 0; align-items: center; white-space: nowrap; font-size: clamp(20px, 1.9vw, 27px); }
         .ow.is-live .ow-item.is-sel a, .ow.is-live .ow-item.is-sel .ow-ix { color: var(--accent-ink); }
 
         /* ── the plate ─────────────────────────────────────────────────── */
@@ -489,7 +489,7 @@
         .ow:not(.is-live) .ow-pl:first-child { opacity: 1; }
         .ow.is-live .ow-pl.is-sel { opacity: 1; }
         .ow-pl .cap { position: absolute; z-index: 2; left: clamp(18px, 2.2vw, 30px); right: clamp(18px, 2.2vw, 30px); bottom: clamp(15px, 2vw, 24px); display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; }
-        .ow-pl .nm { font-family: var(--display); font-weight: 500; font-size: clamp(31px, 4.1vw, 62px); line-height: 1.02; letter-spacing: -.022em; text-shadow: 0 2px 26px rgba(9, 7, 4, .6); }
+        .ow-pl .nm { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 3.3vw, 46px); line-height: 1.02; letter-spacing: 0; text-shadow: 0 2px 26px rgba(9, 7, 4, .6); }
         .ow-pl .go { flex-shrink: 0; display: inline-flex; align-items: center; gap: 10px; padding-bottom: 6px; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: rgba(244, 239, 226, .78); }
         .ow-pl .go svg { width: 26px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.2; transition: transform .5s cubic-bezier(.19, .74, .16, 1); }
         .ow-pl:hover .go svg { transform: translateX(8px); }
@@ -513,7 +513,7 @@
         .forest img { position: absolute; inset: -8% 0; width: 100%; height: 116%; object-fit: cover; }
         .forest::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, var(--bg), rgba(11, 9, 6, .5) 26%, rgba(11, 9, 6, .46) 62%, var(--bg)); }
         .forest .q { position: relative; z-index: 2; text-align: center; padding: 70px 26px; max-width: 1080px; }
-        .forest .q blockquote { font-family: var(--display); font-style: italic; font-weight: 400; font-size: clamp(28px, 5vw, 74px); line-height: 1.1; letter-spacing: -.022em; color: #f4efe2; text-shadow: 0 2px 34px rgba(9, 7, 4, .55); }
+        .forest .q blockquote { font-family: var(--display); font-weight: 300; letter-spacing: .012em; font-size: clamp(24px, 3.6vw, 52px); line-height: 1.1; letter-spacing: 0; color: #f4efe2; text-shadow: 0 2px 34px rgba(9, 7, 4, .55); }
         .forest .q figcaption { margin-top: 30px; font-size: 10.5px; font-weight: 500; letter-spacing: .3em; text-transform: uppercase; color: var(--accent-ink); }
 
         /* =================================================================
@@ -524,8 +524,8 @@
         .closing::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .035) 0 1px, transparent 1px 28px); }
         .closing .in { position: relative; z-index: 2; display: grid; grid-template-columns: 1.2fr .8fr; gap: clamp(30px, 5vw, 76px); align-items: end; }
         .closing .k { display: block; color: var(--accent-ink); margin-bottom: 20px; }
-        .closing h2 { font-family: var(--display); font-weight: 500; font-size: clamp(34px, 5.4vw, 80px); line-height: 1; letter-spacing: -.024em; }
-        .closing h2 em { font-style: italic; color: var(--accent-ink); }
+        .closing h2 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 4vw, 58px); line-height: 1; letter-spacing: 0; }
+        .closing h2 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
         .closing p { color: rgba(244, 240, 228, .82); max-width: 46ch; margin-top: 22px; font-size: 15.5px; }
         .closing .rows { display: flex; flex-direction: column; gap: 13px; margin: 30px 0 0; }
         .closing .rows .row { display: flex; align-items: center; gap: 12px; font-size: 11px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: rgba(244, 240, 228, .8); }
@@ -581,7 +581,7 @@
         @media (max-width: 760px) {
             .ow { --ow-row: 52px; grid-template-columns: minmax(0, 1fr); gap: 22px; }
             .ow-plate { order: -1; height: 250px; }
-            .ow-pl .nm { font-size: clamp(28px, 7vw, 40px); }
+            .ow-pl .nm { font-size: clamp(25px, 6vw, 34px); }
             .ow-pl .go span { display: none; }
         }
         @media (max-width: 620px) {

@@ -132,7 +132,11 @@ return [
                 '--line2' => '#bdb199',
                 '--txt' => '#1b1810',
                 '--muted' => '#5c5545',
-                '--faint' => '#7d7461',
+                // Darkened from #7d7461, which measured 3.96:1 on the Daylight
+                // ground — under AA for the 10.5–11px letterspaced labels this
+                // token exists to set (the gutter index, the capability
+                // numerals, the counted-fact captions, every .kicker).
+                '--faint' => '#736a59',
                 // The footer/drawer slab must RISE off a pale page, not sink
                 // below it, or both lose their edge entirely.
                 '--deep' => '#221e16',
@@ -201,25 +205,61 @@ return [
         ],
     ],
 
+    // The theme ships INDUSTRIAL: Oswald, a condensed signage gothic, over IBM
+    // Plex Sans, an engineering face. Every alternate below has to clear the
+    // same bar the default did — real Cyrillic — because this storefront is
+    // Bulgarian first, and that alone rules out most of the obvious display
+    // gothics (Anton, Bebas Neue, Archivo Black, Barlow Condensed, Antonio,
+    // Big Shoulders, Saira Condensed and Space Grotesk are all Latin-only).
+    //
+    // Note for anyone adding one: the theme sets its <em> accents in WEIGHT
+    // rather than italic, because Oswald has no italic and a browser would
+    // otherwise fake a different oblique per engine. A pairing that does have
+    // italics loses nothing by that — the accent simply reads as bold.
     'fonts' => [
-        'alegreya' => [
-            'name' => 'Alegreya (default)',
+        'oswald' => [
+            'name' => 'Oswald + IBM Plex Sans (default) — industrial',
             'vars' => [],
             'link' => null,
         ],
+        'plex_condensed' => [
+            'name' => 'IBM Plex Condensed — engineered, quieter than Oswald',
+            'vars' => [
+                '--display' => '"IBM Plex Sans Condensed", "Arial Narrow", sans-serif',
+            ],
+            'link' => 'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@300;400;500;600;700&display=swap',
+        ],
+        'fira_condensed' => [
+            'name' => 'Fira Condensed — technical, a touch softer',
+            'vars' => [
+                '--display' => '"Fira Sans Extra Condensed", "Arial Narrow", sans-serif',
+            ],
+            'link' => 'https://fonts.googleapis.com/css2?family=Fira+Sans+Extra+Condensed:wght@300;400;500;600;700&display=swap',
+        ],
+        'russo' => [
+            'name' => 'Russo One — heavy machine plate (headings only)',
+            'vars' => [
+                '--display' => '"Russo One", "Arial Black", sans-serif',
+            ],
+            'link' => 'https://fonts.googleapis.com/css2?family=Russo+One&display=swap',
+        ],
+        // The theme's original voice, kept for a merchant who wants the mill
+        // to read as a workshop rather than a plant. Restores BOTH faces.
+        'alegreya' => [
+            'name' => 'Alegreya + Commissioner — the original serif',
+            'vars' => [
+                '--display' => '"Alegreya", Georgia, "Times New Roman", serif',
+                '--body' => '"Commissioner", "Helvetica Neue", sans-serif',
+            ],
+            'link' => 'https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;0,800;1,400;1,500&family=Commissioner:wght@300;400;500;600&display=swap',
+        ],
         'literata' => [
-            'name' => 'Literata — steadier, more bookish',
+            'name' => 'Literata + Commissioner — steadier, more bookish',
             'vars' => [
                 '--display' => '"Literata", Georgia, serif',
+                '--body' => '"Commissioner", "Helvetica Neue", sans-serif',
             ],
-            'link' => 'https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..500&display=swap',
-        ],
-        'yeseva' => [
-            'name' => 'Yeseva One — louder, more decorative',
-            'vars' => [
-                '--display' => '"Yeseva One", Georgia, serif',
-            ],
-            'link' => 'https://fonts.googleapis.com/css2?family=Yeseva+One&display=swap',
+            'link' => 'https://fonts.googleapis.com/css2?family=Literata:ital,opsz,wght@0,7..72,400..700;1,7..72,400..500&family=Commissioner:wght@300;400;500;600&display=swap',
         ],
     ],
 ];

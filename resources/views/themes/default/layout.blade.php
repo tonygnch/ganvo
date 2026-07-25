@@ -359,6 +359,15 @@
         /* footer */
         footer.site { border-top: 1px solid var(--ink); margin-top: 60px; padding: 46px 0 40px; }
         .fgrid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 40px; }
+        /* The last footer column holds the language switcher, which is hidden
+           while only one locale is supported. Without this the grid keeps its
+           fourth track and the footer ends on ~250px of dead space. Counting
+           children in CSS keeps it self-correcting: restore a second locale
+           and the fourth column returns, and so does the four-track template.
+           (repeat(auto-fit,...) is NOT usable here — the spec forbids pairing
+           an auto-repeat with a flexible track like the 1.6fr first column,
+           and the whole declaration would be dropped.) */
+        .fgrid:not(:has(> :nth-child(4))) { grid-template-columns: 1.6fr 1fr 1fr; }
         .fgrid .wm { font-family: var(--display); font-weight: 800; font-size: 30px; letter-spacing: .14em; text-transform: uppercase; }
         .fcol h4 { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
         .fcol a { display: block; font-size: 13px; margin-bottom: 10px; color: #4a4338; }
@@ -460,20 +469,22 @@
                     @endif
                 </a>
                 <div class="right">
-                    <details class="menu">
-                        <summary aria-label="{{ __('site.lang.switch') }}">
-                            <span>{{ strtoupper($currentLocale) }}</span>
-                            <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg>
-                        </summary>
-                        <div class="menu-items" role="menu">
-                            @foreach ($languages as $code => $name)
-                                <a role="menuitem" href="/lang/{{ $code }}" class="@if($currentLocale===$code) active @endif">
-                                    <span>{{ $name }}</span>
-                                    <svg class="check" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10l4 4 8-8"/></svg>
-                                </a>
-                            @endforeach
-                        </div>
-                    </details>
+                    @if (count($languages) > 1)
+                        <details class="menu">
+                            <summary aria-label="{{ __('site.lang.switch') }}">
+                                <span>{{ strtoupper($currentLocale) }}</span>
+                                <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg>
+                            </summary>
+                            <div class="menu-items" role="menu">
+                                @foreach ($languages as $code => $name)
+                                    <a role="menuitem" href="/lang/{{ $code }}" class="@if($currentLocale===$code) active @endif">
+                                        <span>{{ $name }}</span>
+                                        <svg class="check" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10l4 4 8-8"/></svg>
+                                    </a>
+                                @endforeach
+                            </div>
+                        </details>
+                    @endif
                     @if (count($supportedCurrencies) > 1)
                         <details class="menu">
                             <summary aria-label="{{ __('site.currency.switch') }}">
@@ -553,12 +564,14 @@
                     @if ($csContactOn)<a href="/contact">{{ __('site.storefront.footer.contact') }}</a>@endif
                     @if ($csAboutOn)<a href="/about">{{ __('site.storefront.footer.about') }}</a>@endif
                 </div>
-                <div class="fcol">
-                    <h4>{{ __('site.lang.switch') }}</h4>
-                    @foreach ($languages as $code => $name)
-                        <a href="/lang/{{ $code }}">{{ $name }}</a>
-                    @endforeach
-                </div>
+                @if (count($languages) > 1)
+                    <div class="fcol">
+                        <h4>{{ __('site.lang.switch') }}</h4>
+                        @foreach ($languages as $code => $name)
+                            <a href="/lang/{{ $code }}">{{ $name }}</a>
+                        @endforeach
+                    </div>
+                @endif
             </div>
             <div class="fbot">
                 <span>© {{ date('Y') }} {{ $tenant->name }}. {{ __('site.common.all_rights') }}</span>

@@ -118,7 +118,7 @@
         .stub-notice { display: flex; gap: 16px; align-items: flex-start; background: var(--surface2); border: 1px solid var(--line2); padding: 18px 22px; font-size: 13.5px; color: var(--muted); }
         .stub-notice .icon { flex-shrink: 0; width: 28px; height: 28px; display: grid; place-items: center; background: var(--accent); color: var(--on-accent); font-size: 14px; font-weight: 600; }
         .stub-notice strong { display: block; margin-bottom: 5px; font-family: var(--display); font-weight: 500; font-size: 19px; color: var(--txt); }
-        .stub-notice em { font-style: italic; color: var(--accent-ink); }
+        .stub-notice em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
 
         /* ===== ENQUIRY — the send sheet ===== */
         /* what happens next: three ruled steps, numbered in the margin */
@@ -129,7 +129,7 @@
 
         /* the no-payment slab — the one place on the page allowed to be loud */
         .nopay { display: flex; gap: 18px; align-items: flex-start; background: var(--moss); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--moss)); padding: 22px 26px; margin-bottom: 22px; color: #f1ebdd; }
-        .nopay .ic { flex-shrink: 0; width: 34px; height: 34px; display: grid; place-items: center; background: var(--accent); color: var(--on-accent); font-family: var(--display); font-size: 20px; font-style: italic; line-height: 1; }
+        .nopay .ic { flex-shrink: 0; width: 34px; height: 34px; display: grid; place-items: center; background: var(--accent); color: var(--on-accent); font-family: var(--display); font-size: 20px; font-weight: 600; line-height: 1; }
         .nopay strong { display: block; margin-bottom: 6px; font-family: var(--display); font-weight: 500; font-size: 21px; line-height: 1.1; }
         .nopay p { font-size: 14px; line-height: 1.6; color: color-mix(in srgb, #f1ebdd 78%, transparent); }
 

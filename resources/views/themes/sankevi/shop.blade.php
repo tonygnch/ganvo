@@ -102,8 +102,8 @@
         .cover .crumb { font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
         .cover .crumb a:hover { color: var(--accent-ink); }
         .cover .kicker { display: block; margin: 22px 0 12px; }
-        .cover h1 { font-family: var(--display); font-weight: 500; font-size: clamp(40px, 6vw, 82px); line-height: .98; letter-spacing: -.02em; max-width: 16ch; }
-        .cover h1 em { font-style: italic; color: var(--accent-ink); }
+        .cover h1 { font-family: var(--display); font-weight: 500; font-size: clamp(31px, 4.4vw, 60px); line-height: .98; letter-spacing: 0; max-width: 16ch; }
+        .cover h1 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
         .cover p { color: var(--muted); max-width: 54ch; margin-top: 16px; font-size: 15.5px; }
 
         /* ===== THE RAIL — sections, tally and the order form. No panel: a
@@ -189,7 +189,7 @@
         /* the entry itself */
         .entry .body { grid-column: 2; padding: clamp(34px, 3.4vw, 54px) clamp(24px, 3vw, 48px); display: flex; flex-direction: column; justify-content: center; min-width: 0; }
         .entry .body .sec { font-size: 10.5px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--faint); }
-        .entry .body h2 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 3.3vw, 48px); line-height: 1.04; letter-spacing: -.015em; margin: 12px 0 0; transition: color .3s ease; }
+        .entry .body h2 { font-family: var(--display); font-weight: 500; font-size: clamp(25px, 2.8vw, 38px); line-height: 1.04; letter-spacing: 0; margin: 12px 0 0; transition: color .3s ease; }
         .entry:hover .body h2 { color: var(--accent-ink); }
         .entry .body .desc { color: var(--muted); font-size: 14.5px; line-height: 1.6; margin-top: 12px; max-width: 46ch; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
@@ -221,8 +221,8 @@
 
         /* ===== the empty page of the book ===== */
         .book-empty { margin: 64px 0 0; padding: clamp(54px, 7vw, 96px) clamp(24px, 4vw, 60px); border: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 18px; }
-        .book-empty h2 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 4vw, 52px); line-height: 1.04; letter-spacing: -.015em; }
-        .book-empty h2 em { font-style: italic; color: var(--accent-ink); }
+        .book-empty h2 { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 3.2vw, 40px); line-height: 1.04; letter-spacing: 0; }
+        .book-empty h2 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
         .book-empty p { color: var(--muted); max-width: 48ch; }
         .book-empty .acts { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
 

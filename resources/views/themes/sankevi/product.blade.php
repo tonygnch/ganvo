@@ -51,7 +51,7 @@
         /* ===== the specification column ===== */
         .pinfo .crumb { font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); margin-bottom: 22px; }
         .pinfo .crumb a:hover { color: var(--accent-ink); }
-        .pinfo h1 { font-family: var(--display); font-weight: 500; font-size: clamp(36px, 4.6vw, 62px); line-height: 1.02; letter-spacing: -.02em; margin-bottom: 18px; }
+        .pinfo h1 { font-family: var(--display); font-weight: 500; font-size: clamp(29px, 3.6vw, 46px); line-height: 1.02; letter-spacing: 0; margin-bottom: 18px; }
         .pinfo .price { font-family: var(--display); font-weight: 500; font-size: 30px; font-variant-numeric: tabular-nums; color: var(--accent-ink); }
         .pinfo .stock { display: inline-flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
         .pinfo .stock .dot { width: 6px; height: 6px; background: var(--accent); animation: stockpulse 3s ease-in-out infinite; }

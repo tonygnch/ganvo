@@ -386,14 +386,16 @@
                 </div>
                 <div class="right">
                     @include('storefront.partials.mode-toggle')
-                    <details class="menu">
-                        <summary aria-label="{{ __('site.lang.switch') }}"><span>{{ strtoupper($currentLocale) }}</span><svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg></summary>
-                        <div class="menu-items" role="menu">
-                            @foreach ($languages as $code => $name)
-                                <a role="menuitem" href="/lang/{{ $code }}" class="@if($currentLocale===$code) active @endif"><span>{{ $name }}</span><svg class="check" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10l4 4 8-8"/></svg></a>
-                            @endforeach
-                        </div>
-                    </details>
+                    @if (count($languages) > 1)
+                        <details class="menu">
+                            <summary aria-label="{{ __('site.lang.switch') }}"><span>{{ strtoupper($currentLocale) }}</span><svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg></summary>
+                            <div class="menu-items" role="menu">
+                                @foreach ($languages as $code => $name)
+                                    <a role="menuitem" href="/lang/{{ $code }}" class="@if($currentLocale===$code) active @endif"><span>{{ $name }}</span><svg class="check" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10l4 4 8-8"/></svg></a>
+                                @endforeach
+                            </div>
+                        </details>
+                    @endif
                     @if (count($supportedCurrencies) > 1)
                         <details class="menu">
                             <summary aria-label="{{ __('site.currency.switch') }}"><span>{{ $displayCurrency }}</span><svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg></summary>
@@ -463,16 +465,21 @@
                     @if ($csContactOn)<a href="/contact">{{ __('site.storefront.footer.contact') }}</a>@endif
                     @if ($csAboutOn)<a href="/about">{{ __('site.storefront.footer.about') }}</a>@endif
                 </div>
-                <div class="fcol">
-                    @if ($store->showsAccountUi())
-                        <h4>{{ __('site.common.my_account') }}</h4>
-                        <a href="{{ $customer ? '/account' : '/account/login' }}">{{ $customer ? __('site.common.my_account') : __('site.common.sign_in') }}</a>
-                    @endif
-                    <h4 style="margin-top: {{ $store->showsAccountUi() ? '22px' : '0' }};">{{ __('site.lang.switch') }}</h4>
-                    @foreach ($languages as $code => $name)
-                        <a href="/lang/{{ $code }}">{{ $name }}</a>
-                    @endforeach
-                </div>
+                {{-- Column guarded as well as the switcher — see sankevi. --}}
+                @if ($store->showsAccountUi() || count($languages) > 1)
+                    <div class="fcol">
+                        @if ($store->showsAccountUi())
+                            <h4>{{ __('site.common.my_account') }}</h4>
+                            <a href="{{ $customer ? '/account' : '/account/login' }}">{{ $customer ? __('site.common.my_account') : __('site.common.sign_in') }}</a>
+                        @endif
+                        @if (count($languages) > 1)
+                            <h4 style="margin-top: {{ $store->showsAccountUi() ? '22px' : '0' }};">{{ __('site.lang.switch') }}</h4>
+                            @foreach ($languages as $code => $name)
+                                <a href="/lang/{{ $code }}">{{ $name }}</a>
+                            @endforeach
+                        @endif
+                    </div>
+                @endif
             </div>
             <div class="fbot">
                 <span>© {{ date('Y') }} {{ $tenant->name }} — {{ __('site.common.all_rights') }}</span>

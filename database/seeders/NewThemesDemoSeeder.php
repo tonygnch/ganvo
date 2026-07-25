@@ -457,7 +457,12 @@ class NewThemesDemoSeeder extends Seeder
                 // carry the same message the theme was rewritten to: what the
                 // yard does for the caller, not where the trees grew. Leave it
                 // blank and the theme's hero_h1_html shows through instead.
-                'hero' => ['Семейна дъскорезница · Родопите', 'От трупа до вашия размер', 'Разгледай материала'],
+                // Subtitle deliberately BLANK. The banner's subtitle is plain
+                // text, so setting it here would override the theme's own
+                // hero_h1_html and lose the <em> that puts the accent colour
+                // on "вашия размер" — the one coloured word in the headline.
+                // Empty means the theme copy shows through, accent and all.
+                'hero' => ['Семейна дъскорезница · Родопите', '', 'Разгледай материала'],
                 // Sankevi sells by length AND width, and the two interact —
                 // seedOptionMatrix() below wires the real dependency.
                 'sizes' => [],

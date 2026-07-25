@@ -286,21 +286,23 @@
             </nav>
         @endif
         <div class="nav-utils">
-            <details class="lang-menu">
-                <summary aria-label="{{ __('site.lang.switch') }}">
-                    <span>{{ strtoupper($currentLocale) }}</span>
-                    <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg>
-                </summary>
-                <div class="lang-menu-items" role="menu">
-                    @foreach ($languages as $code => $name)
-                        <a role="menuitem" href="/lang/{{ $code }}" class="@if($currentLocale===$code) active @endif">
-                            <span>{{ $name }}</span>
-                            <svg class="check" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10l4 4 8-8"/></svg>
-                        </a>
-                    @endforeach
-                </div>
-            </details>
-            <span class="sep">·</span>
+            @if (count($languages) > 1)
+                <details class="lang-menu">
+                    <summary aria-label="{{ __('site.lang.switch') }}">
+                        <span>{{ strtoupper($currentLocale) }}</span>
+                        <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg>
+                    </summary>
+                    <div class="lang-menu-items" role="menu">
+                        @foreach ($languages as $code => $name)
+                            <a role="menuitem" href="/lang/{{ $code }}" class="@if($currentLocale===$code) active @endif">
+                                <span>{{ $name }}</span>
+                                <svg class="check" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10l4 4 8-8"/></svg>
+                            </a>
+                        @endforeach
+                    </div>
+                </details>
+                <span class="sep">·</span>
+            @endif
             @if ($store->showsAccountUi())
                 @if ($customer)
                     <a href="/account">{{ explode(' ', $customer->name)[0] }}</a>

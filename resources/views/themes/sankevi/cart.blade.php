@@ -78,7 +78,7 @@
         /* ===== nothing on the list yet ===== */
         .req-empty { position: relative; overflow: hidden; text-align: center; padding: 92px 28px; margin-top: 34px; border: 1px solid var(--line); background: var(--surface); }
         .req-empty h2 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 3.6vw, 42px); line-height: 1.06; margin-bottom: 12px; }
-        .req-empty h2 em { font-style: italic; color: var(--accent-ink); }
+        .req-empty h2 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
         .req-empty p { color: var(--muted); max-width: 46ch; margin: 0 auto 30px; }
 
         /* ===== the ledger. Column heads set in the spec register, ruled off

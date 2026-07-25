@@ -13,12 +13,30 @@ class SetLocale
     public const COOKIE = 'ganvo_locale';
 
     /**
-     * Bulgarian first: it is the platform's primary language, and the order
-     * here is load-bearing twice over — it drives the language switcher's
-     * listing, and Symfony's getPreferredLanguage() falls back to the FIRST
-     * entry when a request carries no usable Accept-Language header.
+     * Bulgarian ONLY, for now. The owner asked for English to come off the
+     * storefronts until it is worth maintaining properly.
+     *
+     * Nothing was deleted to do this: lang/en/*.php all stay on disk, so
+     * putting 'en' back in this array is the entire job of re-enabling it.
+     * Everything downstream keys off this list —
+     *
+     *   - SetLocale::available() feeds every theme's language switcher, and
+     *     the themes only render that control when it offers more than one
+     *     language, so a single entry hides it rather than shipping a
+     *     one-option dropdown;
+     *   - LanguageController::switch() 404s anything not in here, so a
+     *     bookmarked /lang/en stops working rather than half-working;
+     *   - resolve() ignores a stale ganvo_locale=en cookie for the same
+     *     reason, so a returning visitor who had picked English lands on
+     *     Bulgarian instead of being stuck on a language that no longer
+     *     resolves.
+     *
+     * The ORDER is still load-bearing for the day a second language returns:
+     * Symfony's getPreferredLanguage() falls back to the FIRST entry when a
+     * request carries no usable Accept-Language header, so Bulgarian must
+     * stay at the head of the list.
      */
-    public const SUPPORTED = ['bg', 'en'];
+    public const SUPPORTED = ['bg'];
     public const DEFAULT = 'bg';
 
     /**

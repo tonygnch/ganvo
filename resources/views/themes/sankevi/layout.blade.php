@@ -11,10 +11,27 @@
          Alegreya (a calligraphic, slightly restless serif — the voice of the
          story) over Commissioner (a quiet humanist grotesque that carries the
          specs). Both ship real Cyrillic AND Cyrillic-ext, which is the whole
-         reason they were chosen: this storefront is Bulgarian first. --}}
+         reason they were chosen: this storefront is Bulgarian first.
+
+         REPLACED by an industrial pairing at the merchant's request: Oswald
+         over IBM Plex Sans. Oswald is a condensed signage gothic — the
+         lettering of crate stencils, grading stamps and machine plates, which
+         is what a sawmill's own type actually looks like. IBM Plex Sans was
+         drawn as an engineering face and carries the specs without arguing
+         with it.
+
+         Cyrillic was the binding constraint, and it eliminated most of the
+         obvious answers: Anton, Bebas Neue, Archivo Black, Barlow Condensed,
+         Antonio, Big Shoulders, Saira Condensed, Chakra Petch and Space
+         Grotesk are all Latin-only, and a Bulgarian-first storefront cannot
+         ship a headline face that cannot set its own headlines. Oswald and
+         Plex both carry Cyrillic AND Cyrillic-ext, and Plex additionally
+         ships Bulgarian localised forms.
+
+         The serif pairings are still one click away in Customize theme. --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;0,800;1,400;1,500&family=Commissioner:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -33,9 +50,11 @@
                so ONE value clears AA on the daylight mode and still reads as a
                border/edge on the bark ground — no second knob for merchants. */
             --accent-deep: color-mix(in srgb, var(--accent) 52%, #16200f);
-            --display: "Alegreya", Georgia, "Times New Roman", serif;
+            --display: "Oswald", "Arial Narrow", "Helvetica Neue Condensed", sans-serif;
+            /* Kept as an alias only. Nothing about this theme is a serif any
+               more; any shared markup reaching for --serif gets the gothic. */
             --serif: var(--display);
-            --body: "Commissioner", "Helvetica Neue", sans-serif;
+            --body: "IBM Plex Sans", "Helvetica Neue", sans-serif;
             /* Sankevi has no monospace voice — specs are set in the companion
                with wide tracking. Alias kept so any shared markup that reaches
                for --mono lands on the body face instead of a browser default. */
@@ -235,7 +254,7 @@
         .nav { display: flex; align-items: center; gap: 34px; height: var(--header-height); }
         /* the wordmark never gives ground to the nav — it only ellipsises once
            the phone breakpoint hands it a min-width */
-        .logo { display: inline-flex; align-items: center; gap: 11px; flex-shrink: 0; font-family: var(--display); font-weight: 700; font-size: 25px; letter-spacing: .16em; text-transform: uppercase; color: var(--txt); white-space: nowrap; }
+        .logo { display: inline-flex; align-items: center; gap: 11px; flex-shrink: 0; font-family: var(--display); font-weight: 600; font-size: 27px; letter-spacing: .2em; text-transform: uppercase; color: var(--txt); white-space: nowrap; }
         /* The seal is painted as a background so a single rule can swap the
            colourway on mode change; as an <img> the src would need JS. */
         .seal, .fseal { background-image: var(--seal); background-size: contain; background-repeat: no-repeat; background-position: center; }
@@ -296,15 +315,15 @@
            any page; the label above it is the quietest. ===== */
         .sec-head { position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin: 96px 0 34px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
         .sec-head .kicker { display: block; margin-bottom: 14px; }
-        .sec-head h2 { font-family: var(--display); font-weight: 500; font-size: clamp(32px, 4.6vw, 58px); line-height: 1.02; letter-spacing: -.01em; }
-        .sec-head h2 em { font-style: italic; color: var(--accent-ink); }
+        .sec-head h2 { font-family: var(--display); font-weight: 500; font-size: clamp(27px, 3.6vw, 44px); line-height: 1.02; letter-spacing: 0; }
+        .sec-head h2 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
         .sec-head .more { font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--line2); padding-bottom: 4px; transition: color .25s ease, border-color .25s ease; }
         .sec-head .more:hover { color: var(--accent-ink); border-color: var(--accent); }
         .page-head { position: relative; padding: 54px 0 28px; border-bottom: 1px solid var(--line); }
         .page-head .crumb { font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
         .page-head .crumb a:hover { color: var(--accent-ink); }
-        .page-head h1 { font-family: var(--display); font-weight: 500; font-size: clamp(38px, 5.4vw, 70px); line-height: 1.02; letter-spacing: -.015em; margin-top: 14px; }
-        .page-head h1 em { font-style: italic; color: var(--accent-ink); }
+        .page-head h1 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 4vw, 52px); line-height: 1.02; letter-spacing: 0; margin-top: 14px; }
+        .page-head h1 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
         .page-head p { color: var(--muted); max-width: 52ch; margin-top: 12px; font-size: 15.5px; }
 
         /* ===== product card — a photograph, a sheet number, a name in the
@@ -498,14 +517,16 @@
                 </div>
                 <div class="right">
                     @include('storefront.partials.mode-toggle')
-                    <details class="menu">
-                        <summary aria-label="{{ __('site.lang.switch') }}"><span>{{ strtoupper($currentLocale) }}</span><svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg></summary>
-                        <div class="menu-items" role="menu">
-                            @foreach ($languages as $code => $name)
-                                <a role="menuitem" href="/lang/{{ $code }}" class="@if($currentLocale===$code) active @endif"><span>{{ $name }}</span><svg class="check" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10l4 4 8-8"/></svg></a>
-                            @endforeach
-                        </div>
-                    </details>
+                    @if (count($languages) > 1)
+                        <details class="menu">
+                            <summary aria-label="{{ __('site.lang.switch') }}"><span>{{ strtoupper($currentLocale) }}</span><svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg></summary>
+                            <div class="menu-items" role="menu">
+                                @foreach ($languages as $code => $name)
+                                    <a role="menuitem" href="/lang/{{ $code }}" class="@if($currentLocale===$code) active @endif"><span>{{ $name }}</span><svg class="check" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10l4 4 8-8"/></svg></a>
+                                @endforeach
+                            </div>
+                        </details>
+                    @endif
                     @if (count($supportedCurrencies) > 1)
                         <details class="menu">
                             <summary aria-label="{{ __('site.currency.switch') }}"><span>{{ $displayCurrency }}</span><svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5L6 7.5L9 4.5"/></svg></summary>
@@ -590,16 +611,24 @@
                     @if ($csContactOn)<a href="/contact">{{ __('site.storefront.footer.contact') }}</a>@endif
                     @if ($csAboutOn)<a href="/about">{{ __('site.storefront.footer.about') }}</a>@endif
                 </div>
-                <div class="fcol">
-                    @if ($store->showsAccountUi())
-                        <h4>{{ __('site.common.my_account') }}</h4>
-                        <a href="{{ $customer ? '/account' : '/account/login' }}">{{ $customer ? __('site.common.my_account') : __('site.common.sign_in') }}</a>
-                    @endif
-                    <h4 style="margin-top: {{ $store->showsAccountUi() ? '24px' : '0' }};">{{ __('site.lang.switch') }}</h4>
-                    @foreach ($languages as $code => $name)
-                        <a href="/lang/{{ $code }}">{{ $name }}</a>
-                    @endforeach
-                </div>
+                {{-- Account links and the language switcher share this column.
+                     Guard the COLUMN as well as the switcher: with one locale
+                     and account UI off it would otherwise render empty and the
+                     footer grid would carry a blank track. --}}
+                @if ($store->showsAccountUi() || count($languages) > 1)
+                    <div class="fcol">
+                        @if ($store->showsAccountUi())
+                            <h4>{{ __('site.common.my_account') }}</h4>
+                            <a href="{{ $customer ? '/account' : '/account/login' }}">{{ $customer ? __('site.common.my_account') : __('site.common.sign_in') }}</a>
+                        @endif
+                        @if (count($languages) > 1)
+                            <h4 style="margin-top: {{ $store->showsAccountUi() ? '24px' : '0' }};">{{ __('site.lang.switch') }}</h4>
+                            @foreach ($languages as $code => $name)
+                                <a href="/lang/{{ $code }}">{{ $name }}</a>
+                            @endforeach
+                        @endif
+                    </div>
+                @endif
             </div>
             <div class="fbot">
                 <span>© {{ date('Y') }} {{ $tenant->name }} — {{ __('site.common.all_rights') }}</span>
