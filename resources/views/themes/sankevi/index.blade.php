@@ -224,17 +224,34 @@
            rewraps later. (That is the failure mode of splitting a headline
            into per-line masks at load: narrow the window afterwards and the
            second line is guillotined. This cannot.) */
-        .hero .h1w { overflow: hidden; padding-bottom: .06em; }
+        /* THE HEADLINE, RISING OUT OF A SLOT.
+           No overflow:hidden wrapper any more. That masked the rise, but it
+           also cut the DESCENDERS off the finished headline: line-height .9 is
+           tighter than the glyphs, so the ink overflowed its own box by 25px
+           at 88px, and Cyrillic is full of descenders — р, у, д, ц, щ, ф. The
+           tail of "размер" was sliced flat. (The padding meant to allow for it
+           was written in em on the WRAPPER, where em resolves against the
+           wrapper's 16.5px, not the headline's 88px — it came to 0.99px.)
+
+           The wipe is now the headline's own clip-path, and it ENDS on a
+           negative inset, i.e. clipping nothing. So the reveal still runs and
+           the finished type is never cut. --h1-size carries the size so the
+           slide distance scales with it instead of guessing a percentage. */
+        .hero { --h1-size: clamp(36px, 6.1vw, 88px); }
         .hero h1 {
             font-family: var(--display); font-weight: 500;
-            font-size: clamp(36px, 6.1vw, 88px); line-height: .9; letter-spacing: 0;
+            font-size: var(--h1-size); line-height: .9; letter-spacing: 0;
             max-width: 15ch; text-wrap: balance;
             text-shadow: 0 2px 40px rgba(9, 7, 4, .5);
-            transform: translateY(104%);
             animation: h1Rise 1.2s cubic-bezier(.16, .78, .18, 1) both;
             animation-delay: var(--d, 0s);
         }
-        @keyframes h1Rise { to { transform: none; } }
+        @keyframes h1Rise {
+            from { clip-path: inset(0 0 100% 0); transform: translateY(28%); }
+            /* negative inset = the finished headline is not clipped at all,
+               so every descender survives */
+            to   { clip-path: inset(-0.4em 0 -0.4em 0); transform: none; }
+        }
         .hero h1 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
         .hero .sub { max-width: 46ch; margin-top: clamp(18px, 3vh, 30px); font-size: 16.5px; color: rgba(244, 239, 226, .92); text-shadow: 0 1px 12px rgba(9, 7, 4, .8); }
 
@@ -592,9 +609,11 @@
            ================================================================= */
         @media (prefers-reduced-motion: reduce) {
             .grain { animation: none; }
-            /* the headline is translated 104% out of its slot by default, so
-               "no animation" has to mean "put it back", not "never move it" */
-            .hero h1 { animation: none; transform: none; }
+            /* With the animation off there is no clip-path and no transform at
+               all — which is exactly the finished state. Stated anyway so a
+               browser that applies the from-keyframe before honouring the
+               media query cannot leave the headline wiped out. */
+            .hero h1 { animation: none; transform: none; clip-path: none; }
             .hero .pills li::before { animation: none; transform: none; }
             .offer .cell .rule { animation: none; transform: none; }
             .why .hist::after, .offer .cell { transition: none; }
