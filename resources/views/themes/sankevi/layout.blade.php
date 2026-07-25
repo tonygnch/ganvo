@@ -228,7 +228,11 @@
         /* the wordmark never gives ground to the nav — it only ellipsises once
            the phone breakpoint hands it a min-width */
         .logo { display: inline-flex; align-items: center; gap: 11px; flex-shrink: 0; font-family: var(--display); font-weight: 700; font-size: 25px; letter-spacing: .16em; text-transform: uppercase; color: var(--txt); white-space: nowrap; }
-        .logo .seal { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; }
+        /* The seal is painted as a background so a single rule can swap the
+           colourway on mode change; as an <img> the src would need JS. */
+        .seal, .fseal { background-image: var(--seal); background-size: contain; background-repeat: no-repeat; background-position: center; }
+        html[data-mode="light"] .seal, html[data-mode="light"] .fseal { background-image: var(--seal-day); }
+        .logo .seal { display: block; width: 26px; height: 26px; flex-shrink: 0; }
         .logo img.brand { height: 30px; width: auto; }
         .nav .links { display: flex; gap: 28px; align-items: center; font-size: 12px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
         .nav .links > a { position: relative; padding: 4px 0; }
@@ -324,7 +328,7 @@
 
         /* ===== footer — the yard at closing time ===== */
         footer.site { position: relative; overflow: hidden; margin-top: 110px; padding: 74px 0 34px; background: var(--deep); border-top: 1px solid var(--line); }
-        footer.site .fseal { position: absolute; right: -60px; bottom: -70px; width: 320px; opacity: .05; pointer-events: none; filter: grayscale(1); }
+        footer.site .fseal { position: absolute; right: -60px; bottom: -70px; width: 320px; aspect-ratio: 1; opacity: .05; pointer-events: none; filter: grayscale(1); }
         .fgrid { display: grid; grid-template-columns: 2.2fr 1fr 1fr 1fr; gap: 46px; }
         .fgrid .logo { font-size: 23px; }
         .fgrid .ftag { color: var(--muted); max-width: 32ch; margin-top: 18px; font-size: 14.5px; }
@@ -397,7 +401,17 @@
             : null;
         // The seal doubles as the nav mark when no logo was uploaded, and as
         // the ghost watermark in the footer.
+        //
+        // Two colourways: the shipped mark is cream, which is right on the bark
+        // ground but disappears on the Daylight header. So when the slot is
+        // still OUR file, pair it with the walnut master and let CSS swap them
+        // on data-mode. A merchant who uploaded their own seal gets it in both
+        // modes — we cannot recolour someone else's artwork, and silently
+        // showing nothing would be worse than showing it twice.
         $csSeal = $theme->on('brand_seal') ? $theme->image('seal_image') : null;
+        $csSealDaylight = ($csSeal && str_contains($csSeal, 'mark-cream.svg'))
+            ? str_replace('mark-cream.svg', 'mark.svg', $csSeal)
+            : $csSeal;
     @endphp
 
     @if ($csAnnouncement['enabled'] && $csAnnouncement['text'] !== '')
@@ -428,7 +442,7 @@
                     @if ($logoUrl)
                         <img class="brand" src="{{ $logoUrl }}" alt="{{ $tenant->name }}">
                     @else
-                        @if ($csSeal)<img class="seal" src="{{ $csSeal }}" alt="" aria-hidden="true">@endif
+                        @if ($csSeal)<span class="seal" aria-hidden="true" style="--seal: url('{{ $csSeal }}'); --seal-day: url('{{ $csSealDaylight }}');"></span>@endif
                         <span>{{ $tenant->name }}</span>
                     @endif
                 </a>
@@ -524,12 +538,12 @@
     @yield('content')
 
     <footer class="site">
-        @if ($csSeal)<img class="fseal" src="{{ $csSeal }}" alt="" aria-hidden="true">@endif
+        @if ($csSeal)<span class="fseal" aria-hidden="true" style="--seal: url('{{ $csSeal }}'); --seal-day: url('{{ $csSealDaylight }}');"></span>@endif
         <div class="wrap">
             <div class="fgrid">
                 <div>
                     <div class="logo">
-                        @if ($csSeal)<img class="seal" src="{{ $csSeal }}" alt="" aria-hidden="true">@endif
+                        @if ($csSeal)<span class="seal" aria-hidden="true" style="--seal: url('{{ $csSeal }}'); --seal-day: url('{{ $csSealDaylight }}');"></span>@endif
                         <span>{{ $tenant->name }}</span>
                     </div>
                     <p class="ftag">{{ __('site.storefront.footer.tagline') }}</p>
