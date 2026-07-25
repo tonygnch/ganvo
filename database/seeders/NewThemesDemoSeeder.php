@@ -233,13 +233,25 @@ class NewThemesDemoSeeder extends Seeder
         // the merchant's "Shop" entry must point at the catalogue rather than
         // at a landing page that no longer carries a product grid.
         $shopUrl = view()->exists("themes.{$slug}.shop") ? '/shop' : '/';
-        $nav = [['label' => $shopLabel, 'url' => $shopUrl, 'sort_order' => 0, 'auto_source' => null, 'children' => []]];
-        $so = 1;
-        foreach ($cfg['cats'] as $cslug => $c) {
-            if ($c[0] === 'Shop') {
-                continue; // Forma's lone category is literally "Shop" — skip the duplicate nav entry
+
+        if (! empty($cfg['nav'])) {
+            // A short, curated header. Once the catalogue lives at /shop and the
+            // brand page carries the family rows, listing every category up top
+            // just crowds the masthead — the families are one click away either
+            // way. Merchants can rebuild this in Store settings → Header menu.
+            $nav = [];
+            foreach ($cfg['nav'] as $i => [$label, $url]) {
+                $nav[] = ['label' => $label, 'url' => $url, 'sort_order' => $i, 'auto_source' => null, 'children' => []];
             }
-            $nav[] = ['label' => $c[0], 'url' => "/categories/{$cslug}", 'sort_order' => $so++, 'auto_source' => null, 'children' => []];
+        } else {
+            $nav = [['label' => $shopLabel, 'url' => $shopUrl, 'sort_order' => 0, 'auto_source' => null, 'children' => []]];
+            $so = 1;
+            foreach ($cfg['cats'] as $cslug => $c) {
+                if ($c[0] === 'Shop') {
+                    continue; // Forma's lone category is literally "Shop" — skip the duplicate nav entry
+                }
+                $nav[] = ['label' => $c[0], 'url' => "/categories/{$cslug}", 'sort_order' => $so++, 'auto_source' => null, 'children' => []];
+            }
         }
 
         $store->update([
@@ -434,6 +446,11 @@ class NewThemesDemoSeeder extends Seeder
                     'podkonstrukciia-deking' => '/images/demo/sankevi/beams.webp',
                 ],
                 'shop_label' => 'Магазин',
+                'nav' => [
+                    ['Начало', '/'],
+                    ['Магазин', '/shop'],
+                    ['Контакти', '/contact'],
+                ],
                 'announce' => 'Семейна дъскорезница в Родопите · Собствен добив · Разкрой по размер',
                 'hero' => ['От гората до вашия обект', 'Режем дървесина от 1974 г.', 'Разгледай склада'],
                 // Sankevi sells by length AND width, and the two interact —
