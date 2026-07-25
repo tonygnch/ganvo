@@ -296,7 +296,7 @@
                     </div>
                     <div class="specsheet">
                         <div class="row"><div class="rk">{{ __('site.storefront.shop_all.eyebrow') }}</div><div class="rv" data-vp-price>@money($heroProduct->price_cents)</div></div>
-                        <div class="row"><div class="rk">{{ __('site.storefront.value_props.shipping_title') }}</div><div class="rv">{{ __('site.storefront.value_props.shipping_sub') }}</div></div>
+                        <div class="row"><div class="rk">{{ __('site.storefront.value_props.shipping_title') }}</div><div class="rv">{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt]) : '' }}</div></div>
                         <div class="row"><div class="rk">{{ __('site.storefront.value_props.returns_title') }}</div><div class="rv">{{ __('site.storefront.value_props.returns_sub') }}</div></div>
                         <div class="row"><div class="rk">{{ __('site.storefront.value_props.checkout_title') }}</div><div class="rv">{{ __('site.storefront.value_props.checkout_sub') }}</div></div>
                     </div>

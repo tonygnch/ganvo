@@ -204,7 +204,7 @@
                     @endif
 
                     <ul class="perks">
-                        <li>{{ __('site.storefront.value_props.shipping_sub') }}</li>
+                        <li>{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt]) : '' }}</li>
                         <li>{{ __('site.storefront.value_props.returns_sub') }}</li>
                         <li>{{ __('site.storefront.value_props.checkout_sub') }}</li>
                     </ul>

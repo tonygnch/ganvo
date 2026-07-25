@@ -278,7 +278,7 @@
                     <span class="leader" aria-hidden="true"></span>
                     <span class="num">@if($shipping === 0){{ __('site.common.free') }}@else @money($shipping) @endif</span>
                 </div>
-                @if ($shipping > 0)<p class="summary-hint">{{ __('site.cart.free_shipping_at') }}</p>@endif
+                @if ($shipping > 0)<p class="summary-hint">{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.cart.free_shipping_at', ['amount' => $fsAmt]) : '' }}</p>@endif
                 @if ($discount && $discountCents > 0)
                     <div class="totals-row discount">
                         <span class="label">{{ $discount->name }}</span>

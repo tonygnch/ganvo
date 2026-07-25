@@ -207,8 +207,8 @@
 
                     <div class="acc">
                         <details open>
-                            <summary>{{ __('site.storefront.product.perks.shipping') }}<span class="marker"></span></summary>
-                            <div class="b">{{ __('site.storefront.value_props.shipping_sub') }}</div>
+                            <summary>{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.product.perks.shipping', ['amount' => $fsAmt]) : '' }}<span class="marker"></span></summary>
+                            <div class="b">{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt]) : '' }}</div>
                         </details>
                         <details>
                             <summary>{{ __('site.storefront.product.perks.returns') }}<span class="marker"></span></summary>

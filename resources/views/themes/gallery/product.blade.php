@@ -66,7 +66,7 @@
                         </div>
                     </form>
                     <div class="accordion">
-                        <details open><summary>{{ __('site.storefront.product.perks.shipping') }}<span class="mk"></span></summary><div class="ac-body">{{ __('site.storefront.value_props.shipping_sub') }}</div></details>
+                        <details open><summary>{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.product.perks.shipping', ['amount' => $fsAmt]) : '' }}<span class="mk"></span></summary><div class="ac-body">{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt]) : '' }}</div></details>
                         <details><summary>{{ __('site.storefront.product.perks.returns') }}<span class="mk"></span></summary><div class="ac-body">{{ __('site.storefront.value_props.returns_sub') }}</div></details>
                         <details><summary>{{ __('site.storefront.product.perks.fast') }}<span class="mk"></span></summary><div class="ac-body">{{ __('site.storefront.value_props.checkout_sub') }}</div></details>
                     </div>

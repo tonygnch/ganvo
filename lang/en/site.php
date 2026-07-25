@@ -200,7 +200,7 @@ return [
         ],
         'value_props' => [
             'shipping_title' => 'Free shipping',
-            'shipping_sub' => 'On orders over $50',
+            'shipping_sub' => 'On orders over :amount',
             'returns_title' => 'Easy returns',
             'returns_sub' => '30-day no-questions policy',
             'checkout_title' => 'Fast checkout',
@@ -552,7 +552,7 @@ return [
             'add_to_cart' => 'Add to cart',
             'wishlist' => 'Save for later',
             'perks' => [
-                'shipping' => 'Free shipping on orders over $50',
+                'shipping' => 'Free shipping on orders over :amount',
                 'returns' => '30-day easy returns',
                 'fast' => 'Ships within 1–2 business days',
             ],
@@ -654,12 +654,12 @@ return [
         'summary' => 'Order summary',
         'subtotal' => 'Subtotal',
         'shipping' => 'Shipping',
-        'free_shipping_at' => 'Free shipping at $50.00',
+        'free_shipping_at' => 'Free shipping at :amount',
         'total' => 'Total',
         'tax_at_checkout' => 'Tax calculated at checkout',
         'checkout' => 'Checkout',
         'keep_shopping' => '← Keep shopping',
-        'perk_shipping' => '⌁ Free shipping over $50',
+        'perk_shipping' => '⌁ Free shipping over :amount',
         'perk_returns' => '⟲ 30-day returns',
         'perk_fast' => '⚡ Ships in 1–2 days',
         // Discount-code input + flashes

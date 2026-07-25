@@ -166,7 +166,7 @@
                          carries today — but they read as a spec sheet, because
                          that is what this shopper scans for. --}}
                     <div class="specs">
-                        <div class="row"><span class="k">{{ __('site.storefront.value_props.shipping_title') }}</span><span class="v">{{ __('site.storefront.value_props.shipping_sub') }}</span></div>
+                        <div class="row"><span class="k">{{ __('site.storefront.value_props.shipping_title') }}</span><span class="v">{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt]) : '' }}</span></div>
                         <div class="row"><span class="k">{{ __('site.storefront.value_props.returns_title') }}</span><span class="v">{{ __('site.storefront.value_props.returns_sub') }}</span></div>
                         <div class="row"><span class="k">{{ __('site.storefront.value_props.checkout_title') }}</span><span class="v">{{ __('site.storefront.value_props.checkout_sub') }}</span></div>
                         @if ($primaryCategory)

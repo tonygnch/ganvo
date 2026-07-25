@@ -83,7 +83,7 @@
 
                 @if ($theme->on('value_strip'))
                 <div class="marq2 rv">
-                    <span><b>{{ __('site.storefront.value_props.shipping_title') }}</b> · {{ __('site.storefront.value_props.shipping_sub') }}</span>
+                    <span><b>{{ __('site.storefront.value_props.shipping_title') }}</b> · {{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt]) : '' }}</span>
                     <span><b>{{ __('site.storefront.value_props.returns_title') }}</b> · {{ __('site.storefront.value_props.returns_sub') }}</span>
                     <span><b>{{ __('site.storefront.value_props.checkout_title') }}</b> · {{ __('site.storefront.value_props.checkout_sub') }}</span>
                 </div>

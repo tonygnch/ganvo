@@ -477,7 +477,7 @@
                     <i class="xmark xl" aria-hidden="true"></i>
                     <i class="xmark xr" aria-hidden="true"></i>
                 @endif
-                <div class="fs"><div class="l">{{ __('site.storefront.value_props.shipping_title') }}</div><div class="v">{{ __('site.storefront.value_props.shipping_sub') }}</div></div>
+                <div class="fs"><div class="l">{{ __('site.storefront.value_props.shipping_title') }}</div><div class="v">{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt]) : '' }}</div></div>
                 <div class="fs"><div class="l">{{ __('site.storefront.value_props.returns_title') }}</div><div class="v">{{ __('site.storefront.value_props.returns_sub') }}</div></div>
                 <div class="fs"><div class="l">{{ __('site.storefront.value_props.checkout_title') }}</div><div class="v">{{ __('site.storefront.value_props.checkout_sub') }}</div></div>
                 <div class="fs"><div class="l">{{ __('site.storefront.shop_all.eyebrow') }}</div><div class="v"><em>{{ $tenant->name }}</em></div></div>

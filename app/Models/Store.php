@@ -819,6 +819,34 @@ class Store extends Model
      *
      * @return ?array{id: string, label: string, description: string, price_cents: int, cost_cents: int}
      */
+    /**
+     * The lowest free-shipping threshold this store actually offers, already
+     * formatted in the store's own currency — or null when no shipping method
+     * defines one.
+     *
+     * The copy around free shipping used to hardcode "$50": the NUMBER came
+     * from the seeded shipping method and happened to be right, but the
+     * CURRENCY was a literal dollar sign on stores priced in EUR. Reading the
+     * threshold back from the method that grants it keeps the promise true
+     * when a merchant edits it, and lets the views omit the line entirely
+     * when no method grants free shipping at all.
+     */
+    public function freeShippingAmount(): ?string
+    {
+        $cents = null;
+        foreach ($this->shippingMethods() as $method) {
+            $t = $method['free_threshold_cents'] ?? null;
+            if ($t === null) {
+                continue;
+            }
+            $cents = $cents === null ? (int) $t : min($cents, (int) $t);
+        }
+
+        return $cents === null
+            ? null
+            : \App\Services\Money::format($cents, strtoupper($this->currency ?: 'EUR'));
+    }
+
     public function resolveShippingMethod(string $id, int $subtotalCents): ?array
     {
         foreach ($this->shippingMethods() as $m) {

@@ -359,7 +359,7 @@
                         <span class="num">@if($shipping === 0){{ __('site.common.free') }}@else @money($shipping) @endif</span>
                     </div>
                     @if ($shipping > 0)
-                        <div class="summary-hint">{{ __('site.cart.free_shipping_at') }}</div>
+                        <div class="summary-hint">{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.cart.free_shipping_at', ['amount' => $fsAmt]) : '' }}</div>
                     @endif
                     @if ($discount && $discountCents > 0)
                         <div class="summary-row discount">
@@ -383,7 +383,7 @@
                     <a href="/" class="keep-shopping">{{ __('site.cart.keep_shopping') }}</a>
 
                     <div class="perks-row">
-                        <span>{{ __('site.cart.perk_shipping') }}</span>
+                        <span>{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.cart.perk_shipping', ['amount' => $fsAmt]) : '' }}</span>
                         <span>{{ __('site.cart.perk_returns') }}</span>
                         <span>{{ __('site.cart.perk_fast') }}</span>
                     </div>
