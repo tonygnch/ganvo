@@ -48,13 +48,20 @@
         $forestImageUrl = $theme->image('forest_image');
         $csSeal = $theme->on('brand_seal') ? $theme->image('seal_image') : null;
 
-        // The flowing menu's photography, mapped by category ORDER: floorboards,
-        // beams, decking. A category that carries its own image uses that
-        // instead — a merchant who photographs their own families should see
-        // their own families.
+        // The flowing menu's photography, mapped by category ORDER. A category
+        // that carries its own image uses that instead — a merchant who
+        // photographs their own families should see their own families.
+        //
+        // The list is CYCLED, not indexed: the merchant owns their categories
+        // and can add an eighth from the admin panel at any time. Indexing
+        // straight into a fixed list left every extra family with no picture.
         $familyArt = [
-            asset('/images/demo/sankevi/floor.webp'),
             asset('/images/demo/sankevi/beams.webp'),
+            asset('/images/demo/sankevi/letvi.webp'),
+            asset('/images/demo/sankevi/floor.webp'),
+            asset('/images/demo/sankevi/lamperia.webp'),
+            asset('/images/demo/sankevi/pervazi.webp'),
+            asset('/images/demo/sankevi/mebeli.webp'),
             asset('/images/demo/sankevi/deck.webp'),
         ];
 
