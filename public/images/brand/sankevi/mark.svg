@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Sankevi">
+  <title>Sankevi</title>
+  <!--
+    The S read as a stack of sawn boards: the letterform is what is left when
+    boards stop short. One slat is moss — the single green board in the stack.
+
+    Geometry is deliberately rigid. The three full-width bars are flush and
+    the two short runs sit hard against opposite edges, so the counters they
+    leave are large and unambiguous; an earlier pass varied every board's
+    length for charm and the mark stopped reading as a letter at all — it
+    scanned as a stack of lines. Variation now only touches the outer ends of
+    the full bars, where it costs nothing.
+
+    Self-contained tile rather than a transparent mark on purpose: this sits
+    on the dark bark header, over a photograph in the hero, and greyscaled at
+    5% behind the footer, so it has to carry its own ground. The cut top-right
+    corner is the theme's plate device, so the mark belongs to the design
+    system rather than being dropped into it.
+  -->
+  <path d="M0 0 H104 L128 24 V128 H0 Z" fill="#efe7d8"/>
+  <g fill="#3c2f22">
+    <!-- top bar -->
+    <rect x="28" y="23"   width="76" height="6" rx="1"/>
+    <rect x="24" y="31.5" width="80" height="6" rx="1"/>
+    <!-- left descent — leaves the upper-right counter -->
+    <rect x="24" y="40"   width="26" height="6" rx="1"/>
+    <rect x="24" y="48.5" width="23" height="6" rx="1"/>
+    <!-- middle bar -->
+    <rect x="24" y="57"   width="80" height="6" rx="1"/>
+    <rect x="24" y="65.5" width="76" height="6" rx="1"/>
+    <!-- right descent — leaves the lower-left counter -->
+    <rect x="81" y="82.5" width="23" height="6" rx="1"/>
+    <!-- bottom bar -->
+    <rect x="24" y="91"   width="80" height="6" rx="1"/>
+    <rect x="28" y="99.5" width="72" height="6" rx="1"/>
+  </g>
+  <rect x="78" y="74" width="26" height="6" rx="1" fill="#7d8f4e"/>
+</svg>

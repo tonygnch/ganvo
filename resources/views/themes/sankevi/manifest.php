@@ -156,7 +156,7 @@ return [
             'label' => 'Brand seal',
             'hint' => 'Small square mark. Used in the nav when no logo is set, on the hero plate and behind the footer.',
             'size' => '400×400',
-            'default' => '/images/brand/sankevi/mark.webp',
+            'default' => '/images/brand/sankevi/mark.svg',
         ],
     ],
 
