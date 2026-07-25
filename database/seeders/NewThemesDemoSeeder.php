@@ -103,7 +103,19 @@ class NewThemesDemoSeeder extends Seeder
                 // public/images/demo/{theme}/ and copied into storage so the
                 // demo is deterministic (no runtime downloads). Products
                 // without a shot fall back to the theme's placeholder motif.
-                'image_path' => $this->demoImage($slug, $pslug, $cfg['demo_images'][$pslug] ?? null),
+                // Per-product shot first, then the product's CATEGORY shot. The
+                // category fallback is what stops a renamed product silently
+                // losing its photograph: demo_images is keyed by Str::slug() of
+                // the NAME, so editing a name breaks the key with no error, and
+                // the row quietly falls back to the placeholder motif. That had
+                // already happened twice here. A family photograph is also a
+                // truthful stand-in — every board in Греди looks like Греди.
+                'image_path' => $this->demoImage(
+                    $slug,
+                    $pslug,
+                    $cfg['demo_images'][$pslug]
+                        ?? ($cfg['demo_images_by_cat'][$catSlug] ?? null)
+                ),
                 'is_active' => true,
             ]);
             if (isset($cats[$catSlug])) {
@@ -437,13 +449,26 @@ class NewThemesDemoSeeder extends Seeder
                 // slug Str::slug() derives from the Cyrillic name; subjects are
                 // matched to what the item actually is, and the end-grain shot
                 // sits far from the masthead that also uses it.
+                // Shots picked for a specific item. Anything not listed here falls
+                // through to its family below, so this map is now an override
+                // rather than the only source — and a stale key costs a nicety,
+                // not the photograph.
                 'demo_images' => [
-                    'diuseme-bor-rendosano'  => '/images/demo/sankevi/floor.webp',
-                    'obsivka-lamperiia'      => '/images/demo/sankevi/endgrain.webp',
                     'greda-iglolistna-c24'   => '/images/demo/sankevi/yard.webp',
                     'letva-skara'            => '/images/demo/sankevi/workshop.webp',
                     'deking-impregniran'     => '/images/demo/sankevi/deck.webp',
                     'podkonstrukciia-deking' => '/images/demo/sankevi/beams.webp',
+                ],
+                // One photograph per family, keyed by CATEGORY slug — stable
+                // across product renames in a way the map above is not.
+                'demo_images_by_cat' => [
+                    'gredi'    => '/images/demo/sankevi/beams.webp',
+                    'letvi'    => '/images/demo/sankevi/letvi.webp',
+                    'daski'    => '/images/demo/sankevi/floor.webp',
+                    'lamperia' => '/images/demo/sankevi/lamperia.webp',
+                    'pervazi'  => '/images/demo/sankevi/pervazi.webp',
+                    'mebeli'   => '/images/demo/sankevi/mebeli.webp',
+                    'dekingi'  => '/images/demo/sankevi/deck.webp',
                 ],
                 'shop_label' => 'Магазин',
                 'nav' => [

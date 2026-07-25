@@ -52,7 +52,15 @@
         .cat-empty { padding: 90px 24px; text-align: center; font-family: var(--display); font-weight: 300; letter-spacing: .012em; font-size: 24px; color: var(--muted); border: 1px solid var(--line); }
 
         /* the grid loses a column to the rail — three plates, not four */
-        .catalog .shelf { grid-template-columns: repeat(3, 1fr); }
+        /* Three-up beside the filter rail — but ONLY where there is room for
+           three. Unscoped, this beat the layout's own 4 -> 3 -> 2 cascade at
+           every width, so a 390px phone was still rendering three columns and
+           the product photographs came out 107px wide. The layout already
+           steps down correctly below this; all this rule has to do is stay out
+           of its way. */
+        @media (min-width: 901px) {
+            .catalog .shelf { grid-template-columns: repeat(3, 1fr); }
+        }
 
         @media (max-width: 1000px) {
             .catalog { grid-template-columns: 1fr; gap: 30px; }
