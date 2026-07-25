@@ -65,6 +65,14 @@
         @media (max-width: 1000px) {
             .catalog { grid-template-columns: 1fr; gap: 30px; }
             .filters { position: static; }
+            /* PRODUCTS FIRST. Stacked, the filter rail comes before the grid in
+               source order, so a phone opened this page on a full screen of
+               form controls — the first photograph sat 1096px down, 1.3
+               viewport heights, and the page looked like it had no products at
+               all. The chips in the page head still cover quick navigation up
+               top; the full form belongs after the thing it filters. */
+            .catalog .filters { order: 2; }
+            .catalog .catalog-main, .catalog > :not(.filters) { order: 1; }
         }
         @media (max-width: 560px) {
             .cat-empty { padding: 56px 18px; font-size: 20px; }

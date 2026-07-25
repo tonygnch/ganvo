@@ -540,6 +540,33 @@
         @media (max-width: 760px) {
             .wrap { padding: 0 22px; }
             .shelf { grid-template-columns: repeat(2, 1fr); gap: 30px 16px; }
+
+            /* FULL BLEED ON A PHONE. The card grid sat inside the wrap's
+               gutter while the stock-book rows on /shop already ran edge to
+               edge, so the two product lists disagreed with each other. The
+               photographs now reach both screen edges, which is what a phone
+               has the least of — width.
+
+               `calc(50% - 50vw)` cancels whatever the wrap's padding happens
+               to be at this width (22px here, 18px below 430) without naming
+               it, so the two never drift apart.
+
+               The TEXT does not follow the image out. Type against the bezel
+               is the thing that made the About page look broken, so the line,
+               name and price keep their own gutter inside the bleed. */
+            .shelf {
+                margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
+                width: 100vw; max-width: 100vw;
+                gap: 30px 1px;            /* a hairline between the columns */
+                background: var(--line);  /* which is this, showing through */
+            }
+            .shelf .pcard { background: var(--bg); padding-bottom: 4px; }
+            .shelf .pcard .line,
+            .shelf .pcard h3,
+            .shelf .pcard .foot { padding-left: 14px; padding-right: 14px; }
+            /* the chamfer belongs to a plate sitting IN the page; at the screen
+               edge it reads as a rendering fault, so the bleeding corners go */
+            .shelf .pcard .pic { clip-path: none; }
             .sec-head { margin: 66px 0 26px; }
             footer.site { margin-top: 76px; padding-top: 56px; }
         }
