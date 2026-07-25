@@ -513,69 +513,70 @@
         .ow-pl .go svg { width: 26px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.2; transition: transform .5s cubic-bezier(.19, .74, .16, 1); }
         .ow-pl:hover .go svg { transform: translateX(8px); }
 
-        /* ── HORIZONTAL (phones) ───────────────────────────────────────────
-           The same arc laid on its side. Everything the vertical wheel pins to
-           a Y axis flips to X: the box becomes one row tall and full width,
-           the binding rule and the read-line tick rotate with it, and the edge
-           mask fades left/right instead of top/bottom.
+        /* ── TURNED (phones) ──────────────────────────────────────────────
+           NOT a horizontal variant of the wheel — the wheel itself, rotated a
+           quarter turn. Every number that makes the arc what it is (--ow-row,
+           TILT, CURVE, RANGE), the binding, the read-line tick, the index
+           numerals and the edge fade are the DESKTOP ones, untouched; the only
+           thing that changes is which way up the box is hung.
 
-           --ow-step is the spacing along the arc, and it is much larger than a
-           row height on purpose: these are words, and "Целият склад" needs the
-           room. The JS reads whichever of the two the orientation calls for.
+           An earlier attempt rebuilt a sideways wheel out of its own
+           parameters — its own spacing, its own hinge, no numerals — and it
+           read as a different control. This one cannot drift from the desktop
+           wheel, because it IS the desktop wheel.
 
-           touch-action: pan-y is the important one. The vertical wheel claimed
-           every gesture with `none`; lying down it must claim only the
-           sideways ones, or a visitor swiping UP to read the page would fight
-           the carousel instead of scrolling. */
-        .ow.is-horiz { --ow-step: 112px; }
-        .ow.is-horiz.is-live .ow-wheel {
-            /* Taller than the 76px the upright version needed, because the
-               words ROTATE now: a long family name is ~125px lying flat, and
-               by |d|=2 it has turned 48° and hangs some 64px below its own
-               hinge on top of the ~50px the curve has already pushed it down.
-               Not tall enough for the WORST case though — sizing for that left
-               a hand's depth of dead air under the row at rest. The second mask
-               dissolves those few frames instead of reserving space for them,
-               which is the same bargain the column makes at its own two ends. */
-            height: 154px; width: 100%;
-            touch-action: pan-y;
-            /* Two fades, INTERSECTED: left/right along the run (the column
-               fades its top and bottom for the same reason) and one across the
-               foot for the tails of the turned words. Where mask-composite is
-               unsupported the layers merely add, which is the harmless
-               direction to fail — less fade, never a hard cut. */
-            -webkit-mask-image:
-                linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%),
-                linear-gradient(180deg, #000 0, #000 66%, transparent 100%);
-            mask-image:
-                linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%),
-                linear-gradient(180deg, #000 0, #000 66%, transparent 100%);
-            -webkit-mask-composite: source-in;
-            mask-composite: intersect;
+           -90° and not +90°: it puts item 01 at the LEFT with later items to
+           the right, so a leftward drag brings the next family in from the
+           right the way every horizontal carousel does. (+90° is the prettier
+           turn — the binding would land under the plate rather than along the
+           floor — but it runs the list right-to-left and inverts the drag.)
+           The words end up reading bottom-to-top, which is the part the owner
+           accepted in order to get the arc.
+
+           Being rotated, the element's own HEIGHT is what a visitor sees as
+           WIDTH: --ow-run is that on-screen width, and since CSS cannot read a
+           parent's width into a length the JS publishes it. --ow-depth is the
+           on-screen height — however far the longest name reaches from the
+           spine. */
+        .ow-turn { display: contents; }
+        @media (max-width: 760px) {
+            /* Only the value before JS has measured the real names — see
+               measure(), which overwrites this from the widest of them. */
+            .ow.is-horiz { --ow-depth: 180px; }
+            .ow.is-horiz.is-live .ow-turn {
+                display: block; position: relative; height: var(--ow-depth);
+            }
+            .ow.is-horiz.is-live .ow-wheel {
+                position: absolute; top: 50%; left: 50%;
+                width: var(--ow-depth);
+                height: var(--ow-run, 320px);
+                transform-origin: 50% 50%;
+                transform: translate(-50%, -50%) rotate(-90deg);
+                /* The desktop fade runs along the element's own Y — which the
+                   turn carries round to the on-screen LEFT and RIGHT, exactly
+                   where the arc enters and leaves, so it needs no help there.
+                   The second layer feathers the element's far X edge, which
+                   lands on the on-screen TOP: the outer end of every name.
+                   Without it a name longer than the depth ceiling would meet a
+                   bare overflow:hidden cut in the middle of a letter.
+                   INTERSECTED; where mask-composite is unsupported the layers
+                   merely add, which is the harmless direction to fail. */
+                -webkit-mask-image:
+                    linear-gradient(180deg, transparent 0, #000 17%, #000 83%, transparent 100%),
+                    linear-gradient(90deg, #000 0, #000 92%, transparent 100%);
+                mask-image:
+                    linear-gradient(180deg, transparent 0, #000 17%, #000 83%, transparent 100%),
+                    linear-gradient(90deg, #000 0, #000 92%, transparent 100%);
+                -webkit-mask-composite: source-in;
+                mask-composite: intersect;
+                /* The column claims every gesture with `none`. Turned, it must
+                   claim only the sideways ones — touch-action is read in SCREEN
+                   directions, not the element's own, so pan-y leaves the browser
+                   free to scroll the page on an up/down swipe while the wheel
+                   still takes the left/right ones. */
+                touch-action: pan-y;
+            }
         }
-        /* the binding runs along the top, and the tick that marks the
-           read-line stands up instead of lying flat */
-        .ow.is-horiz.is-live .ow-wheel::before {
-            top: 0; left: 0; right: 0; bottom: auto; width: auto; height: 1px;
-            background: linear-gradient(90deg, transparent, var(--line2) 24%, var(--line2) 76%, transparent);
-        }
-        .ow.is-horiz.is-live .ow-wheel::after {
-            top: 0; left: 50%; width: 1px; height: 17px; transform: translateX(-50%);
-        }
-        /* Hinged on the TOP RAIL — the mirror of the column hinging at its left
-           spine, so the words swing down and away from the read-line instead of
-           spinning about their own middles. Translated back by half their width
-           first, so it is the CENTRE of the word that meets the tick and not
-           its left edge. */
-        .ow.is-horiz.is-live .ow-item {
-            left: 50%; top: 28px; height: auto; margin-top: 0;
-            transform-origin: 50% 0;
-            transform: translate3d(calc(var(--ow-x, 0px) - 50%), var(--ow-y, 0px), 0)
-                       rotate(var(--ow-r, 0deg));
-        }
-        .ow.is-horiz.is-live .ow-item a { height: auto; font-size: clamp(17px, 4.6vw, 21px); }
-        /* the index numeral costs width the phone does not have */
-        .ow.is-horiz.is-live .ow-ix { display: none; }
         /* one hint or the other, never both */
         .hint-h { display: none; }
         @media (max-width: 760px) { .hint-v { display: none; } .hint-h { display: inline; } }
@@ -587,24 +588,13 @@
            The cubic on the fade only takes the very outermost row to zero. */
         .ow.is-flat .ow-item { filter: none; opacity: calc(1 - var(--ow-p, 0) * var(--ow-p, 0) * var(--ow-p, 0)); }
         .ow.is-flat .ow-pl { transition: none; }
-        /* the edge fade exists to soften the tails of ROTATED rows; a stack
-           has none, and dimming its outer rows would be the opposite of the
-           point */
+        /* The edge fade exists to soften the tails of ROTATED rows; an
+           upright stack has none, and dimming its outer rows would be the
+           opposite of the point. TURNED is the exception — a flat run still
+           leaves the box at both ends, where the fade is all that stands
+           between the outer names and a hard cut. Being the same mask on the
+           same element, it needs no rule of its own to get there. */
         .ow.is-flat:not(.is-horiz) .ow-wheel { -webkit-mask-image: none; mask-image: none; }
-        /* Laid on its side that argument reverses. A straight run of WORDS is
-           far wider than the phone, so the side fade is the only thing between
-           the outer names and a hard cut at the bezel — it stays. The foot fade
-           goes (nothing hangs below a word that never turned) and with it the
-           height that only rotation ever needed.
-           mask-composite is reset explicitly: a lone layer left on `intersect`
-           composites against transparent black, and the whole strip vanishes. */
-        .ow.is-flat.is-horiz.is-live .ow-wheel {
-            height: 76px;
-            -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
-            mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
-            -webkit-mask-composite: source-over;
-            mask-composite: add;
-        }
 
         /* =================================================================
            ACT 6 — FOREST. Full bleed, one line of type, nothing else.
@@ -810,6 +800,13 @@
                          preventDefault, so without this the wheel would turn
                          AND the page would slide out from under it. Scoped to
                          this one 300px box; the rest of the act scrolls. --}}
+                    {{-- ow-turn only exists for the phone. A rotated element
+                         still occupies its UNROTATED box in the layout, so the
+                         turned wheel needs a parent that reserves the footprint
+                         it actually paints into. On desktop the wrapper is
+                         display:contents — no box, no effect, the wheel stays a
+                         direct grid item of .ow. --}}
+                    <div class="ow-turn">
                     <nav class="ow-wheel" data-ow-wheel data-lenis-prevent
                          aria-label="{{ __('site.storefront.sankevi.wheel_label') }}">
                         <ul class="ow-list">
@@ -823,6 +820,7 @@
                             @endforeach
                         </ul>
                     </nav>
+                    </div>
 
                     {{-- The plates. Every one of them repeats a link the wheel
                          already exposes by name, so they are a pointer
@@ -1144,6 +1142,7 @@
         if (!root) return;
 
         var wheel = root.querySelector('[data-ow-wheel]');
+        var turn = root.querySelector('.ow-turn');
         var items = [].slice.call(root.querySelectorAll('[data-ow-item]'));
         var plates = [].slice.call(root.querySelectorAll('[data-ow-pl]'));
         var status = root.querySelector('[data-ow-status]');
@@ -1188,23 +1187,59 @@
         var tiltRad = TILT * Math.PI / 180;
         var rowH = 46;
         var R = rowH / tiltRad;
-        /* ORIENTATION. The same arc, turned on its side for a phone: a
-           vertical wheel in a 354px column showed three legible names out of
-           eight with two thirds of the box empty. Laid horizontally it uses
-           the width it actually has, and a sideways swipe is the natural
-           gesture on a handset. The step between neighbours is wider than a
-           row height because these are WORDS, not list rows — "Целият склад"
-           needs room — so the CSS hands over --ow-step for it. */
+        /* ORIENTATION. A vertical wheel in a 354px phone column showed three
+           legible names out of eight with two thirds of the box empty. So on a
+           phone the whole control is ROTATED a quarter turn (see the CSS): it
+           then spends the width a handset actually has, and a sideways swipe is
+           the natural gesture there.
+
+           Nothing below this line knows about that. The geometry, the arc and
+           every parameter stay exactly what they are on a desktop — the turn is
+           one CSS transform, not a second wheel. `horiz` therefore means only
+           "the box is turned", and all it changes is which SCREEN axis an input
+           arrives on. */
         var horiz = false;
 
-        // The row height is a CSS decision (it changes at the phone
-        // breakpoint), so the geometry reads it back rather than duplicating
-        // the media query in here.
+        // The row height is a CSS decision, so the geometry reads it back
+        // rather than duplicating the media query in here.
         function measure() {
-            var cs = getComputedStyle(wheel);
-            var v = parseFloat(cs.getPropertyValue(horiz ? '--ow-step' : '--ow-row'));
-            rowH = v > 0 ? v : (horiz ? 150 : 46);
+            var v = parseFloat(getComputedStyle(wheel).getPropertyValue('--ow-row'));
+            rowH = v > 0 ? v : 46;
             R = rowH / tiltRad;
+            /* Turned, what the layout calls the wheel's HEIGHT is what the
+               visitor sees as its width, and it should fill the space the
+               wrapper was given. CSS cannot read a parent's width into a
+               length, so that one number is published from here — and only
+               while turned, because a display:contents wrapper reports a
+               clientWidth of 0. */
+            if (horiz && turn) {
+                root.style.setProperty('--ow-run', turn.clientWidth + 'px');
+                /* And the DEPTH — how far the longest name reaches out from
+                   the spine — is measured rather than guessed. Upright, a name
+                   has the column's whole width to run into and the slack is
+                   enormous; turned, it has only the strip's on-screen height,
+                   and a hard 180px (tuned to this shop's seven names) left
+                   about 6px of it. Category names are merchant-authored free
+                   text: "Обработени первази" already measures 194px and would
+                   have been guillotined mid-letter, at full opacity, on the
+                   read-line. Clamped at both ends — never a sliver, never a
+                   strip taller than the plate above it — and the far end is
+                   feathered below, so a name past even the ceiling dissolves
+                   instead of being cut. */
+                var reach = 0;
+                for (var q = 0; q < n; q++) {
+                    var w = items[q].offsetLeft + items[q].offsetWidth;
+                    if (w > reach) reach = w;
+                }
+                /* +22 is not slack, it is the feather's clearance: the mask
+                   below dissolves the last 8% of the depth, and a name whose
+                   tip landed inside that would be dimmed for no reason. 22px
+                   is wider than 8% of any depth this can produce, so an
+                   ordinary name is never touched by it and only one that has
+                   pushed past the 300px ceiling ever meets it. */
+                root.style.setProperty('--ow-depth',
+                    Math.max(150, Math.min(reach + 22, 300)) + 'px');
+            }
         }
 
         var cur = 0, target = 0, sel = -1, raf = 0, lastT = 0, onScreen = true;
@@ -1247,31 +1282,22 @@
         function render() {
             for (var i = 0; i < n; i++) {
                 var d = offset(i, cur);
-                var out = Math.abs(d) > RANGE;
+                /* >= and not >: the fade reaches ZERO at exactly RANGE rows
+                   (p hits 1 there, and opacity is 1.04 - p * 1.04), so the row
+                   AT the limit is already invisible — and `out` is what clears
+                   its pointer-events. Upright, those two ghosts sat outside the
+                   box and the mistake cost nothing. Turned, they park along the
+                   bottom edge of a full-width strip, over blank ground a thumb
+                   lands on, and a tap there jumped the wheel three places to a
+                   family that was never on screen. */
+                var out = Math.abs(d) >= RANGE;
                 var cd = out ? (d < 0 ? -RANGE : RANGE) : d;
                 var p = Math.min(1, Math.abs(d) / RANGE);
                 var x = 0, y, r = 0;
                 if (flat) {
-                    // Reduced motion: a plain straight run. No arc to read
-                    // means no reason to rotate, lean or blur anything — but
-                    // it has to run along the axis the wheel is LAID on. Sent
-                    // down Y while horizontal, all eight words share one X and
-                    // pile up outside a box one row tall.
-                    if (horiz) { x = cd * rowH; y = 0; } else { y = cd * rowH; }
-                } else if (horiz) {
-                    // Same circle, quarter-turned: the run goes along X and the
-                    // lean pushes DOWN, away from the read-line. Rotation is
-                    // the SAME tangent the column uses — the neighbours turn
-                    // progressively on end as they roll away, which is the
-                    // whole effect and the reason the strip is tall.
-                    var ah = cd * tiltRad;
-                    x = R * Math.sin(ah);
-                    r = ah * 180 / Math.PI;
-                    // POSITIVE: neighbours fall AWAY beneath the read-line, so
-                    // the centred word is the one nearest the tick above it.
-                    // Negative read as a valley — the chosen item sat lowest
-                    // and its neighbours climbed into the tick.
-                    y = R * (1 - Math.cos(ah)) * CURVE;
+                    // Reduced motion: a plain stack. No arc to read means no
+                    // reason to rotate, lean or blur anything.
+                    y = cd * rowH;
                 } else {
                     var a = cd * tiltRad;
                     y = R * Math.sin(a);
@@ -1342,7 +1368,7 @@
             // reports deltaY should still turn it rather than do nothing.
             var d = horiz ? (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) : e.deltaY;
             if (e.deltaMode === 1) d *= 16;                    // lines
-            else if (e.deltaMode === 2) d *= (horiz ? wheel.clientWidth : wheel.clientHeight);
+            else if (e.deltaMode === 2) d *= wheel.clientHeight;   // the run, turned or not
             if (!d) return;
             e.preventDefault();
             target += d / (rowH * 1.35);
@@ -1460,12 +1486,19 @@
          | Without JS the markup is still a plain list of real links, every
          | family visible and tappable, so nothing is duplicated to get there.
          */
-        var wide = window.matchMedia('(min-width: 761px)');
+        /* THE SAME QUERY STRING THE CSS USES, character for character.
+           It used to be the complement, `(min-width: 761px)` negated, which is
+           NOT the same predicate: a viewport 760.5px wide — routine at 125%
+           Windows scaling or any non-integral zoom — satisfies neither
+           `min-width: 761px` nor `max-width: 760px`. JS would flip every input
+           axis to X while the CSS media query stayed unmatched and painted the
+           upright column, so Up/Down did nothing on a visibly vertical wheel
+           and the box swallowed the page scroll it had claimed with
+           touch-action: none. One predicate, one source of truth. */
+        var turned = window.matchMedia('(max-width: 760px)');
 
-        // Orientation is decided by the same breakpoint the CSS uses, read
-        // from the CSS rather than duplicated as a number in here.
         function orient() {
-            var want = !wide.matches;
+            var want = turned.matches;
             if (want === horiz) return false;
             horiz = want;
             root.classList.toggle('is-horiz', horiz);
@@ -1512,6 +1545,17 @@
         orient();
         // The wheel is live at every width now — only its ORIENTATION changes.
         setLive(true);
+
+        /* Measured once more when the webfont lands. --ow-depth is derived from
+           how wide the NAMES are, and at first paint they are still set in the
+           fallback face: "Целият склад" measured 136px there and 145px once
+           Oswald swapped in. The strip was therefore sized 9px too shallow for
+           the whole session — enough to push the tip of the longest name into
+           the feather that is meant never to touch it. Harmless where the
+           font is already cached; the guard is for the first visit. */
+        if (document.fonts && document.fonts.ready) {
+            document.fonts.ready.then(function () { measure(); render(); });
+        }
     })();
 })();
 </script>
