@@ -67,11 +67,13 @@ return [
             'label' => 'Planed corner — the chamfer cut off photographs, panels and buttons',
             'default' => true,
         ],
+        // Key kept as 'gutter_index' so stores that already saved this toggle
+        // keep their setting — but it is no longer an index. The № prefix and
+        // the 01/02/03 numbering came off at the owner's request; what is left
+        // is the section's name, set once, vertically, in the left margin.
         'gutter_index' => [
-            'label' => 'Gutter index — the vertical section label in the left margin',
+            'label' => 'Gutter label — the vertical section name in the left margin',
             'default' => true,
-            'text_label' => 'Index prefix',
-            'text_default' => '№',
         ],
         'sheet_marks' => [
             'label' => 'Sheet numbers on product cards and cart lines',

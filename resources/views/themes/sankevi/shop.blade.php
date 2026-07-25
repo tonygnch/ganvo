@@ -301,7 +301,7 @@
             <div class="wrap">
                 <div class="head">
                     @if ($theme->on('gutter_index'))
-                        <span class="gx" aria-hidden="true"><b>{{ $theme->label('gutter_index') }}</b> {{ __('site.storefront.sankevi.shop_eyebrow') }}</span>
+                        <span class="gx" aria-hidden="true">{{ __('site.storefront.sankevi.shop_eyebrow') }}</span>
                     @endif
                     <div class="crumb">
                         <a href="/">{{ $tenant->name }}</a> /
@@ -311,7 +311,6 @@
                             {{ __('site.storefront.product.breadcrumb_shop') }}
                         @endif
                     </div>
-                    <span class="kicker">{{ __('site.storefront.sankevi.shop_eyebrow') }}</span>
                     {{-- The heading is the family when one is chosen; the house
                          line only stands in for "everything". --}}
                     <h1 class="rise" style="--d: .1s;">

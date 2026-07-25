@@ -671,10 +671,9 @@
             <div class="wrap">
                 <div class="head" data-gv-reveal>
                     @if ($theme->on('gutter_index'))
-                        <span class="gx" aria-hidden="true"><b>{{ $theme->label('gutter_index') }} 01</b> {{ __('site.storefront.sankevi.gx_home') }}</span>
+                        <span class="gx" aria-hidden="true">{{ __('site.storefront.sankevi.gx_home') }}</span>
                     @endif
                     <div>
-                        <span class="kicker">{{ __('site.storefront.sankevi.families_eyebrow') }}</span>
                         <h2>{!! __('site.storefront.sankevi.families_h2_html') !!}</h2>
                     </div>
                     <span class="hint">{{ __('site.storefront.sankevi.families_hint') }}</span>
@@ -742,9 +741,8 @@
                 <div class="wrap">
                     <div class="head" data-gv-reveal>
                         @if ($theme->on('gutter_index'))
-                            <span class="gx" aria-hidden="true"><b>{{ $theme->label('gutter_index') }} 02</b> {{ __('site.storefront.sankevi.offer_eyebrow') }}</span>
+                            <span class="gx" aria-hidden="true">{{ __('site.storefront.sankevi.offer_eyebrow') }}</span>
                         @endif
-                        <span class="kicker">{{ __('site.storefront.sankevi.offer_eyebrow') }}</span>
                         <h2>{!! __('site.storefront.sankevi.offer_h2_html') !!}</h2>
                         <p class="lead">{{ __('site.storefront.sankevi.offer_lead') }}</p>
                     </div>
@@ -792,9 +790,8 @@
                 <div class="wrap in">
                     <div class="aside" data-gv-reveal>
                         @if ($theme->on('gutter_index'))
-                            <span class="gx" aria-hidden="true"><b>{{ $theme->label('gutter_index') }} 03</b> {{ __('site.storefront.sankevi.why_eyebrow') }}</span>
+                            <span class="gx" aria-hidden="true">{{ __('site.storefront.sankevi.why_eyebrow') }}</span>
                         @endif
-                        <span class="kicker">{{ __('site.storefront.sankevi.why_eyebrow') }}</span>
                         <h2>{!! __('site.storefront.sankevi.why_h2_html') !!}</h2>
 
                         @if ($theme->on('ledger_strip'))
@@ -849,7 +846,6 @@
         <section class="closing">
             <div class="wrap in">
                 <div data-gv-reveal>
-                    <span class="kicker k">{{ __('site.storefront.sankevi.closing_eyebrow') }}</span>
                     <h2>{!! __('site.storefront.sankevi.closing_h2_html') !!}</h2>
                     <p>{{ $theme->copy('trade_body') }}</p>
                     @if ($theme->on('trade_band'))

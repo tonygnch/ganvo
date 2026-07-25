@@ -387,7 +387,6 @@ return [
             // ——— WHAT WE OFFER. The family story moved wholesale to /about;
             // the landing page now talks about what the yard can DO, and why
             // you would place the order here rather than anywhere else.
-            'gx_offer'        => 'The workshop',
             'offer_eyebrow'   => 'Capabilities',
             'offer_h2_html'   => 'One yard, <em>every stage</em>',
             'offer_lead'      => 'The log arrives here and leaves as a finished component. No subcontractor between the stages, no waiting on someone else, and nobody else to carry the blame for the quality.',
@@ -406,7 +405,6 @@ return [
 
             // ——— WHY US. Reasons, not a biography: the family history lives
             // at /about and is pointed at from here with a single link.
-            'gx_why'          => 'The ledger',
             'why_eyebrow'     => 'Why us',
             'why_h2_html'     => 'The reasons they <em>come back</em>',
             'why_1_h'         => 'A quote within one working day',

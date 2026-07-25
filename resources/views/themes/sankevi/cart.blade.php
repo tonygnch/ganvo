@@ -182,7 +182,7 @@
         <div class="wrap req-wrap">
             <div class="page-head reveal">
                 @if ($theme->on('gutter_index'))
-                    <span class="gx" aria-hidden="true" style="top: 60px;"><b>{{ $theme->label('gutter_index') }}</b> {{ __('site.storefront.sankevi.req_gx') }}</span>
+                    <span class="gx" aria-hidden="true" style="top: 60px;">{{ __('site.storefront.sankevi.req_gx') }}</span>
                 @endif
                 <div class="crumb">{{ $crumbTxt }}</div>
                 <h1>{!! $headingHtml !!}</h1>

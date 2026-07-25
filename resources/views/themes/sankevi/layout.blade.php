@@ -171,7 +171,6 @@
             display: flex; align-items: center; gap: 14px;
         }
         .gx::after { content: ""; width: 1px; height: 62px; background: linear-gradient(180deg, var(--line2), transparent); }
-        .gx b { color: var(--accent-ink); font-weight: 500; }
         body.no-gx .gx { display: none; }
         @media (max-width: 1180px) { .gx { display: none; } }
 

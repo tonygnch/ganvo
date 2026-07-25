@@ -46,11 +46,10 @@
             @if ($bannerUrl)
                 <section class="coll-hero reveal">
                     @if ($theme->on('gutter_index'))
-                        <span class="gx" aria-hidden="true" style="top: 30px;"><b>{{ $theme->label('gutter_index') }}</b> {{ __('site.storefront.featured.eyebrow') }}</span>
+                        <span class="gx" aria-hidden="true" style="top: 30px;">{{ __('site.storefront.featured.eyebrow') }}</span>
                     @endif
                     <div class="art cut cut-lg"><img src="{{ $bannerUrl }}" alt="{{ $collection->title }}"></div>
                     <div class="overlay">
-                        <span class="kicker">{{ __('site.storefront.featured.eyebrow') }}</span>
                         <h1>{{ $collection->title }}</h1>
                         @if ($collection->description)<p>{{ $collection->description }}</p>@endif
                     </div>
@@ -58,7 +57,7 @@
             @else
                 <div class="page-head reveal">
                     @if ($theme->on('gutter_index'))
-                        <span class="gx" aria-hidden="true" style="top: 60px;"><b>{{ $theme->label('gutter_index') }}</b> {{ __('site.storefront.featured.eyebrow') }}</span>
+                        <span class="gx" aria-hidden="true" style="top: 60px;">{{ __('site.storefront.featured.eyebrow') }}</span>
                     @endif
                     <div class="crumb"><a href="/">{{ __('site.storefront.product.breadcrumb_shop') }}</a></div>
                     <h1>{{ $collection->title }}</h1>

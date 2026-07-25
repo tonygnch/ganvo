@@ -111,7 +111,7 @@
         <div class="wrap">
             <div class="pdp">
                 @if ($theme->on('gutter_index'))
-                    <span class="gx" aria-hidden="true" style="top: 44px;"><b>{{ $theme->label('gutter_index') }}</b> {{ __('site.storefront.sankevi.gx_product') }}</span>
+                    <span class="gx" aria-hidden="true" style="top: 44px;">{{ __('site.storefront.sankevi.gx_product') }}</span>
                 @endif
 
                 <div class="pgal rise" style="--d: .1s;">
@@ -195,7 +195,6 @@
             @if ($related->isNotEmpty())
                 <div class="sec-head">
                     <div>
-                        <span class="kicker">{{ __('site.storefront.sankevi.related_eyebrow') }}</span>
                         <h2>{{ __('site.storefront.featured.h2') }}</h2>
                     </div>
                     <a class="more" href="/">{{ __('site.storefront.featured.browse_all') }}</a>

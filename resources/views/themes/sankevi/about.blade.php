@@ -110,7 +110,7 @@
         <div class="wrap about">
             <div class="page-head reveal">
                 @if ($theme->on('gutter_index'))
-                    <span class="gx" aria-hidden="true" style="top: 60px;"><b>{{ $theme->label('gutter_index') }}</b> {{ __('site.storefront.sankevi.story_eyebrow') }}</span>
+                    <span class="gx" aria-hidden="true" style="top: 60px;">{{ __('site.storefront.sankevi.story_eyebrow') }}</span>
                 @endif
                 @if ($about['founded_year'])
                     <div class="crumb">{{ __('site.storefront.about.since', ['year' => $about['founded_year']]) }}</div>
@@ -146,7 +146,6 @@
                         </div>
                     @endif
                     <div class="tx">
-                        <span class="kicker k">{{ __('site.storefront.sankevi.story_eyebrow') }}</span>
                         <h2>{!! __('site.storefront.sankevi.story_h2_html') !!}</h2>
                         <p>{{ $theme->copy('story_body') }}</p>
                     </div>

@@ -90,7 +90,7 @@
         <div class="wrap ct-wrap">
             <div class="page-head reveal">
                 @if ($theme->on('gutter_index'))
-                    <span class="gx" aria-hidden="true" style="top: 60px;"><b>{{ $theme->label('gutter_index') }}</b> {{ __('site.storefront.contact.title') }}</span>
+                    <span class="gx" aria-hidden="true" style="top: 60px;">{{ __('site.storefront.contact.title') }}</span>
                 @endif
                 <div class="crumb"><a href="/">{{ __('site.storefront.product.breadcrumb_shop') }}</a> / {{ __('site.storefront.contact.title') }}</div>
                 <h1>{{ $heading }}</h1>
