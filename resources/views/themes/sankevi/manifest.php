@@ -156,7 +156,10 @@ return [
             'label' => 'Brand seal',
             'hint' => 'Small square mark. Used in the nav when no logo is set, on the hero plate and behind the footer.',
             'size' => '400×400',
-            'default' => '/images/brand/sankevi/mark.svg',
+            // Cream colourway: the theme is dark-native and the seal sits on the
+            // bark header, the hero plate and the footer watermark. mark.svg is
+            // the walnut master for light grounds and print.
+            'default' => '/images/brand/sankevi/mark-cream.svg',
         ],
     ],
 
