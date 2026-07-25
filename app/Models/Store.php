@@ -41,6 +41,9 @@ class Store extends Model
     ];
 
     protected $fillable = [
+        // Per-storefront preview lock (Super Admin → Tenants). The password is
+        // only ever stored as a bcrypt hash; the plaintext is never persisted.
+        'preview_lock', 'preview_user', 'preview_password_hash',
         'tenant_id',
         'theme',
         'logo_path',
@@ -71,6 +74,7 @@ class Store extends Model
     ];
 
     protected $casts = [
+        'preview_lock' => 'boolean',
         'theme_settings' => 'array',
         'display_currencies' => 'array',
         'fx_rates' => 'array',

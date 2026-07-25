@@ -17,6 +17,7 @@ use App\Http\Controllers\Storefront\CurrencyController;
 use App\Http\Controllers\Storefront\OrderController;
 use App\Http\Controllers\Storefront\StorefrontController;
 use App\Http\Middleware\ResolveStorefrontTenant;
+use App\Http\Middleware\StorefrontPreviewGate;
 use App\Http\Middleware\SetDisplayCurrency;
 use Illuminate\Support\Facades\Route;
 
@@ -272,12 +273,17 @@ $storefrontRoutes = function () {
         ->whereAlpha('code');
 };
 
+// StorefrontPreviewGate sits between the two on purpose: it needs the tenant
+// the resolver produces in order to know whose lock to apply, and running it
+// before the currency middleware means a locked-out visitor costs nothing
+// beyond the 401.
+//
 // Subdomain routing: acme.ganvo.lvh.me
 Route::domain('{tenantSlug}.' . $centralDomain)
-    ->middleware([ResolveStorefrontTenant::class, SetDisplayCurrency::class])
+    ->middleware([ResolveStorefrontTenant::class, StorefrontPreviewGate::class, SetDisplayCurrency::class])
     ->group($storefrontRoutes);
 
 // Custom-domain (catch-all): any host that didn't match above falls through here.
 // ResolveStorefrontTenant 404s if the host doesn't match a verified custom_domain.
-Route::middleware([ResolveStorefrontTenant::class, SetDisplayCurrency::class])
+Route::middleware([ResolveStorefrontTenant::class, StorefrontPreviewGate::class, SetDisplayCurrency::class])
     ->group($storefrontRoutes);
