@@ -269,9 +269,44 @@
         .nav .right { margin-left: auto; display: flex; gap: 20px; align-items: center; font-size: 12px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
         .nav .right a, .nav .right summary { white-space: nowrap; }
         .nav .right a:hover { color: var(--txt); }
-        .bag { color: var(--txt); display: inline-flex; align-items: baseline; gap: 7px; }
-        .bag .n { color: var(--accent-ink); font-variant-numeric: tabular-nums; }
-        .bag .ico { display: none; width: 17px; height: 17px; align-self: center; }
+        /* THE UTILITY ICONS. Account and cart are the two controls a visitor
+           reaches for by shape rather than by reading — and in Bulgarian their
+           labels ("Моят профил", "Кошница") run half again as long as MY
+           ACCOUNT and CART, which is what used to shove this cluster off the
+           right edge on a phone and cost the account link its place there
+           entirely. Both are glyphs now, at every width.
+
+           The words are CLIPPED, never removed, so the accessible name is
+           still "Кошница 3" and the account link still announces which state
+           it is in. The count stays visible: it is information, not a label. */
+        .nav .right .acct, .nav .right .bag {
+            position: relative; display: inline-flex; align-items: center; gap: 7px;
+        }
+        /* A full-height target around a 20px glyph, drawn with a pseudo-element
+           so the hit area costs the layout nothing — padding here would have
+           pushed the two icons apart under the cluster's own gap.
+
+           Vertical growth is free (the header is far taller than 44px). Sideways
+           it is NOT: --hit is half the cluster gap, so two neighbouring targets
+           meet without ever overlapping — an overlap means a tap near the seam
+           opens the wrong one. And the last control's target stops flush with
+           the content column, or it pushes the nav past its own right edge (it
+           did: 4px, which only body{overflow-x:hidden} was swallowing). */
+        .nav .right { --hit: 10px; }
+        .nav .right .acct::after, .nav .right .bag::after {
+            content: ""; position: absolute; top: 50%; transform: translateY(-50%);
+            left: calc(var(--hit) * -1); right: calc(var(--hit) * -1); height: 44px;
+        }
+        .nav .right > :last-child::after { right: 0; }
+        .nav .right .acct .ico, .nav .right .bag .ico { display: block; width: 20px; height: 20px; }
+        .nav .right .acct .lbl, .nav .right .bag .lbl {
+            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+            overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+        }
+        .nav .right .acct { color: var(--muted); }
+        .nav .right .acct:hover { color: var(--txt); }
+        .bag { color: var(--txt); }
+        .bag .n { color: var(--accent-ink); font-variant-numeric: tabular-nums; line-height: 1; }
         .menu-toggle { display: none; background: none; border: none; color: var(--txt); font-size: 20px; line-height: 1; padding: 6px; z-index: 80; }
 
         /* dropdown — language, currency and the merchant's nav groups */
@@ -388,8 +423,7 @@
         }
         @media (max-width: 640px) {
             .nav { gap: 10px; }
-            .nav .right { gap: 13px; font-size: 11px; letter-spacing: .08em; }
-            .nav .right .acct { display: none; }
+            .nav .right { gap: 13px; font-size: 11px; letter-spacing: .08em; --hit: 6px; }
         }
         @media (max-width: 760px) {
             .wrap { padding: 0 22px; }
@@ -398,22 +432,20 @@
             footer.site { margin-top: 76px; padding-top: 56px; }
         }
         @media (max-width: 430px) {
-            /* The utility cluster is where Bulgarian overflows first: "Количка"
-               and "Моят профил" run half again as long as CART and MY ACCOUNT.
-               So on a phone the account link goes (the drawer carries it), the
-               cart word becomes a bag — visually only, its label stays in the
-               accessible name — the gaps tighten, the nav seal goes, and the
-               wordmark is finally allowed to ellipsise. */
+            /* Bulgarian used to overflow this cluster first, which is why the
+               account link was dropped here and the cart word swapped for a
+               bag. Both controls are icons at every width now, so neither
+               rule is needed and the account link KEEPS its place on a phone
+               instead of hiding in the drawer. What is still phone-only: the
+               gaps tighten, the nav seal goes, and the wordmark is finally
+               allowed to ellipsise. */
             .wrap { padding: 0 18px; }
             .nav { gap: 10px; }
-            .nav .right { gap: 13px; font-size: 11px; letter-spacing: .08em; }
-            .nav .right .acct { display: none; }
+            .nav .right { gap: 13px; font-size: 11px; letter-spacing: .08em; --hit: 6px; }
             .logo { font-size: 17px; letter-spacing: .1em; gap: 8px; min-width: 0; }
             .logo span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
             .logo .seal { display: none; }
             .bag { gap: 5px; }
-            .bag .ico { display: block; }
-            .bag .lbl { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
             .toast { left: 18px; right: 18px; }
         }
     </style>
@@ -538,14 +570,21 @@
                         </details>
                     @endif
                     @if ($store->showsAccountUi())
-                        <a class="acct" href="{{ $customer ? '/account' : '/account/login' }}">{{ $customer ? __('site.common.my_account') : __('site.common.sign_in') }}</a>
+                        {{-- Icon + CLIPPED label, never a bare icon: the accessible
+                             name still has to say "Моят профил" / "Вход", and it is
+                             also what tells a screen-reader user which of the two
+                             states they are in. --}}
+                        <a class="acct" href="{{ $customer ? '/account' : '/account/login' }}">
+                            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8.2" r="3.6"/><path d="M4.9 20.2a7.3 7.3 0 0 1 14.2 0"/></svg>
+                            <span class="lbl">{{ $customer ? __('site.common.my_account') : __('site.common.sign_in') }}</span>
+                        </a>
                     @endif
                     <a class="bag" href="/cart">
                         {{-- The label is only ever hidden VISUALLY (see the phone
                              breakpoint), never removed: the accessible name has
                              to stay "Cart 3" once the icon takes over. --}}
                         <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
-                        <span class="lbl">{{ __('site.common.cart') }}</span><span class="n">{{ $cartCount }}</span>
+                        <span class="lbl">{{ __('site.common.cart') }} </span><span class="n">{{ $cartCount }}</span>
                     </a>
                 </div>
             </div>
