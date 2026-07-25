@@ -40,6 +40,13 @@ return [
             'label' => 'Price-list newsletter',
             'default' => true,
         ],
+        // The catalogue at /shop is a separate destination from the landing
+        // page, so it gets its own switch: off leaves the stock book opening
+        // on type alone, which is what a merchant with no wide shot wants.
+        'shop_masthead' => [
+            'label' => 'Shop masthead (photographic cover over the stock book)',
+            'default' => true,
+        ],
     ],
 
     'motifs' => [
@@ -138,6 +145,12 @@ return [
             'hint' => 'Hands, tools, shavings — the making, not the product.',
             'size' => '1200×900',
             'default' => '/images/demo/sankevi/workshop.webp',
+        ],
+        'shop_image' => [
+            'label' => 'Shop masthead photograph',
+            'hint' => 'The cover of the catalogue at /shop. Very wide crop — the band is short and full-bleed. Ships with the end-grain stack.',
+            'size' => '2100×900',
+            'default' => '/images/demo/sankevi/endgrain.webp',
         ],
         'seal_image' => [
             'label' => 'Brand seal',

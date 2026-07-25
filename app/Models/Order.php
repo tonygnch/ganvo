@@ -48,6 +48,7 @@ class Order extends Model
         // PaymentIntent. Lets the system run both modes side-by-side
         // during rollout + indefinitely for tenants without Connect.
         'payment_method',
+        'order_flow',
         'carrier',
         'tracking_number',
         'tracking_url',

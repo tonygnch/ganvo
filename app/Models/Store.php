@@ -12,6 +12,28 @@ class Store extends Model
     public const CHECKOUT_ACCOUNT = 'account';
     public const CHECKOUT_BOTH = 'both';
 
+    /**
+     * How an order completes.
+     *
+     * PAYMENT — the shopper pays at checkout (Stripe Connect).
+     * ENQUIRY — no money is taken. The order is a firm request the merchant
+     *   reviews and quotes; they contact the customer to settle price and
+     *   delivery. For merchants who cut to order, this IS the real flow, and
+     *   it is safer than the legacy stub path, which marked orders paid.
+     */
+    public const FLOW_PAYMENT = 'payment';
+    public const FLOW_ENQUIRY = 'enquiry';
+
+    public const ORDER_FLOWS = [
+        self::FLOW_PAYMENT => 'Take payment at checkout',
+        self::FLOW_ENQUIRY => 'Collect the order, then contact the customer (no payment)',
+    ];
+
+    public function isEnquiryFlow(): bool
+    {
+        return ($this->order_flow ?? self::FLOW_PAYMENT) === self::FLOW_ENQUIRY;
+    }
+
     public const CHECKOUT_MODES = [
         self::CHECKOUT_GUEST => 'Guest checkout only',
         self::CHECKOUT_ACCOUNT => 'Account required',
@@ -44,6 +66,7 @@ class Store extends Model
         'shipping_methods',
         'is_live',
         'checkout_mode',
+        'order_flow',
         'allow_registration',
     ];
 

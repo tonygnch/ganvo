@@ -24,6 +24,32 @@ class StorefrontController extends Controller
      */
     public function index(Request $request): View
     {
+        return $this->catalogue($request, forceShop: false);
+    }
+
+    /**
+     * The catalogue at /shop. Same data as index(), but always the shop view
+     * when the theme provides one — a shopper who clicked "Shop" wants the
+     * grid, not the brand page.
+     */
+    public function shop(Request $request): View
+    {
+        return $this->catalogue($request, forceShop: true);
+    }
+
+    /**
+     * The shared body of index() and shop().
+     *
+     * This MUST stay private with both entry points taking only a Request:
+     * the storefront is also registered under a `{tenantSlug}.domain` route,
+     * and Laravel splices leftover route parameters positionally into any
+     * extra controller arguments. A public `index(Request, bool $forceShop)`
+     * therefore received the tenant slug as $forceShop — a non-empty string,
+     * i.e. true — and the landing page rendered the catalogue on every
+     * subdomain request.
+     */
+    private function catalogue(Request $request, bool $forceShop): View
+    {
         $tenant = app('current_tenant');
         $store = $tenant->store;
         $theme = $this->themeFor($store);
@@ -44,9 +70,31 @@ class StorefrontController extends Controller
         // collection() below.
         $featuredCollections = $this->featuredCollectionsFor($tenant);
 
-        return view("themes.{$theme}.index", compact(
+        // A theme may split its landing page from its catalogue: when the
+        // shopper is browsing (searching, filtering, paginating) send them to
+        // the shop view if the theme has one, so the brand page does not have
+        // to double as a product grid. Themes without a shop view are
+        // unaffected — index still renders both, exactly as before.
+        $browsing = $forceShop || $this->isBrowsing($filters, $products);
+        $view = ($browsing && view()->exists("themes.{$theme}.shop"))
+            ? "themes.{$theme}.shop"
+            : "themes.{$theme}.index";
+
+        return view($view, compact(
             'tenant', 'store', 'products', 'categories', 'filters', 'featuredCollections'
         ));
+    }
+
+    /** True when the shopper is filtering/searching/paging rather than landing. */
+    private function isBrowsing(array $filters, $products): bool
+    {
+        return ($filters['q'] ?? null)
+            || ($filters['category'] ?? null)
+            || ($filters['min_price'] ?? null) !== null
+            || ($filters['max_price'] ?? null) !== null
+            || ($filters['in_stock'] ?? false)
+            || (($filters['sort'] ?? 'newest') !== 'newest')
+            || (method_exists($products, 'currentPage') && $products->currentPage() > 1);
     }
 
     /**

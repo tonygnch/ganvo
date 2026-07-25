@@ -223,7 +223,12 @@ class NewThemesDemoSeeder extends Seeder
     {
         // Sankevi is a Bulgarian-first client site — its nav should not open in English.
         $shopLabel = $cfg['shop_label'] ?? 'Shop';
-        $nav = [['label' => $shopLabel, 'url' => '/', 'sort_order' => 0, 'auto_source' => null, 'children' => []]];
+        // A theme that ships its own catalogue view has split the brand page
+        // from the shop (StorefrontController::shop renders it at /shop), so
+        // the merchant's "Shop" entry must point at the catalogue rather than
+        // at a landing page that no longer carries a product grid.
+        $shopUrl = view()->exists("themes.{$slug}.shop") ? '/shop' : '/';
+        $nav = [['label' => $shopLabel, 'url' => $shopUrl, 'sort_order' => 0, 'auto_source' => null, 'children' => []]];
         $so = 1;
         foreach ($cfg['cats'] as $cslug => $c) {
             if ($c[0] === 'Shop') {
@@ -410,7 +415,19 @@ class NewThemesDemoSeeder extends Seeder
             ],
             'sankevi' => [
                 'name' => 'Sankevi', 'accent' => '#8a9a5b', 'currency' => 'EUR',
-                'demo_images' => [],
+                // The stock book at /shop is one full-width band per item, so
+                // every row is carried by its photograph. Keyed by the product
+                // slug Str::slug() derives from the Cyrillic name; subjects are
+                // matched to what the item actually is, and the end-grain shot
+                // sits far from the masthead that also uses it.
+                'demo_images' => [
+                    'diuseme-bor-rendosano'  => '/images/demo/sankevi/floor.webp',
+                    'obsivka-lamperiia'      => '/images/demo/sankevi/endgrain.webp',
+                    'greda-iglolistna-c24'   => '/images/demo/sankevi/yard.webp',
+                    'letva-skara'            => '/images/demo/sankevi/workshop.webp',
+                    'deking-impregniran'     => '/images/demo/sankevi/deck.webp',
+                    'podkonstrukciia-deking' => '/images/demo/sankevi/beams.webp',
+                ],
                 'shop_label' => 'Магазин',
                 'announce' => 'Семейна дъскорезница в Родопите · Собствен добив · Разкрой по размер',
                 'hero' => ['От гората до вашия обект', 'Режем дървесина от 1974 г.', 'Разгледай склада'],

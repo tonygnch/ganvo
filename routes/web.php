@@ -214,6 +214,9 @@ Route::domain($centralDomain)->group(function () {
 // Shared storefront route definitions, reused for both subdomain and custom-domain matching.
 $storefrontRoutes = function () {
     Route::get('/', [StorefrontController::class, 'index']);
+    // The catalogue. Themes that ship a `shop` view get a landing page free
+    // of the product grid; themes without one fall back to their index.
+    Route::get('/shop', [StorefrontController::class, 'shop']);
     Route::get('/products/{slug}', [StorefrontController::class, 'product']);
     // No ->name() on any route in this closure — it is registered twice
     // (subdomain group + custom-domain catch-all) and duplicate names break

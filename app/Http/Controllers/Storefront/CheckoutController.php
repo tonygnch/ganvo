@@ -59,7 +59,11 @@ class CheckoutController extends Controller
         // Stripe-mode flag drives both the form behavior + the
         // Stripe.js include in the view. Stays false for tenants in
         // stub mode (the default until they complete Connect onboarding).
-        $paymentMode = $tenant->canAcceptRealPayments() ? 'stripe' : 'stub';
+        // 'enquiry' short-circuits everything: the store is not taking money,
+        // so no Stripe include, no card step, and the view swaps its wording.
+        $paymentMode = $store->isEnquiryFlow()
+            ? 'enquiry'
+            : ($tenant->canAcceptRealPayments() ? 'stripe' : 'stub');
 
         return view($view, [
             'tenant' => $tenant,
@@ -142,14 +146,17 @@ class CheckoutController extends Controller
 
         // The same Order build in both modes — only `status` +
         // `payment_method` differ.
-        $isStripe = $tenant->canAcceptRealPayments();
+        // An enquiry store never charges, even if Connect happens to be ready —
+        // the merchant's setting wins over Stripe availability.
+        $isEnquiry = $store->isEnquiryFlow();
+        $isStripe = ! $isEnquiry && $tenant->canAcceptRealPayments();
 
         $order = DB::transaction(function () use (
             $tenant, $store, $customer, $items, $data,
             $grandTotal, $displayCurrency, $displayTotal,
             $discount, $discountAmount,
             $shipping, $shippingLabel,
-            $isStripe
+            $isStripe, $isEnquiry
         ) {
             $order = Order::create([
                 'tenant_id' => $tenant->id,
@@ -169,10 +176,14 @@ class CheckoutController extends Controller
                 'discount_code' => $discount?->code,
                 'discount_name' => $discount?->name,
                 'discount_amount_cents' => $discountAmount,
-                // Branch: stub orders are paid instantly; stripe orders
-                // wait for the webhook to flip them to 'paid'.
-                'status' => $isStripe ? 'pending' : 'paid',
-                'payment_method' => $isStripe ? 'stripe' : 'stub',
+                // Three flows, and only one of them is ever 'paid' here:
+                //   stripe  — pending until the webhook confirms payment
+                //   enquiry — no money involved; stays pending until the
+                //             merchant has quoted and contacted the customer
+                //   stub    — legacy demo path, marked paid instantly
+                'status' => ($isStripe || $isEnquiry) ? 'pending' : 'paid',
+                'payment_method' => $isStripe ? 'stripe' : ($isEnquiry ? 'enquiry' : 'stub'),
+                'order_flow' => $isEnquiry ? \App\Models\Store::FLOW_ENQUIRY : \App\Models\Store::FLOW_PAYMENT,
                 'shipping_address' => [
                     'line' => $data['address_line'],
                     'region' => $data['address_region'] ?? null,
@@ -181,9 +192,9 @@ class CheckoutController extends Controller
                     'country' => $data['country'],
                 ],
                 'notes' => $data['notes'] ?? null,
-                // Only stamp paid_at in stub mode — the webhook does
-                // it for stripe orders.
-                'paid_at' => $isStripe ? null : now(),
+                // Only stub mode stamps paid_at. An enquiry has not been
+                // paid and must never look like it has.
+                'paid_at' => ($isStripe || $isEnquiry) ? null : now(),
             ]);
 
             if ($discount) {

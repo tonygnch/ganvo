@@ -451,8 +451,13 @@
                             @endif
                         @endforeach
                     @else
-                        <a href="/">{{ __('site.storefront.nav.shop') }}</a>
-                        <a href="/#shop">{{ __('site.storefront.nav.featured') }}</a>
+                        {{-- Fallback nav, for a store that has not built its own
+                             menu. The landing page is the brand; the catalogue
+                             lives at /shop — so "Shop" is a destination here,
+                             never an anchor into a grid the home no longer has. --}}
+                        <a href="/shop">{{ __('site.storefront.nav.shop') }}</a>
+                        @if ($csAboutOn)<a href="/about">{{ __('site.storefront.footer.about') }}</a>@endif
+                        @if ($csContactOn)<a href="/contact">{{ __('site.storefront.footer.contact') }}</a>@endif
                     @endif
                 </div>
                 <div class="right">
@@ -500,8 +505,9 @@
                     <a href="{{ $item['url'] ?: '/' }}"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ $item['label'] }}</a>
                 @endforeach
             @else
-                <a href="/"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ __('site.storefront.nav.shop') }}</a>
-                <a href="/#shop"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ __('site.storefront.nav.featured') }}</a>
+                <a href="/shop"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ __('site.storefront.nav.shop') }}</a>
+                @if ($csAboutOn)<a href="/about"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ __('site.storefront.footer.about') }}</a>@endif
+                @if ($csContactOn)<a href="/contact"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ __('site.storefront.footer.contact') }}</a>@endif
             @endif
             @if ($store->showsAccountUi())
                 <a href="{{ $customer ? '/account' : '/account/login' }}"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ $customer ? __('site.common.my_account') : __('site.common.sign_in') }}</a>
@@ -530,8 +536,15 @@
                 </div>
                 <div class="fcol">
                     <h4>{{ __('site.storefront.footer.col_shop') }}</h4>
-                    <a href="/">{{ __('site.storefront.footer.all_products') }}</a>
-                    <a href="/#shop">{{ __('site.storefront.nav.featured') }}</a>
+                    {{-- The stock book, then whatever sections the merchant
+                         actually keeps — the footer follows the same split as
+                         the nav: the catalogue is never the home page. --}}
+                    <a href="/shop">{{ __('site.storefront.footer.all_products') }}</a>
+                    @foreach (array_slice($csNavMenu, 0, 4) as $item)
+                        @if ($item['url'] && str_starts_with($item['url'], '/categories/'))
+                            <a href="{{ $item['url'] }}">{{ $item['label'] }}</a>
+                        @endif
+                    @endforeach
                     <a href="/cart">{{ __('site.common.cart') }}</a>
                 </div>
                 <div class="fcol">

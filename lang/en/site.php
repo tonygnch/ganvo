@@ -344,6 +344,101 @@ return [
             'pill_kiln'       => 'Kiln-dried',
             'pill_graded'     => 'Strength-graded',
             'pill_cut'        => 'Cut to size',
+
+            // ——— THE LANDING PAGE AS A BRAND PAGE. Home is no longer a
+            // shop window: the catalogue lives at /shop. The strings below
+            // carry the acts of the cinematic landing — hero, velocity band,
+            // flowing family menu, story, forest and the closing call.
+            'scroll_cue'          => 'Scroll',
+            'marquee_trade'       => 'Sawmill',
+            'marquee_place'       => 'Rhodope mountains',
+            'marquee_since'       => 'since :year',
+            // What a screen reader gets instead of the decorative running band.
+            'marquee_sr'          => ':name — a family sawmill in the Rhodope mountains.',
+            'families_eyebrow'    => 'What we cut',
+            'families_h2_html'    => 'Everything that leaves <em>the yard</em>',
+            'families_hint'       => 'Every row opens the yard',
+            'families_all'        => 'The whole yard',
+            'stat_years_label'    => 'Years in one clearing',
+            'stat_radius_label'   => 'Km sourcing radius',
+            'pickup_eyebrow'      => 'Off the stack this week',
+            'pickup_all'          => 'See everything in the yard',
+            'closing_eyebrow'     => 'Next step',
+            'closing_h2_html'     => 'Bring us <em>the measurements</em>',
+            'closing_shop'        => 'Enter the yard',
+
+            // ——— THE STOCK BOOK (/shop). The catalogue is its own
+            // destination, not a card grid: one row per item, the way the
+            // mill's own book runs — photograph, sizes, availability, price.
+            'shop_eyebrow'        => 'The stock book',
+            'shop_h1_html'        => 'Everything off the <em>saw</em>',
+            'shop_intro'          => 'One row, one item in the yard: the sizes we mill it in, and the price of the smallest section. Open a row for the full specification.',
+            'shop_refine'         => 'Refine',
+            'shop_all'            => 'The whole yard',
+            'shop_choose'         => 'Choose by :axes',
+            'shop_from'           => 'from',
+            'shop_open'           => 'View the entry',
+            'shop_empty_h_html'   => 'Nothing in <em>the book</em>',
+            'shop_empty_p'        => 'No row matches this selection. Drop a filter — or write to us: we cut to specification too.',
+            'shop_empty_cta'      => 'Clear the selection',
+
+            // ——— ENQUIRY FLOW (Store::FLOW_ENQUIRY). This yard takes no money
+            // online: the customer sends a cutting list and is called back with
+            // a quote. Nothing below may imply a charge, a card or a payment —
+            // that is the whole point of the wording. Used by cart / checkout /
+            // order when $store->isEnquiryFlow() (resp. $order->order_flow).
+            'req_gx'              => 'The list',
+            'req_crumb'           => 'Request · nothing is charged online',
+            'req_h1_html'         => 'Your <em>cutting list</em>',
+            'req_lead_one'        => ':count line ready to go to the yard.',
+            'req_lead_many'       => ':count lines ready to go to the yard.',
+            'req_empty_h_html'    => 'Nothing on <em>the list</em> yet',
+            'req_empty_p'         => 'Pick your boards, set the lengths, and send us the list. We price it and come back to you — no payment happens on this site.',
+            'req_empty_cta'       => 'Into the yard →',
+            'req_col_item'        => 'Item',
+            'req_col_qty'         => 'Quantity',
+            'req_col_est'         => 'Estimate',
+            'req_back'            => 'Add more to the list',
+            'req_panel_h'         => 'Your request',
+            'req_delivery_note'   => 'Quoted with the offer',
+            'req_est_label'       => 'Estimate',
+            'req_est_note'        => 'An indicative figure taken from our list prices. The yard confirms the final price once the cut and the delivery are agreed.',
+            'req_cta'             => 'Continue to request →',
+            'req_no_payment'      => 'No card · no payment online',
+
+            // Checkout — the wizard's third sheet is a review, not a till.
+            'co_crumb'            => 'Request · no payment is taken',
+            'co_h1'               => 'Send the list',
+            'step_review'         => 'Send',
+            'sec_review'          => 'Review & send',
+            'rv_contact'          => 'Contact',
+            'rv_delivery'         => 'Delivery',
+            'rv_list'             => 'The list',
+            'rv_edit'             => 'Edit',
+            'rv_notes'            => 'Notes',
+            'rv_none'             => '—',
+            'next_h'              => 'What happens next',
+            'next_1'              => 'We read the list and check the yard for every line on it.',
+            'next_2'              => 'We price it — timber, cutting and delivery — and put the offer in writing.',
+            'next_3'              => 'We call or email you, usually within one working day. Nothing is charged until you accept.',
+            'no_pay_h'            => 'Nothing is charged now',
+            'no_pay_p'            => 'This is a request, not an order. No card details are collected and no payment is taken on this site.',
+            'send_request'        => 'Send the request',
+
+            // Order confirmation — a receipt for a request, never for a payment.
+            'ord_title'           => 'Your list is with us, :name',
+            'ord_title_anon'      => 'Your list is with us',
+            'ord_body'            => 'We have the request and we are pricing it now. The offer goes to :email — or we call, if that is quicker.',
+            'ord_ref'             => 'Request no.',
+            'ord_state'           => 'Request',
+            'ord_state_pending'   => 'Received · awaiting quote',
+            'ord_state_confirmed' => 'Quoted · confirmed',
+            'ord_submitted'       => 'Sent',
+            'ord_phone'           => 'Phone',
+            'ord_list_h'          => 'The list you sent',
+            'ord_est_total'       => 'Estimated total',
+            'ord_est_note'        => 'Indicative only — our list prices, before the cut and the delivery are agreed. The offer we send is the binding figure.',
+            'ord_back'            => 'Back to the yard',
         ],
         // Storefront contact page — merchant details + enquiry form.
         'contact' => [
