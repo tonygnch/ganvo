@@ -11,8 +11,22 @@
     <style>
         .auth { position: relative; display: grid; place-items: center; min-height: 80vh; padding: 60px 0; }
         .auth::before { content: ""; position: absolute; width: min(720px, 90%); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--moss) 42%, transparent), transparent 68%); pointer-events: none; }
-        .auth .card { position: relative; z-index: 2; width: min(470px, 100%); background: var(--surface); border: 1px solid var(--line); padding: 46px 44px; }
-        .auth .card .seal { position: absolute; top: -26px; right: 26px; width: 52px; height: 52px; object-fit: contain; }
+        .auth .card { position: relative; z-index: 2; width: 100%; background: var(--surface); border: 1px solid var(--line); padding: 46px 44px; }
+        /* The seal hangs 26px above the card's top edge — but the card carries
+           the planed-corner motif, and clip-path clips EVERY descendant no
+           matter what overflow says. Inside the card, the overhanging half was
+           simply cut away, which is what "half hidden" looked like. So the
+           seal now lives on an unclipped wrapper, as a SIBLING of the card. */
+        .auth .cardwrap { position: relative; z-index: 2; width: min(470px, 100%); }
+        .auth .cardwrap .seal {
+            position: absolute; top: -26px; right: 26px; z-index: 3;
+            width: 52px; height: 52px;
+            background-image: var(--seal); background-size: contain;
+            background-repeat: no-repeat; background-position: center;
+        }
+        /* the card and the page behind it are both pale in Daylight, so the
+           cream colourway would vanish there — swap to the walnut master */
+        html[data-mode="light"] .auth .cardwrap .seal { background-image: var(--seal-day); }
 
         .auth .head { padding-bottom: 22px; margin-bottom: 26px; border-bottom: 1px solid var(--line2); }
         .auth .card .k { display: block; margin-bottom: 14px; }
@@ -57,10 +71,20 @@
     <main>
         <div class="wrap">
             <section class="auth">
-                <div class="card cut cut-lg reveal">
+                <div class="cardwrap reveal">
                     @if ($theme->on('brand_seal') && ($seal = $theme->image('seal_image')))
-                        <img class="seal" src="{{ $seal }}" alt="" aria-hidden="true">
+                        @php
+                            // Same two-colourway pairing the layout uses for the nav
+                            // mark: the shipped seal is cream, which disappears on the
+                            // pale Daylight card. A merchant's own upload is shown in
+                            // both modes — we cannot recolour someone else's artwork.
+                            $sealDay = str_contains($seal, 'mark-cream.svg')
+                                ? str_replace('mark-cream.svg', 'mark.svg', $seal)
+                                : $seal;
+                        @endphp
+                        <span class="seal" aria-hidden="true" style="--seal: url('{{ $seal }}'); --seal-day: url('{{ $sealDay }}');"></span>
                     @endif
+                <div class="card cut cut-lg">
 
                     @php
                         // Editorial accent: the last word of the (escaped) title
@@ -111,6 +135,7 @@
                     <div class="alt">
                         {{ __('site.auth.have_account') }} <a href="/account/login">{{ __('site.auth.sign_in_link') }} →</a>
                     </div>
+                </div>
                 </div>
             </section>
         </div>
