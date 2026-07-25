@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class ProductVariant extends Model
 {
@@ -27,6 +28,21 @@ class ProductVariant extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * The option values this variant is pinned to — one per axis. The pivot
+     * carries product_option_id so callers can group by axis without a second
+     * query back through the values.
+     */
+    public function optionValues(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            ProductOptionValue::class,
+            'product_variant_option_values',
+            'product_variant_id',
+            'product_option_value_id'
+        )->withPivot('product_option_id');
     }
 
     /**

@@ -7,10 +7,12 @@ use App\Http\Controllers\Marketing\SignupController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\Onboarding\AuthController as OnboardingAuthController;
 use App\Http\Controllers\Onboarding\WizardController;
+use App\Http\Controllers\Storefront\AboutController;
 use App\Http\Controllers\Storefront\AccountController;
 use App\Http\Controllers\Storefront\Auth\CustomerAuthController;
 use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CheckoutController;
+use App\Http\Controllers\Storefront\ContactController;
 use App\Http\Controllers\Storefront\CurrencyController;
 use App\Http\Controllers\Storefront\OrderController;
 use App\Http\Controllers\Storefront\StorefrontController;
@@ -236,6 +238,15 @@ $storefrontRoutes = function () {
     Route::post('/checkout', [CheckoutController::class, 'process']);
 
     Route::get('/orders/{orderNumber}', [OrderController::class, 'show']);
+
+    // Contact page — merchant details + enquiry form. 404s when the merchant
+    // disables the page in Store settings.
+    Route::get('/contact', [ContactController::class, 'show']);
+    Route::post('/contact', [ContactController::class, 'submit']);
+
+    // History / about page. Opt-in, so this 404s until the merchant fills it
+    // in and switches it on in Store settings.
+    Route::get('/about', [AboutController::class, 'show']);
 
     // Customer auth + account
     Route::get('/account/login', [CustomerAuthController::class, 'showLogin']);

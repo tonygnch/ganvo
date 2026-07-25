@@ -250,6 +250,10 @@
 <body>
     @php
         $csAnnouncement = $store->announcementBar();
+        // The contact and history pages can each be switched off per store;
+        // don't leave a footer link pointing at a route that 404s.
+        $csContactOn = $store->contactPage()['enabled'];
+        $csAboutOn = $store->aboutPage()['enabled'];
         $csNavMenu = $store->navMenuItems();
         $customer = auth('customer')->user();
         $currentLocale = app()->getLocale();
@@ -322,7 +326,8 @@
         <div class="footer-links">
             <a href="/">{{ __('site.storefront.footer.all_products') }}</a>
             <a href="/cart">{{ __('site.common.cart') }}</a>
-            <a href="#">{{ __('site.storefront.footer.contact') }}</a>
+            @if ($csContactOn)<a href="/contact">{{ __('site.storefront.footer.contact') }}</a>@endif
+            @if ($csAboutOn)<a href="/about">{{ __('site.storefront.footer.about') }}</a>@endif
         </div>
         <div class="footer-bottom">
             © {{ date('Y') }} {{ $tenant->name }} ·

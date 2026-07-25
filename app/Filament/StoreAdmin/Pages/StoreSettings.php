@@ -6,6 +6,7 @@ use App\Models\Store;
 use App\Services\Money;
 use App\Themes\ThemeRegistry;
 use BackedEnum;
+use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\ColorPicker;
@@ -142,6 +143,41 @@ class StoreSettings extends Page implements HasForms
         $data['collection_band_height_px'] = (int) ($cdRaw['band_height_px'] ?? $cd['band_height_px']);
         $data['collection_title_size']     = $cd['title_size'];
         $data['collection_title_size_px']  = (int) ($cdRaw['title_size_px'] ?? $cd['title_size_px']);
+
+        // Contact page. Defaults come from the helper, but email, phone and the
+        // map embed are hydrated from the RAW column: contactPage() substitutes
+        // the tenant's contact details for a blank email/phone, and re-saving
+        // that would bake the fallback into the store's own JSON — the merchant
+        // could never get back to "inherit from my account". Same for the map:
+        // the helper nulls a snippet it rejects, so showing the raw value is the
+        // only way a merchant can see and fix what they actually pasted.
+        $contact = $store->contactPage();
+        $contactRaw = (array) ($store->contact ?? []);
+        $data['contact_enabled']   = $contact['enabled'];
+        $data['contact_show_form'] = $contact['show_form'];
+        $data['contact_heading']   = $contact['heading'];
+        $data['contact_intro']     = $contact['intro'];
+        $data['contact_address']   = $contact['address'];
+        $data['contact_phone']     = trim((string) ($contactRaw['phone'] ?? ''));
+        $data['contact_email']     = trim((string) ($contactRaw['email'] ?? ''));
+        $data['contact_hours']     = $contact['hours'];
+        $data['contact_map_embed'] = trim((string) ($contactRaw['map_embed'] ?? ''));
+
+        // History page. Straight out of the helper — nothing here inherits
+        // from the account, so the normalised values ARE what's stored.
+        // Images come back as a compacted list; spread it over the fixed
+        // upload slots the form shows.
+        $about = $store->aboutPage();
+        $data['about_enabled']      = $about['enabled'];
+        $data['about_heading']      = $about['heading'];
+        $data['about_intro']        = $about['intro'];
+        $data['about_story']        = $about['story'];
+        $data['about_founded_year'] = $about['founded_year'];
+        $data['about_milestones']   = $about['milestones'];
+        $data['about_stats']        = $about['stats'];
+        for ($i = 0; $i < Store::ABOUT_IMAGE_SLOTS; $i++) {
+            $data['about_image_' . ($i + 1)] = $about['images'][$i] ?? null;
+        }
 
         // Storefront effects.
         $data['number_animation'] = $store->numberAnimation();
@@ -400,6 +436,192 @@ class StoreSettings extends Page implements HasForms
                             ->required(fn (Get $get): bool => ($get('collection_title_size') ?? 'medium') === 'custom')
                             ->dehydratedWhenHidden()
                             ->helperText('Between ' . Store::COLLECTION_TITLE_MIN . ' and ' . Store::COLLECTION_TITLE_MAX . ' px.'),
+                    ]),
+
+                Section::make('Contact page')
+                    ->description('A page where shoppers find your details and send you a message. Enquiries are emailed to your contact address.')
+                    ->collapsible()
+                    ->columns(2)
+                    ->schema([
+                        Toggle::make('contact_enabled')
+                            ->label('Show contact page')
+                            ->default(true)
+                            ->helperText('The page lives at /contact and your storefront footer links to it. When off, both the page and the footer link disappear.')
+                            ->columnSpanFull(),
+                        Toggle::make('contact_show_form')
+                            ->label('Show the enquiry form')
+                            ->default(true)
+                            ->helperText('When off, the page lists your details only — useful if you would rather people phone or email you directly.')
+                            ->columnSpanFull(),
+                        TextInput::make('contact_heading')
+                            ->label('Heading')
+                            ->placeholder('Get in touch')
+                            ->maxLength(120)
+                            ->helperText('Leave empty to use the default wording.')
+                            ->columnSpanFull(),
+                        Textarea::make('contact_intro')
+                            ->label('Intro text')
+                            ->rows(3)
+                            ->maxLength(600)
+                            ->placeholder('Questions about a product, an order or a delivery? Send us a message and we will come back to you.')
+                            ->helperText('Leave empty to use the default wording.')
+                            ->columnSpanFull(),
+                        Textarea::make('contact_address')
+                            ->label('Address')
+                            ->rows(3)
+                            ->maxLength(300)
+                            ->placeholder("12 Vitosha Blvd\n1000 Sofia, Bulgaria")
+                            ->columnSpanFull(),
+                        TextInput::make('contact_phone')
+                            ->label('Phone')
+                            ->tel()
+                            ->maxLength(40)
+                            ->placeholder('+359 2 123 4567'),
+                        TextInput::make('contact_email')
+                            ->label('Email')
+                            ->email()
+                            ->maxLength(255)
+                            ->placeholder('hello@yourbrand.com')
+                            ->helperText('Also where the enquiry form sends messages. Leave empty to use your account contact email.'),
+                        Textarea::make('contact_hours')
+                            ->label('Opening hours')
+                            ->rows(3)
+                            ->maxLength(300)
+                            ->placeholder("Mon–Fri 9:00–18:00\nSat 10:00–14:00")
+                            ->columnSpanFull(),
+                        Textarea::make('contact_map_embed')
+                            ->label('Map embed')
+                            ->rows(4)
+                            ->maxLength(4000)
+                            ->placeholder('<iframe src="https://www.google.com/maps/embed?pb=…" …></iframe>')
+                            ->helperText('Google Maps → Share → Embed a map → Copy HTML, then paste the whole snippet here.')
+                            // Mirrors the guard in Store::contactPage(), which silently
+                            // drops a snippet it doesn't recognize. Without this rule the
+                            // save would look successful and the map would just never
+                            // appear, with nothing to explain why.
+                            ->rule(static fn (): Closure => static function (string $attribute, $value, Closure $fail): void {
+                                $snippet = trim((string) $value);
+                                if ($snippet === '' || Store::sanitizeMapEmbed($snippet) !== null) {
+                                    return;
+                                }
+                                $fail('This does not look like a map embed. Paste the whole snippet from <iframe to </iframe>, with an https:// address and nothing before or after it.');
+                            })
+                            ->columnSpanFull(),
+                    ]),
+
+                Section::make('History / About')
+                    ->description('Your story: how the business started, what it has built since, and the numbers you are proud of. Shoppers who read this page buy with more confidence — especially for made-to-order and trade work.')
+                    ->collapsible()
+                    ->columns(2)
+                    ->schema([
+                        Toggle::make('about_enabled')
+                            ->label('Show history page')
+                            ->helperText('The page lives at /about and your storefront footer links to it. Off by default — switch it on once there is something to read, since an empty history page is worse than none.')
+                            ->columnSpanFull(),
+                        TextInput::make('about_heading')
+                            ->label('Heading')
+                            ->placeholder('Our story')
+                            ->maxLength(120)
+                            ->helperText('Leave empty to use the default wording.'),
+                        TextInput::make('about_founded_year')
+                            ->label('Founded in')
+                            ->numeric()
+                            ->minValue(1800)
+                            ->maxValue((int) date('Y'))
+                            ->placeholder((string) (date('Y') - 20))
+                            ->helperText('Shown above the heading, e.g. “Since 1998”. Leave empty to hide it.'),
+                        Textarea::make('about_intro')
+                            ->label('Intro text')
+                            ->rows(3)
+                            ->maxLength(600)
+                            ->placeholder('Three generations, one workshop, and the same obsession with a straight edge.')
+                            ->helperText('One or two sentences under the heading. Leave empty to use the default wording.')
+                            ->columnSpanFull(),
+                        Textarea::make('about_story')
+                            ->label('The story')
+                            ->rows(10)
+                            ->maxLength(6000)
+                            ->placeholder("We started in a rented garage with one saw and a van…\n\nLeave a blank line between paragraphs.")
+                            ->helperText('The main text. Blank lines become paragraphs — write it the way you would tell it.')
+                            ->columnSpanFull(),
+                        Repeater::make('about_milestones')
+                            ->label('Milestones')
+                            ->helperText('Turning points, shown as a timeline in the order below. Drag to reorder — newest-first is fine if that reads better.')
+                            ->schema([
+                                TextInput::make('year')
+                                    ->label('Year')
+                                    ->maxLength(20)
+                                    ->placeholder('1998')
+                                    ->helperText('Free text — “1998” or “1998–2003” both work.')
+                                    ->columnSpan(1),
+                                TextInput::make('title')
+                                    ->label('What happened')
+                                    ->maxLength(120)
+                                    ->placeholder('The first workshop')
+                                    ->columnSpan(2),
+                                Textarea::make('text')
+                                    ->label('Details (optional)')
+                                    ->rows(2)
+                                    ->maxLength(600)
+                                    ->placeholder('Two machines, four people and our first contract.')
+                                    ->columnSpanFull(),
+                            ])
+                            ->columns(3)
+                            ->reorderable()
+                            ->reorderableWithDragAndDrop()
+                            ->collapsible()
+                            ->cloneable()
+                            ->defaultItems(0)
+                            ->itemLabel(fn (array $state): ?string => trim(($state['year'] ?? '') . ' · ' . ($state['title'] ?? ''), ' ·') ?: null)
+                            ->addActionLabel('Add a milestone')
+                            ->columnSpanFull(),
+                        Repeater::make('about_stats')
+                            ->label('Numbers')
+                            ->helperText('A short row of figures — years in business, orders delivered, square metres of workshop. Three or four read best.')
+                            ->schema([
+                                TextInput::make('value')
+                                    ->label('Figure')
+                                    ->maxLength(20)
+                                    ->placeholder('25+')
+                                    ->helperText('Keep it short — it is set large.')
+                                    ->columnSpan(1),
+                                TextInput::make('label')
+                                    ->label('What it counts')
+                                    ->maxLength(80)
+                                    ->placeholder('years in business')
+                                    ->columnSpan(2),
+                            ])
+                            ->columns(3)
+                            ->reorderable()
+                            ->reorderableWithDragAndDrop()
+                            ->collapsible()
+                            ->cloneable()
+                            ->defaultItems(0)
+                            ->itemLabel(fn (array $state): ?string => trim(($state['value'] ?? '') . ' ' . ($state['label'] ?? '')) ?: null)
+                            ->addActionLabel('Add a number')
+                            ->columnSpanFull(),
+                        FileUpload::make('about_image_1')
+                            ->label('Image 1')
+                            ->image()
+                            ->disk('public')
+                            ->directory('about')
+                            ->maxSize(4096)
+                            ->helperText('Up to three photos — the workshop, the team, the building. Landscape shots sit best.')
+                            ->columnSpanFull(),
+                        FileUpload::make('about_image_2')
+                            ->label('Image 2')
+                            ->image()
+                            ->disk('public')
+                            ->directory('about')
+                            ->maxSize(4096)
+                            ->columnSpanFull(),
+                        FileUpload::make('about_image_3')
+                            ->label('Image 3')
+                            ->image()
+                            ->disk('public')
+                            ->directory('about')
+                            ->maxSize(4096)
+                            ->columnSpanFull(),
                     ]),
                     ]), // end Storefront tab
 
@@ -707,6 +929,69 @@ class StoreSettings extends Page implements HasForms
         ];
         unset($state['collection_band_height'], $state['collection_band_height_px'],
               $state['collection_title_size'], $state['collection_title_size_px']);
+
+        // Contact page: same fold-into-JSON pattern. Every value stays optional —
+        // a blank heading/intro falls back to the platform copy, and a blank
+        // email/phone falls back to the account contact details, both resolved
+        // by Store::contactPage() at render time.
+        $state['contact'] = [
+            'enabled'   => (bool) ($state['contact_enabled'] ?? false),
+            'show_form' => (bool) ($state['contact_show_form'] ?? false),
+            'heading'   => trim((string) ($state['contact_heading'] ?? '')),
+            'intro'     => trim((string) ($state['contact_intro'] ?? '')),
+            'address'   => trim((string) ($state['contact_address'] ?? '')),
+            'phone'     => trim((string) ($state['contact_phone'] ?? '')),
+            'email'     => trim((string) ($state['contact_email'] ?? '')),
+            'hours'     => trim((string) ($state['contact_hours'] ?? '')),
+            'map_embed' => trim((string) ($state['contact_map_embed'] ?? '')) ?: null,
+        ];
+        unset($state['contact_enabled'], $state['contact_show_form'], $state['contact_heading'],
+              $state['contact_intro'], $state['contact_address'], $state['contact_phone'],
+              $state['contact_email'], $state['contact_hours'], $state['contact_map_embed']);
+
+        // History page: same fold-into-JSON pattern. Rows and images are stored
+        // raw-ish (trimmed only) — Store::aboutPage() is what drops the empties
+        // and clamps the year, and keeping that in ONE place means a row saved
+        // by an older form version still renders correctly.
+        $aboutImages = [];
+        for ($i = 1; $i <= Store::ABOUT_IMAGE_SLOTS; $i++) {
+            $key = "about_image_{$i}";
+            $path = trim((string) ($state[$key] ?? ''));
+            if ($path !== '') {
+                $aboutImages[] = $path;
+            }
+            unset($state[$key]);
+        }
+        $state['about'] = [
+            'enabled'      => (bool) ($state['about_enabled'] ?? false),
+            'heading'      => trim((string) ($state['about_heading'] ?? '')),
+            'intro'        => trim((string) ($state['about_intro'] ?? '')),
+            'story'        => trim((string) ($state['about_story'] ?? '')),
+            'founded_year' => (int) ($state['about_founded_year'] ?? 0) ?: null,
+            'milestones'   => collect($state['about_milestones'] ?? [])
+                ->filter(fn ($m) => is_array($m))
+                ->map(fn ($m) => [
+                    'year'  => trim((string) ($m['year'] ?? '')),
+                    'title' => trim((string) ($m['title'] ?? '')),
+                    'text'  => trim((string) ($m['text'] ?? '')),
+                ])
+                ->filter(fn ($m) => $m['year'] !== '' || $m['title'] !== '' || $m['text'] !== '')
+                ->values()
+                ->all(),
+            'stats'        => collect($state['about_stats'] ?? [])
+                ->filter(fn ($s) => is_array($s))
+                ->map(fn ($s) => [
+                    'value' => trim((string) ($s['value'] ?? '')),
+                    'label' => trim((string) ($s['label'] ?? '')),
+                ])
+                ->filter(fn ($s) => $s['value'] !== '' && $s['label'] !== '')
+                ->values()
+                ->all(),
+            'images'       => $aboutImages,
+        ];
+        unset($state['about_enabled'], $state['about_heading'], $state['about_intro'],
+              $state['about_story'], $state['about_founded_year'], $state['about_milestones'],
+              $state['about_stats']);
 
         // Fold the per-field signup toggles back into the signup_fields JSON.
         // Walks Store::SIGNUP_FIELDS so adding a new field name in the model

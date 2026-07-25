@@ -312,6 +312,10 @@
 <body data-gv-motion='{"duration":0.9,"ease":"power3.out","distance":26,"stagger":0.08,"scroll":{"lerp":0.24,"wheelMultiplier":1.3}}'>
     @php
         $csAnnouncement = $store->announcementBar();
+        // The contact and history pages can each be switched off per store;
+        // don't leave a footer link pointing at a route that 404s.
+        $csContactOn = $store->contactPage()['enabled'];
+        $csAboutOn = $store->aboutPage()['enabled'];
         $csNavMenu = $store->navMenuItems();
         $customer = auth('customer')->user();
         $currentLocale = app()->getLocale();
@@ -456,7 +460,8 @@
                     <h4>{{ __('site.storefront.footer.col_help') }}</h4>
                     <a href="#">{{ __('site.storefront.footer.shipping') }}</a>
                     <a href="#">{{ __('site.storefront.footer.returns') }}</a>
-                    <a href="#">{{ __('site.storefront.footer.contact') }}</a>
+                    @if ($csContactOn)<a href="/contact">{{ __('site.storefront.footer.contact') }}</a>@endif
+                    @if ($csAboutOn)<a href="/about">{{ __('site.storefront.footer.about') }}</a>@endif
                 </div>
                 <div class="fcol">
                     @if ($store->showsAccountUi())

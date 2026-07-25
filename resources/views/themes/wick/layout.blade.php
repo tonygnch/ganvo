@@ -285,7 +285,13 @@
             .blooms { grid-template-columns: repeat(2, 1fr); }
             .bcard .pic { height: 260px; }
             .fgrid { grid-template-columns: 1fr 1fr; }
-            .nav .right .lbl { display: none; }
+            /* Bulgarian labels run longer than English ("Кошница" vs "Cart"),
+               which pushed this cluster past the viewport. Drop the account
+               link entirely — hiding only its label left an empty, unlabelled
+               anchor in the tab order, and the drawer already carries it. */
+            .nav .right .acct { display: none; }
+            .nav { gap: 14px; }
+            .nav .right { gap: 13px; }
         }
     </style>
     {!! $theme->headExtras() !!}
@@ -297,6 +303,10 @@
 <body data-gv-motion='{"duration":1.35,"ease":"power2.out","distance":34,"stagger":0.12,"scroll":{"lerp":0.18,"wheelMultiplier":1.6}}'>
     @php
         $csAnnouncement = $store->announcementBar();
+        // The contact and history pages can each be switched off per store;
+        // don't leave a footer link pointing at a route that 404s.
+        $csContactOn = $store->contactPage()['enabled'];
+        $csAboutOn = $store->aboutPage()['enabled'];
         $csNavMenu = $store->navMenuItems();
         $customer = auth('customer')->user();
         $currentLocale = app()->getLocale();
@@ -385,7 +395,7 @@
                         </details>
                     @endif
                     @if ($store->showsAccountUi())
-                        <a href="{{ $customer ? '/account' : '/account/login' }}"><span class="lbl">{{ $customer ? __('site.common.my_account') : __('site.common.sign_in') }}</span></a>
+                        <a class="acct" href="{{ $customer ? '/account' : '/account/login' }}">{{ $customer ? __('site.common.my_account') : __('site.common.sign_in') }}</a>
                     @endif
                     <a class="bag" href="/cart">{{ __('site.common.cart') }}<span class="n">{{ $cartCount }}</span></a>
                 </div>
@@ -439,7 +449,8 @@
                     <h4>{{ __('site.storefront.footer.col_help') }}</h4>
                     <a href="#">{{ __('site.storefront.footer.shipping') }}</a>
                     <a href="#">{{ __('site.storefront.footer.returns') }}</a>
-                    <a href="#">{{ __('site.storefront.footer.contact') }}</a>
+                    @if ($csContactOn)<a href="/contact">{{ __('site.storefront.footer.contact') }}</a>@endif
+                    @if ($csAboutOn)<a href="/about">{{ __('site.storefront.footer.about') }}</a>@endif
                 </div>
                 <div class="fcol">
                     @if ($store->showsAccountUi())

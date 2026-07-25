@@ -75,6 +75,83 @@ class Product extends Model
         return $this->activeVariants()->exists();
     }
 
+    /** Choice axes for this product, in merchant-defined order. */
+    public function options(): HasMany
+    {
+        return $this->hasMany(ProductOption::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    /**
+     * Everything the storefront picker needs to let a shopper choose across
+     * several interacting axes, in one payload:
+     *
+     *   options[]           the axes, each with its ordered values
+     *   combos[]            variant_id => [option_id => value_id], one entry
+     *                       per PURCHASABLE combination
+     *   variants[]          variant_id => label/price/stock for live updates
+     *
+     * The picker never needs a rule engine: to decide whether "10 cm" is
+     * still selectable it asks whether any combo matches the shopper's other
+     * selections. A 200 cm board with no 10 cm variant therefore greys 10 cm
+     * out automatically — nothing has to be configured to forbid it.
+     *
+     * Returns an empty options list for products that never defined any, so
+     * callers can fall back to the flat variant picker.
+     */
+    public function optionMatrix(): array
+    {
+        $options = $this->relationLoaded('options')
+            ? $this->options
+            : $this->options()->with('values')->get();
+
+        if ($options->isEmpty()) {
+            return ['options' => [], 'combos' => [], 'variants' => []];
+        }
+
+        $variants = $this->activeVariants()->with('optionValues')->get();
+
+        $combos = [];
+        $meta = [];
+        foreach ($variants as $variant) {
+            $pairs = [];
+            foreach ($variant->optionValues as $value) {
+                $pairs[(int) $value->pivot->product_option_id] = (int) $value->id;
+            }
+
+            // A variant that is not pinned on every axis cannot be resolved
+            // unambiguously from the picker, so it is not offered at all.
+            if (count($pairs) !== $options->count()) {
+                continue;
+            }
+
+            $combos[(int) $variant->id] = $pairs;
+            $meta[(int) $variant->id] = [
+                'label' => $variant->label,
+                'price_cents' => $variant->effectivePriceCents(),
+                'stock' => (int) $variant->stock_quantity,
+            ];
+        }
+
+        return [
+            'options' => $options->map(fn (ProductOption $o) => [
+                'id' => (int) $o->id,
+                'name' => $o->name,
+                'values' => $o->values->map(fn (ProductOptionValue $v) => [
+                    'id' => (int) $v->id,
+                    'value' => $v->value,
+                ])->values()->all(),
+            ])->values()->all(),
+            'combos' => $combos,
+            'variants' => $meta,
+        ];
+    }
+
+    /** True when this product chooses via interacting axes rather than a flat list. */
+    public function hasOptionMatrix(): bool
+    {
+        return $this->options()->exists();
+    }
+
     /**
      * Every image for the product as a unified collection: primary
      * first (when set), then gallery rows in sort order. Each item is

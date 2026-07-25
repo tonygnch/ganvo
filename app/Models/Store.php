@@ -37,6 +37,8 @@ class Store extends Model
         'announcement',
         'nav_menu',
         'hero_banner',
+        'contact',
+        'about',
         'collection_display',
         'signup_fields',
         'shipping_methods',
@@ -52,6 +54,8 @@ class Store extends Model
         'announcement' => 'array',
         'nav_menu' => 'array',
         'hero_banner' => 'array',
+        'contact' => 'array',
+        'about' => 'array',
         'collection_display' => 'array',
         'signup_fields' => 'array',
         'shipping_methods' => 'array',
@@ -66,6 +70,55 @@ class Store extends Model
      * page; treat this as the canonical schema.
      */
     public const SIGNUP_FIELDS = ['phone', 'birthday', 'shipping_address', 'marketing_optin'];
+
+    /**
+     * Shape a merchant's pasted map snippet must have before we look at it:
+     * a bare <iframe> carrying an https src, nothing around it. This is only
+     * the first gate — see sanitizeMapEmbed(), which is what actually decides
+     * what reaches the page.
+     */
+    public const MAP_EMBED_PATTERN = '/^<iframe[^>]*\ssrc="(https:\/\/[^"]+)"[^>]*><\/iframe>$/i';
+
+    /** Providers whose map frames we are willing to embed. */
+    public const MAP_EMBED_HOSTS = [
+        'www.google.com',
+        'maps.google.com',
+        'www.openstreetmap.org',
+        'www.bing.com',
+        'yandex.com',
+        'api.mapbox.com',
+    ];
+
+    /**
+     * Reduce a merchant's map snippet to an iframe WE author, or null.
+     *
+     * Only the src survives, and only when it points at a known map host —
+     * every attribute on the merchant's own tag is discarded. Pattern-matching
+     * the snippet and echoing it back is not enough: `<iframe src="https://..."
+     * onload="...">` and `srcdoc="..."` both satisfy any regex loose enough to
+     * accept real Google embeds, and the result is rendered with {!! !!} on a
+     * storefront that has no CSP. A store admin is only semi-trusted, so this
+     * has to be a rewrite, not a check.
+     */
+    public static function sanitizeMapEmbed(?string $snippet): ?string
+    {
+        $snippet = trim((string) $snippet);
+        if ($snippet === '' || ! preg_match(self::MAP_EMBED_PATTERN, $snippet, $m)) {
+            return null;
+        }
+
+        // Real Google embed URLs arrive HTML-encoded (&amp;); decode before
+        // parsing the host, then re-escape when we write our own tag.
+        $src = html_entity_decode($m[1], ENT_QUOTES | ENT_HTML5);
+        $host = strtolower((string) parse_url($src, PHP_URL_HOST));
+        if (! in_array($host, self::MAP_EMBED_HOSTS, true)) {
+            return null;
+        }
+
+        return '<iframe src="' . e($src) . '" style="border:0" loading="lazy"'
+            . ' referrerpolicy="no-referrer-when-downgrade" allowfullscreen'
+            . ' title="' . e(__('site.storefront.contact.map_label')) . '"></iframe>';
+    }
 
     protected $attributes = [
         'currency' => 'EUR',
@@ -258,6 +311,137 @@ class Store extends Model
      *
      * @return array{enabled: bool, text: string, link: ?string, speed: string, speed_px: int}
      */
+    /**
+     * Contact-page content, normalised. Every key is always present so views
+     * never have to null-check. Falls back to the tenant's own contact
+     * details, which the onboarding wizard already collected, so a merchant
+     * who never opens the settings page still gets a usable page.
+     *
+     * @return array{enabled: bool, heading: string, intro: string, address: string,
+     *     phone: string, email: string, hours: string, map_embed: ?string,
+     *     show_form: bool, has_details: bool}
+     */
+    public function contactPage(): array
+    {
+        $c = (array) ($this->contact ?? []);
+        $tenant = $this->tenant;
+
+        // A key that was never written falls back to the account details the
+        // onboarding wizard collected; a key the merchant has explicitly
+        // CLEARED stays blank. Without that distinction a merchant could
+        // never stop publishing their personal email — blanking the field
+        // would just re-reveal the account address.
+        $email = array_key_exists('email', $c) && $c['email'] !== null
+            ? trim((string) $c['email'])
+            : trim((string) ($tenant->contact_email ?? ''));
+        $phone = array_key_exists('phone', $c) && $c['phone'] !== null
+            ? trim((string) $c['phone'])
+            : trim((string) ($tenant->contact_phone ?? ''));
+        $address = trim((string) ($c['address'] ?? ''));
+        $hours = trim((string) ($c['hours'] ?? ''));
+
+        $map = self::sanitizeMapEmbed($c['map_embed'] ?? null);
+
+        return [
+            // Default ON: a storefront without a contact route is the gap this
+            // fills, so merchants get the page unless they opt out.
+            'enabled' => (bool) ($c['enabled'] ?? true),
+            'heading' => trim((string) ($c['heading'] ?? '')),
+            'intro' => trim((string) ($c['intro'] ?? '')),
+            'address' => $address,
+            'phone' => $phone,
+            'email' => $email,
+            'hours' => $hours,
+            'map_embed' => $map,
+            'show_form' => (bool) ($c['show_form'] ?? true),
+            'has_details' => $address !== '' || $phone !== '' || $email !== '' || $hours !== '',
+        ];
+    }
+
+    /** How many story images the merchant can upload. */
+    public const ABOUT_IMAGE_SLOTS = 3;
+
+    /**
+     * History / about-page content, normalised. Same contract as
+     * contactPage(): every key is always present, so views never null-check.
+     *
+     * Unlike the contact page this defaults to DISABLED. Contact details we
+     * can always fall back to (the wizard collected them); a factory history
+     * has no fallback, and an empty "Our story" page reads worse than no page
+     * at all — so the merchant opts in once they've written something.
+     *
+     * `founded_year` is dropped unless it's a plausible past year: it is
+     * rendered as a standalone eyebrow, where a typo'd "20255" would be the
+     * loudest thing on the page.
+     *
+     * Milestone/stat rows survive only if they carry text — the repeaters
+     * hand back empty rows the moment a merchant clicks "add" and reconsiders,
+     * and those would render as gaps in the timeline. Merchant order is kept
+     * as-is: a timeline is not always chronological (some read newest-first).
+     *
+     * @return array{enabled: bool, heading: string, intro: string, story: string,
+     *     founded_year: ?int, milestones: array<int, array{year: string, title: string, text: string}>,
+     *     stats: array<int, array{value: string, label: string}>,
+     *     images: array<int, string>, has_content: bool}
+     */
+    public function aboutPage(): array
+    {
+        $a = (array) ($this->about ?? []);
+
+        $year = (int) ($a['founded_year'] ?? 0);
+        $year = $year >= 1800 && $year <= (int) date('Y') ? $year : null;
+
+        $milestones = collect((array) ($a['milestones'] ?? []))
+            ->filter(fn ($m) => is_array($m))
+            ->map(fn ($m) => [
+                // Free text, not an int: merchants write "1998", "1998–2003"
+                // or "От 1998" and every one of those is a legitimate label.
+                'year'  => trim((string) ($m['year'] ?? '')),
+                'title' => trim((string) ($m['title'] ?? '')),
+                'text'  => trim((string) ($m['text'] ?? '')),
+            ])
+            ->filter(fn ($m) => $m['year'] !== '' || $m['title'] !== '' || $m['text'] !== '')
+            ->values()
+            ->all();
+
+        $stats = collect((array) ($a['stats'] ?? []))
+            ->filter(fn ($s) => is_array($s))
+            ->map(fn ($s) => [
+                'value' => trim((string) ($s['value'] ?? '')),
+                'label' => trim((string) ($s['label'] ?? '')),
+            ])
+            ->filter(fn ($s) => $s['value'] !== '' && $s['label'] !== '')
+            ->values()
+            ->all();
+
+        // Stored per slot, rendered as a list: a merchant who clears the
+        // middle upload should get two images side by side, not a hole.
+        $images = collect((array) ($a['images'] ?? []))
+            ->map(fn ($p) => trim((string) $p))
+            ->filter()
+            ->take(self::ABOUT_IMAGE_SLOTS)
+            ->values()
+            ->all();
+
+        $story = trim((string) ($a['story'] ?? ''));
+        $intro = trim((string) ($a['intro'] ?? ''));
+
+        return [
+            'enabled'      => (bool) ($a['enabled'] ?? false),
+            'heading'      => trim((string) ($a['heading'] ?? '')),
+            'intro'        => $intro,
+            'story'        => $story,
+            'founded_year' => $year,
+            'milestones'   => $milestones,
+            'stats'        => $stats,
+            'images'       => $images,
+            // Heading alone is not content — it falls back to platform copy,
+            // so a page with nothing else is just our own default sentence.
+            'has_content'  => $story !== '' || $intro !== ''
+                || $milestones !== [] || $stats !== [] || $images !== [],
+        ];
+    }
+
     public function announcementBar(): array
     {
         $a = (array) ($this->announcement ?? []);

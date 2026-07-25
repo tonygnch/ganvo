@@ -70,6 +70,11 @@ class ThemeRegistry
                 'description' => 'Daylight lumber yard — sanded-pine paper, resin-amber accent, Barlow Condensed signage caps with mono grading stamps, plank-stack hero and a UC1–UC4 treatment guide. Built for treated wood, building materials, and trade supply.',
                 'screenshot' => '/images/themes/timber.svg',
             ],
+            'sankevi' => [
+                'name' => 'Sankevi',
+                'description' => 'Forest atelier — warm off-black bark ground with moss green and birch cream, Alegreya serif over Commissioner, full-bleed photography with headlines walking across it and every plate cut at the corner. Built for sawmills, timber, stone, and heritage makers who sell the craft before the spec.',
+                'screenshot' => '/images/themes/sankevi.svg',
+            ],
         ];
     }
 

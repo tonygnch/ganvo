@@ -193,6 +193,11 @@ class Tenant extends Model
         return $this->hasMany(Customer::class);
     }
 
+    public function messages(): HasMany
+    {
+        return $this->hasMany(StoreMessage::class);
+    }
+
     public function isActive(): bool
     {
         return $this->status === self::STATUS_ACTIVE;

@@ -2,6 +2,7 @@
 
 namespace App\Filament\StoreAdmin\Resources\Products\Pages;
 
+use App\Filament\StoreAdmin\Resources\Products\Pages\Concerns\SyncsVariantOptionValues;
 use App\Filament\StoreAdmin\Resources\Products\ProductResource;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ForceDeleteAction;
@@ -10,6 +11,8 @@ use Filament\Resources\Pages\EditRecord;
 
 class EditProduct extends EditRecord
 {
+    use SyncsVariantOptionValues;
+
     protected static string $resource = ProductResource::class;
 
     protected function getHeaderActions(): array

@@ -118,6 +118,10 @@
 <body>
     @php
         $csAnnouncement = $store->announcementBar();
+        // The contact and history pages can each be switched off per store;
+        // don't leave a footer link pointing at a route that 404s.
+        $csContactOn = $store->contactPage()['enabled'];
+        $csAboutOn = $store->aboutPage()['enabled'];
         $csNavMenu = $store->navMenuItems();
         $customer = auth('customer')->user();
         $currentLocale = app()->getLocale();
@@ -191,7 +195,7 @@
                     </form>
                 </div>
                 <div class="fcol"><h4>{{ __('site.storefront.footer.col_shop') }}</h4><a href="/">{{ __('site.storefront.footer.all_products') }}</a><a href="/#featured">{{ __('site.storefront.nav.featured') }}</a><a href="/cart">{{ __('site.common.cart') }}</a></div>
-                <div class="fcol"><h4>{{ __('site.storefront.footer.col_help') }}</h4><a href="#">{{ __('site.storefront.footer.shipping') }}</a><a href="#">{{ __('site.storefront.footer.returns') }}</a><a href="#">{{ __('site.storefront.footer.contact') }}</a></div>
+                <div class="fcol"><h4>{{ __('site.storefront.footer.col_help') }}</h4><a href="#">{{ __('site.storefront.footer.shipping') }}</a><a href="#">{{ __('site.storefront.footer.returns') }}</a>@if ($csContactOn)<a href="/contact">{{ __('site.storefront.footer.contact') }}</a>@endif@if ($csAboutOn)<a href="/about">{{ __('site.storefront.footer.about') }}</a>@endif</div>
                 <div class="fcol"><h4>{{ __('site.lang.switch') }}</h4>@foreach ($languages as $code => $name)<a href="/lang/{{ $code }}">{{ $name }}</a>@endforeach</div>
             </div>
             <div class="fbot">

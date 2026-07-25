@@ -37,6 +37,10 @@ class NewThemesDemoSeeder extends Seeder
         foreach ($this->stores() as $slug => $cfg) {
             $this->seedStore($slug, $cfg);
         }
+
+        // Sankevi is the option-matrix showcase: its boards are chosen by
+        // length AND width, and the two interact.
+        $this->seedSankeviMatrix();
     }
 
     private function seedStore(string $slug, array $cfg): void
@@ -142,9 +146,84 @@ class NewThemesDemoSeeder extends Seeder
         $this->command->info('  → http://' . $slug . '.' . config('ganvo.central_domain') . ':8000  (' . count($products) . ' products)');
     }
 
+    /**
+     * Sankevi's dependent options — the reason the matrix exists.
+     *
+     * Each board is sold by Дължина × Широчина, but not every pairing is
+     * milled: a 4 m board is only worth cutting in the wider sections. The
+     * impossible pairs are not configured anywhere — they are simply the
+     * combinations with no variant, which is what the picker greys out.
+     */
+    private function seedSankeviMatrix(): void
+    {
+        $tenant = Tenant::where('slug', 'sankevi')->first();
+        if (! $tenant) {
+            return;
+        }
+
+        // length => the widths actually milled at that length
+        $matrix = [
+            '2000 мм' => ['96 мм', '121 мм'],
+            '3000 мм' => ['121 мм', '146 мм'],
+            '4000 мм' => ['146 мм', '196 мм'],
+        ];
+
+        $products = Product::where('tenant_id', $tenant->id)->get();
+        foreach ($products as $product) {
+            $product->variants()->delete();
+            $product->options()->delete();
+
+            $lenOpt = \App\Models\ProductOption::create([
+                'product_id' => $product->id, 'name' => 'Дължина', 'sort_order' => 0,
+            ]);
+            $widOpt = \App\Models\ProductOption::create([
+                'product_id' => $product->id, 'name' => 'Широчина', 'sort_order' => 1,
+            ]);
+
+            $lenVals = [];
+            foreach (array_keys($matrix) as $i => $len) {
+                $lenVals[$len] = \App\Models\ProductOptionValue::create([
+                    'product_option_id' => $lenOpt->id, 'value' => $len, 'sort_order' => $i,
+                ]);
+            }
+            $widVals = [];
+            foreach (['96 мм', '121 мм', '146 мм', '196 мм'] as $i => $w) {
+                $widVals[$w] = \App\Models\ProductOptionValue::create([
+                    'product_option_id' => $widOpt->id, 'value' => $w, 'sort_order' => $i,
+                ]);
+            }
+
+            $sort = 0;
+            foreach ($matrix as $len => $widths) {
+                foreach ($widths as $w) {
+                    // price scales with the cross-section, rounded to whole cents
+                    $lenM = (int) filter_var($len, FILTER_SANITIZE_NUMBER_INT) / 1000;
+                    $widM = (int) filter_var($w, FILTER_SANITIZE_NUMBER_INT) / 1000;
+                    $price = (int) round($product->price_cents * $lenM * ($widM / 0.121) / 50) * 50;
+
+                    $variant = ProductVariant::create([
+                        'product_id' => $product->id,
+                        'label' => $len . ' / ' . $w,
+                        'sku' => $product->slug . '-' . preg_replace('/\D/', '', $len) . 'x' . preg_replace('/\D/', '', $w),
+                        'price_cents' => $price,
+                        'stock_quantity' => 40 - ($sort * 3),
+                        'sort_order' => $sort++,
+                        'is_active' => true,
+                    ]);
+                    $variant->optionValues()->attach($lenVals[$len]->id, ['product_option_id' => $lenOpt->id]);
+                    $variant->optionValues()->attach($widVals[$w]->id, ['product_option_id' => $widOpt->id]);
+                }
+            }
+        }
+
+        $this->command->info('  → Sankevi option matrix: ' . count($matrix) . ' lengths × varying widths on ' . $products->count() . ' products');
+    }
+
     private function configureStore(Store $store, string $slug, array $cfg): void
     {
-        $nav = [['label' => 'Shop', 'url' => '/', 'sort_order' => 0, 'auto_source' => null, 'children' => []]];
+        // Sankevi is a Bulgarian-first client site — its nav should not open in English.
+        $shopLabel = $cfg['shop_label'] ?? 'Shop';
+        $nav = [['label' => $shopLabel, 'url' => '/', 'sort_order' => 0, 'auto_source' => null, 'children' => []]];
         $so = 1;
         foreach ($cfg['cats'] as $cslug => $c) {
             if ($c[0] === 'Shop') {
@@ -170,6 +249,20 @@ class NewThemesDemoSeeder extends Seeder
                 'cta_label' => $cfg['hero'][2],
                 'cta_url' => '#shop',
             ],
+            // Contact page: filled in where the demo defines details, otherwise
+            // the page still renders on the tenant's own email/phone.
+            'about' => $cfg['about'] ?? null,
+            'contact' => array_merge([
+                'enabled' => true,
+                'show_form' => true,
+                'heading' => '',
+                'intro' => '',
+                'address' => '',
+                'phone' => '',
+                'email' => '',
+                'hours' => '',
+                'map_embed' => '',
+            ], $cfg['contact'] ?? []),
         ]);
     }
 
@@ -283,6 +376,13 @@ class NewThemesDemoSeeder extends Seeder
                 // No demo photography — the theme renders its own plank-mark
                 // placeholder + spec plates, so blank products show the design.
                 'announce' => 'Kiln-dried & pressure-treated · Cut to length · Trade accounts welcome',
+                'contact' => [
+                    'heading' => 'Come to the yard',
+                    'intro' => 'Call ahead for cutting lists and bulk pricing, or send the drawings over and we will quote the full order.',
+                    'address' => "Timberline Yard\nInd. zone Iztok, 14 Purvi Mai St\n1528 Sofia, Bulgaria",
+                    'phone' => '+359 2 555 0184',
+                    'hours' => "Mon–Fri  07:00–18:00\nSat  08:00–14:00\nSun  closed",
+                ],
                 'hero' => ['Pressure-treated timber', 'Built to last outdoors.', 'Shop the yard'],
                 // Timber sells by length — variants are the stocked lengths.
                 'sizes' => [['2.4 m', 0.8, 60], ['3.0 m', 1.0, 45], ['3.6 m', 1.2, 30], ['4.8 m', 1.6, 16]],
@@ -307,6 +407,56 @@ class NewThemesDemoSeeder extends Seeder
                     ['cladding', 'Log Roll Border 1.8 m', 'Half-round treated log roll for edging beds and paths.', 1450, false],
                 ],
                 'collection' => ['new-in-the-yard', 'New in the yard', 'Fresh stock, just off the delivery.'],
+            ],
+            'sankevi' => [
+                'name' => 'Sankevi', 'accent' => '#8a9a5b', 'currency' => 'EUR',
+                'demo_images' => [],
+                'shop_label' => 'Магазин',
+                'announce' => 'Семейна дъскорезница в Родопите · Собствен добив · Разкрой по размер',
+                'hero' => ['От гората до вашия обект', 'Режем дървесина от 1974 г.', 'Разгледай склада'],
+                // Sankevi sells by length AND width, and the two interact —
+                // seedOptionMatrix() below wires the real dependency.
+                'sizes' => [],
+                'cats' => [
+                    'dyuscheme' => ['Дюшеме и обшивка', 'Профилирани дъски за под и стени.'],
+                    'greda' => ['Греди и конструкции', 'Носещи елементи от иглолистна дървесина.'],
+                    'decking' => ['Декинг', 'Импрегнирани дъски за тераси.'],
+                ],
+                'products' => [
+                    ['dyuscheme', 'Дюшеме бор, рендосано', 'Профилирано подово дюшеме от планински бор, сушено в камера до 12% влага.', 1850, false],
+                    ['dyuscheme', 'Обшивка ламперия', 'Класическа ламперия за стени и тавани, гладко рендосана.', 1450, false],
+                    ['greda', 'Греда иглолистна C24', 'Сортирана по якост греда за покривни и подови конструкции.', 2600, false],
+                    ['greda', 'Летва скара', 'Летви за скара под дюшеме и обшивка.', 480, false],
+                    ['decking', 'Декинг импрегниран', 'Импрегнирана дъска за тераси, клас на употреба UC3.', 2200, false],
+                    ['decking', 'Подконструкция декинг', 'Носеща подконструкция за декинг, импрегнирана UC4.', 1400, false],
+                ],
+                'collection' => ['nova-produkciya', 'Нова продукция', 'Последното от бичкийницата.'],
+                'about' => [
+                    'enabled' => true,
+                    'heading' => 'Три поколения в Родопите',
+                    'intro' => 'Започнахме с една гатер-банцигова машина и един камион. Днес режем, сушим и импрегнираме на същото място.',
+                    'founded_year' => '1974',
+                    'story' => "Дъскорезницата в Сан­кеви е основана през 1974 г. от Иван Санкев, който изкупува стар гатер и започва да реже греди за околните села.\n\nПрез 1998 г. синът му Петър добавя сушилна камера — първата в района — което позволява да се предлага дюшеме с гарантирана влажност вместо сурова дървесина.\n\nДнес третото поколение управлява предприятието. Добиваме от сертифицирани горски стопанства в радиус от 40 км, режем по поръчка и доставяме до обект в цяла Южна България.",
+                    'milestones' => [
+                        ['year' => '1974', 'title' => 'Първият гатер', 'text' => 'Иван Санкев започва да реже греди за околните села.'],
+                        ['year' => '1998', 'title' => 'Сушилна камера', 'text' => 'Първата в района — дюшеме с контролирана влажност.'],
+                        ['year' => '2011', 'title' => 'Импрегнация', 'text' => 'Собствена автоклавна инсталация за UC3 и UC4.'],
+                        ['year' => '2023', 'title' => 'Разкрой по поръчка', 'text' => 'CNC разкрой по спецификация на клиента.'],
+                    ],
+                    'stats' => [
+                        ['value' => '50+', 'label' => 'години на едно място'],
+                        ['value' => '40 км', 'label' => 'радиус на добив'],
+                        ['value' => '12%', 'label' => 'влажност след сушене'],
+                        ['value' => '3', 'label' => 'поколения'],
+                    ],
+                ],
+                'contact' => [
+                    'heading' => 'Елате в бичкийницата',
+                    'intro' => 'Обадете се предварително за разкрой и количества — ще подготвим спецификацията преди да дойдете.',
+                    'address' => "Дъскорезница Санкеви\nм. Караманджа\n4700 Смолян, България",
+                    'phone' => '+359 301 6 22 40',
+                    'hours' => "Пон–Пет  07:30–17:30\nСъб  08:00–13:00\nНед  почивен",
+                ],
             ],
             'forma' => [
                 'name' => 'Forma', 'accent' => '#2f4fe0', 'currency' => 'EUR',

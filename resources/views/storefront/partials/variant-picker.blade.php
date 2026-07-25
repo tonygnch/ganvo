@@ -1,58 +1,81 @@
 @php
     /*
-     | Variant picker — radio-button selector for purchasable variants.
-     | Themes include this *inside their add-to-cart <form>*. Renders
-     | nothing when the product has no variants (single-SKU product),
-     | so themes can always include it unconditionally.
+     | Variant picker — how a shopper says WHICH thing they're buying.
+     |
+     | Two modes, one contract:
+     |   flat    a radio list of variants ("Small / Medium / Large") — the
+     |           original behaviour, used by every product without option axes
+     |   matrix  one chip row per axis (Length × Width × …) — see
+     |           partials/variant-matrix. Needed because a 100 cm board comes
+     |           in 10/20 cm but a 200 cm one in 20/30: the values exist, the
+     |           combination may not.
+     |
+     | Themes include this *inside their add-to-cart <form>*. Renders nothing
+     | when the product has no variants (single-SKU product), so themes can
+     | always include it unconditionally.
      |
      | Inputs:
      |   $product  the Product (must have ->activeVariants relation
      |             loadable, or already loaded)
      |
-     | Behavior:
-     |   - Renders radio cards for each active variant
-     |   - Each card carries data-price-formatted (server-rendered
-     |     @money output) + data-stock + data-label
-     |   - Vanilla JS finds elements in the surrounding form/page that
-     |     are tagged with data-vp-price / data-vp-stock / data-vp-submit-price
-     |     and swaps their text on selection
-     |   - The hidden <input name="variant_id"> gets the picked id;
-     |     the submit button stays disabled until a variant is chosen
-     |     (theme buttons should carry data-vp-submit)
+     | Contract the themes, the cart, sticky-atc and the storefront JS kit all
+     | depend on — DO NOT CHANGE:
+     |   - an <input name="variant_id"> inside the form carries the chosen id:
+     |     the checked radio in flat mode, a hidden input in matrix mode
+     |   - that input carries data-price-formatted (server-rendered @money
+     |     output) + data-stock + data-label
+     |   - vanilla JS finds elements in the surrounding form/page tagged with
+     |     data-vp-price / data-vp-stock / data-vp-submit-price and swaps their
+     |     text on selection
+     |   - the submit button (tagged data-vp-submit) stays disabled until a
+     |     purchasable variant is chosen
      */
-    $variants = $product->activeVariants()->orderBy('sort_order')->get();
+    $matrix = $product->hasOptionMatrix() ? $product->optionMatrix() : null;
+
+    // Axes are only worth rendering when some variant is pinned on every one
+    // of them — a half-built matrix resolves to nothing, so we fall back to
+    // the flat list instead of showing chips that can never add to cart.
+    $useMatrix = $matrix !== null && $matrix['options'] !== [] && $matrix['combos'] !== [];
+
+    $variants = $useMatrix
+        ? collect()
+        : $product->activeVariants()->orderBy('sort_order')->get();
 @endphp
 
-@if ($variants->isNotEmpty())
+@if ($useMatrix || $variants->isNotEmpty())
     <div class="vp" data-vp-root>
-        <p class="vp-label">{{ __('site.storefront.product.choose_variant') }}</p>
-        <div class="vp-options" role="radiogroup" aria-label="{{ __('site.storefront.product.choose_variant') }}">
-            @foreach ($variants as $variant)
-                @php
-                    $priceCents = $variant->price_cents !== null ? (int) $variant->price_cents : (int) $product->price_cents;
-                    $outOfStock = $variant->stock_quantity <= 0;
-                @endphp
-                <label class="vp-option {{ $outOfStock ? 'vp-out' : '' }}">
-                    <input type="radio"
-                           name="variant_id"
-                           value="{{ $variant->id }}"
-                           data-price-cents="{{ $priceCents }}"
-                           data-price-formatted="@money($priceCents)"
-                           data-stock="{{ $variant->stock_quantity }}"
-                           data-label="{{ $variant->label }}"
-                           {{ $outOfStock ? 'disabled' : '' }}>
-                    <span class="vp-option-body">
-                        <span class="vp-option-label">{{ $variant->label }}</span>
-                        <span class="vp-option-price">@money($priceCents)</span>
-                        @if ($outOfStock)
-                            <span class="vp-option-meta">{{ __('site.storefront.product.out_of_stock') }}</span>
-                        @elseif ($variant->stock_quantity < 10)
-                            <span class="vp-option-meta">{{ __('site.storefront.product.in_stock_low', ['count' => $variant->stock_quantity]) }}</span>
-                        @endif
-                    </span>
-                </label>
-            @endforeach
-        </div>
+        @if ($useMatrix)
+            @include('storefront.partials.variant-matrix', ['matrix' => $matrix])
+        @else
+            <p class="vp-label">{{ __('site.storefront.product.choose_variant') }}</p>
+            <div class="vp-options" role="radiogroup" aria-label="{{ __('site.storefront.product.choose_variant') }}">
+                @foreach ($variants as $variant)
+                    @php
+                        $priceCents = $variant->price_cents !== null ? (int) $variant->price_cents : (int) $product->price_cents;
+                        $outOfStock = $variant->stock_quantity <= 0;
+                    @endphp
+                    <label class="vp-option {{ $outOfStock ? 'vp-out' : '' }}">
+                        <input type="radio"
+                               name="variant_id"
+                               value="{{ $variant->id }}"
+                               data-price-cents="{{ $priceCents }}"
+                               data-price-formatted="@money($priceCents)"
+                               data-stock="{{ $variant->stock_quantity }}"
+                               data-label="{{ $variant->label }}"
+                               {{ $outOfStock ? 'disabled' : '' }}>
+                        <span class="vp-option-body">
+                            <span class="vp-option-label">{{ $variant->label }}</span>
+                            <span class="vp-option-price">@money($priceCents)</span>
+                            @if ($outOfStock)
+                                <span class="vp-option-meta">{{ __('site.storefront.product.out_of_stock') }}</span>
+                            @elseif ($variant->stock_quantity < 10)
+                                <span class="vp-option-meta">{{ __('site.storefront.product.in_stock_low', ['count' => $variant->stock_quantity]) }}</span>
+                            @endif
+                        </span>
+                    </label>
+                @endforeach
+            </div>
+        @endif
     </div>
 
     <style>
@@ -94,6 +117,13 @@
             color: var(--vp-on-accent, var(--accent));
             background: var(--vp-fill, transparent);
         }
+        /* Keyboard users get no hover and no visible box (the real radio is
+           offscreen-ish), so mirror focus onto the chip or the picker is
+           untabbable in practice. */
+        .vp-option input:focus-visible + .vp-option-body {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
         .vp-option-label { line-height: 1; }
         /* Per-variant price + stock are available but hidden by default —
            the picker reads as a clean label chip (matching the source
@@ -104,6 +134,17 @@
             opacity: .4;
             cursor: not-allowed;
             text-decoration: line-through;
+        }
+        /* Screen-reader-only: the WHY behind a dimmed chip ("not available
+           with your selection") must be announced, not just implied by CSS. */
+        .vp-sr {
+            position: absolute;
+            width: 1px; height: 1px;
+            padding: 0; margin: -1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+            border: 0;
         }
     </style>
 
@@ -116,8 +157,18 @@
                 if (window.__vpBound) return;
                 window.__vpBound = true;
 
+                // The variant the shopper has settled on, or null. Flat mode
+                // keeps it in the checked radio; matrix mode narrows several
+                // axes down into one hidden input, empty until it resolves.
+                function resolved(root) {
+                    var picked = root.querySelector('input[name="variant_id"]:checked');
+                    if (picked) return picked;
+                    var hidden = root.querySelector('input[name="variant_id"][type="hidden"]');
+                    return hidden && hidden.value ? hidden : null;
+                }
+
                 function updateForm(root) {
-                    var checked = root.querySelector('input[name="variant_id"]:checked');
+                    var checked = resolved(root);
                     var form = root.closest('form');
                     var scope = form || document;
                     var submit = scope.querySelector('[data-vp-submit]');
@@ -141,7 +192,10 @@
                         el.classList.toggle('vp-stock-out', stock <= 0);
                     });
 
-                    if (submit) submit.disabled = false;
+                    // Flat mode disables out-of-stock radios, so a resolved
+                    // variant is always buyable there; matrix mode can land on
+                    // a real-but-sold-out combination, which must not submit.
+                    if (submit) submit.disabled = stock <= 0;
                 }
 
                 document.addEventListener('change', function (e) {
@@ -151,9 +205,20 @@
                     }
                 });
 
-                // Initial pass: disable submits on any unselected picker
-                // so the customer must actively choose.
-                document.querySelectorAll('[data-vp-root]').forEach(updateForm);
+                // Initial pass: disable submits on any unselected picker so the
+                // customer must actively choose — and enable it for the matrix
+                // picker, which server-renders a valid combination. Deferred
+                // until the document is ready because [data-vp-submit] and the
+                // price hooks usually sit AFTER the picker in the form and are
+                // simply not parsed yet at this point.
+                function syncAll() {
+                    document.querySelectorAll('[data-vp-root]').forEach(updateForm);
+                }
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', syncAll);
+                } else {
+                    syncAll();
+                }
             })();
         </script>
     @endonce
