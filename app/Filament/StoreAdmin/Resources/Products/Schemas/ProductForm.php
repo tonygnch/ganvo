@@ -183,6 +183,18 @@ class ProductForm
                             ->warning()
                             ->visible(fn (Get $get, $record): bool => filled($get('options')) && ! static::hasSavedOptions($record)),
 
+                        // An axis added after these rows were built covers
+                        // none of them. Rather than opening every row with an
+                        // empty required Select and no explanation — which used
+                        // to make the product unsaveable — each row is given
+                        // that axis's first value and told so here.
+                        Callout::make(fn ($record): string => 'Check the new '
+                            . implode(' / ', static::axesMissingFromRows($record))
+                            . ' on every combination')
+                            ->description('That axis was added after these combinations were made, so none of them had a value for it. Each row below has been given its FIRST value as a starting point — nothing is stored until you save. Correct any that are wrong, or delete the axis above if you added it by mistake.')
+                            ->warning()
+                            ->visible(fn ($record): bool => static::axesMissingFromRows($record) !== []),
+
                         // Bound to the variants() hasMany. Each row is
                         // one ProductVariant; sort_order is auto-synced
                         // from the repeater drag order.
@@ -201,7 +213,7 @@ class ProductForm
                             ->schema(fn ($record): array => static::hasSavedOptions($record)
                                 ? static::combinationFields(static::savedOptions($record))
                                 : static::flatVariantFields())
-                            ->mutateRelationshipDataBeforeFillUsing(fn (array $data): array => static::hydrateCombinationRow($data))
+                            ->mutateRelationshipDataBeforeFillUsing(fn (array $data, $record): array => static::hydrateCombinationRow($data, static::savedOptions($record)))
                             ->mutateRelationshipDataBeforeCreateUsing(fn (array $data): array => static::normaliseCombinationRow($data))
                             ->mutateRelationshipDataBeforeSaveUsing(fn (array $data): array => static::normaliseCombinationRow($data))
                             // Two rows pinned to the same values would compete
@@ -348,9 +360,28 @@ class ProductForm
         $fields = [];
 
         foreach ($options as $option) {
-            $fields[] = Select::make(static::OPTION_FIELD_PREFIX . $option->id)
+            $optionId = (int) $option->id;
+
+            $fields[] = Select::make(static::OPTION_FIELD_PREFIX . $optionId)
                 ->label($option->name)
                 ->options($option->values->pluck('value', 'id')->all())
+                /*
+                 | THE AXIS THE MERCHANT HAS JUST DELETED MUST STOP ASKING.
+                 |
+                 | These Selects are built from the axes in the DATABASE, and a
+                 | row deleted from the Options repeater is not gone from the
+                 | database until the save — the very save this field was
+                 | blocking. Required, unanswerable, and unremovable: adding an
+                 | axis to a product that already had combinations locked the
+                 | product permanently, because the only way out was a save that
+                 | could never pass.
+                 |
+                 | So the field also consults the LIVE state: an axis no longer
+                 | declared above disappears from every row at once, and a
+                 | hidden field is neither validated nor dehydrated, so the
+                 | deletion finally reaches the database.
+                 */
+                ->visible(fn (Get $get): bool => static::axisStillDeclared($get, $optionId))
                 ->required()
                 ->live()
                 // Keeps the collapsed row header readable while editing. The
@@ -408,7 +439,7 @@ class ProductForm
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    protected static function hydrateCombinationRow(array $data): array
+    protected static function hydrateCombinationRow(array $data, ?EloquentCollection $options = null): array
     {
         if (blank($data['id'] ?? null)) {
             return $data;
@@ -425,7 +456,92 @@ class ProductForm
             $data[static::OPTION_FIELD_PREFIX . $optionId] = (int) $valueId;
         }
 
+        /*
+         | An axis declared AFTER these rows were made has no pivot row for any
+         | of them, so every one of them opened with an empty required Select
+         | and the product could not be saved at all until all of them were
+         | filled by hand — with nothing on screen saying so.
+         |
+         | The first value of the new axis is proposed instead. It is a
+         | proposal, not a fact: it lands in the form only, the row header
+         | immediately reads "2000 мм / 96 мм / 45 мм" so it is visible rather
+         | than silent, and nothing reaches the database until the merchant
+         | saves. A Callout above the rows says it has happened.
+         */
+        foreach ($options ?? [] as $option) {
+            $field = static::OPTION_FIELD_PREFIX . $option->id;
+
+            if (filled($data[$field] ?? null)) {
+                continue;
+            }
+
+            if ($first = $option->values->first()) {
+                $data[$field] = (int) $first->id;
+            }
+        }
+
         return $data;
+    }
+
+    /**
+     * True unless the merchant has deleted this axis from the Options repeater
+     * in the current, unsaved form state.
+     *
+     * Existing rows are keyed `record-<id>` and new ones by a browser uuid, so
+     * both the key and an `id` in the row are accepted. If the state cannot be
+     * read at all the answer is YES — never hide an axis on a guess, because
+     * hiding one drops its selection from the save.
+     */
+    protected static function axisStillDeclared(Get $get, int $optionId): bool
+    {
+        $rows = $get('../../options');
+
+        if (! is_array($rows)) {
+            return true;
+        }
+
+        foreach ($rows as $key => $row) {
+            if (is_string($key) && str_starts_with($key, 'record-')
+                && (int) substr($key, 7) === $optionId) {
+                return true;
+            }
+
+            if (is_array($row) && (int) ($row['id'] ?? 0) === $optionId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Axes that exist but which some saved combination has no value for — the
+     * signature of an axis added after the rows were built.
+     *
+     * @return array<int, string>
+     */
+    protected static function axesMissingFromRows($record): array
+    {
+        if (! $record?->exists) {
+            return [];
+        }
+
+        $variantIds = $record->variants()->pluck('id');
+
+        if ($variantIds->isEmpty()) {
+            return [];
+        }
+
+        $pinnedPerOption = DB::table('product_variant_option_values')
+            ->whereIn('product_variant_id', $variantIds)
+            ->selectRaw('product_option_id, COUNT(DISTINCT product_variant_id) AS covered')
+            ->groupBy('product_option_id')
+            ->pluck('covered', 'product_option_id');
+
+        return static::savedOptions($record)
+            ->filter(fn ($option): bool => (int) ($pinnedPerOption[$option->id] ?? 0) < $variantIds->count())
+            ->pluck('name')
+            ->all();
     }
 
     /**
