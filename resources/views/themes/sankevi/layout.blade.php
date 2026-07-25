@@ -455,7 +455,7 @@
         /* a column, so the price rules line up across a row even when one name
            runs to two lines */
         .pcard { display: flex; flex-direction: column; color: inherit; position: relative; counter-increment: sheet; }
-        .pcard .pic { position: relative; aspect-ratio: 4 / 5; overflow: hidden; display: grid; place-items: center; background: linear-gradient(150deg, var(--surface2), #191510); margin-bottom: 16px; }
+        .pcard .pic { position: relative; aspect-ratio: 4 / 5; min-height: 120px; overflow: hidden; display: grid; place-items: center; background: linear-gradient(150deg, var(--surface2), #191510); margin-bottom: 16px; }
         .pcard .pic::before { content: ""; position: absolute; inset: 0; z-index: 2; background: linear-gradient(180deg, transparent 55%, rgba(16, 14, 10, .55)); opacity: 0; transition: opacity .45s ease; }
         .pcard:hover .pic::before { opacity: 1; }
         .pcard .pic img { transition: transform 1.1s cubic-bezier(.19, .74, .16, 1); }

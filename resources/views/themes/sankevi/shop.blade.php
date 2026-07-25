@@ -264,7 +264,21 @@
              | running the full width of the page.
              */
             .entry, .entry.rev { grid-template-columns: minmax(0, 1fr); padding: 0; }
-            .entry .plate, .entry.rev .plate { grid-column: 1; grid-row: 1; min-height: 0; aspect-ratio: 16 / 10; }
+            /* A REAL floor, not 0. This used to read `min-height: 0` — cancelling
+               the desktop floor and leaving the box with nothing but
+               aspect-ratio to stand on. Where aspect-ratio does not resolve on
+               a grid item (older iOS Safari has known bugs with exactly this
+               combination) the plate collapses to zero height and the row
+               renders as text with no photograph, which is precisely the
+               reported symptom.
+
+               The floor is deliberately SHORTER than the 16/10 height at every
+               width (56vw < 62.5vw), so when aspect-ratio works it still wins
+               and the crop is unchanged; the floor only catches the fall. */
+            .entry .plate, .entry.rev .plate {
+                grid-column: 1; grid-row: 1;
+                min-height: min(56vw, 260px); aspect-ratio: 16 / 10;
+            }
             /* top veil for the sheet number, bottom veil to hand the band over
                to the entry beneath it */
             .entry .plate::after, .entry.rev .plate::after { background: linear-gradient(180deg, color-mix(in srgb, var(--deep) 46%, transparent), transparent 30%, transparent 52%, color-mix(in srgb, var(--deep) 42%, transparent)); }
