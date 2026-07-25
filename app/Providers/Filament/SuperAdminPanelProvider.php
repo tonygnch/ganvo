@@ -64,6 +64,11 @@ class SuperAdminPanelProvider extends PanelProvider
                 RecentOrders::class,
             ])
             ->middleware([
+                // The preview lock is prepended to the `web` group, which a
+                // Filament panel does not use — it builds its own stack. Without
+                // this the admin login pages stayed publicly reachable while the
+                // rest of the site was behind the gate.
+                \App\Http\Middleware\PreviewGate::class,
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,

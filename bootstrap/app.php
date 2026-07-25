@@ -13,6 +13,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // PREPENDED, so an unauthorised visitor is turned away before any
+        // session, locale or tenant resolution runs for them.
+        $middleware->web(prepend: [
+            \App\Http\Middleware\PreviewGate::class,
+        ]);
+
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
         ]);

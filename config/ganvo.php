@@ -14,6 +14,29 @@ return [
     | always persisted regardless of whether mail delivery is configured.
     |
     */
+    /*
+    |--------------------------------------------------------------------------
+    | Preview lock (HTTP Basic)
+    |--------------------------------------------------------------------------
+    |
+    | Puts the whole platform behind an HTTP Basic prompt so work in progress
+    | can sit on a public domain without being publicly readable — and, via an
+    | X-Robots-Tag, without being indexed.
+    |
+    | The password is stored ONLY as a bcrypt hash. Generate it with
+    | `php artisan ganvo:preview-password`, which prompts without echoing, so
+    | the plaintext never reaches shell history or a file.
+    |
+    | The health check and both Stripe webhooks stay open — see PreviewGate.
+    | Turn this OFF at launch.
+    |
+    */
+    'preview' => [
+        'enabled' => (bool) env('PREVIEW_LOCK', false),
+        'user' => env('PREVIEW_USER', ''),
+        'password_hash' => env('PREVIEW_PASSWORD_HASH', ''),
+    ],
+
     'owner_email' => env('GANVO_OWNER_EMAIL', env('MAIL_FROM_ADDRESS', 'hello@ganvo.bg')),
 
     /*
