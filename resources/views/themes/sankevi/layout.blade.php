@@ -356,10 +356,24 @@
             .shelf { grid-template-columns: repeat(3, 1fr); gap: 36px 20px; }
             .fgrid { grid-template-columns: 1fr 1fr; gap: 34px; }
         }
-        @media (max-width: 760px) {
-            .wrap { padding: 0 22px; }
+        /* The header runs out of room well before the rest of the page does, and
+           it is Bulgarian that decides when: НАЧАЛО МАГАЗИН КОНТАКТИ measures
+           278px and the utility cluster 328px, so with the wordmark they need
+           ~815px before a single gap. At 760 the links were still on show with
+           only 688px to sit in, and the cluster was clipped — the cart silently
+           ran off the right edge. These two breakpoints are the header's own;
+           the page keeps its existing ones. */
+        @media (max-width: 900px) {
             .nav .links { display: none; }
             .menu-toggle { display: block; }
+        }
+        @media (max-width: 640px) {
+            .nav { gap: 10px; }
+            .nav .right { gap: 13px; font-size: 11px; letter-spacing: .08em; }
+            .nav .right .acct { display: none; }
+        }
+        @media (max-width: 760px) {
+            .wrap { padding: 0 22px; }
             .shelf { grid-template-columns: repeat(2, 1fr); gap: 30px 16px; }
             .sec-head { margin: 66px 0 26px; }
             footer.site { margin-top: 76px; padding-top: 56px; }

@@ -208,7 +208,7 @@
             max-width: 15ch; text-wrap: balance;
             text-shadow: 0 2px 40px rgba(9, 7, 4, .5);
         }
-        .hero h1 em { font-style: italic; color: var(--accent); }
+        .hero h1 em { font-style: italic; color: var(--accent-ink); }
         .hero .foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; margin-top: clamp(20px, 4vh, 44px); }
         .hero .foot p { max-width: 44ch; font-size: 16px; color: rgba(244, 239, 226, .92); text-shadow: 0 1px 12px rgba(9, 7, 4, .8); }
         /* the scroll cue — a hairline with a bead that falls down it */
@@ -249,7 +249,7 @@
             font-family: var(--display); font-weight: 500; font-size: clamp(42px, 8.4vw, 132px);
             line-height: 1.06; letter-spacing: -.02em; text-transform: uppercase;
         }
-        .vel-item i { font-style: normal; color: var(--accent); font-size: .6em; transform: translateY(-.06em); }
+        .vel-item i { font-style: normal; color: var(--accent-ink); font-size: .6em; transform: translateY(-.06em); }
         /* the second band is the same words cut out of the ground — outline
            only, so the two together read as one thick, woven rule */
         .vel-row.ghost .vel-item { color: transparent; -webkit-text-stroke: 1px var(--line2); }
@@ -271,14 +271,14 @@
         .story .tx { position: relative; z-index: 2; margin-left: -13%; background: var(--surface); border: 1px solid var(--line); padding: clamp(34px, 4.4vw, 62px); }
         .story .tx .k { display: block; margin-bottom: 18px; }
         .story .tx h3 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 3.8vw, 54px); line-height: 1.03; letter-spacing: -.018em; margin-bottom: 22px; }
-        .story .tx h3 em { font-style: italic; color: var(--accent); }
+        .story .tx h3 em { font-style: italic; color: var(--accent-ink); }
         .story .tx p { color: var(--muted); max-width: 46ch; font-size: 15.5px; }
         .story .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 34px; padding-top: 28px; border-top: 1px solid var(--line); }
         /* The counted value lives in its own <span> (the kit rewrites that
            element's text), so the label rule below is scoped to .lb — an
            unscoped `span` would shrink the number itself. */
         .story .stats b { display: flex; align-items: baseline; font-family: var(--display); font-weight: 500; font-size: clamp(28px, 3vw, 40px); line-height: 1; font-variant-numeric: tabular-nums; }
-        .story .stats b i { font-style: normal; color: var(--accent); }
+        .story .stats b i { font-style: normal; color: var(--accent-ink); }
         .story .stats .lb { display: block; margin-top: 10px; font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); }
 
         /* =================================================================
@@ -303,30 +303,45 @@
            rules below never match and the markup renders as what it is — a
            plain vertical list of links beside a photograph.
            ================================================================= */
-        .families { position: relative; padding: clamp(56px, 8vh, 92px) 0 0; }
+        /* Opens tighter than the acts around it (they take ~135–155px) and
+           that is the budget talking: this act has to come in under ~460px
+           all in. 85px still clears the story's panel edge cleanly, and the
+           forest below it gets the full 153px, so the page still breathes
+           where it matters. */
+        .families { position: relative; padding: clamp(64px, 9.5vh, 108px) 0 0; }
         .families .head { position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding-bottom: 20px; }
         /* Smaller than the other acts' headings ON PURPOSE: the display
            moment in this act belongs to the family name on the plate, and
            two 76px lines stacked would put the whole thing back over 600px. */
         .families .head h2 { font-family: var(--display); font-weight: 500; font-size: clamp(27px, 3.3vw, 44px); line-height: 1.04; letter-spacing: -.022em; margin-top: 12px; }
-        .families .head h2 em { font-style: italic; color: var(--accent); }
+        .families .head h2 em { font-style: italic; color: var(--accent-ink); }
         .families .head .hint { font-size: 11px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--faint); padding-bottom: 6px; }
+        /* The hint describes a gesture that only exists once the wheel is
+           live. With JS off it would be instructions for a control that
+           isn't there, so it goes. Browsers without :has() simply keep it —
+           a stale hint is a far smaller failure than a hidden one. */
+        .families:not(:has(.ow.is-live)) .head .hint { display: none; }
 
         .ow {
             --ow-row: 46px;                       /* JS reads this — one row */
             display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
             gap: clamp(22px, 3.4vw, 56px); align-items: center;
-            margin-top: clamp(14px, 2vh, 24px);
+            margin-top: clamp(12px, 1.8vh, 22px);
         }
 
         /* ── the wheel ─────────────────────────────────────────────────── */
         .ow-list { list-style: none; margin: 0; padding: 0; }
         .ow-item a { display: inline-flex; align-items: baseline; gap: 13px; padding: 6px 0; color: var(--txt); font-family: var(--display); font-weight: 500; font-size: 19px; line-height: 1.3; transition: color .3s ease; }
-        .ow-item a:hover { color: var(--accent); }
+        /* --accent-ink, not --accent: these are the act's only accent-coloured
+           TEXT, and the flat moss falls to 2.6:1 on the Daylight ground. The
+           ink token is the moss on bark and a darkened mix in light mode, so
+           the read-line label stays legible in both. Fills (the read-line
+           rule itself) keep the full-strength moss. */
+        .ow-item a:hover { color: var(--accent-ink); }
         .ow-ix { font-family: var(--body); font-size: 10.5px; font-weight: 500; letter-spacing: .2em; color: var(--faint); font-variant-numeric: tabular-nums; transition: color .3s ease; }
 
         .ow.is-live .ow-wheel {
-            position: relative; height: calc(var(--ow-row) * 5.5); overflow: hidden;
+            position: relative; height: calc(var(--ow-row) * 5.3); overflow: hidden;
             /* the drag owns the vertical gesture inside this one small box;
                everywhere else on the section the page scrolls normally */
             touch-action: none; cursor: grab;
@@ -355,10 +370,10 @@
             will-change: transform, opacity;
         }
         .ow.is-live .ow-item a { height: 100%; padding: 0; align-items: center; white-space: nowrap; font-size: clamp(18px, 1.55vw, 22px); }
-        .ow.is-live .ow-item.is-sel a, .ow.is-live .ow-item.is-sel .ow-ix { color: var(--accent); }
+        .ow.is-live .ow-item.is-sel a, .ow.is-live .ow-item.is-sel .ow-ix { color: var(--accent-ink); }
 
         /* ── the plate ─────────────────────────────────────────────────── */
-        .ow-plate { position: relative; height: calc(var(--ow-row) * 5.5); overflow: hidden; background: var(--surface2); }
+        .ow-plate { position: relative; height: calc(var(--ow-row) * 5.3); overflow: hidden; background: var(--surface2); }
         .ow-pl { position: absolute; inset: 0; display: block; color: #f4efe2; opacity: 0; transition: opacity .5s ease; }
         .ow-pl img { width: 100%; height: 100%; object-fit: cover; }
         .ow-pl::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11, 9, 6, .04) 0%, rgba(11, 9, 6, .22) 40%, rgba(11, 9, 6, .84) 100%); }
@@ -391,7 +406,7 @@
         .forest::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, var(--bg), rgba(11, 9, 6, .5) 26%, rgba(11, 9, 6, .46) 62%, var(--bg)); }
         .forest .q { position: relative; z-index: 2; text-align: center; padding: 70px 26px; max-width: 1080px; }
         .forest .q blockquote { font-family: var(--display); font-style: italic; font-weight: 400; font-size: clamp(28px, 5vw, 74px); line-height: 1.1; letter-spacing: -.022em; color: #f4efe2; text-shadow: 0 2px 34px rgba(9, 7, 4, .55); }
-        .forest .q figcaption { margin-top: 30px; font-size: 10.5px; font-weight: 500; letter-spacing: .3em; text-transform: uppercase; color: var(--accent); }
+        .forest .q figcaption { margin-top: 30px; font-size: 10.5px; font-weight: 500; letter-spacing: .3em; text-transform: uppercase; color: var(--accent-ink); }
 
         /* =================================================================
            ACT 6 — THE CLOSING CALL. The one saturated field on the page, and
@@ -400,16 +415,16 @@
         .closing { position: relative; overflow: hidden; margin-left: calc(50% - 50vw); width: 100vw; background: var(--moss); color: #f4f0e4; padding: clamp(70px, 13vh, 140px) 0; }
         .closing::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .035) 0 1px, transparent 1px 28px); }
         .closing .in { position: relative; z-index: 2; display: grid; grid-template-columns: 1.2fr .8fr; gap: clamp(30px, 5vw, 76px); align-items: end; }
-        .closing .k { display: block; color: var(--accent); margin-bottom: 20px; }
+        .closing .k { display: block; color: var(--accent-ink); margin-bottom: 20px; }
         .closing h2 { font-family: var(--display); font-weight: 500; font-size: clamp(34px, 5.4vw, 80px); line-height: 1; letter-spacing: -.024em; }
-        .closing h2 em { font-style: italic; color: var(--accent); }
+        .closing h2 em { font-style: italic; color: var(--accent-ink); }
         .closing p { color: rgba(244, 240, 228, .82); max-width: 46ch; margin-top: 22px; font-size: 15.5px; }
         .closing .rows { display: flex; flex-direction: column; gap: 13px; margin: 30px 0 0; }
         .closing .rows .row { display: flex; align-items: center; gap: 12px; font-size: 11px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: rgba(244, 240, 228, .8); }
         .closing .rows .row::before { content: ""; width: 18px; height: 1px; background: var(--accent); }
         .closing .cta { display: flex; flex-wrap: wrap; gap: 14px; }
         .closing .btn.outline { color: #f4f0e4; border-color: rgba(244, 240, 228, .35); }
-        .closing .btn.outline:hover { border-color: var(--accent); color: var(--accent); }
+        .closing .btn.outline:hover { border-color: var(--accent); color: var(--accent-ink); }
 
         /* =================================================================
            REDUCED MOTION — the whole page holds still. Nothing here is
@@ -831,6 +846,10 @@
             return el.textContent.replace(/\s+/g, ' ').trim();
         });
 
+        // No arc, no rotation, no blur and no smoothing when the visitor has
+        // asked for less motion — a plain stack that jumps between states.
+        var flat = reduced;
+
         // ── parameters ────────────────────────────────────────────────────
         // TILT   degrees of arc per row. Lower curls less and shows more of
         //        the list; higher turns the far rows almost side-on. 24° puts
@@ -844,10 +863,6 @@
         //        the box, row 3 is already at opacity 0.
         // TAU    0.11s — the smoothing time constant. A page being turned,
         //        not a reel coming to rest.
-        // No arc, no rotation, no blur and no smoothing when the visitor has
-        // asked for less motion — a plain stack that jumps between states.
-        var flat = reduced;
-
         var TILT = 24;
         var CURVE = 0.55;
         var RANGE = 3;
@@ -961,6 +976,8 @@
                 announce();
                 return;
             }
+            // Already where it wants to be — do not spend a frame proving it.
+            if (Math.abs(target - cur) < SETTLE) { cur = target; return; }
             if (!raf) { lastT = 0; raf = requestAnimationFrame(tick); }
         }
 
