@@ -439,7 +439,9 @@
 
         /* ── the wheel ─────────────────────────────────────────────────── */
         .ow-list { list-style: none; margin: 0; padding: 0; }
-        .ow-item a { display: inline-flex; align-items: baseline; gap: 15px; padding: 8px 0; color: var(--txt); font-family: var(--display); font-weight: 500; font-size: 23px; line-height: 1.3; transition: color .3s ease; }
+        /* WebKit still honours the proprietary flag, and it stops the drag
+           image appearing before dragstart can be cancelled */
+        .ow-item a { -webkit-user-drag: none; display: inline-flex; align-items: baseline; gap: 15px; padding: 8px 0; color: var(--txt); font-family: var(--display); font-weight: 500; font-size: 23px; line-height: 1.3; transition: color .3s ease; }
         /* --accent-ink, not --accent: these are the act's only accent-coloured
            TEXT, and the flat moss falls to 2.6:1 on the Daylight ground. The
            ink token is the moss on bark and a darkened mix in light mode, so
@@ -493,6 +495,51 @@
         .ow-pl .go { flex-shrink: 0; display: inline-flex; align-items: center; gap: 10px; padding-bottom: 6px; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: rgba(244, 239, 226, .78); }
         .ow-pl .go svg { width: 26px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.2; transition: transform .5s cubic-bezier(.19, .74, .16, 1); }
         .ow-pl:hover .go svg { transform: translateX(8px); }
+
+        /* ── HORIZONTAL (phones) ───────────────────────────────────────────
+           The same arc laid on its side. Everything the vertical wheel pins to
+           a Y axis flips to X: the box becomes one row tall and full width,
+           the binding rule and the read-line tick rotate with it, and the edge
+           mask fades left/right instead of top/bottom.
+
+           --ow-step is the spacing along the arc, and it is much larger than a
+           row height on purpose: these are words, and "Целият склад" needs the
+           room. The JS reads whichever of the two the orientation calls for.
+
+           touch-action: pan-y is the important one. The vertical wheel claimed
+           every gesture with `none`; lying down it must claim only the
+           sideways ones, or a visitor swiping UP to read the page would fight
+           the carousel instead of scrolling. */
+        .ow.is-horiz { --ow-step: 150px; }
+        .ow.is-horiz.is-live .ow-wheel {
+            height: 76px; width: 100%;
+            touch-action: pan-y;
+            -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+            mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+        }
+        /* the binding runs along the top, and the tick that marks the
+           read-line stands up instead of lying flat */
+        .ow.is-horiz.is-live .ow-wheel::before {
+            top: 0; left: 0; right: 0; bottom: auto; width: auto; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--line2) 24%, var(--line2) 76%, transparent);
+        }
+        .ow.is-horiz.is-live .ow-wheel::after {
+            top: 0; left: 50%; width: 1px; height: 15px; transform: translateX(-50%);
+        }
+        /* Hinged at its own centre, not at a spine — and translated back by
+           half its width so the CENTRE of the word sits on the read-line
+           rather than its left edge. */
+        .ow.is-horiz.is-live .ow-item {
+            left: 50%; top: 26px; height: auto; margin-top: 0;
+            transform-origin: 50% 50%;
+            transform: translate3d(calc(var(--ow-x, 0px) - 50%), var(--ow-y, 0px), 0);
+        }
+        .ow.is-horiz.is-live .ow-item a { height: auto; font-size: clamp(17px, 4.6vw, 21px); }
+        /* the index numeral costs width the phone does not have */
+        .ow.is-horiz.is-live .ow-ix { display: none; }
+        /* one hint or the other, never both */
+        .hint-h { display: none; }
+        @media (max-width: 760px) { .hint-v { display: none; } .hint-h { display: inline; } }
 
         /* ── REDUCED MOTION. Not "the wheel without the animation" — a wheel
            that snaps has no arc to read. JS flags .is-flat and switches the
@@ -581,6 +628,24 @@
         @media (max-width: 760px) {
             .ow { --ow-row: 52px; grid-template-columns: minmax(0, 1fr); gap: 22px; }
             .ow-plate { order: -1; height: 250px; }
+
+            /* THE PHONE PRESENTATION — the wheel never goes live here (see the
+               script), so this styles the plain list it leaves behind: two
+               columns of real, full-size tap targets, every family visible at
+               once instead of one legible name on an arc. The last item
+               ("Целият склад") spans both columns, because it is the way out
+               rather than one more family. */
+            .ow:not(.is-live) .ow-list {
+                display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+                background: var(--line); border: 1px solid var(--line);
+            }
+            .ow:not(.is-live) .ow-item { background: var(--bg); }
+            .ow:not(.is-live) .ow-item:last-child { grid-column: 1 / -1; }
+            .ow:not(.is-live) .ow-item a {
+                display: flex; align-items: baseline; gap: 10px;
+                padding: 15px 14px; min-height: 52px; font-size: 17px;
+                width: 100%; box-sizing: border-box;
+            }
             .ow-pl .nm { font-size: clamp(25px, 6vw, 34px); }
             .ow-pl .go span { display: none; }
         }
@@ -676,7 +741,12 @@
                     <div>
                         <h2>{!! __('site.storefront.sankevi.families_h2_html') !!}</h2>
                     </div>
-                    <span class="hint">{{ __('site.storefront.sankevi.families_hint') }}</span>
+                    {{-- The hint describes a GESTURE, and the gesture turns with
+                         the wheel: up/down on a desktop column, left/right on a
+                         phone's horizontal strip. Both are rendered and the CSS
+                         shows whichever matches, so no JS decides copy. --}}
+                    <span class="hint hint-v">{{ __('site.storefront.sankevi.families_hint') }}</span>
+                    <span class="hint hint-h">{{ __('site.storefront.sankevi.families_hint_h') }}</span>
                 </div>
 
                 <div class="ow" data-ow data-gv-reveal data-gv-delay="0.1">
@@ -1063,13 +1133,22 @@
         var tiltRad = TILT * Math.PI / 180;
         var rowH = 46;
         var R = rowH / tiltRad;
+        /* ORIENTATION. The same arc, turned on its side for a phone: a
+           vertical wheel in a 354px column showed three legible names out of
+           eight with two thirds of the box empty. Laid horizontally it uses
+           the width it actually has, and a sideways swipe is the natural
+           gesture on a handset. The step between neighbours is wider than a
+           row height because these are WORDS, not list rows — "Целият склад"
+           needs room — so the CSS hands over --ow-step for it. */
+        var horiz = false;
 
         // The row height is a CSS decision (it changes at the phone
         // breakpoint), so the geometry reads it back rather than duplicating
         // the media query in here.
         function measure() {
-            var v = parseFloat(getComputedStyle(wheel).getPropertyValue('--ow-row'));
-            rowH = v > 0 ? v : 46;
+            var cs = getComputedStyle(wheel);
+            var v = parseFloat(cs.getPropertyValue(horiz ? '--ow-step' : '--ow-row'));
+            rowH = v > 0 ? v : (horiz ? 150 : 46);
             R = rowH / tiltRad;
         }
 
@@ -1121,6 +1200,19 @@
                     // Reduced motion: a plain stack. No arc to read means no
                     // reason to rotate, lean or blur anything.
                     y = cd * rowH;
+                } else if (horiz) {
+                    // Same circle, quarter-turned: the run goes along X and the
+                    // lean pushes DOWN, away from the read-line. Deliberately
+                    // NO rotation — a word tilted 24° inside a 64px strip is
+                    // unreadable, and the fade plus the tick already say which
+                    // one is chosen.
+                    var ah = cd * tiltRad;
+                    x = R * Math.sin(ah);
+                    // POSITIVE: neighbours fall AWAY beneath the read-line, so
+                    // the centred word is the one nearest the tick above it.
+                    // Negative read as a valley — the chosen item sat lowest
+                    // and its neighbours climbed into the tick.
+                    y = R * (1 - Math.cos(ah)) * CURVE;
                 } else {
                     var a = cd * tiltRad;
                     y = R * Math.sin(a);
@@ -1187,9 +1279,11 @@
         // so the page still scrolls everywhere else in this act.
         var snapT;
         wheel.addEventListener('wheel', function (e) {
-            var d = e.deltaY;
+            // Horizontally the sideways axis leads, but a trackpad that only
+            // reports deltaY should still turn it rather than do nothing.
+            var d = horiz ? (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) : e.deltaY;
             if (e.deltaMode === 1) d *= 16;                    // lines
-            else if (e.deltaMode === 2) d *= wheel.clientHeight; // pages
+            else if (e.deltaMode === 2) d *= (horiz ? wheel.clientWidth : wheel.clientHeight);
             if (!d) return;
             e.preventDefault();
             target += d / (rowH * 1.35);
@@ -1201,15 +1295,25 @@
         }, { passive: false });
 
         // ── pointer drag ──────────────────────────────────────────────────
+        /* Every item on this wheel is an <a>, and dragging a link starts the
+           browser's OWN drag-and-drop. That fires pointercancel a couple of
+           moves in and kills the gesture — measured as down:1 move:2 cancel:1,
+           with the wheel never turning. It went unnoticed while the wheel was
+           vertical because the items sit right of the grab point; laid
+           horizontally the centred link is exactly under the thumb, so every
+           swipe landed on one. Refusing dragstart is the whole fix, and it
+           helps the vertical wheel too whenever a drag begins on a name. */
+        wheel.addEventListener('dragstart', function (e) { e.preventDefault(); });
+
         var down = false, moved = false, sy = 0, st = 0, pid = -1, dragEnd = 0;
         wheel.addEventListener('pointerdown', function (e) {
             if (e.button > 0) return;
-            down = true; moved = false; sy = e.clientY; st = target; pid = e.pointerId;
+            down = true; moved = false; sy = horiz ? e.clientX : e.clientY; st = target; pid = e.pointerId;
             clearTimeout(snapT);
         });
         wheel.addEventListener('pointermove', function (e) {
             if (!down) return;
-            var dy = e.clientY - sy;
+            var dy = (horiz ? e.clientX : e.clientY) - sy;
             if (!moved) {
                 if (Math.abs(dy) < DRAG_PX) return;   // still a click
                 moved = true;
@@ -1251,8 +1355,10 @@
         wheel.addEventListener('keydown', function (e) {
             if (e.altKey || e.ctrlKey || e.metaKey) return;
             var to = -1;
-            if (e.key === 'ArrowDown') to = norm(sel + 1);
-            else if (e.key === 'ArrowUp') to = norm(sel - 1);
+            var next = horiz ? 'ArrowRight' : 'ArrowDown';
+            var prev = horiz ? 'ArrowLeft' : 'ArrowUp';
+            if (e.key === next) to = norm(sel + 1);
+            else if (e.key === prev) to = norm(sel - 1);
             else if (e.key === 'Home') to = 0;
             else if (e.key === 'End') to = n - 1;
             else if (e.key === ' ' || e.key === 'Spacebar') {
@@ -1270,10 +1376,57 @@
         });
 
         // ── lifecycle ─────────────────────────────────────────────────────
+        /*
+         | THE WHEEL IS A DESKTOP CONTROL. Beside a 750px plate its arc reads
+         | beautifully; squeezed into a 354px phone column it showed THREE
+         | legible names out of eight, rotated and blurred, with two thirds of
+         | the box empty — which is exactly the "it looks empty" that was
+         | reported. A turning arc is also a poor touch target: the thing you
+         | want to tap is skewed, half-transparent and needs a drag first.
+         |
+         | So below the breakpoint it simply never goes live, and the markup
+         | stays what it already is without JS: a plain list of real links,
+         | every family visible and tappable. Nothing is duplicated to achieve
+         | that — the no-JS fallback IS the mobile design.
+         */
+        var wide = window.matchMedia('(min-width: 761px)');
+
+        // Orientation is decided by the same breakpoint the CSS uses, read
+        // from the CSS rather than duplicated as a number in here.
+        function orient() {
+            var want = !wide.matches;
+            if (want === horiz) return false;
+            horiz = want;
+            root.classList.toggle('is-horiz', horiz);
+            return true;
+        }
+
+        function setLive(on) {
+            if (on === root.classList.contains('is-live')) return;
+            if (on) {
+                // Roving tabindex: everything out of the tab order, then
+                // render() puts the CENTRED item back in. Do not try to set it
+                // here — `sel` is not initialised until the first render, and
+                // reaching into links[sel] threw before the wheel ever went
+                // live, which silently killed it on desktop too.
+                links.forEach(function (a) { a.tabIndex = -1; });
+                root.classList.add('is-live');
+                measure(); render();
+            } else {
+                // hand every link back to the tab order — on the list there is
+                // no "selected" row to carry focus on everyone else's behalf
+                links.forEach(function (a) { a.tabIndex = 0; });
+                root.classList.remove('is-live');
+            }
+        }
+
         var rz;
         window.addEventListener('resize', function () {
             clearTimeout(rz);
-            rz = setTimeout(function () { measure(); render(); }, 160);
+            rz = setTimeout(function () {
+                orient();
+                measure(); render();
+            }, 160);
         }, { passive: true });
 
         if ('IntersectionObserver' in window) {
@@ -1284,11 +1437,10 @@
         }
         document.addEventListener('visibilitychange', function () { run(); });
 
-        measure();
-        links.forEach(function (a) { a.tabIndex = -1; });
-        root.classList.add('is-live');
         if (flat) root.classList.add('is-flat');
-        render();
+        orient();
+        // The wheel is live at every width now — only its ORIENTATION changes.
+        setLive(true);
     })();
 })();
 </script>

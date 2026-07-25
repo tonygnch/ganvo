@@ -368,6 +368,8 @@ return [
             // The hint now describes the gesture, not a row: the full-width
             // flowing menu became a compact option wheel.
             'families_hint'       => 'Turn the wheel · ↑ ↓',
+            // Same hint for the phone, where the wheel lies down.
+            'families_hint_h'     => 'Swipe · ← →',
             'families_all'        => 'The whole yard',
             // The wheel's accessible name, and what is spoken politely when it
             // is turned by pointer or scroll with focus outside the control.
