@@ -42,7 +42,13 @@
 
 @section('content')
     <style>
-        .about { padding: 0 0 40px; }
+        /* padding-BOTTOM only. This class sits on the same element as .wrap,
+           and the `padding: 0 0 Npx` shorthand was resetting .wrap's own
+           `0 40px` horizontal gutter to zero. On a desktop the wrap is
+           centred inside a 1280px max-width so nothing touched the edge
+           and it went unnoticed; on a 390px phone the wrap IS the
+           viewport, so every line ran flush into both edges. */
+        .about { padding-bottom: 40px; }
 
         .ab-story { display: grid; grid-template-columns: 1.02fr .98fr; gap: 0; align-items: start; margin-top: 64px; }
         .ab-story.single { grid-template-columns: 1fr; max-width: 68ch; }

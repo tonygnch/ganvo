@@ -1318,9 +1318,21 @@
                 if (Math.abs(dy) < DRAG_PX) return;   // still a click
                 moved = true;
                 wheel.classList.add('is-drag');
-                // Capture only once it IS a drag: capturing on pointerdown
-                // would retarget the click away from the item's own <a>.
-                try { wheel.setPointerCapture(pid); } catch (err) {}
+                /* Capture only once it IS a drag: capturing on pointerdown would
+                   retarget the click away from the item's own <a>.
+
+                   And NEVER for touch. A touch pointer already has IMPLICIT
+                   capture — the spec keeps delivering its moves to the element
+                   the touch started on — so setPointerCapture buys nothing, and
+                   on a panning-capable element the browser answers it by firing
+                   lostpointercapture immediately. That is wired to release(),
+                   which set down = false, so every move after the first was
+                   dropped: the wheel twitched about a pixel and stopped. It
+                   looked like the drag was ignored; it was actually cancelled
+                   one move in, by us. */
+                if (e.pointerType !== 'touch') {
+                    try { wheel.setPointerCapture(pid); } catch (err) {}
+                }
             }
             target = st - dy / rowH;
             clampTarget();

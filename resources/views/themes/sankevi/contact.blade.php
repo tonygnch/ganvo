@@ -23,7 +23,13 @@
 
 @section('content')
     <style>
-        .ct-wrap { padding: 0 0 90px; }
+        /* padding-BOTTOM only. This class sits on the same element as .wrap,
+           and the `padding: 0 0 Npx` shorthand was resetting .wrap's own
+           `0 40px` horizontal gutter to zero. On a desktop the wrap is
+           centred inside a 1280px max-width so nothing touched the edge
+           and it went unnoticed; on a 390px phone the wrap IS the
+           viewport, so every line ran flush into both edges. */
+        .ct-wrap { padding-bottom: 90px; }
         .contact { display: grid; grid-template-columns: 330px 1fr; gap: 34px; align-items: start; padding-top: 40px; }
         .contact.solo { grid-template-columns: 1fr; max-width: 780px; }
 
