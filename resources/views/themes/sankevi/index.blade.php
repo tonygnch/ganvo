@@ -527,12 +527,31 @@
            every gesture with `none`; lying down it must claim only the
            sideways ones, or a visitor swiping UP to read the page would fight
            the carousel instead of scrolling. */
-        .ow.is-horiz { --ow-step: 150px; }
+        .ow.is-horiz { --ow-step: 112px; }
         .ow.is-horiz.is-live .ow-wheel {
-            height: 76px; width: 100%;
+            /* Taller than the 76px the upright version needed, because the
+               words ROTATE now: a long family name is ~125px lying flat, and
+               by |d|=2 it has turned 48° and hangs some 64px below its own
+               hinge on top of the ~50px the curve has already pushed it down.
+               Not tall enough for the WORST case though — sizing for that left
+               a hand's depth of dead air under the row at rest. The second mask
+               dissolves those few frames instead of reserving space for them,
+               which is the same bargain the column makes at its own two ends. */
+            height: 154px; width: 100%;
             touch-action: pan-y;
-            -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
-            mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+            /* Two fades, INTERSECTED: left/right along the run (the column
+               fades its top and bottom for the same reason) and one across the
+               foot for the tails of the turned words. Where mask-composite is
+               unsupported the layers merely add, which is the harmless
+               direction to fail — less fade, never a hard cut. */
+            -webkit-mask-image:
+                linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%),
+                linear-gradient(180deg, #000 0, #000 66%, transparent 100%);
+            mask-image:
+                linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%),
+                linear-gradient(180deg, #000 0, #000 66%, transparent 100%);
+            -webkit-mask-composite: source-in;
+            mask-composite: intersect;
         }
         /* the binding runs along the top, and the tick that marks the
            read-line stands up instead of lying flat */
@@ -541,15 +560,18 @@
             background: linear-gradient(90deg, transparent, var(--line2) 24%, var(--line2) 76%, transparent);
         }
         .ow.is-horiz.is-live .ow-wheel::after {
-            top: 0; left: 50%; width: 1px; height: 15px; transform: translateX(-50%);
+            top: 0; left: 50%; width: 1px; height: 17px; transform: translateX(-50%);
         }
-        /* Hinged at its own centre, not at a spine — and translated back by
-           half its width so the CENTRE of the word sits on the read-line
-           rather than its left edge. */
+        /* Hinged on the TOP RAIL — the mirror of the column hinging at its left
+           spine, so the words swing down and away from the read-line instead of
+           spinning about their own middles. Translated back by half their width
+           first, so it is the CENTRE of the word that meets the tick and not
+           its left edge. */
         .ow.is-horiz.is-live .ow-item {
-            left: 50%; top: 26px; height: auto; margin-top: 0;
-            transform-origin: 50% 50%;
-            transform: translate3d(calc(var(--ow-x, 0px) - 50%), var(--ow-y, 0px), 0);
+            left: 50%; top: 28px; height: auto; margin-top: 0;
+            transform-origin: 50% 0;
+            transform: translate3d(calc(var(--ow-x, 0px) - 50%), var(--ow-y, 0px), 0)
+                       rotate(var(--ow-r, 0deg));
         }
         .ow.is-horiz.is-live .ow-item a { height: auto; font-size: clamp(17px, 4.6vw, 21px); }
         /* the index numeral costs width the phone does not have */
@@ -568,7 +590,21 @@
         /* the edge fade exists to soften the tails of ROTATED rows; a stack
            has none, and dimming its outer rows would be the opposite of the
            point */
-        .ow.is-flat .ow-wheel { -webkit-mask-image: none; mask-image: none; }
+        .ow.is-flat:not(.is-horiz) .ow-wheel { -webkit-mask-image: none; mask-image: none; }
+        /* Laid on its side that argument reverses. A straight run of WORDS is
+           far wider than the phone, so the side fade is the only thing between
+           the outer names and a hard cut at the bezel — it stays. The foot fade
+           goes (nothing hangs below a word that never turned) and with it the
+           height that only rotation ever needed.
+           mask-composite is reset explicitly: a lone layer left on `intersect`
+           composites against transparent black, and the whole strip vanishes. */
+        .ow.is-flat.is-horiz.is-live .ow-wheel {
+            height: 76px;
+            -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+            mask-image: linear-gradient(90deg, transparent 0, #000 16%, #000 84%, transparent 100%);
+            -webkit-mask-composite: source-over;
+            mask-composite: add;
+        }
 
         /* =================================================================
            ACT 6 — FOREST. Full bleed, one line of type, nothing else.
@@ -1216,17 +1252,21 @@
                 var p = Math.min(1, Math.abs(d) / RANGE);
                 var x = 0, y, r = 0;
                 if (flat) {
-                    // Reduced motion: a plain stack. No arc to read means no
-                    // reason to rotate, lean or blur anything.
-                    y = cd * rowH;
+                    // Reduced motion: a plain straight run. No arc to read
+                    // means no reason to rotate, lean or blur anything — but
+                    // it has to run along the axis the wheel is LAID on. Sent
+                    // down Y while horizontal, all eight words share one X and
+                    // pile up outside a box one row tall.
+                    if (horiz) { x = cd * rowH; y = 0; } else { y = cd * rowH; }
                 } else if (horiz) {
                     // Same circle, quarter-turned: the run goes along X and the
-                    // lean pushes DOWN, away from the read-line. Deliberately
-                    // NO rotation — a word tilted 24° inside a 64px strip is
-                    // unreadable, and the fade plus the tick already say which
-                    // one is chosen.
+                    // lean pushes DOWN, away from the read-line. Rotation is
+                    // the SAME tangent the column uses — the neighbours turn
+                    // progressively on end as they roll away, which is the
+                    // whole effect and the reason the strip is tall.
                     var ah = cd * tiltRad;
                     x = R * Math.sin(ah);
+                    r = ah * 180 / Math.PI;
                     // POSITIVE: neighbours fall AWAY beneath the read-line, so
                     // the centred word is the one nearest the tick above it.
                     // Negative read as a valley — the chosen item sat lowest
@@ -1408,17 +1448,17 @@
 
         // ── lifecycle ─────────────────────────────────────────────────────
         /*
-         | THE WHEEL IS A DESKTOP CONTROL. Beside a 750px plate its arc reads
-         | beautifully; squeezed into a 354px phone column it showed THREE
-         | legible names out of eight, rotated and blurred, with two thirds of
-         | the box empty — which is exactly the "it looks empty" that was
-         | reported. A turning arc is also a poor touch target: the thing you
-         | want to tap is skewed, half-transparent and needs a drag first.
+         | THE WHEEL IS LIVE AT EVERY WIDTH — only its ORIENTATION changes.
          |
-         | So below the breakpoint it simply never goes live, and the markup
-         | stays what it already is without JS: a plain list of real links,
-         | every family visible and tappable. Nothing is duplicated to achieve
-         | that — the no-JS fallback IS the mobile design.
+         | It was desktop-only once. Squeezed into a 354px phone COLUMN the arc
+         | showed three legible names out of eight with two thirds of the box
+         | empty, so the phone fell back to a plain list. Turning the same arc
+         | on its side fixed the real problem: laid horizontally it spends the
+         | width a handset actually has, and a sideways swipe is the natural
+         | gesture there.
+         |
+         | Without JS the markup is still a plain list of real links, every
+         | family visible and tappable, so nothing is duplicated to get there.
          */
         var wide = window.matchMedia('(min-width: 761px)');
 
