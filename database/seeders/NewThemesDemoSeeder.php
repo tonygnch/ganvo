@@ -449,10 +449,15 @@ class NewThemesDemoSeeder extends Seeder
                 'nav' => [
                     ['Начало', '/'],
                     ['Магазин', '/shop'],
+                    ['За нас', '/about'],
                     ['Контакти', '/contact'],
                 ],
                 'announce' => 'Семейна дъскорезница в Родопите · Собствен добив · Разкрой по размер',
-                'hero' => ['От гората до вашия обект', 'Режем дървесина от 1974 г.', 'Разгледай склада'],
+                // The banner OVERRIDES the theme's own hero copy, so it has to
+                // carry the same message the theme was rewritten to: what the
+                // yard does for the caller, not where the trees grew. Leave it
+                // blank and the theme's hero_h1_html shows through instead.
+                'hero' => ['Семейна дъскорезница · Родопите', 'От трупа до вашия размер', 'Разгледай материала'],
                 // Sankevi sells by length AND width, and the two interact —
                 // seedOptionMatrix() below wires the real dependency.
                 'sizes' => [],

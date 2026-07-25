@@ -28,8 +28,21 @@ return [
             'label' => 'Full-bleed forest divider with pull quote',
             'default' => true,
         ],
+        // The workshop band used to sit on the landing page. The merchant asked
+        // for the family and the history to live in one place, so it moved
+        // wholesale onto /about — this switch follows it there rather than
+        // being retired, because a merchant who turned it off should stay off.
         'story_band' => [
-            'label' => 'Workshop band (photograph + manifesto)',
+            'label' => 'Heritage band on the About page (photograph + manifesto)',
+            'default' => true,
+        ],
+        // What replaced it on the landing page: capabilities, then reasons.
+        'offer_band' => [
+            'label' => 'Capabilities grid (what the yard can do)',
+            'default' => true,
+        ],
+        'why_band' => [
+            'label' => 'Reasons to choose us (+ the counted facts)',
             'default' => true,
         ],
         'trade_band' => [
@@ -78,7 +91,7 @@ return [
 
     'content' => [
         'hero_note' => [
-            'label' => 'Hero plate — the line under the product name',
+            'label' => 'Hero — the capability line under the opening paragraph',
             'type' => 'text',
             'default_lang' => 'site.storefront.sankevi.hero_note',
         ],

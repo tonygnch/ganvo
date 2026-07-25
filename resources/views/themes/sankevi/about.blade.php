@@ -22,6 +22,19 @@
     $leadImage = $paragraphs ? ($about['images'][0] ?? null) : null;
     $gallery = $leadImage ? array_slice($about['images'], 1) : $about['images'];
 
+    // THE HERITAGE BAND, which used to open the landing page. The merchant
+    // asked for the family and the history to be told in one place instead of
+    // half here and half there, so the workshop photograph and the manifesto
+    // came across with the story they always belonged to. It is the theme's
+    // own slot + copy, so a merchant who has already replaced either keeps
+    // exactly what they wrote.
+    //
+    // The shipped workshop photograph carries a printed white mount that has
+    // no business on a bark ground, so the default asset is zoomed past its
+    // border; a merchant's own upload is shown exactly as uploaded.
+    $workshopUrl = $theme->on('story_band') ? $theme->image('story_image') : null;
+    $workshopIsShipped = $workshopUrl && str_contains($workshopUrl, '/images/demo/sankevi/workshop');
+
     // Only invite people to write to us if that page is actually published.
     $contactOn = $store->contactPage()['enabled'];
 @endphp
@@ -39,6 +52,22 @@
         .ab-story figure { position: relative; margin-left: -10%; margin-top: 34px; aspect-ratio: 4 / 5; overflow: hidden; background: var(--surface2); }
         .ab-story.single figure { display: none; }
         .ab-story figure img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* ===== the heritage band — photograph, then the manifesto over it,
+           the same overlap the landing page used to open with ===== */
+        .heritage { position: relative; display: grid; grid-template-columns: 1.02fr .98fr; align-items: center; margin-top: 96px; }
+        .heritage .art { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: var(--surface2); }
+        .heritage .art img { width: 100%; height: 100%; object-fit: cover; }
+        .heritage .art img.mounted { transform: scale(1.14); }
+        .heritage .tx { position: relative; z-index: 2; margin-left: -13%; background: var(--surface); border: 1px solid var(--line); padding: clamp(34px, 4.4vw, 62px); }
+        .heritage .tx .k { display: block; margin-bottom: 18px; }
+        .heritage .tx h2 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 3.8vw, 54px); line-height: 1.03; letter-spacing: -.018em; margin-bottom: 22px; }
+        .heritage .tx h2 em { font-style: italic; color: var(--accent-ink); }
+        .heritage .tx p { color: var(--muted); max-width: 46ch; font-size: 15.5px; }
+        /* No photograph in the slot: the manifesto is a pull-quote instead of
+           half of an overlap, and centres on its own. */
+        .heritage.solo { grid-template-columns: minmax(0, 1fr); }
+        .heritage.solo .tx { margin-left: 0; }
 
         .ab-sec { margin-top: 104px; }
         .ab-sec > h2 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 3.6vw, 48px); line-height: 1.04; letter-spacing: -.015em; padding-bottom: 18px; margin-bottom: 34px; border-bottom: 1px solid var(--line); }
@@ -65,12 +94,16 @@
 
         .ab-cta { margin-top: 84px; text-align: center; }
 
+        @media (max-width: 1100px) { .heritage .tx { margin-left: -8%; } }
         @media (max-width: 900px) {
+            .heritage { grid-template-columns: 1fr; margin-top: 74px; }
+            .heritage .tx { margin-left: 0; margin-top: -44px; width: 93%; }
             .ab-story { grid-template-columns: 1fr; }
             .ab-story figure { margin-left: 0; margin-top: 34px; aspect-ratio: 4 / 3; }
             .tl li { grid-template-columns: 1fr; gap: 10px; padding: 24px 0; }
             .ab-sec { margin-top: 74px; }
         }
+        @media (max-width: 620px) { .heritage .tx { width: 100%; } }
     </style>
 
     <main>
@@ -102,6 +135,21 @@
                                  loading="lazy">
                         </figure>
                     @endif
+                </section>
+            @endif
+
+            @if ($theme->on('story_band'))
+                <section class="heritage {{ $workshopUrl ? '' : 'solo' }} reveal">
+                    @if ($workshopUrl)
+                        <div class="art cut cut-lg">
+                            <img class="{{ $workshopIsShipped ? 'mounted' : '' }}" src="{{ $workshopUrl }}" alt="" loading="lazy">
+                        </div>
+                    @endif
+                    <div class="tx">
+                        <span class="kicker k">{{ __('site.storefront.sankevi.story_eyebrow') }}</span>
+                        <h2>{!! __('site.storefront.sankevi.story_h2_html') !!}</h2>
+                        <p>{{ $theme->copy('story_body') }}</p>
+                    </div>
                 </section>
             @endif
 

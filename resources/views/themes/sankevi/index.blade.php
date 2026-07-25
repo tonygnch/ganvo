@@ -22,15 +22,23 @@
          | The running order, and why:
          |
          |   1  HERO           the yard, once, at full height
-         |   2  MARQUEE        scroll-velocity bands — the name, moving
-         |   3  STORY          who we are, BEFORE we ask what you want
-         |   4  OPTION WHEEL   the families, as a compact index (id="shop")
-         |   5  FOREST         where the wood comes from
-         |   6  CLOSING        the one ask on the page
+         |   2  OPTION WHEEL   the families, straight under the fold (id="shop")
+         |   3  OFFER          what this yard can actually DO for you
+         |   4  MARQUEE        scroll-velocity bands — the name, moving
+         |   5  WHY            the reasons to order it here, and the facts
+         |   6  FOREST         where the wood comes from
+         |   7  CLOSING        the one ask on the page
          |
-         | Acts 1–3 and 5 are full- or near-full-viewport and separated by
-         | generous space; act 4 is deliberately NOT — it is a control, and a
-         | control that eats a screen is a menu, which is what it replaced.
+         | Two things moved at the merchant's request, and they moved together.
+         | The FAMILIES came up to sit directly under the hero and got bigger —
+         | the first question a visitor has is "what do you cut", so the answer
+         | is now the first thing under the fold rather than the fourth act.
+         | And the STORY went away entirely: the family, the four generations
+         | and the history now live in one place, /about, instead of being told
+         | half here and half there. What stands in its place is what the
+         | merchant actually sells — the capabilities (act 3) and the reasons
+         | (act 5). The landing page describes the mill's work; the About page
+         | describes the family.
          |
          | Motion comes from the shared storefront kit (Lenis smooth scroll,
          | data-gv-reveal / -parallax / -counter) plus two ReactBits ports
@@ -53,11 +61,18 @@
                 ? asset('/images/demo/sankevi/endgrain.webp')
                 : $themeHeroUrl);
 
-        $storyImageUrl = $theme->image('story_image');
-        // The shipped workshop photograph carries a printed white mount, which
-        // has no business on a bark ground — the default asset is zoomed past
-        // its border. A merchant's own upload is shown exactly as uploaded.
-        $storyIsShipped = $storyImageUrl && str_contains($storyImageUrl, '/images/demo/sankevi/workshop');
+        // The hero's third line: the three things the yard does FOR the caller,
+        // as separate plates rather than one run-on sentence. It is a single
+        // merchant-editable field, so it is split on the separator they type
+        // and falls back to being one plate if they type no separator at all.
+        $heroNote = trim((string) $theme->copy('hero_note'));
+        $heroPills = array_values(array_filter(array_map(
+            'trim',
+            preg_split('/\s*[·|]\s*/u', $heroNote) ?: []
+        ), fn ($p) => $p !== ''));
+
+        // The workshop photograph moved to /about with the story it belonged
+        // to; nothing on this page reads the story_image slot any more.
         $forestImageUrl = $theme->image('forest_image');
         $csSeal = $theme->on('brand_seal') ? $theme->image('seal_image') : null;
 
@@ -202,15 +217,48 @@
         .hero .mark img { width: 30px; height: 30px; object-fit: contain; opacity: .9; }
         .hero .mark span { font-size: 11px; font-weight: 500; letter-spacing: .38em; text-transform: uppercase; color: #f4efe2; text-shadow: 0 1px 12px rgba(9, 7, 4, .85); }
         .hero .mark::after { content: ""; flex: 1; max-width: 120px; height: 1px; background: linear-gradient(90deg, var(--accent), transparent); }
+        /* THE HEADLINE, RISING OUT OF A SLOT. The mask takes its height from
+           the h1 in normal flow and the h1 is moved with a transform, which
+           takes no part in layout — so the slot is always exactly as tall as
+           the type inside it, at any width, and can never clip a line that
+           rewraps later. (That is the failure mode of splitting a headline
+           into per-line masks at load: narrow the window afterwards and the
+           second line is guillotined. This cannot.) */
+        .hero .h1w { overflow: hidden; padding-bottom: .06em; }
         .hero h1 {
             font-family: var(--display); font-weight: 500;
             font-size: clamp(50px, 10.6vw, 168px); line-height: .9; letter-spacing: -.032em;
             max-width: 15ch; text-wrap: balance;
             text-shadow: 0 2px 40px rgba(9, 7, 4, .5);
+            transform: translateY(104%);
+            animation: h1Rise 1.2s cubic-bezier(.16, .78, .18, 1) both;
+            animation-delay: var(--d, 0s);
         }
+        @keyframes h1Rise { to { transform: none; } }
         .hero h1 em { font-style: italic; color: var(--accent-ink); }
-        .hero .foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; margin-top: clamp(20px, 4vh, 44px); }
-        .hero .foot p { max-width: 44ch; font-size: 16px; color: rgba(244, 239, 226, .92); text-shadow: 0 1px 12px rgba(9, 7, 4, .8); }
+        .hero .sub { max-width: 46ch; margin-top: clamp(18px, 3vh, 30px); font-size: 16.5px; color: rgba(244, 239, 226, .92); text-shadow: 0 1px 12px rgba(9, 7, 4, .8); }
+
+        /* THE CAPABILITY PLATES. One merchant-editable line, broken on its own
+           separator into the three answers every caller wants before they ask
+           for a price. Each opens with a short accent rule that draws itself
+           out as the plate arrives — the same gesture the capability grid
+           below repeats, so the page has one signature for "here is a fact". */
+        .hero .pills { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: clamp(20px, 3.4vh, 34px); list-style: none; padding: 0; }
+        .hero .pills li { display: flex; align-items: center; gap: 11px; font-size: 11px; font-weight: 500; letter-spacing: .17em; text-transform: uppercase; color: rgba(244, 239, 226, .84); text-shadow: 0 1px 10px rgba(9, 7, 4, .8); }
+        .hero .pills li::before {
+            content: ""; width: 20px; height: 1px; background: var(--accent); flex-shrink: 0;
+            transform-origin: 0 50%; transform: scaleX(0);
+            animation: ruleDraw .9s cubic-bezier(.16, .78, .18, 1) both;
+            animation-delay: calc(var(--d, 0s) + var(--i, 0) * .1s);
+        }
+        @keyframes ruleDraw { to { transform: scaleX(1); } }
+
+        .hero .foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 30px; margin-top: clamp(24px, 4.4vh, 48px); }
+        .hero .cta { display: flex; flex-wrap: wrap; gap: 12px; }
+        /* the hero is a night frame in both modes, so its buttons are lit for
+           the photograph rather than for --txt */
+        .hero .cta .btn.ghost { color: #f4efe2; border-color: rgba(244, 239, 226, .38); background: rgba(11, 9, 6, .22); }
+        .hero .cta .btn.ghost:hover { border-color: var(--accent); color: var(--accent-ink); }
         /* the scroll cue — a hairline with a bead that falls down it */
         .hero .cue { display: flex; flex-direction: column; align-items: center; gap: 12px; flex-shrink: 0; font-size: 10px; font-weight: 500; letter-spacing: .3em; text-transform: uppercase; color: rgba(244, 239, 226, .72); }
         .hero .cue .rail { position: relative; width: 1px; height: 62px; background: rgba(244, 239, 226, .22); overflow: hidden; }
@@ -232,7 +280,7 @@
         }
 
         /* =================================================================
-           ACT 2 — SCROLL VELOCITY. A ReactBits "Scroll Velocity" port: two
+           ACT 4 — SCROLL VELOCITY. A ReactBits "Scroll Velocity" port: two
            bands of enormous type that always creep, speed up with the
            scroll's velocity and flip with its direction. The JS lives at the
            foot of the file; everything here is only the look.
@@ -256,33 +304,90 @@
         .vel-row.ghost .vel-item i { color: color-mix(in srgb, var(--accent) 55%, transparent); -webkit-text-stroke: 0; }
 
         /* =================================================================
-           ACT 3 — STORY. The workshop beside the manifesto, and the three
-           facts that matter, counted up.
+           ACT 3 — OFFER. What used to stand here was the STORY: the workshop
+           photograph beside four generations of manifesto. The merchant asked
+           for the family and the history to live in the About page, so this
+           act says the other half of what a landing page owes a visitor —
+           not who we are, but what we can do with your list.
 
-           The top margin used to close a gap under a full-bleed menu; the
-           story now follows the marquee, which already ends on a hairline
-           rule, so it takes the SAME opening breath the families act used to
-           take there — one rhythm after the band, whichever act arrives.
+           Six capabilities on a hairline grid, built out of the gaps between
+           the cells rather than six separate borders, so the rules are 1px at
+           every zoom level and never double up where two cells meet. Each
+           cell opens with an accent rule that draws itself as the cell scrolls
+           into view — scroll-driven, no script, and simply absent (rule at
+           full width) on a browser without view() timelines.
            ================================================================= */
-        .story { position: relative; display: grid; grid-template-columns: 1.02fr .98fr; align-items: center; margin: clamp(90px, 15vh, 170px) 0 0; }
-        .story .art { position: relative; aspect-ratio: 4 / 3; overflow: hidden; background: var(--surface2); }
-        .story .art img { width: 100%; height: 100%; object-fit: cover; }
-        .story .art img.mounted { transform: scale(1.14); }
-        .story .tx { position: relative; z-index: 2; margin-left: -13%; background: var(--surface); border: 1px solid var(--line); padding: clamp(34px, 4.4vw, 62px); }
-        .story .tx .k { display: block; margin-bottom: 18px; }
-        .story .tx h3 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 3.8vw, 54px); line-height: 1.03; letter-spacing: -.018em; margin-bottom: 22px; }
-        .story .tx h3 em { font-style: italic; color: var(--accent-ink); }
-        .story .tx p { color: var(--muted); max-width: 46ch; font-size: 15.5px; }
-        .story .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-top: 34px; padding-top: 28px; border-top: 1px solid var(--line); }
-        /* The counted value lives in its own <span> (the kit rewrites that
-           element's text), so the label rule below is scoped to .lb — an
-           unscoped `span` would shrink the number itself. */
-        .story .stats b { display: flex; align-items: baseline; font-family: var(--display); font-weight: 500; font-size: clamp(28px, 3vw, 40px); line-height: 1; font-variant-numeric: tabular-nums; }
-        .story .stats b i { font-style: normal; color: var(--accent-ink); }
-        .story .stats .lb { display: block; margin-top: 10px; font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); }
+        .offer { position: relative; padding: clamp(96px, 16vh, 180px) 0 0; }
+        .offer .head { max-width: 64ch; }
+        .offer h2 { font-family: var(--display); font-weight: 500; font-size: clamp(32px, 4.6vw, 68px); line-height: 1.01; letter-spacing: -.026em; margin-top: 14px; }
+        .offer h2 em { font-style: italic; color: var(--accent-ink); }
+        .offer .lead { margin-top: 22px; max-width: 56ch; color: var(--muted); font-size: 16px; }
+
+        .offer .grid {
+            display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 1px; background: var(--line); border: 1px solid var(--line);
+            margin-top: clamp(44px, 7vh, 76px);
+        }
+        .offer .cell { position: relative; background: var(--bg); padding: clamp(28px, 3vw, 46px); transition: background .45s ease; }
+        .offer .cell:hover { background: var(--surface); }
+        .offer .cell .n { display: block; font-size: 10.5px; font-weight: 500; letter-spacing: .24em; color: var(--faint); font-variant-numeric: tabular-nums; }
+        .offer .cell .rule { display: block; width: 44px; height: 2px; margin: 20px 0 22px; background: var(--accent); transform-origin: 0 50%; }
+        .offer .cell h3 { font-family: var(--display); font-weight: 500; font-size: clamp(19px, 1.7vw, 25px); line-height: 1.16; letter-spacing: -.012em; }
+        .offer .cell p { margin-top: 13px; color: var(--muted); font-size: 14.5px; line-height: 1.62; }
+
+        /* The rule's RESTING state is full width — that is what a browser
+           without view() timelines shows, and what the print/no-JS reading
+           of the page is. The scroll-driven version therefore needs its own
+           keyframe with an EXPLICIT from: reusing the hero's `to`-only
+           ruleDraw here would take its implicit from off the element's own
+           computed transform (none, i.e. scaleX(1)) and animate nothing. */
+        @keyframes ruleGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        @media (prefers-reduced-motion: no-preference) {
+            @supports (animation-timeline: view()) {
+                .offer .cell .rule {
+                    animation: ruleGrow linear both;
+                    animation-timeline: view();
+                    animation-range: entry 14% entry 56%;
+                }
+            }
+        }
 
         /* =================================================================
-           ACT 4 — THE OPTION WHEEL. A ReactBits port in vanilla JS.
+           ACT 5 — WHY. The reasons, beside a column that stays put while they
+           pass: the heading, the three counted facts and the one door to the
+           history. The sticky aside IS the animation here — the numbers hold
+           still and the arguments move against them.
+           ================================================================= */
+        .why { position: relative; padding: clamp(96px, 16vh, 180px) 0 0; }
+        .why .in { display: grid; grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr); gap: clamp(34px, 6vw, 92px); align-items: start; }
+        .why .aside { position: sticky; top: calc(var(--header-height) + 46px); }
+        .why h2 { font-family: var(--display); font-weight: 500; font-size: clamp(30px, 4vw, 58px); line-height: 1.02; letter-spacing: -.026em; margin-top: 14px; }
+        .why h2 em { font-style: italic; color: var(--accent-ink); }
+
+        /* The counted facts. The value lives in its own <span> because the kit
+           rewrites that element's text — the label rule below is scoped to
+           .lb so it can never shrink the number itself. */
+        .why .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: clamp(30px, 4vh, 44px); padding-top: 28px; border-top: 1px solid var(--line); }
+        .why .facts b { display: flex; align-items: baseline; font-family: var(--display); font-weight: 500; font-size: clamp(26px, 2.8vw, 38px); line-height: 1; font-variant-numeric: tabular-nums; }
+        .why .facts b i { font-style: normal; color: var(--accent-ink); }
+        .why .facts .lb { display: block; margin-top: 10px; font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); }
+
+        /* The one door to the family and the years — the whole reason the
+           story left this page. Underlined on the hover, drawn from the left,
+           like every other rule on the yard. */
+        .why .hist { display: inline-flex; align-items: center; gap: 13px; margin-top: 34px; font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--accent-ink); }
+        .why .hist::after { content: ""; width: 30px; height: 1px; background: currentColor; transition: width .5s cubic-bezier(.19, .74, .16, 1); }
+        .why .hist:hover::after { width: 52px; }
+
+        .why .list { list-style: none; margin: 0; padding: 0; }
+        .why .list li { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: clamp(16px, 2vw, 28px); padding: clamp(24px, 3.2vh, 34px) 0; border-top: 1px solid var(--line); }
+        .why .list li:last-child { border-bottom: 1px solid var(--line); }
+        .why .list .ix { font-size: 10.5px; font-weight: 500; letter-spacing: .18em; color: var(--accent-ink); font-variant-numeric: tabular-nums; padding-top: .5em; }
+        .why .list h3 { font-family: var(--display); font-weight: 500; font-size: clamp(21px, 2vw, 29px); line-height: 1.12; letter-spacing: -.016em; }
+        .why .list p { margin-top: 11px; color: var(--muted); font-size: 15px; max-width: 52ch; }
+
+        /* =================================================================
+           ACT 2 — THE OPTION WHEEL. A ReactBits port in vanilla JS.
 
            What it replaced: seven full-width rows, ~850px of page, to say
            seven words. The merchant's brief was "i don't want to take too
@@ -302,18 +407,21 @@
            WITHOUT JS none of that applies: .ow has no .is-live class, so the
            rules below never match and the markup renders as what it is — a
            plain vertical list of links beside a photograph.
-           ================================================================= */
-        /* Opens tighter than the acts around it (they take ~135–155px) and
-           that is the budget talking: this act has to come in under ~460px
-           all in. 85px still clears the story's panel edge cleanly, and the
-           forest below it gets the full 153px, so the page still breathes
-           where it matters. */
-        .families { position: relative; padding: clamp(64px, 9.5vh, 108px) 0 0; }
+
+           SIZE. This act used to be squeezed under ~460px because it was the
+           fourth thing on the page and the brief was "don't take too much
+           space". It has since been moved directly under the hero and asked
+           to be bigger, which is a different brief: it is now the first
+           answer the page gives, so the row height, the type and the plate
+           all step up roughly a third. What it must NOT become again is the
+           1350px flowing menu it replaced — the whole act still lands inside
+           a single screen on a laptop, which is the actual constraint. */
+        .families { position: relative; padding: clamp(76px, 12vh, 140px) 0 0; }
         .families .head { position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; padding-bottom: 20px; }
-        /* Smaller than the other acts' headings ON PURPOSE: the display
-           moment in this act belongs to the family name on the plate, and
-           two 76px lines stacked would put the whole thing back over 600px. */
-        .families .head h2 { font-family: var(--display); font-weight: 500; font-size: clamp(27px, 3.3vw, 44px); line-height: 1.04; letter-spacing: -.022em; margin-top: 12px; }
+        /* Sized with the other acts now that this one opens the page. The
+           plate's family name still runs larger — the photograph is where the
+           display moment belongs — but the heading no longer whispers. */
+        .families .head h2 { font-family: var(--display); font-weight: 500; font-size: clamp(32px, 4.4vw, 64px); line-height: 1.02; letter-spacing: -.026em; margin-top: 14px; }
         .families .head h2 em { font-style: italic; color: var(--accent-ink); }
         .families .head .hint { font-size: 11px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--faint); padding-bottom: 6px; }
         /* The hint describes a gesture that only exists once the wheel is
@@ -323,22 +431,22 @@
         .families:not(:has(.ow.is-live)) .head .hint { display: none; }
 
         .ow {
-            --ow-row: 46px;                       /* JS reads this — one row */
-            display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
-            gap: clamp(22px, 3.4vw, 56px); align-items: center;
-            margin-top: clamp(12px, 1.8vh, 22px);
+            --ow-row: 62px;                       /* JS reads this — one row */
+            display: grid; grid-template-columns: minmax(0, 390px) minmax(0, 1fr);
+            gap: clamp(26px, 4vw, 64px); align-items: center;
+            margin-top: clamp(18px, 2.6vh, 32px);
         }
 
         /* ── the wheel ─────────────────────────────────────────────────── */
         .ow-list { list-style: none; margin: 0; padding: 0; }
-        .ow-item a { display: inline-flex; align-items: baseline; gap: 13px; padding: 6px 0; color: var(--txt); font-family: var(--display); font-weight: 500; font-size: 19px; line-height: 1.3; transition: color .3s ease; }
+        .ow-item a { display: inline-flex; align-items: baseline; gap: 15px; padding: 8px 0; color: var(--txt); font-family: var(--display); font-weight: 500; font-size: 23px; line-height: 1.3; transition: color .3s ease; }
         /* --accent-ink, not --accent: these are the act's only accent-coloured
            TEXT, and the flat moss falls to 2.6:1 on the Daylight ground. The
            ink token is the moss on bark and a darkened mix in light mode, so
            the read-line label stays legible in both. Fills (the read-line
            rule itself) keep the full-strength moss. */
         .ow-item a:hover { color: var(--accent-ink); }
-        .ow-ix { font-family: var(--body); font-size: 10.5px; font-weight: 500; letter-spacing: .2em; color: var(--faint); font-variant-numeric: tabular-nums; transition: color .3s ease; }
+        .ow-ix { font-family: var(--body); font-size: 11px; font-weight: 500; letter-spacing: .2em; color: var(--faint); font-variant-numeric: tabular-nums; transition: color .3s ease; }
 
         .ow.is-live .ow-wheel {
             position: relative; height: calc(var(--ow-row) * 5.3); overflow: hidden;
@@ -357,10 +465,10 @@
         .ow.is-live .ow-wheel.is-drag { cursor: grabbing; }
         /* the binding, and the read-line the chosen family sits on */
         .ow.is-live .ow-wheel::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: linear-gradient(180deg, transparent, var(--line2) 24%, var(--line2) 76%, transparent); }
-        .ow.is-live .ow-wheel::after { content: ""; position: absolute; left: 0; top: 50%; width: 14px; height: 1px; background: var(--accent); }
+        .ow.is-live .ow-wheel::after { content: ""; position: absolute; left: 0; top: 50%; width: 19px; height: 1px; background: var(--accent); }
         .ow.is-live .ow-list { position: absolute; inset: 0; }
         .ow.is-live .ow-item {
-            position: absolute; left: 24px; top: 50%; width: max-content;
+            position: absolute; left: 29px; top: 50%; width: max-content;
             height: var(--ow-row); margin-top: calc(var(--ow-row) / -2);
             /* hinged at the spine, like a page — not spun about its middle */
             transform-origin: 0 50%;
@@ -369,7 +477,7 @@
             filter: blur(calc(var(--ow-p, 0) * var(--ow-p, 0) * 3.2px));
             will-change: transform, opacity;
         }
-        .ow.is-live .ow-item a { height: 100%; padding: 0; align-items: center; white-space: nowrap; font-size: clamp(18px, 1.55vw, 22px); }
+        .ow.is-live .ow-item a { height: 100%; padding: 0; align-items: center; white-space: nowrap; font-size: clamp(22px, 2.1vw, 31px); }
         .ow.is-live .ow-item.is-sel a, .ow.is-live .ow-item.is-sel .ow-ix { color: var(--accent-ink); }
 
         /* ── the plate ─────────────────────────────────────────────────── */
@@ -381,7 +489,7 @@
         .ow:not(.is-live) .ow-pl:first-child { opacity: 1; }
         .ow.is-live .ow-pl.is-sel { opacity: 1; }
         .ow-pl .cap { position: absolute; z-index: 2; left: clamp(18px, 2.2vw, 30px); right: clamp(18px, 2.2vw, 30px); bottom: clamp(15px, 2vw, 24px); display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; }
-        .ow-pl .nm { font-family: var(--display); font-weight: 500; font-size: clamp(27px, 3.4vw, 50px); line-height: 1.02; letter-spacing: -.022em; text-shadow: 0 2px 26px rgba(9, 7, 4, .6); }
+        .ow-pl .nm { font-family: var(--display); font-weight: 500; font-size: clamp(31px, 4.1vw, 62px); line-height: 1.02; letter-spacing: -.022em; text-shadow: 0 2px 26px rgba(9, 7, 4, .6); }
         .ow-pl .go { flex-shrink: 0; display: inline-flex; align-items: center; gap: 10px; padding-bottom: 6px; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: rgba(244, 239, 226, .78); }
         .ow-pl .go svg { width: 26px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.2; transition: transform .5s cubic-bezier(.19, .74, .16, 1); }
         .ow-pl:hover .go svg { transform: translateX(8px); }
@@ -399,7 +507,7 @@
         .ow.is-flat .ow-wheel { -webkit-mask-image: none; mask-image: none; }
 
         /* =================================================================
-           ACT 5 — FOREST. Full bleed, one line of type, nothing else.
+           ACT 6 — FOREST. Full bleed, one line of type, nothing else.
            ================================================================= */
         .forest { position: relative; margin: clamp(100px, 17vh, 190px) 0; margin-left: calc(50% - 50vw); width: 100vw; min-height: 82vh; display: grid; place-items: center; overflow: hidden; }
         .forest img { position: absolute; inset: -8% 0; width: 100%; height: 116%; object-fit: cover; }
@@ -409,7 +517,7 @@
         .forest .q figcaption { margin-top: 30px; font-size: 10.5px; font-weight: 500; letter-spacing: .3em; text-transform: uppercase; color: var(--accent-ink); }
 
         /* =================================================================
-           ACT 6 — THE CLOSING CALL. The one saturated field on the page, and
+           ACT 7 — THE CLOSING CALL. The one saturated field on the page, and
            the only place the page asks for anything.
            ================================================================= */
         .closing { position: relative; overflow: hidden; margin-left: calc(50% - 50vw); width: 100vw; background: var(--moss); color: #f4f0e4; padding: clamp(70px, 13vh, 140px) 0; }
@@ -437,13 +545,25 @@
            ================================================================= */
         @media (prefers-reduced-motion: reduce) {
             .grain { animation: none; }
+            /* the headline is translated 104% out of its slot by default, so
+               "no animation" has to mean "put it back", not "never move it" */
+            .hero h1 { animation: none; transform: none; }
+            .hero .pills li::before { animation: none; transform: none; }
+            .offer .cell .rule { animation: none; transform: none; }
+            .why .hist::after, .offer .cell { transition: none; }
             .hero .cue .rail::after { animation: none; top: 8px; }
             .ow.is-live .ow-item { filter: none; }
             .ow-pl, .ow-pl .go svg { transition: none; }
         }
 
         @media (max-width: 1100px) {
-            .story .tx { margin-left: -8%; }
+            .offer .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            /* the aside stops being a column that holds still and becomes a
+               header — sticky positioning on a full-width block just pins the
+               heading over the reasons it introduces */
+            .why .in { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+            .why .aside { position: static; }
+            .why .facts { max-width: 560px; }
         }
         @media (max-width: 900px) {
             .hero { height: auto; min-height: calc(100svh - var(--header-height)); padding-top: 26vh; }
@@ -451,8 +571,6 @@
             .hero .cue { flex-direction: row; align-items: center; gap: 14px; }
             .hero .cue .rail { width: 46px; height: 1px; }
             .hero .cue .rail::after { width: 18px; height: 3px; left: auto; top: -1px; animation-name: cueSlide; }
-            .story { grid-template-columns: 1fr; }
-            .story .tx { margin-left: 0; margin-top: -44px; width: 93%; }
             .closing .in { grid-template-columns: 1fr; align-items: start; }
             .forest { min-height: 62vh; }
         }
@@ -461,14 +579,21 @@
            240px columns side by side would give the arc no room to curve
            into and the photograph no room to be a photograph. */
         @media (max-width: 760px) {
-            .ow { --ow-row: 40px; grid-template-columns: minmax(0, 1fr); gap: 20px; }
-            .ow-plate { order: -1; height: 200px; }
-            .ow-pl .nm { font-size: clamp(25px, 6.4vw, 34px); }
+            .ow { --ow-row: 52px; grid-template-columns: minmax(0, 1fr); gap: 22px; }
+            .ow-plate { order: -1; height: 250px; }
+            .ow-pl .nm { font-size: clamp(28px, 7vw, 40px); }
             .ow-pl .go span { display: none; }
         }
         @media (max-width: 620px) {
             .hero h1 { max-width: none; }
-            .story .tx { width: 100%; }
+            .hero .pills { gap: 9px 20px; }
+            /* One column means six cells stacked, so the generous desktop
+               padding turns the act into a 1700px scroll on a phone. Tighten
+               it: the cells are still separated by their own hairlines. */
+            .offer .grid { grid-template-columns: minmax(0, 1fr); }
+            .offer .cell { padding: 24px 22px; }
+            .offer .cell .rule { margin: 15px 0 16px; }
+            .why .facts { grid-template-columns: 1fr 1fr; }
         }
     </style>
 
@@ -491,16 +616,37 @@
                     @if ($csSeal)<img src="{{ $csSeal }}" alt="" aria-hidden="true">@endif
                     <span>{{ $csHero['title'] !== '' ? $csHero['title'] : $tenant->name }}</span>
                 </div>
-                <h1 class="rise" style="--d: .42s;">
-                    @if ($csHero['subtitle'] !== '')
-                        {{ $csHero['subtitle'] }}
-                    @else
-                        {!! __('site.storefront.sankevi.hero_h1_html') !!}
-                    @endif
-                </h1>
+                <div class="h1w">
+                    <h1 style="--d: .38s;">
+                        @if ($csHero['subtitle'] !== '')
+                            {{ $csHero['subtitle'] }}
+                        @else
+                            {!! __('site.storefront.sankevi.hero_h1_html') !!}
+                        @endif
+                    </h1>
+                </div>
+                <p class="sub rise" style="--d: .62s;">{{ __('site.storefront.sankevi.hero_sub') }}</p>
+
+                {{-- The three answers, as plates. One editable field behind
+                     them, so a merchant who sells something other than timber
+                     rewrites all three at once and gets however many they
+                     typed — including one. --}}
+                @if ($heroPills)
+                    <ul class="pills rise" style="--d: .8s;">
+                        @foreach ($heroPills as $pill)
+                            <li style="--d: .86s; --i: {{ $loop->index }};">{{ $pill }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+
                 <div class="foot">
-                    <p class="rise" style="--d: .6s;">{{ __('site.storefront.sankevi.hero_sub') }}</p>
-                    <span class="cue rise" style="--d: .78s;" aria-hidden="true">
+                    <div class="cta rise" style="--d: 1s;">
+                        <a class="btn" href="/shop">{{ __('site.storefront.sankevi.hero_cta') }}</a>
+                        @if ($contactOn)
+                            <a class="btn ghost" href="/contact">{{ __('site.storefront.sankevi.hero_cta2') }}</a>
+                        @endif
+                    </div>
+                    <span class="cue rise" style="--d: 1.12s;" aria-hidden="true">
                         <span class="rail"></span>
                         {{ __('site.storefront.sankevi.scroll_cue') }}
                     </span>
@@ -508,68 +654,11 @@
             </div>
         </section>
 
-        {{-- ============ ACT 2 — SCROLL VELOCITY ============ --}}
-        {{-- The band itself is decorative repetition; a screen reader gets one
-             sentence instead of the same four words eight times over. --}}
-        <section class="vel" data-vel>
-            <span class="sr-only">{{ __('site.storefront.sankevi.marquee_sr', ['name' => $tenant->name]) }}</span>
-            <div class="vel-row" data-vel-row data-vel-dir="-1" data-vel-base="0.062" aria-hidden="true">
-                <div class="vel-seq">
-                    @foreach ($marqueeWords as $word)
-                        <span class="vel-item">{{ $word }} <i>◆</i></span>
-                    @endforeach
-                </div>
-            </div>
-            <div class="vel-row ghost" data-vel-row data-vel-dir="1" data-vel-base="0.044" aria-hidden="true">
-                <div class="vel-seq">
-                    @foreach (array_reverse($marqueeWords) as $word)
-                        <span class="vel-item">{{ $word }} <i>◆</i></span>
-                    @endforeach
-                </div>
-            </div>
-        </section>
+        {{-- ============ ACT 2 — THE OPTION WHEEL ============
+             Moved up to sit directly under the hero, and scaled up with it:
+             the first question a visitor arrives with is "what do you cut",
+             so it is now the first thing they are answered with.
 
-        <div class="wrap">
-            {{-- ============ ACT 3 — STORY ============
-                 Moved ahead of the families at the merchant's request: say who
-                 you are before you ask what the visitor wants. --}}
-            @if ($theme->on('story_band'))
-                <section class="story">
-                    @if ($theme->on('gutter_index'))
-                        <span class="gx" aria-hidden="true" style="top: 40px;"><b>{{ $theme->label('gutter_index') }} 01</b> {{ __('site.storefront.sankevi.story_eyebrow') }}</span>
-                    @endif
-                    <div class="art cut cut-lg" data-gv-reveal="scale">
-                        @if ($storyImageUrl)
-                            <img class="{{ $storyIsShipped ? 'mounted' : '' }}" src="{{ $storyImageUrl }}" alt="" loading="lazy">
-                        @endif
-                    </div>
-                    <div class="tx" data-gv-reveal data-gv-delay="0.12">
-                        <span class="kicker k">{{ __('site.storefront.sankevi.story_eyebrow') }}</span>
-                        <h3>{!! __('site.storefront.sankevi.story_h2_html') !!}</h3>
-                        <p>{{ $theme->copy('story_body') }}</p>
-
-                        @if ($theme->on('ledger_strip'))
-                            <div class="stats">
-                                <div>
-                                    <b><span data-gv-counter="{{ $yearsRunning }}">{{ $yearsRunning }}</span><i>+</i></b>
-                                    <span class="lb">{{ __('site.storefront.sankevi.stat_years_label') }}</span>
-                                </div>
-                                <div>
-                                    <b><span data-gv-counter="{{ $sourcingRadiusKm }}">{{ $sourcingRadiusKm }}</span></b>
-                                    <span class="lb">{{ __('site.storefront.sankevi.stat_radius_label') }}</span>
-                                </div>
-                                <div>
-                                    <b><span data-gv-counter="{{ $kilnMoisturePct }}">{{ $kilnMoisturePct }}</span><i>%</i></b>
-                                    <span class="lb">{{ __('site.storefront.sankevi.ledger_1_k') }}</span>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
-                </section>
-            @endif
-        </div>
-
-        {{-- ============ ACT 4 — THE OPTION WHEEL ============
              id="shop" so the layout's stock "#shop" links (nav + footer, which
              this view must not edit) land on the families rather than nowhere.
 
@@ -582,7 +671,7 @@
             <div class="wrap">
                 <div class="head" data-gv-reveal>
                     @if ($theme->on('gutter_index'))
-                        <span class="gx" aria-hidden="true"><b>{{ $theme->label('gutter_index') }} 02</b> {{ __('site.storefront.sankevi.gx_home') }}</span>
+                        <span class="gx" aria-hidden="true"><b>{{ $theme->label('gutter_index') }} 01</b> {{ __('site.storefront.sankevi.gx_home') }}</span>
                     @endif
                     <div>
                         <span class="kicker">{{ __('site.storefront.sankevi.families_eyebrow') }}</span>
@@ -641,7 +730,111 @@
             </div>
         </section>
 
-        {{-- ============ ACT 5 — FOREST ============ --}}
+        {{-- ============ ACT 3 — OFFER ============
+             The capabilities. This is the half of the old story act that
+             belongs on a landing page: not the generations — those are at
+             /about now — but what the yard will do with a list of sizes.
+             Six cells on one hairline grid, and no photograph: the plate in
+             the wheel above is the picture and the forest below is the other
+             one, and three images in a row would say less than six lines. --}}
+        @if ($theme->on('offer_band'))
+            <section class="offer">
+                <div class="wrap">
+                    <div class="head" data-gv-reveal>
+                        @if ($theme->on('gutter_index'))
+                            <span class="gx" aria-hidden="true"><b>{{ $theme->label('gutter_index') }} 02</b> {{ __('site.storefront.sankevi.offer_eyebrow') }}</span>
+                        @endif
+                        <span class="kicker">{{ __('site.storefront.sankevi.offer_eyebrow') }}</span>
+                        <h2>{!! __('site.storefront.sankevi.offer_h2_html') !!}</h2>
+                        <p class="lead">{{ __('site.storefront.sankevi.offer_lead') }}</p>
+                    </div>
+
+                    <div class="grid" data-gv-reveal data-gv-delay="0.1">
+                        @foreach (range(1, 6) as $n)
+                            <article class="cell">
+                                <span class="n" aria-hidden="true">{{ sprintf('%02d', $n) }}</span>
+                                <span class="rule" aria-hidden="true"></span>
+                                <h3>{{ __('site.storefront.sankevi.offer_' . $n . '_h') }}</h3>
+                                <p>{{ __('site.storefront.sankevi.offer_' . $n . '_p') }}</p>
+                            </article>
+                        @endforeach
+                    </div>
+                </div>
+            </section>
+        @endif
+
+        {{-- ============ ACT 4 — SCROLL VELOCITY ============ --}}
+        {{-- The band itself is decorative repetition; a screen reader gets one
+             sentence instead of the same four words eight times over. --}}
+        <section class="vel" data-vel>
+            <span class="sr-only">{{ __('site.storefront.sankevi.marquee_sr', ['name' => $tenant->name]) }}</span>
+            <div class="vel-row" data-vel-row data-vel-dir="-1" data-vel-base="0.062" aria-hidden="true">
+                <div class="vel-seq">
+                    @foreach ($marqueeWords as $word)
+                        <span class="vel-item">{{ $word }} <i>◆</i></span>
+                    @endforeach
+                </div>
+            </div>
+            <div class="vel-row ghost" data-vel-row data-vel-dir="1" data-vel-base="0.044" aria-hidden="true">
+                <div class="vel-seq">
+                    @foreach (array_reverse($marqueeWords) as $word)
+                        <span class="vel-item">{{ $word }} <i>◆</i></span>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+
+        {{-- ============ ACT 5 — WHY ============
+             The reasons, and the only place the landing page still mentions
+             the family: one link, to the page that now tells it properly. --}}
+        @if ($theme->on('why_band'))
+            <section class="why">
+                <div class="wrap in">
+                    <div class="aside" data-gv-reveal>
+                        @if ($theme->on('gutter_index'))
+                            <span class="gx" aria-hidden="true"><b>{{ $theme->label('gutter_index') }} 03</b> {{ __('site.storefront.sankevi.why_eyebrow') }}</span>
+                        @endif
+                        <span class="kicker">{{ __('site.storefront.sankevi.why_eyebrow') }}</span>
+                        <h2>{!! __('site.storefront.sankevi.why_h2_html') !!}</h2>
+
+                        @if ($theme->on('ledger_strip'))
+                            <div class="facts">
+                                <div>
+                                    <b><span data-gv-counter="{{ $yearsRunning }}">{{ $yearsRunning }}</span><i>+</i></b>
+                                    <span class="lb">{{ __('site.storefront.sankevi.stat_years_label') }}</span>
+                                </div>
+                                <div>
+                                    <b><span data-gv-counter="{{ $sourcingRadiusKm }}">{{ $sourcingRadiusKm }}</span></b>
+                                    <span class="lb">{{ __('site.storefront.sankevi.stat_radius_label') }}</span>
+                                </div>
+                                <div>
+                                    <b><span data-gv-counter="{{ $kilnMoisturePct }}">{{ $kilnMoisturePct }}</span><i>%</i></b>
+                                    <span class="lb">{{ __('site.storefront.sankevi.ledger_1_k') }}</span>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if ($aboutOn)
+                            <a class="hist" href="/about">{{ __('site.storefront.sankevi.why_about') }}</a>
+                        @endif
+                    </div>
+
+                    <ol class="list" data-gv-reveal data-gv-delay="0.1">
+                        @foreach (range(1, 4) as $n)
+                            <li>
+                                <span class="ix" aria-hidden="true">{{ sprintf('%02d', $n) }}</span>
+                                <div>
+                                    <h3>{{ __('site.storefront.sankevi.why_' . $n . '_h') }}</h3>
+                                    <p>{{ __('site.storefront.sankevi.why_' . $n . '_p') }}</p>
+                                </div>
+                            </li>
+                        @endforeach
+                    </ol>
+                </div>
+            </section>
+        @endif
+
+        {{-- ============ ACT 6 — FOREST ============ --}}
         @if ($theme->on('forest_band') && $forestImageUrl)
             <figure class="forest">
                 <img src="{{ $forestImageUrl }}" alt="" loading="lazy" data-gv-parallax="0.12">
@@ -652,7 +845,7 @@
             </figure>
         @endif
 
-        {{-- ============ ACT 6 — THE CLOSING CALL ============ --}}
+        {{-- ============ ACT 7 — THE CLOSING CALL ============ --}}
         <section class="closing">
             <div class="wrap in">
                 <div data-gv-reveal>

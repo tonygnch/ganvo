@@ -294,9 +294,13 @@ return [
         // but every string is merchant-overridable through the manifest.
         'sankevi' => [
             'hero_kicker'     => 'Family sawmill · Rhodope mountains',
-            'hero_h1_html'    => 'Cut close to <em>the forest</em>',
-            'hero_sub'        => 'Treated timber, decking, fencing and structural boards — sawn, dried and graded in our own yard, on the mountain the trees came off.',
-            'hero_note'       => 'Kiln-dried · Strength-graded · Cut to length',
+            'hero_h1_html'    => 'From the log to <em>your size</em>',
+            'hero_sub'        => 'We saw, dry, treat and profile in one yard in the Rhodopes. Beams, boards, panelling, skirting and decking — from the catalogue or to your own spec.',
+            // The three things the yard does FOR the customer, in the order
+            // they get asked: how will you cut it, how dry, when is it here.
+            'hero_note'       => 'Cut to spec · Dried to 12% · Delivered to site',
+            'hero_cta'        => 'Browse the timber',
+            'hero_cta2'       => 'Ask for a quote',
             'gx_home'         => 'The yard',
             'gx_product'      => 'The plate',
             'ledger_stock'    => 'Lines in the yard',
@@ -328,7 +332,11 @@ return [
             'forest_quote'    => 'We take only what the mountain can spare — and we cut it once.',
             'forest_caption'  => 'Rhodope mountains · 1,400 m',
             'story_eyebrow'   => 'The workshop',
-            'story_h2_html'   => 'Four generations at <em>the same saw</em>',
+            // Deliberately WITHOUT a generation count: this band now sits
+            // directly above the merchant's own story and timeline on
+            // /about, and platform copy claiming "four" over their own
+            // "third generation" contradicts itself on one screen.
+            'story_h2_html'   => 'One family, <em>the same saw</em>',
             'story_body'      => 'The mill has stood in this clearing since our great-grandfather set the first blade in it. We still stack every board by hand, still dry it slowly, and still turn down the log that will not hold its shape.',
             'story_cta'       => 'Our story',
             'trade_eyebrow'   => 'Trade & sites',
@@ -375,6 +383,41 @@ return [
             'closing_eyebrow'     => 'Next step',
             'closing_h2_html'     => 'Bring us <em>the measurements</em>',
             'closing_shop'        => 'Enter the yard',
+
+            // ——— WHAT WE OFFER. The family story moved wholesale to /about;
+            // the landing page now talks about what the yard can DO, and why
+            // you would place the order here rather than anywhere else.
+            'gx_offer'        => 'The workshop',
+            'offer_eyebrow'   => 'Capabilities',
+            'offer_h2_html'   => 'One yard, <em>every stage</em>',
+            'offer_lead'      => 'The log arrives here and leaves as a finished component. No subcontractor between the stages, no waiting on someone else, and nobody else to carry the blame for the quality.',
+            'offer_1_h'       => 'Sawn to spec',
+            'offer_1_p'       => 'We cut to your schedule of sections, not to a standard catalogue. Send the sizes — we send back quantities and a price.',
+            'offer_2_h'       => 'Kiln drying',
+            'offer_2_p'       => 'Brought down to 10–12% moisture. Board that will not cup or twist once it is already fixed in place.',
+            'offer_3_h'       => 'UC3 / UC4 treatment',
+            'offer_3_p'       => 'Our own autoclave for anything that stays outdoors or touches the ground — fencing, decking, structural frames.',
+            'offer_4_h'       => 'Profiling',
+            'offer_4_p'       => 'Flooring, panelling, skirting and cladding to our own profiles. We will grind a non-standard knife from your sample.',
+            'offer_5_h'       => 'Strength grading',
+            'offer_5_p'       => 'Structural timber graded to C24, with the class stated on every delivery instead of “whatever came off the saw”.',
+            'offer_6_h'       => 'Delivery to site',
+            'offer_6_p'       => 'Our own trucks across southern Bulgaria, unloading on a schedule agreed with the site.',
+
+            // ——— WHY US. Reasons, not a biography: the family history lives
+            // at /about and is pointed at from here with a single link.
+            'gx_why'          => 'The ledger',
+            'why_eyebrow'     => 'Why us',
+            'why_h2_html'     => 'The reasons they <em>come back</em>',
+            'why_1_h'         => 'A quote within one working day',
+            'why_1_p'         => 'Send a list or a drawing. We price it to the last board and answer in writing.',
+            'why_2_h'         => 'The timber is ours from the start',
+            'why_2_p'         => 'Felled in certified forest within a 40 km radius. We know where every log came from.',
+            'why_3_h'         => 'One supplier for the whole build',
+            'why_3_p'         => 'Beams, boards, panelling, skirting and decking from one place — one delivery, one invoice.',
+            'why_4_h'         => 'The same person answers',
+            'why_4_p'         => 'Whoever takes the order is the one who cuts it. There is nobody to pass it along to.',
+            'why_about'       => 'Three generations in one place',
 
             // ——— THE STOCK BOOK (/shop). The catalogue is its own
             // destination, not a card grid: one row per item, the way the
