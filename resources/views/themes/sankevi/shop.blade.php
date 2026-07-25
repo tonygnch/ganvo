@@ -122,11 +122,20 @@
         .sift .f { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
         .sift .f > span { font-size: 10px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--faint); }
         .sift input[type="search"], .sift input[type="number"], .sift select {
-            width: 100%; min-width: 0; padding: 9px 2px; background: transparent; border: 0; border-bottom: 1px solid var(--line2);
+            width: 100%; min-width: 0; padding: 9px 2px; background-color: transparent; border: 0; border-bottom: 1px solid var(--line2);
             color: var(--txt); font-family: var(--body); font-size: 15px; transition: border-color .25s ease;
         }
         /* the native select needs an explicit ground or the OS paints it white */
-        .sift select { background: transparent; }
+            /* background-COLOR, not the shorthand: the layout draws this
+               select's chevron as a background-image, and `background:`
+               would reset it — leaving a select with no arrow at all,
+               since appearance:none has already removed the native one. */
+        .sift select {
+            background-color: transparent;
+            /* this field is an underline, not a box — pull the layout's chevron
+               in to the same 2px gutter the text uses, and reserve room for it */
+            padding-right: 20px; background-position: right 1px center;
+        }
         .sift select option { background: var(--surface); color: var(--txt); }
         .sift input::placeholder { color: var(--faint); }
         .sift input:focus, .sift select:focus { outline: none; border-bottom-color: var(--accent); box-shadow: none; }

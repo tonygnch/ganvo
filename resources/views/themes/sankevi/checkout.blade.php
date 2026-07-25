@@ -85,7 +85,11 @@
         .field.full { grid-column: 1 / -1; }
         .field label { font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-bottom: 9px; }
         .field label small { text-transform: none; letter-spacing: .02em; color: var(--faint); }
-        .field input, .field select, .field textarea { background: var(--bg); border: 1px solid var(--line2); padding: 13px 15px; font-family: var(--body); font-size: 14.5px; color: var(--txt); transition: border-color .25s ease; }
+        .field input, .field select, .field textarea { background-color: var(--bg); border: 1px solid var(--line2); padding: 13px 15px; font-family: var(--body); font-size: 14.5px; color: var(--txt); transition: border-color .25s ease; }
+        /* background-COLOR, not the shorthand: the layout draws the select's
+           chevron as a background-image and `background:` resets it. The
+           extra right padding is the room that arrow sits in. */
+        .field select { padding-right: 38px; }
         .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--accent); }
         .field textarea { min-height: 96px; resize: vertical; }
 

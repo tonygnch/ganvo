@@ -23,9 +23,14 @@
         .filters .field:last-child { margin-bottom: 0; }
         .filters .field label { font-size: 10.5px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
         .filters input[type="search"], .filters input[type="number"], .filters select {
-            width: 100%; padding: 11px 13px; background: var(--surface); border: 1px solid var(--line);
+            width: 100%; padding: 11px 13px; background-color: var(--surface); border: 1px solid var(--line);
             color: var(--txt); font-family: var(--body); font-size: 14px; transition: border-color .25s ease;
         }
+        /* background-COLOR, not the shorthand: the layout draws this
+           select's chevron as a background-image, and `background:`
+           would reset it — leaving a select with no arrow at all,
+           since appearance:none has already removed the native one. */
+        .filters select { padding-right: 36px; }
         .filters input::placeholder { color: var(--faint); }
         .filters input:focus, .filters select:focus { outline: none; border-color: var(--accent); }
         .filters .price-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

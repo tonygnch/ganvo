@@ -79,6 +79,11 @@
                dark accent should pick a light one instead — same trade the
                other curated themes make. */
             --on-accent: #14180e;
+            /* The one hook into chrome we cannot otherwise touch: the native
+               <select> POPUP list, scrollbars and spin buttons. Without it the
+               option list opens as a light menu over the bark theme. Flipped
+               with the mode below. */
+            color-scheme: dark;
             --header-height: 76px;
             /* The planed corner — how deep the chamfer bites. */
             --notch: 13px;
@@ -132,7 +137,7 @@
            in manifest.php ('modes'); only what tokens cannot carry is retuned
            here. Moss stays a dark slab in both modes: it is a material, not a
            background. ===== */
-        html[data-mode="light"] { --accent-ink: color-mix(in srgb, var(--accent) 64%, #12160b); }
+        html[data-mode="light"] { --accent-ink: color-mix(in srgb, var(--accent) 64%, #12160b); color-scheme: light; }
         html[data-mode="light"] body::before {
             opacity: .7;
             background:
@@ -197,6 +202,84 @@
         body.no-cut .btn { clip-path: none; }
 
         /* pill — the shared micro-tag contract (partials + cards) */
+        /* =================================================================
+           FORM CONTROLS. A native select and a native checkbox are the two
+           places a themed storefront usually gives itself away: the browser
+           paints them in system chrome, which on the bark ground reads as a
+           white box someone forgot. These are drawn to match the rest of the
+           yard — hairline border, square corners, moss when active.
+
+           Styled HERE rather than per page so the shop's sort, the checkout's
+           country, the contact form's subject and every stock/marketing tick
+           agree with each other. Individual pages still own their own sizing
+           and spacing; nothing below touches layout.
+
+           The one part that stays the browser's: the option LIST a select
+           opens. No CSS can reach it — `color-scheme` on :root is the entire
+           available lever, and it is set above.
+           ================================================================= */
+        select {
+            appearance: none; -webkit-appearance: none;
+            font-family: var(--body); font-size: 14.5px; color: var(--txt);
+            background-color: var(--bg);
+            border: 1px solid var(--line2);
+            padding: 12px 40px 12px 14px;
+            cursor: pointer;
+            /* the chevron, drawn to match the ones in the nav menus. It cannot
+               use currentColor — a background-image SVG has no access to it —
+               so the Daylight ground gets its own copy below. */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23b3aa97' stroke-width='1.4'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 12px 12px;
+        }
+        html[data-mode="light"] select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%235c5545' stroke-width='1.4'%3E%3Cpath d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E");
+        }
+        select:hover { border-color: var(--line2); }
+        select:focus-visible, select:focus { outline: none; border-color: var(--accent); }
+
+        input[type="checkbox"], input[type="radio"] {
+            appearance: none; -webkit-appearance: none;
+            width: 16px; height: 16px; flex-shrink: 0; margin: 0;
+            background-color: var(--bg);
+            border: 1px solid var(--line2);
+            cursor: pointer;
+            display: inline-grid; place-content: center;
+            transition: background-color .18s ease, border-color .18s ease;
+        }
+        /* a radio still reads as round — it is the "one of these" affordance,
+           and squaring it would say the wrong thing about the choice */
+        input[type="radio"] { border-radius: 50%; }
+        input[type="checkbox"]:checked, input[type="radio"]:checked {
+            background-color: var(--accent); border-color: var(--accent);
+        }
+        /* the tick is drawn with a mask so it can be --on-accent, the same ink
+           the buttons use on a moss fill, in both modes */
+        input[type="checkbox"]::before {
+            content: ""; width: 10px; height: 10px; transform: scale(0);
+            transition: transform .15s cubic-bezier(.19, .74, .16, 1);
+            background-color: var(--on-accent);
+            -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 10l4 4 8-8' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 10l4 4 8-8' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+        }
+        input[type="checkbox"]:checked::before { transform: scale(1); }
+        input[type="radio"]::before {
+            content: ""; width: 6px; height: 6px; border-radius: 50%;
+            background-color: var(--on-accent); transform: scale(0);
+            transition: transform .15s cubic-bezier(.19, .74, .16, 1);
+        }
+        input[type="radio"]:checked::before { transform: scale(1); }
+        /* Keyboard users must still see where they are — :checked alone is a
+           colour change, and colour is never the only signal. */
+        input[type="checkbox"]:focus-visible, input[type="radio"]:focus-visible {
+            outline: 2px solid var(--accent); outline-offset: 2px;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            input[type="checkbox"], input[type="radio"],
+            input[type="checkbox"]::before, input[type="radio"]::before { transition: none; }
+        }
+
         .pill { display: inline-block; font-size: 10.5px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; padding: 6px 12px; border: 1px solid var(--line2); color: var(--muted); background: transparent; }
 
         /* placeholder ground for any missing photograph */
