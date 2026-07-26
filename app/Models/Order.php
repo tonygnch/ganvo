@@ -160,6 +160,28 @@ class Order extends Model
             && $this->refundableAmountCents() > 0;
     }
 
+    /**
+     * Can the merchant record this one as paid by hand?
+     *
+     * Only a pending order. This does NOT take any money — it records that
+     * payment arrived outside the shop (bank transfer, cash on delivery, or an
+     * enquiry settled on the phone), which on the enquiry flow is how every
+     * order gets paid, since that flow deliberately takes no card at checkout.
+     * Without it a pending order could never move at all: isShippable()
+     * requires `paid`, so an enquiry had no route out of `pending` except
+     * hand-editing the status field.
+     */
+    public function isMarkablePaid(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    /** A cancelled order can be put back into play — cancelling is not final. */
+    public function isReopenable(): bool
+    {
+        return $this->status === self::STATUS_CANCELLED;
+    }
+
     public function isCancellable(): bool
     {
         return in_array($this->status, [self::STATUS_PENDING, self::STATUS_PAID], true);

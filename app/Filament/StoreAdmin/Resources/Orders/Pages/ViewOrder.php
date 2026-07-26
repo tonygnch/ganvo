@@ -151,6 +151,62 @@ class ViewOrder extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            /*
+             | THE ONE-CLICK STATUS MOVES, FIRST IN THE ROW.
+             |
+             | These come before Edit deliberately: working an order is mostly
+             | the same two or three transitions over and over, and making the
+             | merchant open a form and hunt for a dropdown to do them is the
+             | slow path. Each is only visible when it is actually a legal move
+             | from where the order stands, so the row shows what CAN be done
+             | rather than everything that exists.
+             */
+            Action::make('markPaid')
+                ->label(__('admin.orders.action.mark_paid'))
+                ->icon(Heroicon::OutlinedBanknotes)
+                ->color('success')
+                ->visible(fn () => $this->record->isMarkablePaid())
+                ->requiresConfirmation()
+                ->modalHeading(__('admin.orders.confirm.mark_paid_heading'))
+                // Says plainly that nothing is charged. A button labelled
+                // "mark paid" on a shop that DOES take cards invites the
+                // reading that it collects the money.
+                ->modalDescription(__('admin.orders.confirm.mark_paid'))
+                ->action(function () {
+                    $this->record->update([
+                        'status' => Order::STATUS_PAID,
+                        // Never overwrite an existing timestamp — see the same
+                        // rule in EditOrder: the dates are history.
+                        'paid_at' => $this->record->paid_at ?? now(),
+                    ]);
+
+                    Notification::make()
+                        ->success()
+                        ->title(__('admin.orders.notify.marked_paid'))
+                        ->send();
+                }),
+
+            Action::make('reopen')
+                ->label(__('admin.orders.action.reopen'))
+                ->icon(Heroicon::OutlinedArrowUturnLeft)
+                ->color('gray')
+                ->visible(fn () => $this->record->isReopenable())
+                ->requiresConfirmation()
+                ->modalDescription(__('admin.orders.confirm.reopen'))
+                ->action(function () {
+                    $this->record->update([
+                        'status' => Order::STATUS_PENDING,
+                        // This one IS cleared: the order is no longer
+                        // cancelled, so a cancellation date would be a lie.
+                        'cancelled_at' => null,
+                    ]);
+
+                    Notification::make()
+                        ->success()
+                        ->title(__('admin.orders.notify.reopened'))
+                        ->send();
+                }),
+
             \Filament\Actions\EditAction::make(),
             // Mark shipped — initial ship action. Sends OrderShipped
             // email. For already-shipped orders, use Edit tracking
