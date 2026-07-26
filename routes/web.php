@@ -5,6 +5,7 @@ use App\Http\Controllers\ImpersonateController;
 use App\Http\Controllers\Marketing\InquiryController;
 use App\Http\Controllers\Marketing\SignupController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\PanelLanguageController;
 use App\Http\Controllers\Onboarding\AuthController as OnboardingAuthController;
 use App\Http\Controllers\Onboarding\WizardController;
 use App\Http\Controllers\Storefront\AboutController;
@@ -126,6 +127,16 @@ Route::domain($centralDomain)->group(function () {
 
     // The wizard step routes — auth-only. Each step has a show + save handler.
     Route::middleware('auth')->group(function () {
+        /*
+         | The admin panel's language switcher. NOT under /store: that path
+         | belongs to the Filament panel's own router, and a route squatting
+         | inside it is a collision waiting to happen the day Filament adds a
+         | page by that name. It only needs to share the session with the
+         | panel, which every route on the central domain already does.
+         */
+        Route::get('/panel-language/{locale}', [PanelLanguageController::class, 'switch'])
+            ->name('panel.language');
+
         Route::get('/onboarding', [WizardController::class, 'entry'])->name('onboarding.entry');
 
         Route::get('/onboarding/business', [WizardController::class, 'showBusiness'])->name('onboarding.business');

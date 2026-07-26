@@ -10,6 +10,7 @@ use App\Filament\StoreAdmin\Widgets\RecentOrders;
 use App\Filament\StoreAdmin\Widgets\RevenueChart;
 use App\Filament\StoreAdmin\Widgets\StoreStats;
 use Filament\Pages\Dashboard;
+use Filament\Navigation\MenuItem;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -97,6 +98,30 @@ class StoreAdminPanelProvider extends PanelProvider
                 RevenueChart::class,
                 RecentOrders::class,
             ])
+            /*
+             | LANGUAGE SWITCHER, in the user menu behind the avatar.
+             |
+             | Each language names ITSELF — "Български", never "Bulgarian" —
+             | because someone who has landed in a language they cannot read
+             | needs to recognise their own in the list, and a translated
+             | language name is exactly the thing they would not recognise.
+             | The one in use is ticked rather than hidden, so the menu shows
+             | what is selected instead of only what is not.
+             |
+             | Closures throughout: panel definitions are cacheable
+             | (filament:cache-components), and a value baked in at cache time
+             | would pin every merchant to whoever warmed the cache.
+             */
+            ->userMenuItems(collect(\App\Support\PanelLocale::SUPPORTED)
+                ->map(fn (string $native, string $code): MenuItem => MenuItem::make()
+                    ->label(fn (): string => $native)
+                    ->icon(fn (): string => \App\Support\PanelLocale::forUser(auth()->user()) === $code
+                        ? 'heroicon-m-check'
+                        : 'heroicon-m-language')
+                    ->url(fn (): string => route('panel.language', $code))
+                    ->sort(90))
+                ->values()
+                ->all())
             ->middleware([
                 // The preview lock is prepended to the `web` group, which a
                 // Filament panel does not use — it builds its own stack. Without
@@ -107,6 +132,11 @@ class StoreAdminPanelProvider extends PanelProvider
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 AuthenticateSession::class,
+                // After the session, so it can read the signed-in merchant's
+                // saved language — and in this stack rather than authMiddleware
+                // so the login screen is translated too, where there is no user
+                // yet and the server default applies.
+                \App\Http\Middleware\SetPanelLocale::class,
                 ShareErrorsFromSession::class,
                 PreventRequestForgery::class,
                 SubstituteBindings::class,
