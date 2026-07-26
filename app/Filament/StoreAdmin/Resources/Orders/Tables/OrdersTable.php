@@ -31,9 +31,7 @@ class OrdersTable
                 TextColumn::make('status')
                     ->label(__('admin.orders.field.status'))
                     ->badge()
-                    ->formatStateUsing(fn (string $state) => isset(Order::STATUSES[$state])
-                        ? __('admin.orders.opt.status_' . $state)
-                        : $state)
+                    ->formatStateUsing(fn (string $state) => Order::statusOptions()[$state] ?? $state)
                     ->color(fn (string $state): string => match ($state) {
                         'paid' => 'success',
                         'shipped' => 'info',
@@ -53,9 +51,10 @@ class OrdersTable
             ->filters([
                 SelectFilter::make('status')
                     ->label(__('admin.orders.field.status'))
-                    ->options(fn (): array => collect(Order::STATUSES)
-                        ->map(fn (string $label, string $status) => __('admin.orders.opt.status_' . $status))
-                        ->all()),
+                    // Keys stay the raw stored values — the filter still
+                    // queries `status = 'paid'`, the merchant just reads
+                    // „Платена“.
+                    ->options(fn (): array => Order::statusOptions()),
             ])
             ->recordActions([
                 ViewAction::make(),

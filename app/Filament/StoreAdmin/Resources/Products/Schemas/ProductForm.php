@@ -130,7 +130,11 @@ class ProductForm
                         // once the parent option row has an id, so a new axis
                         // and its values land in the same submit.
                         Repeater::make('options')
-                            ->label('')
+                            // hiddenLabel() hides it VISUALLY but the accessible name remains, and
+                            // an unset label is derived from the attribute in English —
+                            // so a screen reader still needs a translated one.
+                            ->label(__('admin.products.section.options'))
+                            ->hiddenLabel()
                             ->relationship()
                             ->orderColumn('sort_order')
                             ->collapsed()
@@ -157,7 +161,8 @@ class ProductForm
                                     ->minItems(1)
                                     ->schema([
                                         TextInput::make('value')
-                                            ->label('')
+                                            ->label(__('admin.products.field.values'))
+                                            ->hiddenLabel()
                                             ->required()
                                             ->maxLength(60)
                                             ->placeholder(__('admin.products.ph.value'))
@@ -205,7 +210,8 @@ class ProductForm
                         // one ProductVariant; sort_order is auto-synced
                         // from the repeater drag order.
                         Repeater::make('variants')
-                            ->label('')
+                            ->label(__('admin.products.section.variants'))
+                            ->hiddenLabel()
                             ->relationship()
                             ->orderColumn('sort_order')
                             ->collapsed()
@@ -265,7 +271,8 @@ class ProductForm
                     ->description(__('admin.products.section_help.categories'))
                     ->schema([
                         Select::make('categories')
-                            ->label('')
+                            ->label(__('admin.products.section.categories'))
+                            ->hiddenLabel()
                             ->multiple()
                             ->relationship(
                                 name: 'categories',

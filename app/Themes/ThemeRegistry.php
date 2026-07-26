@@ -142,4 +142,23 @@ class ThemeRegistry
 
         return $out;
     }
+
+    /**
+     * A label that came out of a theme's manifest.php, translated.
+     *
+     * Manifest text is authored in English next to the theme it describes, and
+     * that English stays the single source for the key list; the translation
+     * lives under admin.manifest.{theme}.{kind}.{id} — e.g.
+     * admin.manifest.sankevi.palette.ash. Same fallback rule as descriptions():
+     * an entry with no key yet renders its English manifest text rather than
+     * the raw key, so a theme can ship a palette or a pairing before anyone
+     * has translated it.
+     */
+    public static function manifestText(string $theme, string $kind, string $id, string $english): string
+    {
+        $key = "admin.manifest.{$theme}.{$kind}.{$id}";
+        $line = __($key);
+
+        return is_string($line) && $line !== $key ? $line : $english;
+    }
 }

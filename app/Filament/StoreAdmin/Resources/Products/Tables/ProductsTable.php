@@ -22,7 +22,7 @@ class ProductsTable
             ->defaultSort('created_at', 'desc')
             ->columns([
                 ImageColumn::make('image_path')
-                    ->label('')
+                    ->label('')   // table columns have no hiddenLabel(); '' is an empty header here
                     ->disk('public')
                     ->circular()
                     ->defaultImageUrl('https://placehold.co/40x40?text=%E2%80%94'),

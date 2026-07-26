@@ -21,7 +21,7 @@ class CollectionsTable
             ->defaultSort('sort_order')
             ->columns([
                 ImageColumn::make('banner_path')
-                    ->label('')
+                    ->label('')   // table columns have no hiddenLabel(); '' is an empty header here
                     ->disk('public')
                     ->square()
                     ->size(40),

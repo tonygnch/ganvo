@@ -100,16 +100,24 @@ class CustomizeTheme extends Page implements HasForms
         $tabs = [];
 
         // — Appearance: palette preset + font pairing —
+        // Both option lists are authored in English inside the theme's own
+        // manifest.php; ThemeRegistry::manifestText() swaps in the translation
+        // when one exists and leaves the English standing when it doesn't, so
+        // an untranslated theme keeps working exactly as before.
         $appearance = [];
         if (! empty($manifest['palettes'])) {
             $appearance[] = Radio::make('palette')
                 ->label(__('admin.theme.field.palette'))
-                ->options(collect($manifest['palettes'])->map(fn ($p) => $p['name'])->all());
+                ->options(collect($manifest['palettes'])
+                    ->map(fn ($p, $id) => ThemeRegistry::manifestText($this->themeSlug, 'palette', $id, $p['name'] ?? $id))
+                    ->all());
         }
         if (! empty($manifest['fonts'])) {
             $appearance[] = Radio::make('font')
                 ->label(__('admin.theme.field.font'))
-                ->options(collect($manifest['fonts'])->map(fn ($f) => $f['name'])->all());
+                ->options(collect($manifest['fonts'])
+                    ->map(fn ($f, $id) => ThemeRegistry::manifestText($this->themeSlug, 'font', $id, $f['name'] ?? $id))
+                    ->all());
         }
         if ($appearance !== []) {
             $tabs[] = Tab::make(__('admin.theme.section.appearance'))->schema($appearance);

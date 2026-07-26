@@ -63,7 +63,9 @@ class CategoryTreeController extends Controller
                     return response()->json([
                         'ok' => false,
                         'reason' => 'cycle',
-                        'message' => 'That move would create a cycle in the category tree.',
+                        // Surfaced verbatim by the tree view's toast, so it has
+                        // to come out of the lang files like everything else.
+                        'message' => __('admin.categories.notify.cycle_blocked_body'),
                     ], 422);
                 }
                 $seen[$cursor] = true;

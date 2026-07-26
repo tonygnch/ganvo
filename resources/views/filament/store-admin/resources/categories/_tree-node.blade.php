@@ -5,17 +5,19 @@
      and break subsequent drags. --}}
 <li data-id="{{ $node['id'] }}" wire:key="ct-node-{{ $node['id'] }}">
     <div class="ct-row">
-        <span class="ct-handle" aria-hidden="true" title="Drag to move">⋮⋮</span>
+        <span class="ct-handle" aria-hidden="true" title="{{ __('admin.categories.text.drag_to_move') }}">⋮⋮</span>
         <span class="ct-name">{{ $node['name'] }}</span>
         <span class="ct-slug">/{{ $node['slug'] }}</span>
-        <span class="ct-badge">{{ $node['products_count'] }} products</span>
+        {{-- trans_choice, not "$n products": Bulgarian needs a separate
+             form for 1 vs many, and the count reads 0 often enough. --}}
+        <span class="ct-badge">{{ trans_choice('admin.categories.text.product_count', $node['products_count'], ['count' => $node['products_count']]) }}</span>
         @if ($node['is_active'])
-            <span class="ct-badge ct-badge-on">Active</span>
+            <span class="ct-badge ct-badge-on">{{ __('admin.categories.status.active') }}</span>
         @else
-            <span class="ct-badge ct-badge-off">Hidden</span>
+            <span class="ct-badge ct-badge-off">{{ __('admin.categories.status.hidden') }}</span>
         @endif
         <div class="ct-actions">
-            <a class="ct-btn" href="{{ $node['edit_url'] }}">Edit</a>
+            <a class="ct-btn" href="{{ $node['edit_url'] }}">{{ __('admin.categories.action.edit') }}</a>
         </div>
     </div>
     {{-- Always render a child <ul> so the operator can drag into an

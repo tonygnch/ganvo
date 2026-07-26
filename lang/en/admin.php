@@ -44,6 +44,10 @@ return [
         'section' => [
             'visibility' => 'Visibility',
         ],
+        'action' => [
+            'save' => 'Save',
+            'preview_storefront' => 'Preview storefront ↗',
+        ],
     ],
     'categories' => [
         'section' => [
@@ -75,6 +79,10 @@ return [
         ],
         'action' => [
             'create' => 'Add category',
+            'save_changes' => 'Save changes',
+            'saving' => 'Saving…',
+            'discard' => 'Discard',
+            'edit' => 'Edit',
         ],
         'empty' => [
             'heading' => 'No categories yet',
@@ -84,6 +92,20 @@ return [
             'cycle_blocked' => 'Move blocked',
             'cycle_blocked_body' => 'That would create a cycle in the category tree.',
             'tree_updated' => 'Tree updated',
+            'tree_saved' => 'Tree saved',
+            'save_failed' => 'Could not save',
+            'network_error' => 'Network error — try again',
+            'discard_confirm' => 'Discard your unsaved changes?',
+        ],
+        'text' => [
+            'tree_help' => 'Drag the :handle handle to reorder. Drop a category onto another one to nest it; drop it into the top list to make it top-level.',
+            'unsaved_changes' => 'Unsaved changes',
+            'drag_to_move' => 'Drag to move',
+            'product_count' => '{0} No products|{1} :count product|[2,*] :count products',
+        ],
+        'status' => [
+            'active' => 'Active',
+            'hidden' => 'Hidden',
         ],
     ],
     'settings' => [
@@ -304,6 +326,17 @@ Leave a blank line between paragraphs.',
             'domain_force_verified' => 'Domain force-verified',
             'domain_unverified' => 'Domain unverified',
         ],
+        'text' => [
+            'dns_heading' => 'Custom domain setup',
+            'domain_verified' => ':domain is verified.',
+            'domain_verified_when' => 'Verified :when.',
+            'domain_visit' => 'Visit',
+            'dns_intro' => 'Follow these two steps at your DNS provider, then click :action above.',
+            'dns_step_cname' => 'Point traffic to Ganvo',
+            'dns_step_cname_body' => 'Add a CNAME record:',
+            'dns_step_txt' => 'Prove ownership',
+            'dns_step_txt_body' => 'Add a TXT record:',
+        ],
     ],
     'products' => [
         'nav' => [
@@ -482,11 +515,14 @@ Leave a blank line between paragraphs.',
         'notify' => [
             'saved' => 'Theme customization saved',
         ],
+        'text' => [
+            'customizing' => 'Customizing the :theme theme.',
+            'saved_per_theme' => 'Settings are saved per theme — switching themes keeps each theme\'s customizations.',
+        ],
     ],
     'billing' => [
         'nav' => [
             'billing' => 'Billing',
-            'payments' => 'Payments',
         ],
     ],
     'collections' => [
@@ -673,7 +709,6 @@ Leave a blank line between paragraphs.',
             'revenue_paid_only' => 'Paid orders only',
         ],
     ],
-
     'themes' => [
         'default' => 'Editorial luxury — warm paper tones, Cormorant Garamond serif headlines, magazine-grade layouts. Built for fashion and considered lifestyle brands.',
         'minimal' => 'Soft, premium beauty — blush palette, Marcellus serif, rounded cards and gentle gradients. Built for skincare, cosmetics, and wellness.',
@@ -689,7 +724,6 @@ Leave a blank line between paragraphs.',
         'timber' => 'Daylight lumber yard — sanded-pine paper, resin-amber accent, Barlow Condensed. Built for timber, building materials, and trade catalogues.',
         'sankevi' => 'Forest atelier — warm off-black bark ground with moss green and birch light, Oswald display. Built for sawmills and timber workshops.',
     ],
-
     'currency' => [
         'EUR' => 'Euro',
         'USD' => 'US Dollar',
@@ -697,6 +731,100 @@ Leave a blank line between paragraphs.',
         'CAD' => 'Canadian Dollar',
         'AUD' => 'Australian Dollar',
         'BGN' => 'Bulgarian Lev',
+    ],
+    'payments' => [
+        'nav' => [
+            'label' => 'Payments',
+            'title' => 'Payments',
+        ],
+        'status' => [
+            'not_connected' => 'Not connected',
+            'onboarding' => 'Onboarding in progress',
+            'pending_review' => 'Pending review',
+            'active' => 'Active',
+            'restricted' => 'Restricted',
+            'enabled' => '✓ Enabled',
+            'not_yet' => '— Not yet',
+            'wallets_active' => 'Active',
+            'needs_verification' => 'Needs verification',
+            'not_registered' => 'Not registered',
+            'wallet_on' => '✓ Active',
+            'wallet_off' => '✗ Inactive',
+        ],
+        'section' => [
+            'wallets' => 'Wallet buttons',
+            'platform_fee' => 'Platform fee',
+        ],
+        'field' => [
+            'reason' => 'Reason',
+            'account_id' => 'Account ID',
+            'account_type' => 'Type',
+            'charges' => 'Charges',
+            'payouts' => 'Payouts',
+        ],
+        'action' => [
+            'setup' => 'Set up Ganvo Payments',
+            'connect_own' => 'Connect your own Stripe account',
+            'continue_setup' => 'Continue setup',
+            'refresh' => 'Refresh status',
+            'disconnect' => 'Disconnect',
+            'dashboard' => 'Open Stripe dashboard',
+            'register' => 'Register now',
+            'reverify' => 'Re-verify',
+        ],
+        'help' => [
+            'coming_soon' => 'Coming soon',
+            'apple_pay' => 'Apple Pay needs HTTPS + a card in your device\'s Wallet to actually render.',
+        ],
+        'notify' => [
+            'confirm_disconnect' => 'Disconnect this Stripe account? You can re-connect later.',
+            'confirm_disconnect_active' => 'Disconnect Stripe? Your storefront will revert to demo payment mode immediately.',
+        ],
+        'text' => [
+            'not_connected_before' => 'Your storefront is in',
+            'demo_mode' => 'demo payment mode',
+            'not_connected_after' => '— orders go through without charging real cards. To start accepting real payments, set up Ganvo Payments below. Takes about 5 minutes.',
+            'onboarding' => 'You started setting up payments but haven\'t finished. Pick up where you left off — Stripe remembers what you\'ve already filled in.',
+            'pending_review' => 'You\'ve submitted all your info. Stripe is reviewing your account — this usually takes a few minutes but can take up to 1–2 business days in rare cases. You\'ll get an email when it\'s ready, or you can check back here and click',
+            'active' => 'Your storefront is accepting real card payments. Manage payouts, view transactions, and handle any disputes from your Stripe Express dashboard.',
+            'restricted' => 'Stripe has temporarily disabled charges on your account. Open the Stripe dashboard to resolve the issue (usually missing info or verification).',
+            'reason_fallback' => 'See Stripe dashboard for details.',
+            'wallets_unregistered_before' => 'Apple Pay, Google Pay and Link don\'t appear at checkout yet — the storefront domain hasn\'t been registered with Stripe. Click',
+            'wallets_unregistered_after' => 'below to verify. Stripe usually validates within 30 seconds.',
+            'wallets_registered' => 'Apple Pay (Safari), Google Pay (Chrome) and Link buttons surface at checkout when the customer\'s browser supports them. The storefront domain is registered with Stripe as',
+            'fee_intro' => 'Ganvo\'s fee on every storefront transaction.',
+            'fee_none_before' => 'You\'re currently on',
+            'fee_none' => 'no fee',
+            'fee_none_after' => '— Ganvo doesn\'t take a cut of your sales right now.',
+            'fee_detail' => 'Ganvo collects :rate of every successful charge (:bps basis points). The remainder lands in your Stripe balance and is paid out by Stripe on your normal schedule.',
+        ],
+    ],
+    'statuses' => [
+        'status' => [
+            'order_pending' => 'Pending',
+            'order_paid' => 'Paid',
+            'order_shipped' => 'Shipped',
+            'order_refunded' => 'Refunded',
+            'order_cancelled' => 'Cancelled',
+            'payment_stub' => 'Demo (stub)',
+        ],
+    ],
+    'manifest' => [
+        'sankevi' => [
+            'palette' => [
+                'bark' => 'Bark (default)',
+                'ash' => 'Ash — cooler, smoke over the yard',
+                'umber' => 'Umber — warmer, closer to the heartwood',
+            ],
+            'font' => [
+                'oswald' => 'Oswald + IBM Plex Sans (default) — industrial',
+                'plex_condensed' => 'IBM Plex Condensed — engineered, quieter than Oswald',
+                'fira_condensed' => 'Fira Condensed — technical, a touch softer',
+                'russo' => 'Russo One — heavy machine plate (headings only)',
+                'alegreya' => 'Alegreya + Commissioner — the original serif',
+                'literata' => 'Literata + Commissioner — steadier, more bookish',
+            ],
+        ],
     ],
 
 ];

@@ -25,7 +25,7 @@ class CategoriesTable
             ->defaultSort('sort_order')
             ->columns([
                 ImageColumn::make('image_path')
-                    ->label('')
+                    ->label('')   // table columns have no hiddenLabel(); '' is an empty header here
                     ->disk('public')
                     ->square()
                     ->size(40),

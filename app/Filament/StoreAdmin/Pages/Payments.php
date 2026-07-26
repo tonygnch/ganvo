@@ -38,12 +38,12 @@ class Payments extends Page
     // hardcoded English literals.
     public static function getNavigationLabel(): string
     {
-        return __('admin.billing.nav.payments');
+        return __('admin.payments.nav.label');
     }
 
     public function getTitle(): string|Htmlable
     {
-        return __('admin.billing.nav.payments');
+        return __('admin.payments.nav.title');
     }
 
     public function getViewData(): array

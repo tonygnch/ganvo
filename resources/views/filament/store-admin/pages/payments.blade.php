@@ -10,11 +10,11 @@
          * also land on plain GETs).
          */
         $statusBadges = [
-            'not_connected'  => ['label' => 'Not connected', 'color' => '#6b7280', 'bg' => 'rgba(107,114,128,.12)'],
-            'onboarding'     => ['label' => 'Onboarding in progress', 'color' => '#b45309', 'bg' => 'rgba(245,158,11,.15)'],
-            'pending_review' => ['label' => 'Pending review', 'color' => '#1d4ed8', 'bg' => 'rgba(59,130,246,.15)'],
-            'active'         => ['label' => 'Active', 'color' => '#047857', 'bg' => 'rgba(16,185,129,.15)'],
-            'restricted'     => ['label' => 'Restricted', 'color' => '#b91c1c', 'bg' => 'rgba(239,68,68,.15)'],
+            'not_connected'  => ['label' => __('admin.payments.status.not_connected'), 'color' => '#6b7280', 'bg' => 'rgba(107,114,128,.12)'],
+            'onboarding'     => ['label' => __('admin.payments.status.onboarding'), 'color' => '#b45309', 'bg' => 'rgba(245,158,11,.15)'],
+            'pending_review' => ['label' => __('admin.payments.status.pending_review'), 'color' => '#1d4ed8', 'bg' => 'rgba(59,130,246,.15)'],
+            'active'         => ['label' => __('admin.payments.status.active'), 'color' => '#047857', 'bg' => 'rgba(16,185,129,.15)'],
+            'restricted'     => ['label' => __('admin.payments.status.restricted'), 'color' => '#b91c1c', 'bg' => 'rgba(239,68,68,.15)'],
         ];
         $badge = $statusBadges[$status];
     @endphp
@@ -186,33 +186,32 @@
 
         @if ($status === 'not_connected')
             <p>
-                Your storefront is in <strong>demo payment mode</strong> — orders go through without charging real cards.
-                To start accepting real payments, set up Ganvo Payments below. Takes about 5 minutes.
+                {{ __('admin.payments.text.not_connected_before') }} <strong>{{ __('admin.payments.text.demo_mode') }}</strong>
+                {{ __('admin.payments.text.not_connected_after') }}
             </p>
 
         @elseif ($status === 'onboarding')
             <p>
-                You started setting up payments but haven't finished. Pick up where you left off — Stripe remembers what you've already filled in.
+                {{ __('admin.payments.text.onboarding') }}
             </p>
 
         @elseif ($status === 'pending_review')
             <p>
-                You've submitted all your info. Stripe is reviewing your account — this usually takes a few minutes but can take up to 1–2 business days in rare cases.
-                You'll get an email when it's ready, or you can check back here and click <em>Refresh status</em>.
+                {{ __('admin.payments.text.pending_review') }} <em>{{ __('admin.payments.action.refresh') }}</em>.
             </p>
 
         @elseif ($status === 'active')
             <p>
-                Your storefront is accepting real card payments. Manage payouts, view transactions, and handle any disputes from your Stripe Express dashboard.
+                {{ __('admin.payments.text.active') }}
             </p>
 
         @elseif ($status === 'restricted')
             <p>
-                Stripe has temporarily disabled charges on your account. Open the Stripe dashboard to resolve the issue (usually missing info or verification).
+                {{ __('admin.payments.text.restricted') }}
             </p>
             <div class="pay-warning">
                 <div>
-                    <strong>Reason:</strong> {{ $tenant->stripe_connect_disabled_reason ?: 'See Stripe dashboard for details.' }}
+                    <strong>{{ __('admin.payments.field.reason') }}:</strong> {{ $tenant->stripe_connect_disabled_reason ?: __('admin.payments.text.reason_fallback') }}
                 </div>
             </div>
         @endif
@@ -220,20 +219,20 @@
         @if ($tenant->hasConnect())
             <div class="pay-grid">
                 <div>
-                    <p class="pay-meta-label">Account ID</p>
+                    <p class="pay-meta-label">{{ __('admin.payments.field.account_id') }}</p>
                     <p class="pay-meta-value"><code>{{ $tenant->stripe_account_id }}</code></p>
                 </div>
                 <div>
-                    <p class="pay-meta-label">Type</p>
+                    <p class="pay-meta-label">{{ __('admin.payments.field.account_type') }}</p>
                     <p class="pay-meta-value">{{ ucfirst($tenant->stripe_connect_account_type ?? 'express') }}</p>
                 </div>
                 <div>
-                    <p class="pay-meta-label">Charges</p>
-                    <p class="pay-meta-value">{{ $tenant->stripe_connect_charges_enabled ? '✓ Enabled' : '— Not yet' }}</p>
+                    <p class="pay-meta-label">{{ __('admin.payments.field.charges') }}</p>
+                    <p class="pay-meta-value">{{ $tenant->stripe_connect_charges_enabled ? __('admin.payments.status.enabled') : __('admin.payments.status.not_yet') }}</p>
                 </div>
                 <div>
-                    <p class="pay-meta-label">Payouts</p>
-                    <p class="pay-meta-value">{{ $tenant->stripe_connect_payouts_enabled ? '✓ Enabled' : '— Not yet' }}</p>
+                    <p class="pay-meta-label">{{ __('admin.payments.field.payouts') }}</p>
+                    <p class="pay-meta-value">{{ $tenant->stripe_connect_payouts_enabled ? __('admin.payments.status.enabled') : __('admin.payments.status.not_yet') }}</p>
                 </div>
             </div>
         @endif
@@ -243,51 +242,51 @@
                 <form method="post" action="{{ route('store.payments.connect.express') }}">
                     @csrf
                     <button type="submit" class="pay-btn pay-btn-primary">
-                        Set up Ganvo Payments →
+                        {{ __('admin.payments.action.setup') }} →
                     </button>
                 </form>
-                <button type="button" class="pay-btn pay-btn-secondary" disabled title="Coming soon">
-                    Connect your own Stripe account
+                <button type="button" class="pay-btn pay-btn-secondary" disabled title="{{ __('admin.payments.help.coming_soon') }}">
+                    {{ __('admin.payments.action.connect_own') }}
                 </button>
 
             @elseif ($status === 'onboarding')
                 <form method="post" action="{{ route('store.payments.connect.express') }}">
                     @csrf
-                    <button type="submit" class="pay-btn pay-btn-primary">Continue setup →</button>
+                    <button type="submit" class="pay-btn pay-btn-primary">{{ __('admin.payments.action.continue_setup') }} →</button>
                 </form>
                 <form method="post" action="{{ route('store.payments.sync') }}">
                     @csrf
-                    <button type="submit" class="pay-btn pay-btn-secondary">Refresh status</button>
+                    <button type="submit" class="pay-btn pay-btn-secondary">{{ __('admin.payments.action.refresh') }}</button>
                 </form>
                 <form method="post" action="{{ route('store.payments.disconnect') }}"
-                      onsubmit="return confirm('Disconnect this Stripe account? You can re-connect later.');">
+                      onsubmit="return confirm('{{ __('admin.payments.notify.confirm_disconnect') }}');">
                     @csrf
-                    <button type="submit" class="pay-btn pay-btn-danger">Disconnect</button>
+                    <button type="submit" class="pay-btn pay-btn-danger">{{ __('admin.payments.action.disconnect') }}</button>
                 </form>
 
             @elseif ($status === 'pending_review')
                 <form method="post" action="{{ route('store.payments.sync') }}">
                     @csrf
-                    <button type="submit" class="pay-btn pay-btn-primary">Refresh status</button>
+                    <button type="submit" class="pay-btn pay-btn-primary">{{ __('admin.payments.action.refresh') }}</button>
                 </form>
                 <form method="post" action="{{ route('store.payments.dashboard') }}" target="_blank">
                     @csrf
-                    <button type="submit" class="pay-btn pay-btn-secondary">Open Stripe dashboard ↗</button>
+                    <button type="submit" class="pay-btn pay-btn-secondary">{{ __('admin.payments.action.dashboard') }} ↗</button>
                 </form>
 
             @elseif ($status === 'active' || $status === 'restricted')
                 <form method="post" action="{{ route('store.payments.dashboard') }}" target="_blank">
                     @csrf
-                    <button type="submit" class="pay-btn pay-btn-primary">Open Stripe dashboard ↗</button>
+                    <button type="submit" class="pay-btn pay-btn-primary">{{ __('admin.payments.action.dashboard') }} ↗</button>
                 </form>
                 <form method="post" action="{{ route('store.payments.sync') }}">
                     @csrf
-                    <button type="submit" class="pay-btn pay-btn-secondary">Refresh status</button>
+                    <button type="submit" class="pay-btn pay-btn-secondary">{{ __('admin.payments.action.refresh') }}</button>
                 </form>
                 <form method="post" action="{{ route('store.payments.disconnect') }}"
-                      onsubmit="return confirm('Disconnect Stripe? Your storefront will revert to demo payment mode immediately.');">
+                      onsubmit="return confirm('{{ __('admin.payments.notify.confirm_disconnect_active') }}');">
                     @csrf
-                    <button type="submit" class="pay-btn pay-btn-danger">Disconnect</button>
+                    <button type="submit" class="pay-btn pay-btn-danger">{{ __('admin.payments.action.disconnect') }}</button>
                 </form>
             @endif
         </div>
@@ -297,7 +296,7 @@
     @if ($walletStatus !== null)
         <div class="pay-card">
             <div class="pay-card-head">
-                <h3>Wallet buttons</h3>
+                <h3>{{ __('admin.payments.section.wallets') }}</h3>
                 @php
                     $allActive = (
                         ($walletStatus['apple_pay'] ?? null) === 'active'
@@ -308,23 +307,23 @@
                     <span class="pay-badge"
                           style="background: {{ $allActive ? 'rgba(16,185,129,.15)' : 'rgba(245,158,11,.15)' }};
                                  color: {{ $allActive ? '#047857' : '#b45309' }};">
-                        {{ $allActive ? 'Active' : 'Needs verification' }}
+                        {{ $allActive ? __('admin.payments.status.wallets_active') : __('admin.payments.status.needs_verification') }}
                     </span>
                 @else
                     <span class="pay-badge" style="background: rgba(107,114,128,.12); color: #6b7280;">
-                        Not registered
+                        {{ __('admin.payments.status.not_registered') }}
                     </span>
                 @endif
             </div>
 
             @if (empty($walletStatus['domain']))
                 <p>
-                    Apple Pay, Google Pay and Link don't appear at checkout yet — the storefront domain hasn't been registered with Stripe.
-                    Click <em>Register now</em> below to verify. Stripe usually validates within 30 seconds.
+                    {{ __('admin.payments.text.wallets_unregistered_before') }}
+                    <em>{{ __('admin.payments.action.register') }}</em> {{ __('admin.payments.text.wallets_unregistered_after') }}
                 </p>
             @else
                 <p>
-                    Apple Pay (Safari), Google Pay (Chrome) and Link buttons surface at checkout when the customer's browser supports them. The storefront domain is registered with Stripe as <code style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.8125rem; background:var(--pay-code-bg); padding:.125rem .375rem; border-radius:4px;">{{ $walletStatus['domain'] }}</code>.
+                    {{ __('admin.payments.text.wallets_registered') }} <code style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.8125rem; background:var(--pay-code-bg); padding:.125rem .375rem; border-radius:4px;">{{ $walletStatus['domain'] }}</code>.
                 </p>
 
                 <div class="pay-grid">
@@ -334,9 +333,9 @@
                             <p class="pay-meta-label">{{ $label }}</p>
                             <p class="pay-meta-value">
                                 @if ($status === 'active')
-                                    <span style="color:#047857;">✓ Active</span>
+                                    <span style="color:#047857;">{{ __('admin.payments.status.wallet_on') }}</span>
                                 @elseif ($status === 'inactive')
-                                    <span style="color:#b91c1c;">✗ Inactive</span>
+                                    <span style="color:#b91c1c;">{{ __('admin.payments.status.wallet_off') }}</span>
                                 @else
                                     <span style="color:var(--pay-text-soft);">{{ $status ?? '—' }}</span>
                                 @endif
@@ -356,11 +355,11 @@
                 <form method="post" action="{{ route('store.payments.wallets.register') }}">
                     @csrf
                     <button type="submit" class="pay-btn pay-btn-primary">
-                        {{ empty($walletStatus['domain']) ? 'Register now' : 'Re-verify' }}
+                        {{ empty($walletStatus['domain']) ? __('admin.payments.action.register') : __('admin.payments.action.reverify') }}
                     </button>
                 </form>
                 <p style="margin:0; align-self:center; color:var(--pay-text-soft); font-size:.8125rem;">
-                    Apple Pay needs HTTPS + a card in your device's Wallet to actually render.
+                    {{ __('admin.payments.help.apple_pay') }}
                 </p>
             </div>
         </div>
@@ -369,15 +368,16 @@
     {{-- ============ Platform fee summary ============ --}}
     <div class="pay-card">
         <div class="pay-card-head">
-            <h3>Platform fee</h3>
+            <h3>{{ __('admin.payments.section.platform_fee') }}</h3>
             <span class="pay-badge pay-badge-fee">{{ $feeRate }}</span>
         </div>
         <p>
-            Ganvo's fee on every storefront transaction.
+            {{ __('admin.payments.text.fee_intro') }}
             @if ($feeBps === 0)
-                You're currently on <strong>no fee</strong> — Ganvo doesn't take a cut of your sales right now.
+                {{ __('admin.payments.text.fee_none_before') }} <strong>{{ __('admin.payments.text.fee_none') }}</strong>
+                {{ __('admin.payments.text.fee_none_after') }}
             @else
-                Ganvo collects {{ $feeRate }} of every successful charge ({{ $feeBps }} basis points). The remainder lands in your Stripe balance and is paid out by Stripe on your normal schedule.
+                {{ __('admin.payments.text.fee_detail', ['rate' => $feeRate, 'bps' => $feeBps]) }}
             @endif
         </p>
     </div>

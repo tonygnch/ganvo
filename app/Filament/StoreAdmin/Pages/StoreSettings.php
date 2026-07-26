@@ -298,7 +298,8 @@ class StoreSettings extends Page implements HasForms
                     ->collapsible()
                     ->schema([
                         Repeater::make('nav_menu')
-                            ->label('')
+                            ->label(__('admin.settings.section.header_menu'))
+                            ->hiddenLabel()
                             ->schema([
                                 TextInput::make('label')
                                     ->label(__('admin.settings.field.nav_label'))
@@ -736,7 +737,8 @@ class StoreSettings extends Page implements HasForms
                     ->collapsible()
                     ->schema([
                         Repeater::make('shipping_methods')
-                            ->label('')
+                            ->label(__('admin.settings.section.shipping_methods'))
+                            ->hiddenLabel()
                             ->addActionLabel(__('admin.settings.action.add_shipping_method'))
                             ->reorderableWithDragAndDrop()
                             ->collapsed()

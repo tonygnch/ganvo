@@ -1,7 +1,7 @@
 <x-filament-panels::page>
     <div style="margin-bottom: 1rem; font-size: 0.875rem; opacity: 0.75;">
-        Customizing the <strong>{{ $this->themeName }}</strong> theme. Settings are saved per theme —
-        switching themes keeps each theme's customizations.
+        {!! __('admin.theme.text.customizing', ['theme' => '<strong>' . e($this->themeName) . '</strong>']) !!}
+        {{ __('admin.theme.text.saved_per_theme') }}
     </div>
 
     <form wire:submit="save">
@@ -15,9 +15,9 @@
             <a href="{{ $previewUrl }}" target="_blank" rel="noopener"
                class="fi-btn fi-btn-color-gray fi-btn-size-md fi-color-gray"
                style="text-decoration: none;">
-                Preview storefront ↗
+                {{ __('admin.shared.action.preview_storefront') }}
             </a>
-            <x-filament::button type="submit">Save</x-filament::button>
+            <x-filament::button type="submit">{{ __('admin.shared.action.save') }}</x-filament::button>
         </div>
     </form>
 </x-filament-panels::page>

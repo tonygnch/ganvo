@@ -17,8 +17,8 @@
 <x-filament-panels::page>
     @if (empty($tree))
         <div style="padding: 3rem 1rem; text-align: center; border: 1px dashed rgba(0,0,0,.15); border-radius: 12px; color: rgba(0,0,0,.55);">
-            <p style="margin: 0 0 .75rem; font-weight: 600;">No categories yet</p>
-            <p style="margin: 0; font-size: .9375rem;">Add your first category to start organizing your catalog.</p>
+            <p style="margin: 0 0 .75rem; font-weight: 600;">{{ __('admin.categories.empty.heading') }}</p>
+            <p style="margin: 0; font-size: .9375rem;">{{ __('admin.categories.empty.description') }}</p>
         </div>
     @else
         {{-- Sticky action bar. Save/Discard light up when the operator
@@ -26,14 +26,16 @@
              both buttons are disabled to make the "nothing to save"
              state visually obvious. --}}
         <div class="ct-toolbar" data-ct-toolbar>
+            {{-- The drag-handle glyph sits mid-sentence, so it travels as a
+                 :handle replacement instead of being split across two keys —
+                 word order differs per language and the markup must not. --}}
             <div class="ct-help">
-                Drag the <span class="ct-handle ct-handle-inline" aria-hidden="true">⋮⋮</span> handle to reorder.
-                Drop into another node to nest it; drop into the top list to make it a root.
+                {!! __('admin.categories.text.tree_help', ['handle' => '<span class="ct-handle ct-handle-inline" aria-hidden="true">⋮⋮</span>']) !!}
             </div>
             <div class="ct-toolbar-actions">
-                <span class="ct-dirty-flag" data-ct-dirty-flag hidden>Unsaved changes</span>
-                <button type="button" class="ct-btn-secondary" data-ct-discard disabled>Discard</button>
-                <button type="button" class="ct-btn-primary" data-ct-save disabled>Save changes</button>
+                <span class="ct-dirty-flag" data-ct-dirty-flag hidden>{{ __('admin.categories.text.unsaved_changes') }}</span>
+                <button type="button" class="ct-btn-secondary" data-ct-discard disabled>{{ __('admin.categories.action.discard') }}</button>
+                <button type="button" class="ct-btn-primary" data-ct-save disabled>{{ __('admin.categories.action.save_changes') }}</button>
             </div>
         </div>
 
@@ -298,6 +300,17 @@
     <script>
         (function () {
             var REORDER_URL = @json(route('store.categories.reorder'));
+            // Every string the script writes into the DOM, resolved
+            // server-side so the toolbar and the toasts speak the same
+            // locale as the rest of the panel.
+            var T = {
+                save:           @json(__('admin.categories.action.save_changes')),
+                saving:         @json(__('admin.categories.action.saving')),
+                saved:          @json(__('admin.categories.notify.tree_saved')),
+                failed:         @json(__('admin.categories.notify.save_failed')),
+                network:        @json(__('admin.categories.notify.network_error')),
+                discardConfirm: @json(__('admin.categories.notify.discard_confirm')),
+            };
             // CSRF token — Laravel injects a <meta name="csrf-token"> by
             // default; Filament includes it too. Fall back to scanning
             // any input[name=_token] just in case.
@@ -365,7 +378,7 @@
                     if (saveBtn && saveBtn.disabled) return;
                     var nodes = walk();
                     // Optimistic UI: block double-click while in-flight.
-                    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; }
+                    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = T.saving; }
                     fetch(REORDER_URL, {
                         method: 'POST',
                         credentials: 'same-origin',
@@ -379,18 +392,19 @@
                     }).then(function (res) {
                         return res.json().then(function (body) { return { res: res, body: body }; });
                     }).then(function (r) {
-                        if (saveBtn) saveBtn.textContent = 'Save changes';
+                        if (saveBtn) saveBtn.textContent = T.save;
                         if (r.res.ok && r.body && r.body.ok) {
-                            flash('Tree saved', true);
+                            flash(T.saved, true);
                             setDirty(false);
                         } else {
-                            flash((r.body && r.body.message) || 'Could not save', false);
+                            // The controller's own message is already localised.
+                            flash((r.body && r.body.message) || T.failed, false);
                             // Re-enable so the operator can retry.
                             setDirty(true);
                         }
                     }).catch(function () {
-                        if (saveBtn) saveBtn.textContent = 'Save changes';
-                        flash('Network error — try again', false);
+                        if (saveBtn) saveBtn.textContent = T.save;
+                        flash(T.network, false);
                         setDirty(true);
                     });
                 }
@@ -398,7 +412,7 @@
                 function discard() {
                     // Cheapest correct revert: reload, server re-renders
                     // the persisted state. No diffing-rollback gymnastics.
-                    if (! window.confirm('Discard your unsaved changes?')) return;
+                    if (! window.confirm(T.discardConfirm)) return;
                     window.location.reload();
                 }
 

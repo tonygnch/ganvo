@@ -14,6 +14,12 @@ class Order extends Model
     public const STATUS_REFUNDED = 'refunded';
     public const STATUS_CANCELLED = 'cancelled';
 
+    /**
+     * The canonical set of values `orders.status` may hold. The keys are what
+     * gets written to the database and compared against — never change them.
+     * The English strings here are a developer-facing reference only; what the
+     * merchant actually reads comes from {@see self::statusOptions()}.
+     */
     public const STATUSES = [
         self::STATUS_PENDING => 'Pending',
         self::STATUS_PAID => 'Paid',
@@ -97,9 +103,47 @@ class Order extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    /**
+     * Merchant-facing wording for every order status, keyed by the stored
+     * value. Same shape as Store::checkoutModeOptions(): the key is the raw
+     * database value and stays put, only the label is translated — so this
+     * feeds badges and the status filter without touching any comparison.
+     */
+    public static function statusOptions(): array
+    {
+        return [
+            self::STATUS_PENDING => __('admin.statuses.status.order_pending'),
+            self::STATUS_PAID => __('admin.statuses.status.order_paid'),
+            self::STATUS_SHIPPED => __('admin.statuses.status.order_shipped'),
+            self::STATUS_REFUNDED => __('admin.statuses.status.order_refunded'),
+            self::STATUS_CANCELLED => __('admin.statuses.status.order_cancelled'),
+        ];
+    }
+
+    /**
+     * How the order was paid, keyed by the stored `payment_method` value.
+     * Stripe is a brand name and stays Latin in every locale; 'stub' is the
+     * legacy/demo path that never moved real money.
+     */
+    public static function paymentMethodOptions(): array
+    {
+        return [
+            'stripe' => 'Stripe',
+            'stub' => __('admin.statuses.status.payment_stub'),
+        ];
+    }
+
     public function statusLabel(): string
     {
-        return self::STATUSES[$this->status] ?? $this->status;
+        // A value that isn't one of ours (only reachable from data written
+        // outside the app) falls back to the raw string rather than rendering
+        // a missing translation key.
+        return static::statusOptions()[$this->status] ?? $this->status;
+    }
+
+    public function paymentMethodLabel(): string
+    {
+        return static::paymentMethodOptions()[$this->payment_method] ?? ($this->payment_method ?? '—');
     }
 
     public function isShippable(): bool

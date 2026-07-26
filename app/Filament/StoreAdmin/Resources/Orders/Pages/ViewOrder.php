@@ -40,9 +40,7 @@ class ViewOrder extends ViewRecord
                     TextEntry::make('status')
                         ->label(__('admin.orders.field.status'))
                         ->badge()
-                        ->formatStateUsing(fn (string $state) => isset(Order::STATUSES[$state])
-                            ? __('admin.orders.opt.status_' . $state)
-                            : $state)
+                        ->formatStateUsing(fn (string $state) => Order::statusOptions()[$state] ?? $state)
                         ->color(fn (string $state): string => match ($state) {
                             'paid' => 'success',
                             'shipped' => 'info',
@@ -103,11 +101,7 @@ class ViewOrder extends ViewRecord
                         ->label(__('admin.orders.field.payment_method'))
                         ->badge()
                         ->color(fn (?string $s) => $s === 'stripe' ? 'success' : 'gray')
-                        ->formatStateUsing(fn (?string $s) => match ($s) {
-                            'stripe' => 'Stripe',
-                            'stub'   => __('admin.orders.opt.payment_stub'),
-                            default  => $s ?? '—',
-                        }),
+                        ->formatStateUsing(fn (?string $s) => Order::paymentMethodOptions()[$s] ?? ($s ?? '—')),
                     TextEntry::make('stripe_payment_intent_id')
                         ->label(__('admin.orders.field.payment_intent'))
                         ->placeholder('—')

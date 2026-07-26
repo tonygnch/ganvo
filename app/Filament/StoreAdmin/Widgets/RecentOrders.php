@@ -45,6 +45,9 @@ class RecentOrders extends TableWidget
                 TextColumn::make('status')
                     ->label(__('admin.widgets.field.status'))
                     ->badge()
+                    // Without this the badge printed the raw stored value
+                    // ("pending", "paid") straight onto the dashboard.
+                    ->formatStateUsing(fn (string $state) => Order::statusOptions()[$state] ?? $state)
                     ->color(fn (string $state): string => match ($state) {
                         'paid' => 'success',
                         'pending' => 'warning',
