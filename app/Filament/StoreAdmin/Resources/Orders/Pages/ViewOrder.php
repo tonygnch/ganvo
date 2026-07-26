@@ -151,6 +151,7 @@ class ViewOrder extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            \Filament\Actions\EditAction::make(),
             // Mark shipped — initial ship action. Sends OrderShipped
             // email. For already-shipped orders, use Edit tracking
             // (below) instead which only updates fields silently.

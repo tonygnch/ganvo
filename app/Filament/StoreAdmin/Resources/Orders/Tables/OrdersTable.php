@@ -3,6 +3,7 @@
 namespace App\Filament\StoreAdmin\Resources\Orders\Tables;
 
 use App\Models\Order;
+use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -58,6 +59,7 @@ class OrdersTable
             ])
             ->recordActions([
                 ViewAction::make(),
+                EditAction::make(),
             ]);
     }
 }
