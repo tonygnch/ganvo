@@ -30,9 +30,28 @@ class CategoryResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;
 
-    protected static ?string $navigationLabel = 'Categories';
-
     protected static ?int $navigationSort = 20;       // sits right after Products in nav
+
+    // Nav + model labels are set explicitly instead of as static
+    // properties: Filament would otherwise derive them from the model
+    // class name ("Category" / "Categories") in English only, and the
+    // plural is pluralized with English rules. They feed the sidebar,
+    // the page headings, the breadcrumbs and every "Create category" /
+    // "Delete category" string Filament builds for us.
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.categories.nav.label');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('admin.categories.nav.model');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('admin.categories.nav.model_plural');
+    }
 
     public static function form(Schema $schema): Schema
     {

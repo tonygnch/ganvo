@@ -19,6 +19,7 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 
 /**
  * Schema-driven theme customizer. The form is generated from the active
@@ -36,15 +37,21 @@ class CustomizeTheme extends Page implements HasForms
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPaintBrush;
 
-    protected static ?string $navigationLabel = 'Customize Theme';
-
-    protected static ?string $title = 'Customize Theme';
-
     public ?array $data = [];
 
     public string $themeSlug = '';
 
     public string $themeName = '';
+
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.theme.nav.label');
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+        return __('admin.theme.nav.label');
+    }
 
     public function mount(): void
     {
@@ -85,8 +92,8 @@ class CustomizeTheme extends Page implements HasForms
 
         if ($manifest === []) {
             return $schema->statePath('data')->components([
-                Section::make('No customization available yet')
-                    ->description("The \"{$this->themeName}\" theme doesn't expose customization options yet. Colors, logo and chrome are still editable under Store Settings."),
+                Section::make(__('admin.theme.section.no_options'))
+                    ->description(__('admin.theme.section_help.no_options', ['theme' => $this->themeName])),
             ]);
         }
 
@@ -96,16 +103,16 @@ class CustomizeTheme extends Page implements HasForms
         $appearance = [];
         if (! empty($manifest['palettes'])) {
             $appearance[] = Radio::make('palette')
-                ->label('Palette preset')
+                ->label(__('admin.theme.field.palette'))
                 ->options(collect($manifest['palettes'])->map(fn ($p) => $p['name'])->all());
         }
         if (! empty($manifest['fonts'])) {
             $appearance[] = Radio::make('font')
-                ->label('Display font pairing')
+                ->label(__('admin.theme.field.font'))
                 ->options(collect($manifest['fonts'])->map(fn ($f) => $f['name'])->all());
         }
         if ($appearance !== []) {
-            $tabs[] = Tab::make('Appearance')->schema($appearance);
+            $tabs[] = Tab::make(__('admin.theme.section.appearance'))->schema($appearance);
         }
 
         // — Sections & motifs: toggles + editable motif labels —
@@ -119,12 +126,12 @@ class CustomizeTheme extends Page implements HasForms
                 $toggles[] = TextInput::make("motif_text_{$id}")
                     ->label($motif['text_label'])
                     ->placeholder(isset($motif['text_default_lang']) ? __($motif['text_default_lang']) : ($motif['text_default'] ?? ''))
-                    ->helperText('Leave empty to use the theme default.')
+                    ->helperText(__('admin.theme.help.leave_empty'))
                     ->visible(fn ($get) => (bool) $get("motif_{$id}"));
             }
         }
         if ($toggles !== []) {
-            $tabs[] = Tab::make('Sections')->schema($toggles);
+            $tabs[] = Tab::make(__('admin.theme.section.sections'))->schema($toggles);
         }
 
         // — Content: merchant copy with theme defaults as placeholders —
@@ -132,27 +139,27 @@ class CustomizeTheme extends Page implements HasForms
         foreach (($manifest['content'] ?? []) as $key => $field) {
             $placeholder = isset($field['default_lang']) ? __($field['default_lang']) : ($field['default'] ?? '');
             $contentFields[] = ($field['type'] ?? 'text') === 'textarea'
-                ? Textarea::make("content_{$key}")->label($field['label'] ?? $key)->placeholder($placeholder)->rows(3)->helperText('Leave empty to use the theme default.')
-                : TextInput::make("content_{$key}")->label($field['label'] ?? $key)->placeholder($placeholder)->helperText('Leave empty to use the theme default.');
+                ? Textarea::make("content_{$key}")->label($field['label'] ?? $key)->placeholder($placeholder)->rows(3)->helperText(__('admin.theme.help.leave_empty'))
+                : TextInput::make("content_{$key}")->label($field['label'] ?? $key)->placeholder($placeholder)->helperText(__('admin.theme.help.leave_empty'));
         }
         if ($contentFields !== []) {
-            $tabs[] = Tab::make('Content')->schema($contentFields);
+            $tabs[] = Tab::make(__('admin.theme.section.content'))->schema($contentFields);
         }
 
         // — Images: merchant photos for the theme's image slots —
         $imageFields = [];
         foreach (($manifest['images'] ?? []) as $slot => $field) {
-            $help = trim(($field['hint'] ?? '') . (isset($field['size']) ? " Recommended: {$field['size']}." : ''));
+            $help = trim(($field['hint'] ?? '') . (isset($field['size']) ? ' ' . __('admin.theme.help.recommended_size', ['size' => $field['size']]) : ''));
             $imageFields[] = FileUpload::make("image_{$slot}")
                 ->label($field['label'] ?? $slot)
                 ->image()
                 ->disk('public')
                 ->directory('theme-images')
                 ->maxSize(4096)
-                ->helperText($help !== '' ? $help : 'Leave empty to use the theme default.');
+                ->helperText($help !== '' ? $help : __('admin.theme.help.leave_empty'));
         }
         if ($imageFields !== []) {
-            $tabs[] = Tab::make('Images')->schema($imageFields);
+            $tabs[] = Tab::make(__('admin.theme.section.images'))->schema($imageFields);
         }
 
         return $schema->statePath('data')->components([
@@ -206,7 +213,7 @@ class CustomizeTheme extends Page implements HasForms
         $all['themes'][$this->themeSlug] = $settings;
         $store->update(['theme_settings' => $all]);
 
-        Notification::make()->success()->title('Theme customization saved')->send();
+        Notification::make()->success()->title(__('admin.theme.notify.saved'))->send();
     }
 
     protected function getStore(): Store

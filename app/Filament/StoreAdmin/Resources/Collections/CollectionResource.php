@@ -29,11 +29,28 @@ class CollectionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
-    protected static ?string $navigationLabel = 'Collections';
-
     // Slot between Categories (20) and below — collections are a
     // merchandising layer the operator reaches for less often.
     protected static ?int $navigationSort = 21;
+
+    // Navigation + model labels come from translations rather than the
+    // static $navigationLabel / $modelLabel properties: a property
+    // initialiser cannot call __(), and Filament's fallback derivation
+    // from the class name is English-only.
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.collections.nav.label');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('admin.collections.nav.model');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('admin.collections.nav.model_plural');
+    }
 
     public static function form(Schema $schema): Schema
     {

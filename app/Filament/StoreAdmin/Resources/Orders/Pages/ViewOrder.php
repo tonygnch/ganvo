@@ -33,13 +33,16 @@ class ViewOrder extends ViewRecord
     public function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Order')
+            Section::make(__('admin.orders.section.order'))
                 ->columns(3)
                 ->schema([
-                    TextEntry::make('order_number')->label('Order')->weight('bold'),
+                    TextEntry::make('order_number')->label(__('admin.orders.field.order_number'))->weight('bold'),
                     TextEntry::make('status')
+                        ->label(__('admin.orders.field.status'))
                         ->badge()
-                        ->formatStateUsing(fn (string $state) => Order::STATUSES[$state] ?? $state)
+                        ->formatStateUsing(fn (string $state) => isset(Order::STATUSES[$state])
+                            ? __('admin.orders.opt.status_' . $state)
+                            : $state)
                         ->color(fn (string $state): string => match ($state) {
                             'paid' => 'success',
                             'shipped' => 'info',
@@ -48,42 +51,44 @@ class ViewOrder extends ViewRecord
                             default => 'gray',
                         }),
                     TextEntry::make('total_cents')
-                        ->label('Total')
+                        ->label(__('admin.orders.field.total'))
                         ->money(fn (Order $r) => $r->currency)
                         ->state(fn (Order $r) => $r->total_cents / 100),
-                    TextEntry::make('created_at')->label('Placed')->dateTime(),
-                    TextEntry::make('paid_at')->dateTime()->placeholder('—'),
-                    TextEntry::make('shipped_at')->dateTime()->placeholder('—'),
+                    TextEntry::make('created_at')->label(__('admin.orders.field.placed'))->dateTime(),
+                    TextEntry::make('paid_at')->label(__('admin.orders.field.paid_at'))->dateTime()->placeholder('—'),
+                    TextEntry::make('shipped_at')->label(__('admin.orders.field.shipped_at'))->dateTime()->placeholder('—'),
                 ]),
 
-            Section::make('Customer')
+            Section::make(__('admin.orders.section.customer'))
                 ->columns(2)
                 ->schema([
-                    TextEntry::make('customer_name'),
-                    TextEntry::make('customer_email'),
-                    TextEntry::make('customer_phone')->placeholder('—'),
+                    TextEntry::make('customer_name')->label(__('admin.shared.field.name')),
+                    TextEntry::make('customer_email')->label(__('admin.orders.field.customer_email')),
+                    TextEntry::make('customer_phone')->label(__('admin.orders.field.customer_phone'))->placeholder('—'),
                 ]),
 
-            Section::make('Shipping address')
+            Section::make(__('admin.orders.section.shipping_address'))
                 ->visible(fn (Order $r) => ! empty($r->shipping_address))
                 ->columns(2)
                 ->schema([
-                    TextEntry::make('shipping_address.line')->label('Street'),
-                    TextEntry::make('shipping_address.region')->label('Region')->placeholder('—'),
-                    TextEntry::make('shipping_address.city')->label('City'),
-                    TextEntry::make('shipping_address.postal_code')->label('Postal code'),
-                    TextEntry::make('shipping_address.country')->label('Country'),
+                    TextEntry::make('shipping_address.line')->label(__('admin.orders.field.street')),
+                    TextEntry::make('shipping_address.region')->label(__('admin.orders.field.region'))->placeholder('—'),
+                    TextEntry::make('shipping_address.city')->label(__('admin.orders.field.city')),
+                    TextEntry::make('shipping_address.postal_code')->label(__('admin.orders.field.postal_code')),
+                    TextEntry::make('shipping_address.country')->label(__('admin.orders.field.country')),
                 ]),
 
-            Section::make('Fulfillment')
+            Section::make(__('admin.orders.section.fulfillment'))
                 ->visible(fn (Order $r) => $r->status === 'shipped' || $r->tracking_number)
                 ->columns(3)
                 ->schema([
                     TextEntry::make('carrier')
+                        ->label(__('admin.orders.field.carrier'))
                         ->placeholder('—')
                         ->formatStateUsing(fn (?string $state) => CarrierRegistry::label($state)),
-                    TextEntry::make('tracking_number')->placeholder('—')->copyable(),
+                    TextEntry::make('tracking_number')->label(__('admin.orders.field.tracking_number'))->placeholder('—')->copyable(),
                     TextEntry::make('tracking_url')
+                        ->label(__('admin.orders.field.tracking_url'))
                         ->placeholder('—')
                         ->url(fn (Order $r) => $r->tracking_url)
                         ->openUrlInNewTab(),
@@ -91,56 +96,57 @@ class ViewOrder extends ViewRecord
 
             // Payment info — surfaces method + Stripe identifiers +
             // fee/refund snapshot. Critical for support lookups.
-            Section::make('Payment')
+            Section::make(__('admin.orders.section.payment'))
                 ->columns(3)
                 ->schema([
                     TextEntry::make('payment_method')
-                        ->label('Method')
+                        ->label(__('admin.orders.field.payment_method'))
                         ->badge()
                         ->color(fn (?string $s) => $s === 'stripe' ? 'success' : 'gray')
                         ->formatStateUsing(fn (?string $s) => match ($s) {
                             'stripe' => 'Stripe',
-                            'stub'   => 'Demo (stub)',
+                            'stub'   => __('admin.orders.opt.payment_stub'),
                             default  => $s ?? '—',
                         }),
                     TextEntry::make('stripe_payment_intent_id')
-                        ->label('Payment Intent')
+                        ->label(__('admin.orders.field.payment_intent'))
                         ->placeholder('—')
                         ->copyable(),
                     TextEntry::make('stripe_charge_id')
-                        ->label('Charge')
+                        ->label(__('admin.orders.field.charge'))
                         ->placeholder('—')
                         ->copyable(),
                     TextEntry::make('platform_fee_cents')
-                        ->label('Platform fee')
+                        ->label(__('admin.orders.field.platform_fee'))
                         ->money(fn (Order $r) => $r->currency)
                         ->state(fn (Order $r) => $r->platform_fee_cents / 100),
                     TextEntry::make('refund_amount_cents')
-                        ->label('Refunded')
+                        ->label(__('admin.orders.field.refunded_amount'))
                         ->visible(fn (Order $r) => $r->refund_amount_cents > 0)
                         ->money(fn (Order $r) => $r->currency)
                         ->state(fn (Order $r) => $r->refund_amount_cents / 100),
                     TextEntry::make('refunded_at')
+                        ->label(__('admin.orders.field.refunded_at'))
                         ->dateTime()
                         ->visible(fn (Order $r) => filled($r->refunded_at))
                         ->placeholder('—'),
                 ]),
 
-            Section::make('Line items')
+            Section::make(__('admin.orders.section.line_items'))
                 ->schema([
                     RepeatableEntry::make('items')
                         ->hiddenLabel()
                         ->columns(4)
                         ->schema([
-                            TextEntry::make('product_name')->columnSpan(2),
-                            TextEntry::make('quantity')->label('Qty'),
+                            TextEntry::make('product_name')->label(__('admin.orders.field.product'))->columnSpan(2),
+                            TextEntry::make('quantity')->label(__('admin.orders.field.qty')),
                             TextEntry::make('subtotal_cents')
-                                ->label('Subtotal')
+                                ->label(__('admin.orders.field.subtotal'))
                                 ->state(fn ($record) => number_format($record->subtotal_cents / 100, 2) . ' ' . $record->order->currency),
                         ]),
                 ]),
 
-            Section::make('Internal notes')
+            Section::make(__('admin.orders.section.notes'))
                 ->visible(fn (Order $r) => filled($r->notes))
                 ->schema([
                     TextEntry::make('notes')->hiddenLabel(),
@@ -155,23 +161,26 @@ class ViewOrder extends ViewRecord
             // email. For already-shipped orders, use Edit tracking
             // (below) instead which only updates fields silently.
             Action::make('markShipped')
-                ->label('Mark shipped')
+                ->label(__('admin.orders.action.mark_shipped'))
                 ->icon(Heroicon::OutlinedTruck)
                 ->color('info')
                 ->visible(fn () => $this->record->isShippable())
                 ->schema([
                     Select::make('carrier')
+                        ->label(__('admin.orders.field.carrier'))
                         ->options(CarrierRegistry::options())
                         ->required()
                         ->searchable(),
                     TextInput::make('tracking_number')
+                        ->label(__('admin.orders.field.tracking_number'))
                         ->required()
                         ->maxLength(255),
                     TextInput::make('tracking_url')
+                        ->label(__('admin.orders.field.tracking_url'))
                         ->url()
-                        ->placeholder('Auto-generated from carrier + tracking number')
+                        ->placeholder(__('admin.orders.ph.tracking_url'))
                         ->maxLength(500)
-                        ->helperText('Optional — leave blank to use the carrier\'s standard tracking page (DHL, Econt, Speedy, etc.). Override here if the carrier gave you a custom URL.'),
+                        ->helperText(__('admin.orders.help.tracking_url')),
                 ])
                 ->action(function (array $data) {
                     // Auto-generate the URL from the registry when the
@@ -194,8 +203,8 @@ class ViewOrder extends ViewRecord
 
                     Notification::make()
                         ->success()
-                        ->title('Order marked shipped')
-                        ->body('Shipping notification sent to ' . $this->record->customer_email)
+                        ->title(__('admin.orders.notify.shipped_title'))
+                        ->body(__('admin.orders.notify.shipped_body', ['email' => $this->record->customer_email]))
                         ->send();
                 }),
 
@@ -203,7 +212,7 @@ class ViewOrder extends ViewRecord
             // carrier/number/URL without re-sending the customer email
             // (e.g. fixing a typo, swapping carriers mid-fulfillment).
             Action::make('editTracking')
-                ->label('Edit tracking')
+                ->label(__('admin.orders.action.edit_tracking'))
                 ->icon(Heroicon::OutlinedPencilSquare)
                 ->color('gray')
                 ->visible(fn () => $this->record->status === Order::STATUS_SHIPPED)
@@ -213,12 +222,13 @@ class ViewOrder extends ViewRecord
                     'tracking_url' => $this->record->tracking_url,
                 ])
                 ->schema([
-                    Select::make('carrier')->options(CarrierRegistry::options())->required()->searchable(),
-                    TextInput::make('tracking_number')->required()->maxLength(255),
+                    Select::make('carrier')->label(__('admin.orders.field.carrier'))->options(CarrierRegistry::options())->required()->searchable(),
+                    TextInput::make('tracking_number')->label(__('admin.orders.field.tracking_number'))->required()->maxLength(255),
                     TextInput::make('tracking_url')
+                        ->label(__('admin.orders.field.tracking_url'))
                         ->url()
                         ->maxLength(500)
-                        ->helperText('Leave blank to regenerate from carrier + tracking number.'),
+                        ->helperText(__('admin.orders.help.tracking_url_edit')),
                 ])
                 ->action(function (array $data) {
                     $url = filled($data['tracking_url'] ?? null)
@@ -229,13 +239,13 @@ class ViewOrder extends ViewRecord
                         'tracking_number' => $data['tracking_number'],
                         'tracking_url' => $url,
                     ]);
-                    Notification::make()->success()->title('Tracking updated')->send();
+                    Notification::make()->success()->title(__('admin.orders.notify.tracking_updated'))->send();
                 }),
 
             // Refund — real Stripe path for stripe orders, local-only
             // flip for stub orders. Supports partial amounts.
             Action::make('refund')
-                ->label('Refund')
+                ->label(__('admin.orders.action.refund'))
                 ->icon(Heroicon::OutlinedArrowUturnLeft)
                 ->color('danger')
                 ->visible(fn () => $this->record->isRefundable())
@@ -243,18 +253,21 @@ class ViewOrder extends ViewRecord
                     $remaining = $this->record->refundableAmountCents() / 100;
                     $cur = $this->record->currency;
                     return $this->record->isStripePayment()
-                        ? "Issues a real Stripe refund — returns the funds to the customer's card and reverses the platform fee proportionally. Up to {$remaining} {$cur} remaining."
-                        : "Marks this stub-payment order as refunded. No real transaction is reversed (the original wasn't real).";
+                        ? __('admin.orders.help.refund_stripe', ['amount' => $remaining, 'currency' => $cur])
+                        : __('admin.orders.help.refund_stub');
                 })
                 ->schema([
                     TextInput::make('amount')
-                        ->label('Amount to refund')
+                        ->label(__('admin.orders.field.refund_amount'))
                         ->numeric()
                         ->step('0.01')
                         ->minValue(0.01)
                         ->required()
                         ->default(fn () => number_format($this->record->refundableAmountCents() / 100, 2, '.', ''))
-                        ->helperText(fn () => 'Max ' . number_format($this->record->refundableAmountCents() / 100, 2) . ' ' . $this->record->currency . '. Leave at the default for a full refund.'),
+                        ->helperText(fn () => __('admin.orders.help.refund_amount', [
+                            'amount' => number_format($this->record->refundableAmountCents() / 100, 2),
+                            'currency' => $this->record->currency,
+                        ])),
                 ])
                 ->action(function (array $data) {
                     $amountCents = (int) round(((float) $data['amount']) * 100);
@@ -262,8 +275,11 @@ class ViewOrder extends ViewRecord
 
                     if ($amountCents <= 0 || $amountCents > $remaining) {
                         Notification::make()->danger()
-                            ->title('Invalid amount')
-                            ->body('Amount must be between 0.01 and ' . number_format($remaining / 100, 2) . ' ' . $this->record->currency)
+                            ->title(__('admin.orders.notify.invalid_amount_title'))
+                            ->body(__('admin.orders.notify.invalid_amount_body', [
+                                'max' => number_format($remaining / 100, 2),
+                                'currency' => $this->record->currency,
+                            ]))
                             ->send();
                         return;
                     }
@@ -279,14 +295,14 @@ class ViewOrder extends ViewRecord
                             app(StripeConnectService::class)->refundCharge($this->record, $amountCents);
                         } catch (ApiErrorException $e) {
                             Notification::make()->danger()
-                                ->title('Stripe refund failed')
+                                ->title(__('admin.orders.notify.refund_failed_title'))
                                 ->body($e->getMessage())
                                 ->send();
                             return;
                         }
                         Notification::make()->success()
-                            ->title('Refund issued')
-                            ->body('Stripe is processing — Order will update via webhook shortly.')
+                            ->title(__('admin.orders.notify.refund_issued_title'))
+                            ->body(__('admin.orders.notify.refund_issued_body'))
                             ->send();
                         return;
                     }
@@ -304,13 +320,15 @@ class ViewOrder extends ViewRecord
                     NotificationFacade::route('mail', $this->record->customer_email)
                         ->notify(new OrderRefunded($this->record->fresh(), $amountCents));
                     Notification::make()->success()
-                        ->title($isFull ? 'Order refunded' : 'Partial refund recorded')
-                        ->body('Customer notified.')
+                        ->title($isFull
+                            ? __('admin.orders.notify.refunded_full_title')
+                            : __('admin.orders.notify.refunded_partial_title'))
+                        ->body(__('admin.orders.notify.customer_notified'))
                         ->send();
                 }),
 
             Action::make('cancel')
-                ->label('Cancel order')
+                ->label(__('admin.orders.action.cancel'))
                 ->icon(Heroicon::OutlinedXCircle)
                 ->color('danger')
                 ->visible(fn () => $this->record->isCancellable())
@@ -320,11 +338,11 @@ class ViewOrder extends ViewRecord
                         'status' => Order::STATUS_CANCELLED,
                         'cancelled_at' => now(),
                     ]);
-                    Notification::make()->warning()->title('Order cancelled')->send();
+                    Notification::make()->warning()->title(__('admin.orders.notify.cancelled_title'))->send();
                 }),
 
             Action::make('addNote')
-                ->label('Edit notes')
+                ->label(__('admin.orders.action.edit_notes'))
                 ->icon(Heroicon::OutlinedPencilSquare)
                 ->color('gray')
                 ->fillForm(fn () => ['notes' => $this->record->notes])
@@ -333,7 +351,7 @@ class ViewOrder extends ViewRecord
                 ])
                 ->action(function (array $data) {
                     $this->record->update(['notes' => $data['notes'] ?? null]);
-                    Notification::make()->success()->title('Notes updated')->send();
+                    Notification::make()->success()->title(__('admin.orders.notify.notes_updated'))->send();
                 }),
         ];
     }

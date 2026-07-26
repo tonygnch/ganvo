@@ -30,32 +30,35 @@ class CategoriesTable
                     ->square()
                     ->size(40),
                 TextColumn::make('name')
+                    // Explicit even though Filament would derive "Name"
+                    // from the attribute — that derivation is English-only.
+                    ->label(__('admin.shared.field.name'))
                     ->searchable()
                     ->weight('bold')
                     ->description(fn (Category $r) => '/categories/' . $r->slug),
                 TextColumn::make('parent.name')
-                    ->label('Parent')
-                    ->placeholder('— root —')
+                    ->label(__('admin.categories.field.parent'))
+                    ->placeholder(__('admin.categories.ph.parent'))
                     ->badge()
                     ->color('gray'),
                 TextColumn::make('products_count')
-                    ->label('Products')
+                    ->label(__('admin.categories.field.products_count'))
                     ->counts('products')
                     ->badge()
                     ->color('info'),
                 TextColumn::make('sort_order')
-                    ->label('Sort')
+                    ->label(__('admin.shared.field.sort_order'))
                     ->numeric()
                     ->sortable()
                     ->toggleable(),
                 IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.shared.field.active'))
                     ->boolean()
                     ->sortable(),
             ])
             ->filters([
                 Filter::make('only_roots')
-                    ->label('Top-level only')
+                    ->label(__('admin.categories.field.only_roots'))
                     ->query(fn ($query) => $query->whereNull('parent_id')),
                 TrashedFilter::make(),
             ])
@@ -78,7 +81,7 @@ class CategoriesTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->emptyStateHeading('No categories yet')
-            ->emptyStateDescription('Add your first category to organize your catalog.');
+            ->emptyStateHeading(__('admin.categories.empty.heading'))
+            ->emptyStateDescription(__('admin.categories.empty.description'));
     }
 }

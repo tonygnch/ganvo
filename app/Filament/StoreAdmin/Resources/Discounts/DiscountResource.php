@@ -34,11 +34,26 @@ class DiscountResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTicket;
 
-    protected static ?string $navigationLabel = 'Discounts';
-
     // Sit after Collections (21) — promotional plumbing belongs near
     // the merchandising tools, distinct from the day-to-day Orders nav.
     protected static ?int $navigationSort = 22;
+
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.discounts.nav.label');
+    }
+
+    // Filament derives these from the model class name in English; without
+    // an override the page titles and breadcrumbs stay English under bg.
+    public static function getModelLabel(): string
+    {
+        return __('admin.discounts.nav.model');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('admin.discounts.nav.model_plural');
+    }
 
     public static function form(Schema $schema): Schema
     {

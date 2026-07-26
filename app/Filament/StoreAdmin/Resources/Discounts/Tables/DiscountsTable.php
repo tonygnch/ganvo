@@ -21,15 +21,18 @@ class DiscountsTable
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('name')
+                    ->label(__('admin.shared.field.name'))
                     ->searchable()
                     ->weight('bold')
-                    ->description(fn (Discount $d) => $d->code ? 'Code: ' . $d->code : 'Auto-applied'),
+                    ->description(fn (Discount $d) => $d->code
+                        ? __('admin.discounts.help.row_code', ['code' => $d->code])
+                        : __('admin.discounts.help.row_auto')),
                 TextColumn::make('type')
-                    ->label('Type')
+                    ->label(__('admin.discounts.field.type'))
                     ->formatStateUsing(fn (string $state) => match ($state) {
-                        Discount::TYPE_PERCENTAGE   => 'Percent off',
-                        Discount::TYPE_FIXED        => 'Amount off',
-                        Discount::TYPE_FREE_SHIPPING => 'Free shipping',
+                        Discount::TYPE_PERCENTAGE   => __('admin.discounts.opt.type_short_percentage'),
+                        Discount::TYPE_FIXED        => __('admin.discounts.opt.type_short_fixed'),
+                        Discount::TYPE_FREE_SHIPPING => __('admin.discounts.opt.type_short_free_shipping'),
                         default                     => $state,
                     })
                     ->badge()
@@ -40,7 +43,7 @@ class DiscountsTable
                         default                     => 'gray',
                     }),
                 TextColumn::make('value')
-                    ->label('Value')
+                    ->label(__('admin.discounts.field.value'))
                     ->formatStateUsing(function ($state, Discount $d) {
                         return match ($d->type) {
                             Discount::TYPE_PERCENTAGE   => $state . '%',
@@ -50,31 +53,33 @@ class DiscountsTable
                         };
                     }),
                 TextColumn::make('times_used')
-                    ->label('Used')
+                    ->label(__('admin.discounts.field.times_used'))
                     ->numeric()
                     ->sortable()
-                    ->description(fn (Discount $d) => $d->usage_limit ? 'of ' . $d->usage_limit : null),
+                    ->description(fn (Discount $d) => $d->usage_limit
+                        ? __('admin.discounts.help.row_of_limit', ['limit' => $d->usage_limit])
+                        : null),
                 IconColumn::make('is_auto')
-                    ->label('Auto')
+                    ->label(__('admin.discounts.field.is_auto_short'))
                     ->boolean()
-                    ->tooltip('Applied automatically without a code'),
+                    ->tooltip(__('admin.discounts.help.is_auto_tooltip')),
                 IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.shared.field.active'))
                     ->boolean()
                     ->sortable(),
                 TextColumn::make('ends_at')
-                    ->label('Ends')
+                    ->label(__('admin.discounts.field.ends_short'))
                     ->dateTime('M j, Y')
                     ->placeholder('—')
                     ->toggleable(),
             ])
             ->filters([
                 Filter::make('active_only')
-                    ->label('Active only')
+                    ->label(__('admin.discounts.field.filter_active'))
                     ->query(fn ($query) => $query->where('is_active', true))
                     ->default(),
                 Filter::make('auto_only')
-                    ->label('Auto-discounts only')
+                    ->label(__('admin.discounts.field.filter_auto'))
                     ->query(fn ($query) => $query->where('is_auto', true)),
                 TrashedFilter::make(),
             ])
@@ -87,7 +92,7 @@ class DiscountsTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->emptyStateHeading('No discounts yet')
-            ->emptyStateDescription('Create a discount code (e.g. SUMMER10) or an auto-applied promo for big carts.');
+            ->emptyStateHeading(__('admin.discounts.empty.heading'))
+            ->emptyStateDescription(__('admin.discounts.empty.description'));
     }
 }

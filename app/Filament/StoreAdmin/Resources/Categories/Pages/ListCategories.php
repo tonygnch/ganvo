@@ -36,11 +36,19 @@ class ListCategories extends Page
         $this->refreshTree();
     }
 
+    // Without this Filament builds the page title from the class name
+    // ("List Categories") — English only, and it is also what the
+    // breadcrumb shows.
+    public function getTitle(): string
+    {
+        return __('admin.categories.nav.label');
+    }
+
     protected function getHeaderActions(): array
     {
         return [
             CreateAction::make()
-                ->label('Add category')
+                ->label(__('admin.categories.action.create'))
                 ->url(static::$resource::getUrl('create')),
         ];
     }
@@ -95,8 +103,8 @@ class ListCategories extends Page
             while ($cursor !== null) {
                 if (isset($seen[$cursor])) {
                     Notification::make()
-                        ->title('Move blocked')
-                        ->body('That would create a cycle in the category tree.')
+                        ->title(__('admin.categories.notify.cycle_blocked'))
+                        ->body(__('admin.categories.notify.cycle_blocked_body'))
                         ->danger()
                         ->send();
                     return;
@@ -133,7 +141,7 @@ class ListCategories extends Page
         $this->refreshTree();
 
         Notification::make()
-            ->title('Tree updated')
+            ->title(__('admin.categories.notify.tree_updated'))
             ->success()
             ->send();
     }

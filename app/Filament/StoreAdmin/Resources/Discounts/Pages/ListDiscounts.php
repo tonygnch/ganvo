@@ -13,7 +13,7 @@ class ListDiscounts extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->label('Add discount'),
+            CreateAction::make()->label(__('admin.discounts.action.create')),
         ];
     }
 }

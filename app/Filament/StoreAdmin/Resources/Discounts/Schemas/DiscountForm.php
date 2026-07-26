@@ -16,17 +16,19 @@ class DiscountForm
     {
         return $schema
             ->components([
-                Section::make('Identity')
+                Section::make(__('admin.discounts.section.identity'))
                     ->columns(2)
                     ->schema([
                         TextInput::make('name')
+                            ->label(__('admin.shared.field.name'))
                             ->required()
                             ->maxLength(160)
-                            ->helperText('Internal label + what customers see on the receipt.'),
+                            ->helperText(__('admin.discounts.help.name')),
                         TextInput::make('code')
+                            ->label(__('admin.discounts.field.code'))
                             ->maxLength(60)
-                            ->placeholder('e.g. SUMMER10')
-                            ->helperText('Customer-entered code. Leave blank for an auto-discount.')
+                            ->placeholder(__('admin.discounts.ph.code'))
+                            ->helperText(__('admin.discounts.help.code'))
                             ->unique(
                                 table: 'discounts',
                                 column: 'code',
@@ -35,20 +37,22 @@ class DiscountForm
                             ),
                     ]),
 
-                Section::make('Discount mechanics')
+                Section::make(__('admin.discounts.section.mechanics'))
                     ->columns(2)
                     ->schema([
                         Select::make('type')
+                            ->label(__('admin.discounts.field.type'))
                             ->required()
                             ->default(Discount::TYPE_PERCENTAGE)
                             ->options([
-                                Discount::TYPE_PERCENTAGE   => 'Percentage off subtotal',
-                                Discount::TYPE_FIXED        => 'Fixed amount off subtotal',
-                                Discount::TYPE_FREE_SHIPPING => 'Free shipping',
+                                Discount::TYPE_PERCENTAGE   => __('admin.discounts.opt.type_percentage'),
+                                Discount::TYPE_FIXED        => __('admin.discounts.opt.type_fixed'),
+                                Discount::TYPE_FREE_SHIPPING => __('admin.discounts.opt.type_free_shipping'),
                             ])
                             ->live()
-                            ->helperText('Choose how the discount calculates.'),
+                            ->helperText(__('admin.discounts.help.type')),
                         TextInput::make('value')
+                            ->label(__('admin.discounts.field.value'))
                             ->numeric()
                             ->minValue(0)
                             ->default(0)
@@ -74,12 +78,12 @@ class DiscountForm
                                 ? \App\Services\Money::symbol(auth()->user()?->tenant?->store?->currency ?? 'EUR')
                                 : null)
                             ->helperText(fn ($get) => match ($get('type')) {
-                                Discount::TYPE_PERCENTAGE => '0–100 percent off the subtotal.',
-                                Discount::TYPE_FIXED      => 'Amount in your store currency.',
-                                default                   => 'Not applicable for free shipping.',
+                                Discount::TYPE_PERCENTAGE => __('admin.discounts.help.value_percentage'),
+                                Discount::TYPE_FIXED      => __('admin.discounts.help.value_fixed'),
+                                default                   => __('admin.discounts.help.value_free_shipping'),
                             }),
                         TextInput::make('min_subtotal_cents')
-                            ->label('Minimum subtotal')
+                            ->label(__('admin.discounts.field.min_subtotal'))
                             ->numeric()
                             ->minValue(0)
                             ->nullable()
@@ -87,46 +91,48 @@ class DiscountForm
                             ->formatStateUsing(fn ($state) => $state !== null ? number_format($state / 100, 2, '.', '') : null)
                             ->dehydrateStateUsing(fn ($state) => ($state === null || $state === '') ? null : (int) round(((float) $state) * 100))
                             ->step('0.01')
-                            ->helperText('Cart subtotal must reach this for the discount to apply. Leave blank for no minimum.'),
+                            ->helperText(__('admin.discounts.help.min_subtotal')),
                     ]),
 
-                Section::make('Validity & limits')
+                Section::make(__('admin.discounts.section.validity'))
                     ->columns(2)
                     ->schema([
                         DateTimePicker::make('starts_at')
+                            ->label(__('admin.discounts.field.starts_at'))
                             ->seconds(false)
                             ->nullable()
-                            ->helperText('Earliest moment the discount can be used. Blank = always live.'),
+                            ->helperText(__('admin.discounts.help.starts_at')),
                         DateTimePicker::make('ends_at')
+                            ->label(__('admin.discounts.field.ends_at'))
                             ->seconds(false)
                             ->nullable()
                             ->after('starts_at')
-                            ->helperText('Last moment the discount can be used. Blank = open-ended.'),
+                            ->helperText(__('admin.discounts.help.ends_at')),
                         TextInput::make('usage_limit')
-                            ->label('Total usage limit')
+                            ->label(__('admin.discounts.field.usage_limit'))
                             ->numeric()
                             ->minValue(0)
                             ->nullable()
-                            ->helperText('Cap across all customers. Blank = unlimited.'),
+                            ->helperText(__('admin.discounts.help.usage_limit')),
                         TextInput::make('per_customer_limit')
-                            ->label('Per-customer limit')
+                            ->label(__('admin.discounts.field.per_customer_limit'))
                             ->numeric()
                             ->minValue(0)
                             ->nullable()
-                            ->helperText('Cap per logged-in customer. Blank = unlimited. Ignored for guest checkout.'),
+                            ->helperText(__('admin.discounts.help.per_customer_limit')),
                     ]),
 
-                Section::make('Behavior')
+                Section::make(__('admin.discounts.section.behavior'))
                     ->columns(2)
                     ->schema([
                         Toggle::make('is_auto')
-                            ->label('Apply automatically (no code needed)')
+                            ->label(__('admin.discounts.field.is_auto'))
                             ->default(false)
-                            ->helperText('When on, the discount applies silently whenever conditions match — customer does not type a code.'),
+                            ->helperText(__('admin.discounts.help.is_auto')),
                         Toggle::make('is_active')
-                            ->label('Active')
+                            ->label(__('admin.shared.field.active'))
                             ->default(true)
-                            ->helperText('Turn off to retire without deleting.'),
+                            ->helperText(__('admin.discounts.help.is_active')),
                     ]),
             ]);
     }

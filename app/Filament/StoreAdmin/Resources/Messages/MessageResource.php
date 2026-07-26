@@ -27,17 +27,30 @@ class MessageResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedInbox;
 
-    protected static ?string $navigationLabel = 'Messages';
-
-    protected static ?string $modelLabel = 'Message';
-
-    protected static ?string $pluralModelLabel = 'Messages';
-
     // After the catalog tools (Categories 20 → Discounts 22) but well ahead
     // of Billing (90) — enquiries are day-to-day work, like orders.
     protected static ?int $navigationSort = 30;
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    // Navigation + model labels come from translations rather than the
+    // static $navigationLabel / $modelLabel properties: a property
+    // initialiser cannot call __(), and Filament's fallback derivation
+    // from the class name is English-only.
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.messages.nav.label');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('admin.messages.nav.model');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('admin.messages.nav.model_plural');
+    }
 
     /** Status → badge colour: a new enquiry shouts, an archived one recedes. */
     public const STATUS_COLORS = [
@@ -106,7 +119,22 @@ class MessageResource extends Resource
     /** Status labels for the filter + badges. */
     public static function statusOptions(): array
     {
-        return array_combine(StoreMessage::STATUSES, array_map('ucfirst', StoreMessage::STATUSES));
+        return [
+            StoreMessage::STATUS_NEW => __('admin.messages.opt.status_new'),
+            StoreMessage::STATUS_READ => __('admin.messages.opt.status_read'),
+            StoreMessage::STATUS_REPLIED => __('admin.messages.opt.status_replied'),
+            StoreMessage::STATUS_ARCHIVED => __('admin.messages.opt.status_archived'),
+        ];
+    }
+
+    /**
+     * Wording for a single stored status value. A value that isn't one of
+     * ours (only reachable from data written outside the app) falls back to
+     * the raw string rather than rendering a missing translation key.
+     */
+    public static function statusLabel(string $status): string
+    {
+        return static::statusOptions()[$status] ?? ucfirst($status);
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Services\Payments\StripeConnectService;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Auth;
 use Stripe\Exception\ApiErrorException;
 
@@ -30,11 +31,20 @@ class Payments extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
-    protected static ?string $navigationLabel = 'Payments';
-
-    protected static ?string $title = 'Payments';
-
     protected static ?int $navigationSort = 91; // right after Billing
+
+    // Sidebar entry + page heading. Static property initializers can't call
+    // __(), so both resolve here in the active locale instead of being
+    // hardcoded English literals.
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.billing.nav.payments');
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+        return __('admin.billing.nav.payments');
+    }
 
     public function getViewData(): array
     {

@@ -34,10 +34,11 @@ class ProductForm
     {
         return $schema
             ->components([
-                Section::make('Details')
+                Section::make(__('admin.products.section.details'))
                     ->columns(2)
                     ->schema([
                         TextInput::make('name')
+                            ->label(__('admin.shared.field.name'))
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
@@ -45,20 +46,22 @@ class ProductForm
                                 ? null
                                 : $set('slug', Str::slug((string) $state))),
                         TextInput::make('slug')
+                            ->label(__('admin.shared.field.slug'))
                             ->required()
                             ->maxLength(255)
-                            ->helperText('URL fragment. Auto-filled from name.'),
+                            ->helperText(__('admin.products.help.slug')),
                         Textarea::make('description')
+                            ->label(__('admin.shared.field.description'))
                             ->rows(4)
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Pricing & inventory')
-                    ->description('Prices are in your store\'s base currency, set in Store Settings.')
+                Section::make(__('admin.products.section.pricing'))
+                    ->description(__('admin.products.section_help.pricing'))
                     ->columns(2)
                     ->schema([
                         TextInput::make('price_cents')
-                            ->label('Price')
+                            ->label(__('admin.shared.field.price'))
                             ->required()
                             ->numeric()
                             ->step('0.01')
@@ -68,17 +71,18 @@ class ProductForm
                             ->formatStateUsing(fn ($state) => $state !== null ? number_format($state / 100, 2, '.', '') : null)
                             ->dehydrateStateUsing(fn ($state) => (int) round(((float) $state) * 100)),
                         TextInput::make('stock_quantity')
+                            ->label(__('admin.products.field.stock_quantity'))
                             ->required()
                             ->numeric()
                             ->minValue(0)
                             ->default(0),
                     ]),
 
-                Section::make('Images')
-                    ->description('The primary image shows on cards, in the cart, and as the main image on the product page. Gallery extras appear as thumbnails next to it; the customer can click a thumb to swap it into the main slot.')
+                Section::make(__('admin.products.section.images'))
+                    ->description(__('admin.products.section_help.images'))
                     ->schema([
                         FileUpload::make('image_path')
-                            ->label('Primary image')
+                            ->label(__('admin.products.field.primary_image'))
                             ->image()
                             ->disk('public')
                             ->directory('products')
@@ -93,17 +97,17 @@ class ProductForm
                         // column so the order in the editor matches
                         // the storefront.
                         Repeater::make('gallery')
-                            ->label('Gallery extras')
+                            ->label(__('admin.products.field.gallery'))
                             ->relationship()
                             ->orderColumn('sort_order')
                             ->collapsed()
                             ->itemLabel(fn (array $state): ?string => $state['alt_text'] ?? null)
-                            ->addActionLabel('Add image')
+                            ->addActionLabel(__('admin.products.action.add_image'))
                             ->reorderableWithDragAndDrop()
                             ->defaultItems(0)
                             ->schema([
                                 FileUpload::make('path')
-                                    ->label('Image')
+                                    ->label(__('admin.shared.field.image'))
                                     ->image()
                                     ->disk('public')
                                     ->directory('products/gallery')
@@ -111,15 +115,15 @@ class ProductForm
                                     ->imageEditor()
                                     ->required(),
                                 TextInput::make('alt_text')
-                                    ->label('Alt text')
+                                    ->label(__('admin.products.field.alt_text'))
                                     ->maxLength(160)
-                                    ->helperText('For screen readers + SEO. Optional but recommended.'),
+                                    ->helperText(__('admin.products.help.alt_text')),
                             ])
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Options')
-                    ->description('Only for products where the choices interact — a 100 см board sold in 10 and 20 см widths, a 200 см one in 20 and 30. Declare each axis here; which pairings you actually sell is decided below, under Variants. Leave empty for a plain list of variants, or for a single-SKU product.')
+                Section::make(__('admin.products.section.options'))
+                    ->description(__('admin.products.section_help.options'))
                     ->schema([
                         // Bound to the options() hasMany, with the values as a
                         // nested relationship repeater — Filament saves those
@@ -131,23 +135,23 @@ class ProductForm
                             ->orderColumn('sort_order')
                             ->collapsed()
                             ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
-                            ->addActionLabel('Add option')
+                            ->addActionLabel(__('admin.products.action.add_option'))
                             ->reorderableWithDragAndDrop()
                             ->defaultItems(0)
                             ->schema([
                                 TextInput::make('name')
-                                    ->label('Option')
+                                    ->label(__('admin.products.field.option'))
                                     ->required()
                                     ->maxLength(60)
                                     ->live(onBlur: true)
-                                    ->placeholder('e.g. Дължина')
-                                    ->helperText('The axis the customer chooses on. Order matters — it is the order the picker shows, and the order the variant label reads in.'),
+                                    ->placeholder(__('admin.products.ph.option'))
+                                    ->helperText(__('admin.products.help.option')),
                                 Repeater::make('values')
-                                    ->label('Values')
+                                    ->label(__('admin.products.field.values'))
                                     ->relationship()
                                     ->orderColumn('sort_order')
                                     ->itemLabel(fn (array $state): ?string => $state['value'] ?? null)
-                                    ->addActionLabel('Add value')
+                                    ->addActionLabel(__('admin.products.action.add_value'))
                                     ->reorderableWithDragAndDrop()
                                     ->defaultItems(1)
                                     ->minItems(1)
@@ -156,30 +160,32 @@ class ProductForm
                                             ->label('')
                                             ->required()
                                             ->maxLength(60)
-                                            ->placeholder('e.g. 100 см')
+                                            ->placeholder(__('admin.products.ph.value'))
                                             ->distinct(),
                                     ]),
                             ])
                             ->columnSpanFull(),
                     ]),
 
-                Section::make(fn ($record): string => static::hasSavedOptions($record) ? 'Combinations' : 'Variants')
+                Section::make(fn ($record): string => static::hasSavedOptions($record)
+                    ? __('admin.products.section.combinations')
+                    : __('admin.products.section.variants'))
                     ->description(fn ($record): string => static::hasSavedOptions($record)
-                        ? 'One row per pairing you actually sell, each with its own SKU, price and stock.'
-                        : 'Optional. Add purchasable variations (e.g. sizes, colors). When a product has variants, the customer must pick one — they buy the variant, not the bare product. Leave empty for single-SKU products.')
+                        ? __('admin.products.section_help.combinations')
+                        : __('admin.products.section_help.variants'))
                     ->schema([
                         // The mechanism, spelled out: there is no rule anywhere
                         // that forbids 200 см × 10 см. It is unbuyable purely
                         // because no row below pairs them.
-                        Callout::make('A pairing you do not add here cannot be bought')
-                            ->description('There is no separate list of forbidden combinations — absence is the rule. If 200 см never comes in 10 см, simply never add that row, and the customer will find 10 см greyed out the moment they pick 200 см.')
+                        Callout::make(__('admin.products.section.callout_absence'))
+                            ->description(__('admin.products.section_help.callout_absence'))
                             ->info()
                             ->visible(fn ($record): bool => static::hasSavedOptions($record)),
 
                         // Combination rows point at option values by id, so the
                         // axes have to be stored before they can be paired.
-                        Callout::make('Save the product to start pairing')
-                            ->description('You have declared options above but not saved them yet. Save now — the rows here then turn into one dropdown per option. The same applies to values added since the last save: they become selectable after saving.')
+                        Callout::make(__('admin.products.section.callout_save_first'))
+                            ->description(__('admin.products.section_help.callout_save_first'))
                             ->warning()
                             ->visible(fn (Get $get, $record): bool => filled($get('options')) && ! static::hasSavedOptions($record)),
 
@@ -188,10 +194,10 @@ class ProductForm
                         // empty required Select and no explanation — which used
                         // to make the product unsaveable — each row is given
                         // that axis's first value and told so here.
-                        Callout::make(fn ($record): string => 'Check the new '
-                            . implode(' / ', static::axesMissingFromRows($record))
-                            . ' on every combination')
-                            ->description('That axis was added after these combinations were made, so none of them had a value for it. Each row below has been given its FIRST value as a starting point — nothing is stored until you save. Correct any that are wrong, or delete the axis above if you added it by mistake.')
+                        Callout::make(fn ($record): string => __('admin.products.section.callout_new_axis', [
+                            'axes' => implode(' / ', static::axesMissingFromRows($record)),
+                        ]))
+                            ->description(__('admin.products.section_help.callout_new_axis'))
                             ->warning()
                             ->visible(fn ($record): bool => static::axesMissingFromRows($record) !== []),
 
@@ -204,7 +210,9 @@ class ProductForm
                             ->orderColumn('sort_order')
                             ->collapsed()
                             ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
-                            ->addActionLabel(fn ($record): string => static::hasSavedOptions($record) ? 'Add combination' : 'Add variant')
+                            ->addActionLabel(fn ($record): string => static::hasSavedOptions($record)
+                                ? __('admin.products.action.add_combination')
+                                : __('admin.products.action.add_variant'))
                             ->reorderableWithDragAndDrop()
                             ->defaultItems(0)
                             // Same relation, two shapes: a free-text label when
@@ -237,7 +245,7 @@ class ProductForm
                                     ));
 
                                     if (isset($seen[$signature])) {
-                                        $fail('Two rows describe the same combination. Each pairing may only appear once — delete the duplicate, or change one of its options.');
+                                        $fail(__('admin.products.notify.duplicate_combination'));
 
                                         return;
                                     }
@@ -253,8 +261,8 @@ class ProductForm
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Categories')
-                    ->description('Pick one or more categories this product belongs to. Customers browse by these on the storefront.')
+                Section::make(__('admin.products.section.categories'))
+                    ->description(__('admin.products.section_help.categories'))
                     ->schema([
                         Select::make('categories')
                             ->label('')
@@ -269,10 +277,10 @@ class ProductForm
                             ->searchable(),
                     ]),
 
-                Section::make('Visibility')
+                Section::make(__('admin.shared.section.visibility'))
                     ->schema([
                         Toggle::make('is_active')
-                            ->label('Visible in storefront')
+                            ->label(__('admin.products.field.is_active'))
                             ->default(true),
                     ]),
             ]);
@@ -327,11 +335,11 @@ class ProductForm
     {
         return [
             TextInput::make('label')
-                ->label('Label')
+                ->label(__('admin.products.field.variant_label'))
                 ->required()
                 ->maxLength(255)
-                ->placeholder('e.g. Small / Red')
-                ->helperText('Shown to the customer in the picker.'),
+                ->placeholder(__('admin.products.ph.variant_label'))
+                ->helperText(__('admin.products.help.variant_label')),
             ...static::variantStockFields(),
         ];
     }
@@ -405,29 +413,29 @@ class ProductForm
     {
         return [
             TextInput::make('sku')
-                ->label('SKU')
+                ->label(__('admin.products.field.sku'))
                 ->maxLength(120)
-                ->placeholder('Optional, your inventory code.'),
+                ->placeholder(__('admin.products.ph.sku')),
             TextInput::make('price_cents')
-                ->label('Price override')
+                ->label(__('admin.products.field.price_override'))
                 ->numeric()
                 ->step('0.01')
                 ->prefix(fn () => \App\Services\Money::symbol(
                     auth()->user()?->tenant?->store?->currency ?? 'EUR'
                 ))
-                ->helperText('Leave empty to use the product price.')
+                ->helperText(__('admin.products.help.price_override'))
                 // Same cent ↔ display dance as the
                 // product-level price field above.
                 ->formatStateUsing(fn ($state) => $state !== null ? number_format($state / 100, 2, '.', '') : null)
                 ->dehydrateStateUsing(fn ($state) => ($state === null || $state === '') ? null : (int) round(((float) $state) * 100)),
             TextInput::make('stock_quantity')
-                ->label('Stock')
+                ->label(__('admin.products.field.stock'))
                 ->numeric()
                 ->minValue(0)
                 ->default(0)
                 ->required(),
             Toggle::make('is_active')
-                ->label('Active')
+                ->label(__('admin.shared.field.active'))
                 ->default(true),
         ];
     }

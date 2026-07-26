@@ -4,11 +4,17 @@ namespace App\Filament\StoreAdmin\Widgets;
 
 use App\Models\Order;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Carbon;
 
 class RevenueChart extends ChartWidget
 {
-    protected ?string $heading = 'Revenue, last 14 days';
+    // Set through getHeading() instead of the $heading property because a
+    // property initialiser can't call __().
+    public function getHeading(): string | Htmlable | null
+    {
+        return __('admin.widgets.section.revenue_chart');
+    }
 
     protected function getData(): array
     {
@@ -38,7 +44,7 @@ class RevenueChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Revenue (' . $currency . ')',
+                    'label' => __('admin.widgets.field.revenue_currency', ['currency' => $currency]),
                     'data' => $data,
                     'borderColor' => '#10B981',
                     'backgroundColor' => 'rgba(16, 185, 129, 0.15)',

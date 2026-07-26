@@ -324,9 +324,40 @@ class Store extends Model
     ];
 
     /** @return array<string, string> [slug => label] for the admin select. */
+    /*
+     | THE CONSTANTS ABOVE ARE KEYS AND DEFAULTS, NOT COPY.
+     |
+     | Their English labels are still there because a class constant cannot
+     | call __() — it is evaluated at class-load, before a locale exists, so a
+     | translated constant would freeze whatever locale happened to boot first.
+     | Validation keeps reading the constants (array_key_exists), and these
+     | three accessors are what the admin panel shows.
+     */
+    public static function checkoutModeOptions(): array
+    {
+        return [
+            self::CHECKOUT_GUEST => __('admin.settings.opt.checkout_guest'),
+            self::CHECKOUT_ACCOUNT => __('admin.settings.opt.checkout_account'),
+            self::CHECKOUT_BOTH => __('admin.settings.opt.checkout_both'),
+        ];
+    }
+
+    public static function numberAnimationOptions(): array
+    {
+        $out = [];
+
+        foreach (array_keys(self::NUMBER_ANIMATIONS) as $key) {
+            $out[$key] = __("admin.settings.opt.anim_{$key}");
+        }
+
+        return $out;
+    }
+
     public static function announcementSpeedOptions(): array
     {
-        return array_map(fn ($s) => $s['label'], self::ANNOUNCEMENT_SPEEDS);
+        return collect(self::ANNOUNCEMENT_SPEEDS)
+            ->mapWithKeys(fn ($s, $key) => [$key => __("admin.settings.opt.speed_{$key}")])
+            ->all();
     }
 
     /**

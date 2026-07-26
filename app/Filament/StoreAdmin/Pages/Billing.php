@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Auth;
 
 /**
@@ -23,11 +24,21 @@ class Billing extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
 
-    protected static ?string $navigationLabel = 'Billing';
-
-    protected static ?string $title = 'Billing';
-
     protected static ?int $navigationSort = 90;
+
+    // The sidebar entry and the page heading used to be static
+    // $navigationLabel / $title literals, but a property initializer can't
+    // call __() — so they resolve here instead, once per request, in the
+    // active locale.
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.billing.nav.billing');
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+        return __('admin.billing.nav.billing');
+    }
 
     public function getViewData(): array
     {

@@ -22,6 +22,24 @@ class ProductResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    // Resolved in methods rather than static properties: a property initialiser
+    // has to be a constant expression, and __() runs before the locale is set
+    // there anyway.
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.products.nav.label');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('admin.products.nav.model');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('admin.products.nav.model_plural');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return ProductForm::configure($schema);

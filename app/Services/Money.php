@@ -153,7 +153,12 @@ class Money
     {
         $out = [];
         foreach (self::SUPPORTED as $code => $meta) {
-            $out[$code] = sprintf('%s — %s (%s)', $code, $meta['name'], $meta['symbol']);
+            // The name in SUPPORTED is the English fallback; a currency without
+            // a translation still reads properly rather than showing its key.
+            $name = __("admin.currency.{$code}");
+            $out[$code] = sprintf('%s — %s (%s)', $code,
+                $name === "admin.currency.{$code}" ? $meta['name'] : $name,
+                $meta['symbol']);
         }
         return $out;
     }

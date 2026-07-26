@@ -18,10 +18,15 @@ class CategoryForm
     {
         return $schema
             ->components([
-                Section::make('Identity')
+                Section::make(__('admin.categories.section.identity'))
                     ->columns(2)
                     ->schema([
                         TextInput::make('name')
+                            // Explicit even though Filament would derive
+                            // "Name" from the attribute — that derivation is
+                            // English-only, and it is what left the panel
+                            // half-translated.
+                            ->label(__('admin.shared.field.name'))
                             ->required()
                             ->maxLength(120)
                             ->live(onBlur: true)
@@ -32,6 +37,7 @@ class CategoryForm
                                 ? null
                                 : $set('slug', Str::slug((string) $state))),
                         TextInput::make('slug')
+                            ->label(__('admin.shared.field.slug'))
                             ->required()
                             ->maxLength(120)
                             ->unique(
@@ -40,19 +46,20 @@ class CategoryForm
                                 ignoreRecord: true,
                                 modifyRuleUsing: fn ($rule) => $rule->where('tenant_id', auth()->user()?->tenant_id),
                             )
-                            ->helperText('URL part: /categories/{slug}. Lowercase letters, numbers, dashes.'),
+                            ->helperText(__('admin.categories.help.slug')),
                         Textarea::make('description')
+                            ->label(__('admin.shared.field.description'))
                             ->rows(3)
                             ->maxLength(1000)
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Hierarchy + display')
+                Section::make(__('admin.categories.section.hierarchy'))
                     ->columns(2)
                     ->schema([
                         Select::make('parent_id')
-                            ->label('Parent category')
-                            ->placeholder('— root —')
+                            ->label(__('admin.categories.field.parent'))
+                            ->placeholder(__('admin.categories.ph.parent'))
                             ->options(function ($record) {
                                 $query = Category::query()
                                     ->where('tenant_id', auth()->user()?->tenant_id)
@@ -66,32 +73,33 @@ class CategoryForm
                             })
                             ->searchable()
                             ->nullable()
-                            ->helperText('Leave empty for a top-level category.'),
+                            ->helperText(__('admin.categories.help.parent')),
                         TextInput::make('sort_order')
+                            ->label(__('admin.shared.field.sort_order'))
                             ->numeric()
                             ->minValue(0)
                             ->default(0)
-                            ->helperText('Lower numbers appear first.'),
+                            ->helperText(__('admin.shared.help.sort_order')),
                         FileUpload::make('image_path')
-                            ->label('Category image')
+                            ->label(__('admin.categories.field.image'))
                             ->image()
                             ->directory('categories')
                             ->disk('public')
                             ->maxSize(2048)
                             ->columnSpanFull()
-                            ->helperText('Optional. Shown on the category card + page header.'),
+                            ->helperText(__('admin.categories.help.image')),
                     ]),
 
-                Section::make('Visibility')
+                Section::make(__('admin.shared.section.visibility'))
                     ->schema([
                         Toggle::make('is_active')
-                            ->label('Visible in storefront')
+                            ->label(__('admin.categories.field.is_active'))
                             ->default(true)
-                            ->helperText('When off, the category is hidden from the storefront but products inside it still appear if assigned to other visible categories or queried directly.'),
+                            ->helperText(__('admin.categories.help.is_active')),
                         Toggle::make('show_in_menu')
-                            ->label('Show in header navigation')
+                            ->label(__('admin.categories.field.show_in_menu'))
                             ->default(true)
-                            ->helperText('When the merchant has set up a Categories dropdown in their header menu, this category appears as a link inside it. Turn off to keep the category page accessible by URL but hide it from the nav.'),
+                            ->helperText(__('admin.categories.help.show_in_menu')),
                     ]),
             ]);
     }

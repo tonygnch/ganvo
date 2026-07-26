@@ -26,6 +26,9 @@ class CollectionsTable
                     ->square()
                     ->size(40),
                 TextColumn::make('title')
+                    // Explicit label — Filament's fallback derivation from
+                    // the column name is English-only.
+                    ->label(__('admin.collections.field.title'))
                     ->searchable()
                     ->weight('bold')
                     // Null-guard: Filament occasionally calls the
@@ -34,28 +37,28 @@ class CollectionsTable
                     // cleanly instead of throwing.
                     ->description(fn ($r) => $r?->slug ? '/collections/' . $r->slug : null),
                 TextColumn::make('products_count')
-                    ->label('Products')
+                    ->label(__('admin.collections.field.products_count'))
                     ->counts('products')
                     ->badge()
                     ->color('info'),
                 IconColumn::make('is_featured')
-                    ->label('Featured')
+                    ->label(__('admin.collections.field.featured'))
                     ->boolean()
                     ->sortable()
-                    ->tooltip('Shown as a strip on the storefront homepage'),
+                    ->tooltip(__('admin.collections.help.featured')),
                 IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.shared.field.active'))
                     ->boolean()
                     ->sortable(),
                 TextColumn::make('sort_order')
-                    ->label('Sort')
+                    ->label(__('admin.shared.field.sort_order'))
                     ->numeric()
                     ->sortable()
                     ->toggleable(),
             ])
             ->filters([
                 Filter::make('featured_only')
-                    ->label('Featured only')
+                    ->label(__('admin.collections.field.featured_only'))
                     ->query(fn ($query) => $query->where('is_featured', true)),
                 TrashedFilter::make(),
             ])
@@ -68,7 +71,7 @@ class CollectionsTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->emptyStateHeading('No collections yet')
-            ->emptyStateDescription('Create your first curated grouping — Summer Sale, Staff Picks, New Arrivals.');
+            ->emptyStateHeading(__('admin.collections.empty.heading'))
+            ->emptyStateDescription(__('admin.collections.empty.description'));
     }
 }

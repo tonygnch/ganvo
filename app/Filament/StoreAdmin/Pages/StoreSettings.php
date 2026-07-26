@@ -28,6 +28,7 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
 
 class StoreSettings extends Page implements HasForms
 {
@@ -37,11 +38,19 @@ class StoreSettings extends Page implements HasForms
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
 
-    protected static ?string $navigationLabel = 'Store Settings';
-
-    protected static ?string $title = 'Store Settings';
-
     public ?array $data = [];
+
+    // Navigation label and page title are resolved at request time, not as
+    // static property defaults, so the active locale decides the wording.
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.settings.nav.label');
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+        return __('admin.settings.nav.title');
+    }
 
     public function mount(): void
     {
@@ -190,49 +199,53 @@ class StoreSettings extends Page implements HasForms
         return $schema
             ->statePath('data')
             ->components([
-                Tabs::make('Store settings')
+                Tabs::make(__('admin.settings.nav.title'))
                     ->persistTabInQueryString()
                     ->columnSpanFull()
                     ->tabs([
 
                 // ───────────────────────── DESIGN ─────────────────────────
-                Tab::make('Design')
+                Tab::make(__('admin.settings.nav.tab_design'))
                     ->icon(Heroicon::OutlinedSwatch)
                     ->schema([
-                Section::make('Theme')
-                    ->description('Pick a starting point for your storefront. Every theme can then be made your own — palette presets, font pairings, sections and signature details — under Customize Theme.')
+                Section::make(__('admin.settings.section.theme'))
+                    ->description(__('admin.settings.section_help.theme'))
                     ->headerActions([
                         Action::make('customizeTheme')
-                            ->label('Customize Theme →')
+                            ->label(__('admin.settings.action.customize_theme'))
                             ->url(fn () => CustomizeTheme::getUrl()),
                     ])
                     ->schema([
                         Radio::make('theme')
+                            ->label(__('admin.settings.field.theme'))
                             ->options(ThemeRegistry::options())
-                            ->descriptions(collect(ThemeRegistry::all())->map(fn ($t) => $t['description'])->all())
+                            ->descriptions(ThemeRegistry::descriptions())
                             ->required(),
                     ]),
-                Section::make('Branding')
+                Section::make(__('admin.settings.section.branding'))
                     ->columns(2)
                     ->schema([
                         ColorPicker::make('primary_color')
+                            ->label(__('admin.settings.field.primary_color'))
                             ->required()
-                            ->helperText('Used for buttons, links, and accents.'),
+                            ->helperText(__('admin.settings.help.primary_color')),
                         ColorPicker::make('secondary_color')
+                            ->label(__('admin.settings.field.secondary_color'))
                             ->required()
-                            ->helperText('Used for header background and primary text.'),
+                            ->helperText(__('admin.settings.help.secondary_color')),
                         Select::make('font_family')
+                            ->label(__('admin.settings.field.font_family'))
                             ->options([
                                 'Inter' => 'Inter',
                                 'Roboto' => 'Roboto',
                                 'Lato' => 'Lato',
-                                'Merriweather' => 'Merriweather (serif)',
-                                'Playfair Display' => 'Playfair Display (serif)',
+                                'Merriweather' => __('admin.settings.opt.font_merriweather'),
+                                'Playfair Display' => __('admin.settings.opt.font_playfair'),
                             ])
                             ->required()
                             ->columnSpanFull(),
                         FileUpload::make('logo_path')
-                            ->label('Logo')
+                            ->label(__('admin.settings.field.logo'))
                             ->image()
                             ->disk('public')
                             ->directory('logos')
@@ -240,93 +253,99 @@ class StoreSettings extends Page implements HasForms
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('Storefront effects')
-                    ->description('Fine-tune the motion of your storefront.')
+                Section::make(__('admin.settings.section.storefront_effects'))
+                    ->description(__('admin.settings.section_help.storefront_effects'))
                     ->schema([
                         Select::make('number_animation')
-                            ->label('Cart number animation')
-                            ->options(\App\Models\Store::NUMBER_ANIMATIONS)
+                            ->label(__('admin.settings.field.number_animation'))
+                            ->options(\App\Models\Store::numberAnimationOptions())
                             ->default('count')
                             ->required()
                             ->native(false)
-                            ->helperText('How prices and quantities animate when the cart updates without a page reload. Honors a visitor’s “reduce motion” setting automatically.'),
+                            ->helperText(__('admin.settings.help.number_animation')),
                     ]),
                     ]), // end Design tab
 
                 // ─────────────────────── STOREFRONT ───────────────────────
-                Tab::make('Storefront')
+                Tab::make(__('admin.settings.nav.tab_storefront'))
                     ->icon(Heroicon::OutlinedSparkles)
                     ->schema([
-                Section::make('Announcement bar')
-                    ->description('A thin promo strip shown at the top of every page on your storefront.')
+                Section::make(__('admin.settings.section.announcement'))
+                    ->description(__('admin.settings.section_help.announcement'))
                     ->collapsible()
                     ->schema([
                         Toggle::make('announcement_enabled')
-                            ->label('Show announcement bar'),
+                            ->label(__('admin.settings.field.announcement_enabled')),
                         TextInput::make('announcement_text')
-                            ->label('Text')
-                            ->placeholder('Free shipping on orders over $50.')
+                            ->label(__('admin.settings.field.announcement_text'))
+                            ->placeholder(__('admin.settings.ph.announcement_text'))
                             ->maxLength(180),
                         TextInput::make('announcement_link')
-                            ->label('Click-through link (optional)')
+                            ->label(__('admin.settings.field.announcement_link'))
                             ->placeholder('https://example.com/shipping')
                             ->url()
                             ->maxLength(500),
                         Select::make('announcement_speed')
-                            ->label('Scroll speed')
+                            ->label(__('admin.settings.field.announcement_speed'))
                             ->options(\App\Models\Store::announcementSpeedOptions())
                             ->default('normal')
                             ->native(false)
-                            ->helperText('How fast the bar scrolls on themes that animate it (e.g. Brick). Choose “Static” to stop it scrolling. Themes with a non-moving bar ignore this.'),
+                            ->helperText(__('admin.settings.help.announcement_speed')),
                     ]),
 
-                Section::make('Header menu')
-                    ->description('Top-level navigation links shown in your storefront header. Drag rows to reorder. Add sub-links to turn a top-level item into a dropdown.')
+                Section::make(__('admin.settings.section.header_menu'))
+                    ->description(__('admin.settings.section_help.header_menu'))
                     ->collapsible()
                     ->schema([
                         Repeater::make('nav_menu')
                             ->label('')
                             ->schema([
                                 TextInput::make('label')
+                                    ->label(__('admin.settings.field.nav_label'))
                                     ->required()
                                     ->maxLength(60)
-                                    ->placeholder('Shop')
+                                    ->placeholder(__('admin.settings.ph.nav_label'))
                                     ->columnSpan(1),
                                 TextInput::make('url')
+                                    ->label(__('admin.settings.field.nav_url'))
                                     ->maxLength(500)
                                     ->placeholder('/')
-                                    ->helperText('Leave blank to make this a dropdown-only header (no own page).')
+                                    ->helperText(__('admin.settings.help.nav_url'))
                                     ->columnSpan(1),
                                 TextInput::make('sort_order')
+                                    ->label(__('admin.shared.field.sort_order'))
                                     ->numeric()
                                     ->minValue(0)
                                     ->default(0)
-                                    ->helperText('Lower numbers come first.')
+                                    ->helperText(__('admin.shared.help.sort_order'))
                                     ->columnSpan(1),
                                 Select::make('auto_source')
-                                    ->label('Dropdown contents')
+                                    ->label(__('admin.settings.field.nav_auto_source'))
                                     ->options([
-                                        'none'        => 'Manual sub-links',
-                                        'categories' => 'Auto: all categories tagged "Show in menu"',
-                                        'collections'=> 'Auto: all collections tagged "Show in menu"',
+                                        'none'        => __('admin.settings.opt.nav_auto_none'),
+                                        'categories' => __('admin.settings.opt.nav_auto_categories'),
+                                        'collections'=> __('admin.settings.opt.nav_auto_collections'),
                                     ])
                                     ->default('none')
                                     ->live()
-                                    ->helperText('Pick "Auto" to have this dropdown stay in sync with your Categories or Collections list — no manual upkeep.')
+                                    ->helperText(__('admin.settings.help.nav_auto_source'))
                                     ->columnSpanFull(),
                                 Repeater::make('children')
-                                    ->label('Sub-links (dropdown)')
+                                    ->label(__('admin.settings.field.nav_children'))
                                     ->visible(fn (Get $get): bool => ($get('auto_source') ?? 'none') === 'none')
                                     ->schema([
                                         TextInput::make('label')
+                                            ->label(__('admin.settings.field.nav_label'))
                                             ->required()
                                             ->maxLength(60)
-                                            ->placeholder('Apparel'),
+                                            ->placeholder(__('admin.settings.ph.nav_child_label')),
                                         TextInput::make('url')
+                                            ->label(__('admin.settings.field.nav_url'))
                                             ->required()
                                             ->maxLength(500)
                                             ->placeholder('/categories/apparel'),
                                         TextInput::make('sort_order')
+                                            ->label(__('admin.shared.field.sort_order'))
                                             ->numeric()
                                             ->minValue(0)
                                             ->default(0),
@@ -338,7 +357,7 @@ class StoreSettings extends Page implements HasForms
                                     ->cloneable()
                                     ->defaultItems(0)
                                     ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
-                                    ->addActionLabel('Add a sub-link')
+                                    ->addActionLabel(__('admin.settings.action.add_sub_link'))
                                     ->columnSpanFull(),
                             ])
                             ->columns(3)
@@ -348,61 +367,61 @@ class StoreSettings extends Page implements HasForms
                             ->cloneable()
                             ->defaultItems(0)
                             ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
-                            ->addActionLabel('Add a link'),
+                            ->addActionLabel(__('admin.settings.action.add_link')),
                     ]),
 
-                Section::make('Hero banner')
-                    ->description('A large welcome panel above the product grid on your storefront home.')
+                Section::make(__('admin.settings.section.hero'))
+                    ->description(__('admin.settings.section_help.hero'))
                     ->collapsible()
                     ->columns(2)
                     ->schema([
                         Toggle::make('hero_enabled')
-                            ->label('Show hero banner')
+                            ->label(__('admin.settings.field.hero_enabled'))
                             ->columnSpanFull(),
                         TextInput::make('hero_title')
-                            ->label('Title')
-                            ->placeholder('Spring collection')
+                            ->label(__('admin.settings.field.hero_title'))
+                            ->placeholder(__('admin.settings.ph.hero_title'))
                             ->maxLength(120),
                         TextInput::make('hero_subtitle')
-                            ->label('Subtitle')
-                            ->placeholder('Bright pieces for sunny days.')
+                            ->label(__('admin.settings.field.hero_subtitle'))
+                            ->placeholder(__('admin.settings.ph.hero_subtitle'))
                             ->maxLength(200),
                         TextInput::make('hero_cta_label')
-                            ->label('Button text (optional)')
-                            ->placeholder('Shop the collection')
+                            ->label(__('admin.settings.field.hero_cta_label'))
+                            ->placeholder(__('admin.settings.ph.hero_cta_label'))
                             ->maxLength(40),
                         TextInput::make('hero_cta_url')
-                            ->label('Button link (optional)')
+                            ->label(__('admin.settings.field.hero_cta_url'))
                             ->placeholder('/')
                             ->maxLength(500),
                         FileUpload::make('hero_image_path')
-                            ->label('Background image (optional)')
+                            ->label(__('admin.settings.field.hero_image'))
                             ->image()
                             ->disk('public')
                             ->directory('hero-banners')
                             ->maxSize(4096)
                             ->columnSpanFull(),
                     ]),
-                Section::make('Collection strips')
-                    ->description('How featured-collection strips look on your storefront home. Honored by themes with a banner band (e.g. Brick).')
+                Section::make(__('admin.settings.section.collection_strips'))
+                    ->description(__('admin.settings.section_help.collection_strips'))
                     ->collapsible()
                     ->columns(2)
                     ->schema([
                         Select::make('collection_band_height')
-                            ->label('Banner band height')
+                            ->label(__('admin.settings.field.collection_band_height'))
                             ->options([
-                                'compact'  => 'Compact',
-                                'standard' => 'Standard',
-                                'tall'     => 'Tall',
-                                'custom'   => 'Custom (px)',
+                                'compact'  => __('admin.settings.opt.band_compact'),
+                                'standard' => __('admin.settings.opt.band_standard'),
+                                'tall'     => __('admin.settings.opt.band_tall'),
+                                'custom'   => __('admin.settings.opt.custom_px'),
                             ])
                             ->default('standard')
                             ->selectablePlaceholder(false)
                             ->native(false)
                             ->live()
-                            ->helperText('Height of the image band behind a collection title.'),
+                            ->helperText(__('admin.settings.help.collection_band_height')),
                         TextInput::make('collection_band_height_px')
-                            ->label('Custom band height')
+                            ->label(__('admin.settings.field.collection_band_height_px'))
                             ->numeric()
                             ->suffix('px')
                             ->minValue(Store::COLLECTION_BAND_MIN)
@@ -412,22 +431,25 @@ class StoreSettings extends Page implements HasForms
                             // Keep the value in state even while hidden so toggling to a
                             // preset and back doesn't wipe the merchant's custom number.
                             ->dehydratedWhenHidden()
-                            ->helperText('Between ' . Store::COLLECTION_BAND_MIN . ' and ' . Store::COLLECTION_BAND_MAX . ' px.'),
+                            ->helperText(__('admin.settings.help.px_range', [
+                                'min' => Store::COLLECTION_BAND_MIN,
+                                'max' => Store::COLLECTION_BAND_MAX,
+                            ])),
                         Select::make('collection_title_size')
-                            ->label('Collection title size')
+                            ->label(__('admin.settings.field.collection_title_size'))
                             ->options([
-                                'small'  => 'Small',
-                                'medium' => 'Medium',
-                                'large'  => 'Large',
-                                'custom' => 'Custom (px)',
+                                'small'  => __('admin.settings.opt.size_small'),
+                                'medium' => __('admin.settings.opt.size_medium'),
+                                'large'  => __('admin.settings.opt.size_large'),
+                                'custom' => __('admin.settings.opt.custom_px'),
                             ])
                             ->default('medium')
                             ->selectablePlaceholder(false)
                             ->native(false)
                             ->live()
-                            ->helperText('Size of each collection’s title.'),
+                            ->helperText(__('admin.settings.help.collection_title_size')),
                         TextInput::make('collection_title_size_px')
-                            ->label('Custom title size')
+                            ->label(__('admin.settings.field.collection_title_size_px'))
                             ->numeric()
                             ->suffix('px')
                             ->minValue(Store::COLLECTION_TITLE_MIN)
@@ -435,66 +457,69 @@ class StoreSettings extends Page implements HasForms
                             ->visible(fn (Get $get): bool => ($get('collection_title_size') ?? 'medium') === 'custom')
                             ->required(fn (Get $get): bool => ($get('collection_title_size') ?? 'medium') === 'custom')
                             ->dehydratedWhenHidden()
-                            ->helperText('Between ' . Store::COLLECTION_TITLE_MIN . ' and ' . Store::COLLECTION_TITLE_MAX . ' px.'),
+                            ->helperText(__('admin.settings.help.px_range', [
+                                'min' => Store::COLLECTION_TITLE_MIN,
+                                'max' => Store::COLLECTION_TITLE_MAX,
+                            ])),
                     ]),
 
-                Section::make('Contact page')
-                    ->description('A page where shoppers find your details and send you a message. Enquiries are emailed to your contact address.')
+                Section::make(__('admin.settings.section.contact'))
+                    ->description(__('admin.settings.section_help.contact'))
                     ->collapsible()
                     ->columns(2)
                     ->schema([
                         Toggle::make('contact_enabled')
-                            ->label('Show contact page')
+                            ->label(__('admin.settings.field.contact_enabled'))
                             ->default(true)
-                            ->helperText('The page lives at /contact and your storefront footer links to it. When off, both the page and the footer link disappear.')
+                            ->helperText(__('admin.settings.help.contact_enabled'))
                             ->columnSpanFull(),
                         Toggle::make('contact_show_form')
-                            ->label('Show the enquiry form')
+                            ->label(__('admin.settings.field.contact_show_form'))
                             ->default(true)
-                            ->helperText('When off, the page lists your details only — useful if you would rather people phone or email you directly.')
+                            ->helperText(__('admin.settings.help.contact_show_form'))
                             ->columnSpanFull(),
                         TextInput::make('contact_heading')
-                            ->label('Heading')
-                            ->placeholder('Get in touch')
+                            ->label(__('admin.settings.field.contact_heading'))
+                            ->placeholder(__('admin.settings.ph.contact_heading'))
                             ->maxLength(120)
-                            ->helperText('Leave empty to use the default wording.')
+                            ->helperText(__('admin.settings.help.default_wording'))
                             ->columnSpanFull(),
                         Textarea::make('contact_intro')
-                            ->label('Intro text')
+                            ->label(__('admin.settings.field.contact_intro'))
                             ->rows(3)
                             ->maxLength(600)
-                            ->placeholder('Questions about a product, an order or a delivery? Send us a message and we will come back to you.')
-                            ->helperText('Leave empty to use the default wording.')
+                            ->placeholder(__('admin.settings.ph.contact_intro'))
+                            ->helperText(__('admin.settings.help.default_wording'))
                             ->columnSpanFull(),
                         Textarea::make('contact_address')
-                            ->label('Address')
+                            ->label(__('admin.settings.field.contact_address'))
                             ->rows(3)
                             ->maxLength(300)
-                            ->placeholder("12 Vitosha Blvd\n1000 Sofia, Bulgaria")
+                            ->placeholder(__('admin.settings.ph.contact_address'))
                             ->columnSpanFull(),
                         TextInput::make('contact_phone')
-                            ->label('Phone')
+                            ->label(__('admin.settings.field.contact_phone'))
                             ->tel()
                             ->maxLength(40)
                             ->placeholder('+359 2 123 4567'),
                         TextInput::make('contact_email')
-                            ->label('Email')
+                            ->label(__('admin.settings.field.contact_email'))
                             ->email()
                             ->maxLength(255)
                             ->placeholder('hello@yourbrand.com')
-                            ->helperText('Also where the enquiry form sends messages. Leave empty to use your account contact email.'),
+                            ->helperText(__('admin.settings.help.contact_email')),
                         Textarea::make('contact_hours')
-                            ->label('Opening hours')
+                            ->label(__('admin.settings.field.contact_hours'))
                             ->rows(3)
                             ->maxLength(300)
-                            ->placeholder("Mon–Fri 9:00–18:00\nSat 10:00–14:00")
+                            ->placeholder(__('admin.settings.ph.contact_hours'))
                             ->columnSpanFull(),
                         Textarea::make('contact_map_embed')
-                            ->label('Map embed')
+                            ->label(__('admin.settings.field.contact_map_embed'))
                             ->rows(4)
                             ->maxLength(4000)
                             ->placeholder('<iframe src="https://www.google.com/maps/embed?pb=…" …></iframe>')
-                            ->helperText('Google Maps → Share → Embed a map → Copy HTML, then paste the whole snippet here.')
+                            ->helperText(__('admin.settings.help.contact_map_embed'))
                             // Mirrors the guard in Store::contactPage(), which silently
                             // drops a snippet it doesn't recognize. Without this rule the
                             // save would look successful and the map would just never
@@ -504,66 +529,66 @@ class StoreSettings extends Page implements HasForms
                                 if ($snippet === '' || Store::sanitizeMapEmbed($snippet) !== null) {
                                     return;
                                 }
-                                $fail('This does not look like a map embed. Paste the whole snippet from <iframe to </iframe>, with an https:// address and nothing before or after it.');
+                                $fail(__('admin.settings.help.contact_map_embed_invalid'));
                             })
                             ->columnSpanFull(),
                     ]),
 
-                Section::make('History / About')
-                    ->description('Your story: how the business started, what it has built since, and the numbers you are proud of. Shoppers who read this page buy with more confidence — especially for made-to-order and trade work.')
+                Section::make(__('admin.settings.section.about'))
+                    ->description(__('admin.settings.section_help.about'))
                     ->collapsible()
                     ->columns(2)
                     ->schema([
                         Toggle::make('about_enabled')
-                            ->label('Show history page')
-                            ->helperText('The page lives at /about and your storefront footer links to it. Off by default — switch it on once there is something to read, since an empty history page is worse than none.')
+                            ->label(__('admin.settings.field.about_enabled'))
+                            ->helperText(__('admin.settings.help.about_enabled'))
                             ->columnSpanFull(),
                         TextInput::make('about_heading')
-                            ->label('Heading')
-                            ->placeholder('Our story')
+                            ->label(__('admin.settings.field.about_heading'))
+                            ->placeholder(__('admin.settings.ph.about_heading'))
                             ->maxLength(120)
-                            ->helperText('Leave empty to use the default wording.'),
+                            ->helperText(__('admin.settings.help.default_wording')),
                         TextInput::make('about_founded_year')
-                            ->label('Founded in')
+                            ->label(__('admin.settings.field.about_founded_year'))
                             ->numeric()
                             ->minValue(1800)
                             ->maxValue((int) date('Y'))
                             ->placeholder((string) (date('Y') - 20))
-                            ->helperText('Shown above the heading, e.g. “Since 1998”. Leave empty to hide it.'),
+                            ->helperText(__('admin.settings.help.about_founded_year')),
                         Textarea::make('about_intro')
-                            ->label('Intro text')
+                            ->label(__('admin.settings.field.about_intro'))
                             ->rows(3)
                             ->maxLength(600)
-                            ->placeholder('Three generations, one workshop, and the same obsession with a straight edge.')
-                            ->helperText('One or two sentences under the heading. Leave empty to use the default wording.')
+                            ->placeholder(__('admin.settings.ph.about_intro'))
+                            ->helperText(__('admin.settings.help.about_intro'))
                             ->columnSpanFull(),
                         Textarea::make('about_story')
-                            ->label('The story')
+                            ->label(__('admin.settings.field.about_story'))
                             ->rows(10)
                             ->maxLength(6000)
-                            ->placeholder("We started in a rented garage with one saw and a van…\n\nLeave a blank line between paragraphs.")
-                            ->helperText('The main text. Blank lines become paragraphs — write it the way you would tell it.')
+                            ->placeholder(__('admin.settings.ph.about_story'))
+                            ->helperText(__('admin.settings.help.about_story'))
                             ->columnSpanFull(),
                         Repeater::make('about_milestones')
-                            ->label('Milestones')
-                            ->helperText('Turning points, shown as a timeline in the order below. Drag to reorder — newest-first is fine if that reads better.')
+                            ->label(__('admin.settings.field.about_milestones'))
+                            ->helperText(__('admin.settings.help.about_milestones'))
                             ->schema([
                                 TextInput::make('year')
-                                    ->label('Year')
+                                    ->label(__('admin.settings.field.milestone_year'))
                                     ->maxLength(20)
                                     ->placeholder('1998')
-                                    ->helperText('Free text — “1998” or “1998–2003” both work.')
+                                    ->helperText(__('admin.settings.help.milestone_year'))
                                     ->columnSpan(1),
                                 TextInput::make('title')
-                                    ->label('What happened')
+                                    ->label(__('admin.settings.field.milestone_title'))
                                     ->maxLength(120)
-                                    ->placeholder('The first workshop')
+                                    ->placeholder(__('admin.settings.ph.milestone_title'))
                                     ->columnSpan(2),
                                 Textarea::make('text')
-                                    ->label('Details (optional)')
+                                    ->label(__('admin.settings.field.milestone_text'))
                                     ->rows(2)
                                     ->maxLength(600)
-                                    ->placeholder('Two machines, four people and our first contract.')
+                                    ->placeholder(__('admin.settings.ph.milestone_text'))
                                     ->columnSpanFull(),
                             ])
                             ->columns(3)
@@ -573,22 +598,22 @@ class StoreSettings extends Page implements HasForms
                             ->cloneable()
                             ->defaultItems(0)
                             ->itemLabel(fn (array $state): ?string => trim(($state['year'] ?? '') . ' · ' . ($state['title'] ?? ''), ' ·') ?: null)
-                            ->addActionLabel('Add a milestone')
+                            ->addActionLabel(__('admin.settings.action.add_milestone'))
                             ->columnSpanFull(),
                         Repeater::make('about_stats')
-                            ->label('Numbers')
-                            ->helperText('A short row of figures — years in business, orders delivered, square metres of workshop. Three or four read best.')
+                            ->label(__('admin.settings.field.about_stats'))
+                            ->helperText(__('admin.settings.help.about_stats'))
                             ->schema([
                                 TextInput::make('value')
-                                    ->label('Figure')
+                                    ->label(__('admin.settings.field.stat_value'))
                                     ->maxLength(20)
                                     ->placeholder('25+')
-                                    ->helperText('Keep it short — it is set large.')
+                                    ->helperText(__('admin.settings.help.stat_value'))
                                     ->columnSpan(1),
                                 TextInput::make('label')
-                                    ->label('What it counts')
+                                    ->label(__('admin.settings.field.stat_label'))
                                     ->maxLength(80)
-                                    ->placeholder('years in business')
+                                    ->placeholder(__('admin.settings.ph.stat_label'))
                                     ->columnSpan(2),
                             ])
                             ->columns(3)
@@ -598,25 +623,25 @@ class StoreSettings extends Page implements HasForms
                             ->cloneable()
                             ->defaultItems(0)
                             ->itemLabel(fn (array $state): ?string => trim(($state['value'] ?? '') . ' ' . ($state['label'] ?? '')) ?: null)
-                            ->addActionLabel('Add a number')
+                            ->addActionLabel(__('admin.settings.action.add_number'))
                             ->columnSpanFull(),
                         FileUpload::make('about_image_1')
-                            ->label('Image 1')
+                            ->label(__('admin.settings.field.about_image', ['number' => 1]))
                             ->image()
                             ->disk('public')
                             ->directory('about')
                             ->maxSize(4096)
-                            ->helperText('Up to three photos — the workshop, the team, the building. Landscape shots sit best.')
+                            ->helperText(__('admin.settings.help.about_images'))
                             ->columnSpanFull(),
                         FileUpload::make('about_image_2')
-                            ->label('Image 2')
+                            ->label(__('admin.settings.field.about_image', ['number' => 2]))
                             ->image()
                             ->disk('public')
                             ->directory('about')
                             ->maxSize(4096)
                             ->columnSpanFull(),
                         FileUpload::make('about_image_3')
-                            ->label('Image 3')
+                            ->label(__('admin.settings.field.about_image', ['number' => 3]))
                             ->image()
                             ->disk('public')
                             ->directory('about')
@@ -626,42 +651,42 @@ class StoreSettings extends Page implements HasForms
                     ]), // end Storefront tab
 
                 // ───────────────────── CURRENCY & DOMAIN ─────────────────────
-                Tab::make('Currency & domain')
+                Tab::make(__('admin.settings.nav.tab_currency_domain'))
                     ->icon(Heroicon::OutlinedGlobeAlt)
                     ->schema([
-                Section::make('Currency')
-                    ->description('Customers can switch the displayed currency in the storefront header; you\'re still paid in your base currency.')
+                Section::make(__('admin.settings.section.currency'))
+                    ->description(__('admin.settings.section_help.currency'))
                     ->schema([
                         Select::make('currency')
-                            ->label('Base currency')
-                            ->helperText('The currency you price products in and get paid in.')
+                            ->label(__('admin.settings.field.currency'))
+                            ->helperText(__('admin.settings.help.currency'))
                             ->options(Money::options())
                             ->required()
                             ->default('EUR')
                             ->live(),
                         CheckboxList::make('display_currencies')
-                            ->label('Customer display currencies')
-                            ->helperText('Currencies customers can switch their view to. Your base currency is always available.')
+                            ->label(__('admin.settings.field.display_currencies'))
+                            ->helperText(__('admin.settings.help.display_currencies'))
                             ->options(Money::options())
                             ->columns(2)
                             ->bulkToggleable(),
                         KeyValue::make('fx_rates')
-                            ->label('Exchange rates from base currency')
-                            ->helperText('Units of target per 1 unit of base. E.g. if base is EUR and 1 EUR = 1.09 USD, enter USD → 1.09. You do not need a row for your base currency.')
-                            ->keyLabel('Currency code')
-                            ->valueLabel('Rate from base')
+                            ->label(__('admin.settings.field.fx_rates'))
+                            ->helperText(__('admin.settings.help.fx_rates'))
+                            ->keyLabel(__('admin.settings.field.fx_key'))
+                            ->valueLabel(__('admin.settings.field.fx_value'))
                             ->keyPlaceholder('USD')
                             ->valuePlaceholder('1.09')
                             ->reorderable(false),
                     ]),
 
-                Section::make('Custom domain')
-                    ->description('Optional. Use your own domain instead of the *.ganvo.lvh.me subdomain.')
+                Section::make(__('admin.settings.section.custom_domain'))
+                    ->description(__('admin.settings.section_help.custom_domain'))
                     ->schema([
                         TextInput::make('custom_domain')
-                            ->label('Domain')
+                            ->label(__('admin.settings.field.custom_domain'))
                             ->placeholder('shop.acmecorp.com')
-                            ->helperText('Lowercase, no scheme, no path. After saving, follow the instructions below to verify ownership.')
+                            ->helperText(__('admin.settings.help.custom_domain'))
                             ->rule('regex:/^[a-z0-9][a-z0-9.\-]+[a-z0-9]$/')
                             ->maxLength(255)
                             ->unique(table: 'stores', column: 'custom_domain', ignorable: fn () => $this->getStore())
@@ -670,49 +695,49 @@ class StoreSettings extends Page implements HasForms
                     ]), // end Currency & domain tab
 
                 // ─────────────────── CHECKOUT & SHIPPING ───────────────────
-                Tab::make('Checkout & shipping')
+                Tab::make(__('admin.settings.nav.tab_checkout_shipping'))
                     ->icon(Heroicon::OutlinedShoppingCart)
                     ->schema([
-                Section::make('Customer accounts')
-                    ->description('Decide whether shoppers must sign in to check out, or can buy as guests.')
+                Section::make(__('admin.settings.section.customer_accounts'))
+                    ->description(__('admin.settings.section_help.customer_accounts'))
                     ->schema([
                         Radio::make('checkout_mode')
-                            ->label('Checkout mode')
-                            ->options(\App\Models\Store::CHECKOUT_MODES)
+                            ->label(__('admin.settings.field.checkout_mode'))
+                            ->options(\App\Models\Store::checkoutModeOptions())
                             ->default(\App\Models\Store::CHECKOUT_BOTH)
                             ->required(),
                         Toggle::make('allow_registration')
-                            ->label('Allow new customer registrations')
-                            ->helperText('When off, the storefront hides the "Create account" link. Existing customers can still sign in.')
+                            ->label(__('admin.settings.field.allow_registration'))
+                            ->helperText(__('admin.settings.help.allow_registration'))
                             ->default(true),
                     ]),
 
-                Section::make('Signup form fields')
-                    ->description('Choose which optional fields your storefront signup form collects. Each field can be enabled and, separately, marked required.')
+                Section::make(__('admin.settings.section.signup_fields'))
+                    ->description(__('admin.settings.section_help.signup_fields'))
                     ->collapsible()
                     ->columns(2)
                     ->schema([
                         // Phone
-                        Toggle::make('signup_phone_enabled')->label('Collect phone number')->columnSpan(1),
-                        Toggle::make('signup_phone_required')->label('Required')->helperText('Only honored when "Collect" is on.')->columnSpan(1),
+                        Toggle::make('signup_phone_enabled')->label(__('admin.settings.field.signup_phone_enabled'))->columnSpan(1),
+                        Toggle::make('signup_phone_required')->label(__('admin.settings.field.signup_required'))->helperText(__('admin.settings.help.signup_required'))->columnSpan(1),
                         // Birthday
-                        Toggle::make('signup_birthday_enabled')->label('Collect birthday')->columnSpan(1),
-                        Toggle::make('signup_birthday_required')->label('Required')->columnSpan(1),
+                        Toggle::make('signup_birthday_enabled')->label(__('admin.settings.field.signup_birthday_enabled'))->columnSpan(1),
+                        Toggle::make('signup_birthday_required')->label(__('admin.settings.field.signup_required'))->columnSpan(1),
                         // Shipping address (4 sub-inputs rendered together at signup)
-                        Toggle::make('signup_shipping_address_enabled')->label('Collect shipping address')->columnSpan(1),
-                        Toggle::make('signup_shipping_address_required')->label('Required')->columnSpan(1),
+                        Toggle::make('signup_shipping_address_enabled')->label(__('admin.settings.field.signup_shipping_address_enabled'))->columnSpan(1),
+                        Toggle::make('signup_shipping_address_required')->label(__('admin.settings.field.signup_required'))->columnSpan(1),
                         // Marketing opt-in
-                        Toggle::make('signup_marketing_optin_enabled')->label('Show marketing opt-in checkbox')->columnSpan(1),
-                        Toggle::make('signup_marketing_optin_required')->label('Required (must check to sign up)')->helperText('Useful for double opt-in flows; less common.')->columnSpan(1),
+                        Toggle::make('signup_marketing_optin_enabled')->label(__('admin.settings.field.signup_marketing_optin_enabled'))->columnSpan(1),
+                        Toggle::make('signup_marketing_optin_required')->label(__('admin.settings.field.signup_marketing_required'))->helperText(__('admin.settings.help.signup_marketing_required'))->columnSpan(1),
                     ]),
 
-                Section::make('Shipping methods')
-                    ->description('Set the shipping options customers can choose at checkout. The first row is pre-selected. Leave the list empty to use the built-in Standard (free over €50) + Express (€15) defaults.')
+                Section::make(__('admin.settings.section.shipping_methods'))
+                    ->description(__('admin.settings.section_help.shipping_methods'))
                     ->collapsible()
                     ->schema([
                         Repeater::make('shipping_methods')
                             ->label('')
-                            ->addActionLabel('Add shipping method')
+                            ->addActionLabel(__('admin.settings.action.add_shipping_method'))
                             ->reorderableWithDragAndDrop()
                             ->collapsed()
                             ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
@@ -720,18 +745,18 @@ class StoreSettings extends Page implements HasForms
                             ->columns(2)
                             ->schema([
                                 \Filament\Forms\Components\TextInput::make('label')
-                                    ->label('Display label')
+                                    ->label(__('admin.settings.field.shipping_label'))
                                     ->required()
                                     ->maxLength(120)
-                                    ->placeholder('Standard shipping')
+                                    ->placeholder(__('admin.settings.ph.shipping_label'))
                                     ->columnSpan(2),
                                 \Filament\Forms\Components\TextInput::make('description')
-                                    ->label('Subtitle')
+                                    ->label(__('admin.settings.field.shipping_description'))
                                     ->maxLength(160)
-                                    ->placeholder('3–5 business days')
+                                    ->placeholder(__('admin.settings.ph.shipping_description'))
                                     ->columnSpan(2),
                                 \Filament\Forms\Components\TextInput::make('price_cents')
-                                    ->label('Price')
+                                    ->label(__('admin.shared.field.price'))
                                     ->numeric()
                                     ->minValue(0)
                                     ->step('0.01')
@@ -742,7 +767,7 @@ class StoreSettings extends Page implements HasForms
                                     ->dehydrateStateUsing(fn ($state) => (int) round(((float) $state) * 100))
                                     ->required(),
                                 \Filament\Forms\Components\TextInput::make('free_threshold_cents')
-                                    ->label('Free over')
+                                    ->label(__('admin.settings.field.shipping_free_threshold'))
                                     ->numeric()
                                     ->minValue(0)
                                     ->step('0.01')
@@ -752,37 +777,37 @@ class StoreSettings extends Page implements HasForms
                                     ))
                                     ->formatStateUsing(fn ($state) => ($state === null || $state === '') ? null : number_format((int) $state / 100, 2, '.', ''))
                                     ->dehydrateStateUsing(fn ($state) => ($state === null || $state === '') ? null : (int) round(((float) $state) * 100))
-                                    ->helperText('Subtotal threshold above which this method is free. Leave blank to always charge the price.'),
+                                    ->helperText(__('admin.settings.help.shipping_free_threshold')),
                             ]),
                     ]),
 
-                Section::make('Visibility')
+                Section::make(__('admin.shared.section.visibility'))
                     ->schema([
                         Toggle::make('is_live')
-                            ->label('Storefront is live')
-                            ->helperText('When off, visitors see a 404.'),
+                            ->label(__('admin.settings.field.is_live'))
+                            ->helperText(__('admin.settings.help.is_live')),
                     ]),
                     ]), // end Checkout & shipping tab
 
                 // ───────────────────────── ADMIN PANEL ─────────────────────────
-                Tab::make('Admin panel')
+                Tab::make(__('admin.settings.nav.tab_admin_panel'))
                     ->icon(Heroicon::OutlinedCog6Tooth)
                     ->schema([
-                Section::make('Admin panel appearance')
-                    ->description('Brand your own admin workspace. This changes the logo and accent color you see here in the dashboard — it does not affect your storefront.')
+                Section::make(__('admin.settings.section.admin_appearance'))
+                    ->description(__('admin.settings.section_help.admin_appearance'))
                     ->columns(2)
                     ->schema([
                         FileUpload::make('admin_logo_path')
-                            ->label('Admin logo')
+                            ->label(__('admin.settings.field.admin_logo'))
                             ->image()
                             ->disk('public')
                             ->directory('admin-logos')
                             ->maxSize(2048)
-                            ->helperText('Shown in the top-left of your admin panel, replacing the Ganvo logo. Leave empty to keep the Ganvo mark. Takes effect on your next page load.')
+                            ->helperText(__('admin.settings.help.admin_logo'))
                             ->columnSpanFull(),
                         ColorPicker::make('admin_accent_color')
-                            ->label('Admin accent color')
-                            ->helperText('Tints buttons, links, and the active menu item in your admin panel. Pick any colour except black, white, or grey (those fall back to the default green). Leave empty for the default green.')
+                            ->label(__('admin.settings.field.admin_accent_color'))
+                            ->helperText(__('admin.settings.help.admin_accent_color'))
                             ->columnSpanFull(),
                     ]),
                     ]), // end Admin panel tab
@@ -1023,7 +1048,7 @@ class StoreSettings extends Page implements HasForms
 
         Notification::make()
             ->success()
-            ->title('Store settings saved')
+            ->title(__('admin.settings.notify.saved'))
             ->send();
     }
 
@@ -1033,7 +1058,7 @@ class StoreSettings extends Page implements HasForms
 
         return [
             Action::make('verify')
-                ->label('Verify domain')
+                ->label(__('admin.settings.action.verify_domain'))
                 ->icon(Heroicon::OutlinedShieldCheck)
                 ->color('info')
                 ->visible(fn () => filled($store->custom_domain) && ! $store->hasVerifiedCustomDomain())
@@ -1044,31 +1069,31 @@ class StoreSettings extends Page implements HasForms
 
                     if (in_array($token, $values, true)) {
                         $store->update(['custom_domain_verified_at' => now()]);
-                        Notification::make()->success()->title('Domain verified')->send();
+                        Notification::make()->success()->title(__('admin.settings.notify.domain_verified'))->send();
                     } else {
                         Notification::make()
                             ->danger()
-                            ->title('TXT record not found')
-                            ->body('No matching TXT record at ' . $store->custom_domain . '. DNS changes can take a few minutes to propagate.')
+                            ->title(__('admin.settings.notify.txt_not_found'))
+                            ->body(__('admin.settings.notify.txt_not_found_body', ['domain' => $store->custom_domain]))
                             ->send();
                     }
                 }),
 
             Action::make('forceVerify')
-                ->label('Force verify (dev only)')
+                ->label(__('admin.settings.action.force_verify'))
                 ->icon(Heroicon::OutlinedBeaker)
                 ->color('warning')
                 ->visible(fn () => app()->environment('local') && filled($store->custom_domain) && ! $store->hasVerifiedCustomDomain())
                 ->requiresConfirmation()
-                ->modalDescription('Skip the real DNS check and mark this domain verified. Only available in local dev.')
+                ->modalDescription(__('admin.settings.help.force_verify'))
                 ->action(function () use ($store) {
                     $store->ensureVerificationToken();
                     $store->update(['custom_domain_verified_at' => now()]);
-                    Notification::make()->success()->title('Domain force-verified')->send();
+                    Notification::make()->success()->title(__('admin.settings.notify.domain_force_verified'))->send();
                 }),
 
             Action::make('unverify')
-                ->label('Remove verification')
+                ->label(__('admin.settings.action.unverify'))
                 ->icon(Heroicon::OutlinedXMark)
                 ->color('danger')
                 ->visible(fn () => $store->hasVerifiedCustomDomain())
@@ -1078,7 +1103,7 @@ class StoreSettings extends Page implements HasForms
                         'custom_domain_verified_at' => null,
                         'custom_domain_verification_token' => null,
                     ]);
-                    Notification::make()->warning()->title('Domain unverified')->send();
+                    Notification::make()->warning()->title(__('admin.settings.notify.domain_unverified'))->send();
                 }),
         ];
     }

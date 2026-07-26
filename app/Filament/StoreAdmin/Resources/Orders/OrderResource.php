@@ -19,6 +19,25 @@ class OrderResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingBag;
 
+    // Navigation + model labels come from translations rather than the
+    // static $navigationLabel / $modelLabel properties: a property
+    // initialiser cannot call __(), and Filament's fallback derivation
+    // from the class name is English-only.
+    public static function getNavigationLabel(): string
+    {
+        return __('admin.orders.nav.label');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('admin.orders.nav.model');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('admin.orders.nav.model_plural');
+    }
+
     public static function table(Table $table): Table
     {
         return OrdersTable::configure($table);

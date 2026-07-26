@@ -28,17 +28,17 @@ class StoreStats extends StatsOverviewWidget
             ->count();
 
         return [
-            Stat::make('Active products', $activeProducts)
-                ->description('Visible in your storefront')
+            Stat::make(__('admin.widgets.field.active_products'), $activeProducts)
+                ->description(__('admin.widgets.help.active_products'))
                 ->color('primary'),
 
-            Stat::make('Total orders', number_format($totalOrders))
-                ->description($ordersLast7 . ' in the last 7 days')
+            Stat::make(__('admin.widgets.field.total_orders'), number_format($totalOrders))
+                ->description(__('admin.widgets.help.orders_last_7', ['count' => $ordersLast7]))
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('success'),
 
-            Stat::make('Revenue', '$' . number_format($paidRevenue / 100, 2))
-                ->description('Paid orders only')
+            Stat::make(__('admin.widgets.field.revenue'), '$' . number_format($paidRevenue / 100, 2))
+                ->description(__('admin.widgets.help.revenue_paid_only'))
                 ->color('warning'),
         ];
     }

@@ -13,7 +13,7 @@ class ListCollections extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make()->label('Add collection'),
+            CreateAction::make()->label(__('admin.collections.action.create')),
         ];
     }
 }

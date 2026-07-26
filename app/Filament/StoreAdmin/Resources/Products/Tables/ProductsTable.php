@@ -27,27 +27,30 @@ class ProductsTable
                     ->circular()
                     ->defaultImageUrl('https://placehold.co/40x40?text=%E2%80%94'),
                 TextColumn::make('name')
+                    ->label(__('admin.shared.field.name'))
                     ->searchable()
                     ->weight('bold'),
                 TextColumn::make('slug')
+                    ->label(__('admin.shared.field.slug'))
                     ->searchable()
                     ->color('gray')
                     ->size('sm'),
                 TextColumn::make('price_cents')
-                    ->label('Price')
+                    ->label(__('admin.shared.field.price'))
                     // The store's base currency is the source of truth — the
                     // legacy per-product `currency` column is ignored now.
                     ->money(fn (Product $r) => $r->tenant?->store?->currency ?? 'EUR')
                     ->state(fn (Product $r) => $r->price_cents / 100)
                     ->sortable(),
                 TextColumn::make('stock_quantity')
-                    ->label('Stock')
+                    ->label(__('admin.products.field.stock'))
                     ->numeric()
                     ->sortable(),
                 IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label(__('admin.shared.field.active'))
                     ->boolean(),
                 TextColumn::make('updated_at')
+                    ->label(__('admin.shared.field.updated_at'))
                     ->since()
                     ->sortable()
                     ->toggleable(),

@@ -117,6 +117,29 @@ class ThemeRegistry
      */
     public static function options(): array
     {
+        // Theme NAMES are brand nouns — Atelier, Volt, Brick. They are the same
+        // word in every language and are deliberately not translated.
         return array_map(fn ($t) => $t['name'], self::all());
+    }
+
+    /**
+     * The picker blurb for each theme, translated. Kept apart from all() so the
+     * English text there stays the single source for the key list and for any
+     * caller that wants the untranslated original.
+     *
+     * @return array<string, string>
+     */
+    public static function descriptions(): array
+    {
+        $out = [];
+
+        foreach (self::all() as $key => $theme) {
+            // A theme added without a translation falls back to its English
+            // blurb rather than rendering the raw key.
+            $line = __("admin.themes.{$key}");
+            $out[$key] = $line === "admin.themes.{$key}" ? $theme['description'] : $line;
+        }
+
+        return $out;
     }
 }

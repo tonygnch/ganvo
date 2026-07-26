@@ -17,10 +17,14 @@ class CollectionForm
     {
         return $schema
             ->components([
-                Section::make('Identity')
+                Section::make(__('admin.collections.section.identity'))
                     ->columns(2)
                     ->schema([
                         TextInput::make('title')
+                            // Explicit even where Filament would derive the
+                            // same English word from the attribute — that
+                            // derivation never translates.
+                            ->label(__('admin.collections.field.title'))
                             ->required()
                             ->maxLength(160)
                             ->live(onBlur: true)
@@ -30,6 +34,7 @@ class CollectionForm
                                 ? null
                                 : $set('slug', Str::slug((string) $state))),
                         TextInput::make('slug')
+                            ->label(__('admin.shared.field.slug'))
                             ->required()
                             ->maxLength(160)
                             ->unique(
@@ -38,31 +43,32 @@ class CollectionForm
                                 ignoreRecord: true,
                                 modifyRuleUsing: fn ($rule) => $rule->where('tenant_id', auth()->user()?->tenant_id),
                             )
-                            ->helperText('URL part: /collections/{slug}.'),
+                            ->helperText(__('admin.collections.help.slug')),
                         Textarea::make('description')
+                            ->label(__('admin.shared.field.description'))
                             ->rows(3)
                             ->maxLength(2000)
                             ->columnSpanFull()
-                            ->helperText('Optional. Shown on the collection page header.'),
+                            ->helperText(__('admin.collections.help.description')),
                     ]),
 
-                Section::make('Banner')
+                Section::make(__('admin.collections.section.banner'))
                     ->schema([
                         FileUpload::make('banner_path')
-                            ->label('Banner image')
+                            ->label(__('admin.collections.field.banner'))
                             ->image()
                             ->disk('public')
                             ->directory('collections')
                             ->maxSize(4096)
                             ->imageEditor()
-                            ->helperText('Wide rectangle works best (e.g. 1600 × 600). Shown at the top of the collection page; themes can also use it as a strip backdrop on the home.'),
+                            ->helperText(__('admin.collections.help.banner')),
                     ]),
 
-                Section::make('Products')
-                    ->description('Pick which products belong to this collection — and use drag-handles in the storefront grid order (set in the next field) to control how they appear. A product can sit in any number of collections.')
+                Section::make(__('admin.collections.section.products'))
+                    ->description(__('admin.collections.section_help.products'))
                     ->schema([
                         Select::make('products')
-                            ->label('Products in this collection')
+                            ->label(__('admin.collections.field.products'))
                             ->multiple()
                             ->relationship(
                                 name: 'products',
@@ -72,29 +78,30 @@ class CollectionForm
                             )
                             ->preload()
                             ->searchable()
-                            ->helperText('Order of selection sets the storefront order; you can re-order after saving via drag in this picker.'),
+                            ->helperText(__('admin.collections.help.products')),
                     ]),
 
-                Section::make('Display')
+                Section::make(__('admin.collections.section.display'))
                     ->columns(2)
                     ->schema([
                         Toggle::make('is_featured')
-                            ->label('Show as a strip on the homepage')
+                            ->label(__('admin.collections.field.is_featured'))
                             ->default(false)
-                            ->helperText('When on, this collection renders as a named row of products on the storefront homepage.'),
+                            ->helperText(__('admin.collections.help.is_featured')),
                         Toggle::make('is_active')
-                            ->label('Visible to customers')
+                            ->label(__('admin.collections.field.is_active'))
                             ->default(true)
-                            ->helperText('When off, the collection and its /collections/{slug} page are hidden — products inside still appear elsewhere.'),
+                            ->helperText(__('admin.collections.help.is_active')),
                         Toggle::make('show_in_menu')
-                            ->label('Show in header navigation')
+                            ->label(__('admin.collections.field.show_in_menu'))
                             ->default(true)
-                            ->helperText('When the merchant has set up a Collections dropdown in their header menu, this collection appears as a link inside it. Turn off to keep the collection accessible by URL but hide it from the nav.'),
+                            ->helperText(__('admin.collections.help.show_in_menu')),
                         TextInput::make('sort_order')
+                            ->label(__('admin.shared.field.sort_order'))
                             ->numeric()
                             ->minValue(0)
                             ->default(0)
-                            ->helperText('Lower numbers appear first when multiple collections are featured on the homepage.'),
+                            ->helperText(__('admin.collections.help.sort_order')),
                     ]),
             ]);
     }
