@@ -185,6 +185,7 @@ class SitePageSchemas
         $fields['contact_phone'] = $f('contact_phone', 'site.marketing.contact.phone', 'Contact phone', 'Shown as a tel link. Leave blank to hide.', 'text', 40, 'Contact');
         $fields['contact_instagram'] = $f('contact_instagram', 'site.marketing.contact.instagram', 'Instagram URL', 'Full link. Leave blank to hide.', 'text', 200, 'Contact');
         $fields['contact_facebook'] = $f('contact_facebook', 'site.marketing.contact.facebook', 'Facebook URL', 'Full link. Leave blank to hide.', 'text', 200, 'Contact');
+        $fields['contact_x'] = $f('contact_x', 'site.marketing.contact.x', 'X (Twitter) URL', 'Full link. Leave blank to hide.', 'text', 200, 'Contact');
 
         // ---- Contact form labels ----
         $formLabels = [

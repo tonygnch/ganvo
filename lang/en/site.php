@@ -134,6 +134,7 @@ return [
             'phone' => '',
             'instagram' => '',
             'facebook' => '',
+            'x'         => 'https://x.com/Ganvox1',
             'direct' => 'Prefer email?',
             'thanks' => 'Thanks — we’ve received your message. We’ll be in touch within one business day.',
             'error_captcha' => 'We couldn\'t verify you\'re human. Please try again.',

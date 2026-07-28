@@ -88,6 +88,7 @@
     $cEmail = $cs['contact_email'] ?? __('site.marketing.contact.email');
     $cPhone = $cs['contact_phone'] ?? '';
     $cIg    = $cs['contact_instagram'] ?? '';
+    $cX     = $cs['contact_x'] ?? '';
     $cFb    = $cs['contact_facebook'] ?? '';
 
     // Sections for the "you are here" status rail (id ⇒ label).
@@ -398,6 +399,18 @@
             <div class="m-footer__meta">
                 @if ($cEmail)
                     <a href="mailto:{{ $cEmail }}">{{ $cEmail }}</a>
+                @endif
+                @if ($cX)
+                    {{-- The X mark is a glyph, not a letter: an "X" typed in the
+                         body font reads as a close button or a multiplication
+                         sign. aria-label carries the name for anyone who cannot
+                         see the shape. --}}
+                    <a class="m-footer__social" href="{{ $cX }}" target="_blank" rel="noopener noreferrer"
+                       aria-label="Ganvo @ X">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path fill="currentColor" d="M17.53 3h3.02l-6.6 7.54L21.75 21h-5.98l-4.7-6.14L5.7 21H2.67l7.06-8.07L2.25 3h6.13l4.25 5.62L17.53 3Zm-1.06 16.2h1.67L7.6 4.71H5.81l10.66 14.49Z"/>
+                        </svg>
+                    </a>
                 @endif
                 <a href="#" data-cookie-settings>{{ __('site.common.cookies.settings') }}</a>
                 <span>© {{ date('Y') }} Ganvo</span>
