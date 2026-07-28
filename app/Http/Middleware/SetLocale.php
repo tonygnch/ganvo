@@ -13,31 +13,61 @@ class SetLocale
     public const COOKIE = 'ganvo_locale';
 
     /**
-     * Bulgarian ONLY, for now. The owner asked for English to come off the
-     * storefronts until it is worth maintaining properly.
+     * TWO SITES LIVE BEHIND THIS MIDDLEWARE, AND THEY DO NOT GET THE SAME
+     * ANSWER.
      *
-     * Nothing was deleted to do this: lang/en/*.php all stay on disk, so
-     * putting 'en' back in this array is the entire job of re-enabling it.
-     * Everything downstream keys off this list —
+     * The `web` group covers both ganvo.bg — our own studio site — and every
+     * client storefront on a *.ganvo.bg subdomain. There used to be ONE list
+     * here, so when English came off the storefronts it came off our own
+     * marketing site with it, and ganvo.bg went Bulgarian-only overnight. That
+     * was never the intent: a client's shop speaks to that client's customers,
+     * while ganvo.bg speaks to anyone deciding whether to hire us.
      *
-     *   - SetLocale::available() feeds every theme's language switcher, and
-     *     the themes only render that control when it offers more than one
-     *     language, so a single entry hides it rather than shipping a
-     *     one-option dropdown;
-     *   - LanguageController::switch() 404s anything not in here, so a
-     *     bookmarked /lang/en stops working rather than half-working;
-     *   - resolve() ignores a stale ganvo_locale=en cookie for the same
-     *     reason, so a returning visitor who had picked English lands on
-     *     Bulgarian instead of being stuck on a language that no longer
-     *     resolves.
+     * Nothing had to be recovered to undo it — lang/en/site.php still holds
+     * every marketing string, and the /en route and the header switcher were
+     * both still wired. Only this list said no.
      *
-     * The ORDER is still load-bearing for the day a second language returns:
-     * Symfony's getPreferredLanguage() falls back to the FIRST entry when a
-     * request carries no usable Accept-Language header, so Bulgarian must
-     * stay at the head of the list.
+     * SITE        ganvo.bg: Bulgarian and English, switcher shown.
+     * STOREFRONT  a client's shop: Bulgarian only. The themes hide their
+     *             switcher when it would offer a single language, so one entry
+     *             removes the control rather than shipping a dead dropdown.
+     *
+     * ORDER IS LOAD-BEARING in both: Symfony's getPreferredLanguage() falls
+     * back to the FIRST entry when a request carries no usable Accept-Language
+     * header, so Bulgarian stays at the head.
      */
-    public const SUPPORTED = ['bg'];
+    public const SITE = ['bg', 'en'];
+
+    public const STOREFRONT = ['bg'];
+
+    /**
+     * Every locale the PLATFORM'S OWN CONTENT is authored in — what the Super
+     * Admin content editors offer a field for, regardless of which site ends up
+     * serving it. Not what a given visitor may switch between; that is
+     * supportedFor().
+     */
+    public const SUPPORTED = self::SITE;
+
     public const DEFAULT = 'bg';
+
+    /**
+     * What THIS request's site offers a visitor.
+     *
+     * Decided on the host rather than on a resolved tenant: this middleware
+     * runs in the `web` group, which is before the storefront route group's own
+     * middleware, so at this point nothing has looked a tenant up yet. Anything
+     * that is not exactly the central domain is a client's shop.
+     */
+    public static function supportedFor(?Request $request = null): array
+    {
+        $request ??= request();
+        $central = (string) config('ganvo.central_domain');
+        $host = $request?->getHost() ?? $central;
+
+        return in_array($host, [$central, 'www.' . $central], true)
+            ? self::SITE
+            : self::STOREFRONT;
+    }
 
     /**
      * @return array<string, string> [code => native display name]
@@ -45,7 +75,7 @@ class SetLocale
     public static function available(): array
     {
         $list = [];
-        foreach (self::SUPPORTED as $code) {
+        foreach (self::supportedFor() as $code) {
             $key = 'site.lang.' . $code;
             $name = __($key);
             $list[$code] = $name === $key ? strtoupper($code) : $name;
@@ -63,19 +93,21 @@ class SetLocale
 
     private function resolve(Request $request): string
     {
+        $supported = self::supportedFor($request);
+
         $query = $request->query('lang');
-        if (is_string($query) && in_array($query, self::SUPPORTED, true)) {
+        if (is_string($query) && in_array($query, $supported, true)) {
             Cookie::queue(self::COOKIE, $query, 60 * 24 * 365);
             return $query;
         }
 
         $cookie = $request->cookie(self::COOKIE);
-        if (is_string($cookie) && in_array($cookie, self::SUPPORTED, true)) {
+        if (is_string($cookie) && in_array($cookie, $supported, true)) {
             return $cookie;
         }
 
-        $preferred = $request->getPreferredLanguage(self::SUPPORTED);
-        if (is_string($preferred) && in_array($preferred, self::SUPPORTED, true)) {
+        $preferred = $request->getPreferredLanguage($supported);
+        if (is_string($preferred) && in_array($preferred, $supported, true)) {
             return $preferred;
         }
 

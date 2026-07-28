@@ -12,7 +12,9 @@ class LanguageController extends Controller
     public function switch(Request $request): RedirectResponse
     {
         $locale = $request->route('locale');
-        abort_unless(in_array($locale, SetLocale::SUPPORTED, true), 404);
+        // The list for THIS host: /lang/en is a real switch on ganvo.bg and a
+        // 404 on a client's shop, which offers Bulgarian only.
+        abort_unless(in_array($locale, SetLocale::supportedFor($request), true), 404);
 
         Cookie::queue(SetLocale::COOKIE, $locale, 60 * 24 * 365);
 
