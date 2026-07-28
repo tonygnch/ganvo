@@ -30,7 +30,6 @@ class CategoryResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;
 
-    protected static ?int $navigationSort = 20;       // sits right after Products in nav
 
     // Nav + model labels are set explicitly instead of as static
     // properties: Filament would otherwise derive them from the model
@@ -38,6 +37,18 @@ class CategoryResource extends Resource
     // plural is pluralized with English rules. They feed the sidebar,
     // the page headings, the breadcrumbs and every "Create category" /
     // "Delete category" string Filament builds for us.
+    /*
+     | Grouped rather than one flat list of eleven. getNavigationGroup() and not
+     | the static $navigationGroup the SuperAdmin panel uses: a static property
+     | initialiser cannot call __(), so that one is stuck in English forever.
+     */
+    public static function getNavigationGroup(): ?string
+    {
+        return __('admin.nav.group.catalog');
+    }
+
+    protected static ?int $navigationSort = 20;
+
     public static function getNavigationLabel(): string
     {
         return __('admin.categories.nav.label');

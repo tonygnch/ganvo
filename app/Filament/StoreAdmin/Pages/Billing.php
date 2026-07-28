@@ -24,12 +24,23 @@ class Billing extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;
 
-    protected static ?int $navigationSort = 90;
 
     // The sidebar entry and the page heading used to be static
     // $navigationLabel / $title literals, but a property initializer can't
     // call __() — so they resolve here instead, once per request, in the
     // active locale.
+    /*
+     | Grouped rather than one flat list of eleven. getNavigationGroup() and not
+     | the static $navigationGroup the SuperAdmin panel uses: a static property
+     | initialiser cannot call __(), so that one is stuck in English forever.
+     */
+    public static function getNavigationGroup(): ?string
+    {
+        return __('admin.nav.group.account');
+    }
+
+    protected static ?int $navigationSort = 10;
+
     public static function getNavigationLabel(): string
     {
         return __('admin.billing.nav.billing');

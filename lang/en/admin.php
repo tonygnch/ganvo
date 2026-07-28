@@ -860,5 +860,13 @@ Leave a blank line between paragraphs.',
             ],
         ],
     ],
+    'nav' => [
+        'group' => [
+            'sales' => 'Sales',
+            'catalog' => 'Catalog',
+            'shop' => 'Storefront',
+            'account' => 'Account',
+        ],
+    ],
 
 ];

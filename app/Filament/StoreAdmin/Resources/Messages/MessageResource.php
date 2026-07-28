@@ -29,7 +29,6 @@ class MessageResource extends Resource
 
     // After the catalog tools (Categories 20 → Discounts 22) but well ahead
     // of Billing (90) — enquiries are day-to-day work, like orders.
-    protected static ?int $navigationSort = 30;
 
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -37,6 +36,18 @@ class MessageResource extends Resource
     // static $navigationLabel / $modelLabel properties: a property
     // initialiser cannot call __(), and Filament's fallback derivation
     // from the class name is English-only.
+    /*
+     | Grouped rather than one flat list of eleven. getNavigationGroup() and not
+     | the static $navigationGroup the SuperAdmin panel uses: a static property
+     | initialiser cannot call __(), so that one is stuck in English forever.
+     */
+    public static function getNavigationGroup(): ?string
+    {
+        return __('admin.nav.group.sales');
+    }
+
+    protected static ?int $navigationSort = 20;
+
     public static function getNavigationLabel(): string
     {
         return __('admin.messages.nav.label');

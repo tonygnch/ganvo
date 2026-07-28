@@ -11,6 +11,7 @@ use App\Filament\StoreAdmin\Widgets\RevenueChart;
 use App\Filament\StoreAdmin\Widgets\StoreStats;
 use Filament\Pages\Dashboard;
 use Filament\Navigation\MenuItem;
+use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
@@ -98,6 +99,26 @@ class StoreAdminPanelProvider extends PanelProvider
                 RevenueChart::class,
                 RecentOrders::class,
             ])
+            /*
+             | GROUP ORDER. Declaring the groups here is what fixes their
+             | sequence — otherwise Filament orders them by whichever item it
+             | happened to register first, which is alphabetical by class and
+             | means nothing to a shop owner.
+             |
+             | The order is the working day: what came in from customers, then
+             | what you sell, then how the shop looks, then the money side with
+             | Ganvo. Dashboard stays outside any group, pinned at the top.
+             |
+             | Closure labels, because a panel definition is cacheable and a
+             | string baked in at cache time would freeze the language.
+             */
+            ->navigationGroups([
+                NavigationGroup::make(fn (): string => __('admin.nav.group.sales')),
+                NavigationGroup::make(fn (): string => __('admin.nav.group.catalog')),
+                NavigationGroup::make(fn (): string => __('admin.nav.group.shop')),
+                NavigationGroup::make(fn (): string => __('admin.nav.group.account')),
+            ])
+
             /*
              | LANGUAGE SWITCHER, in the user menu behind the avatar.
              |

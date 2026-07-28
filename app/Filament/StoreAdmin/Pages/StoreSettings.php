@@ -42,6 +42,18 @@ class StoreSettings extends Page implements HasForms
 
     // Navigation label and page title are resolved at request time, not as
     // static property defaults, so the active locale decides the wording.
+    /*
+     | Grouped rather than one flat list of eleven. getNavigationGroup() and not
+     | the static $navigationGroup the SuperAdmin panel uses: a static property
+     | initialiser cannot call __(), so that one is stuck in English forever.
+     */
+    public static function getNavigationGroup(): ?string
+    {
+        return __('admin.nav.group.shop');
+    }
+
+    protected static ?int $navigationSort = 10;
+
     public static function getNavigationLabel(): string
     {
         return __('admin.settings.nav.label');

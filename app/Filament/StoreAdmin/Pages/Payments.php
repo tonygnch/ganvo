@@ -31,11 +31,22 @@ class Payments extends Page
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
-    protected static ?int $navigationSort = 91; // right after Billing
 
     // Sidebar entry + page heading. Static property initializers can't call
     // __(), so both resolve here in the active locale instead of being
     // hardcoded English literals.
+    /*
+     | Grouped rather than one flat list of eleven. getNavigationGroup() and not
+     | the static $navigationGroup the SuperAdmin panel uses: a static property
+     | initialiser cannot call __(), so that one is stuck in English forever.
+     */
+    public static function getNavigationGroup(): ?string
+    {
+        return __('admin.nav.group.account');
+    }
+
+    protected static ?int $navigationSort = 20;
+
     public static function getNavigationLabel(): string
     {
         return __('admin.payments.nav.label');

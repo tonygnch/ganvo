@@ -26,6 +26,18 @@ class OrderResource extends Resource
     // static $navigationLabel / $modelLabel properties: a property
     // initialiser cannot call __(), and Filament's fallback derivation
     // from the class name is English-only.
+    /*
+     | Grouped rather than one flat list of eleven. getNavigationGroup() and not
+     | the static $navigationGroup the SuperAdmin panel uses: a static property
+     | initialiser cannot call __(), so that one is stuck in English forever.
+     */
+    public static function getNavigationGroup(): ?string
+    {
+        return __('admin.nav.group.sales');
+    }
+
+    protected static ?int $navigationSort = 10;
+
     public static function getNavigationLabel(): string
     {
         return __('admin.orders.nav.label');

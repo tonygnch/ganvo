@@ -36,7 +36,18 @@ class DiscountResource extends Resource
 
     // Sit after Collections (21) — promotional plumbing belongs near
     // the merchandising tools, distinct from the day-to-day Orders nav.
-    protected static ?int $navigationSort = 22;
+
+    /*
+     | Grouped rather than one flat list of eleven. getNavigationGroup() and not
+     | the static $navigationGroup the SuperAdmin panel uses: a static property
+     | initialiser cannot call __(), so that one is stuck in English forever.
+     */
+    public static function getNavigationGroup(): ?string
+    {
+        return __('admin.nav.group.catalog');
+    }
+
+    protected static ?int $navigationSort = 40;
 
     public static function getNavigationLabel(): string
     {
