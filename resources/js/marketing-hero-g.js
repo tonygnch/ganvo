@@ -81,7 +81,15 @@ export default function initHeroG(host) {
     let renderer;
     try {
         renderer = new WebGLRenderer({
-            antialias: true,
+            /*
+             | MSAA only below 2x. At devicePixelRatio 2 the display is already
+             | resolving the edges, and on a scene made of soft glass and glow
+             | the extra samples are close to invisible — but they are paid for
+             | on every one of the millions of pixels below, which is exactly
+             | the budget that runs out on a weak GPU. It is a context-creation
+             | flag, so this is decided once and cannot be tuned later.
+             */
+            antialias: (window.devicePixelRatio || 1) < 2,
             alpha: false,
             powerPreference: 'high-performance',
             failIfMajorPerformanceCaveat: true,
@@ -394,12 +402,37 @@ export default function initHeroG(host) {
     };
     window.addEventListener('pointerdown', onDown, { passive: true });
 
-    /* ── sizing ── */
-    const resize = () => {
-        layout(); // recomputes `small` BEFORE the DPR cap below reads it
+    /* ── sizing ────────────────────────────────────────────────────────────
+     | A DPR CAP ALONE IS NOT A BUDGET. It bounds the multiplier, not the
+     | result: the same "max 2x" gave 5.6 million pixels on a 1440 laptop and
+     | 9 million on a 27-inch display, and this scene is fill-rate bound, so
+     | the big screen paid nearly twice for the same picture. The budget caps
+     | the ANSWER instead, and the DPR cap stays as the ceiling for small
+     | windows where the budget would otherwise allow more than 2x.
+     |
+     | 3.6M is about 1.6x on a full-width desktop hero — above the point where
+     | more samples stop being visible on soft glass, and well under where a
+     | modest integrated GPU starts dropping frames.
+     |
+     | `quality` is the adaptive governor's multiplier; see it below.
+     */
+    const PIXEL_BUDGET = 3_600_000;
+
+    let quality = 1;
+
+    const applyPixelRatio = () => {
         const w = host.clientWidth || 1;
         const h = host.clientHeight || 1;
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, small ? 1.5 : 2));
+        const ceiling = Math.min(window.devicePixelRatio || 1, small ? 1.5 : 2);
+        const budgeted = Math.sqrt(PIXEL_BUDGET / Math.max(1, w * h));
+        renderer.setPixelRatio(Math.max(0.75, Math.min(ceiling, budgeted) * quality));
+    };
+
+    const resize = () => {
+        layout(); // recomputes `small` BEFORE the caps below read it
+        const w = host.clientWidth || 1;
+        const h = host.clientHeight || 1;
+        applyPixelRatio();
         renderer.setSize(w, h, false);
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
@@ -444,6 +477,14 @@ export default function initHeroG(host) {
             raf = requestAnimationFrame(frame);
         }
     }
+    /* Budget for the render call itself. A 60fps frame is 16.7ms all in —
+       animation, the browser's own compositing and the paint of everything
+       else on the page — so more than 9ms inside render() means the scene is
+       eating the frame rather than sharing it. */
+    const SLOW_FRAME_MS = 9;
+    const MIN_QUALITY = 0.6;
+    let gpuMs = 0, gpuN = 0;
+
     const frame = (now) => {
         if (!shouldRun()) { running = false; return; }
         raf = requestAnimationFrame(frame);
@@ -560,7 +601,39 @@ export default function initHeroG(host) {
             if (drops.instanceColor) drops.instanceColor.needsUpdate = true;
         }
 
+        /*
+         | ADAPTIVE QUALITY.
+         |
+         | The lag reports come from machines we cannot profile: on the GPUs we
+         | can test this never drops a frame, and the main thread costs a flat
+         | ~90ms per second whether it is drawing 1.4 or 9 million pixels — the
+         | cost is fill rate, on hardware we do not have.
+         |
+         | So the scene measures ITSELF. The rAF interval is useless for this
+         | (the loop caps at 60fps, so it reads 8ms on a machine that could do
+         | 2ms and 8ms on one that is struggling) — what is timed here is the
+         | render call alone.
+         |
+         | Downgrades need SUSTAINED evidence, never one slow frame: a GC pause
+         | or a background tab waking up would otherwise permanently degrade a
+         | machine that was coping fine. It steps down at most twice, and never
+         | back up — oscillating resolution is more distracting than a slightly
+         | softer picture, and a machine that struggled once will struggle again.
+         */
+        const t0 = performance.now();
         renderer.render(scene, camera);
+        if (quality > MIN_QUALITY) {
+            gpuMs += performance.now() - t0;
+            if (++gpuN >= 120) {
+                if (gpuMs / gpuN > SLOW_FRAME_MS) {
+                    quality = Math.max(MIN_QUALITY, quality - 0.2);
+                    applyPixelRatio();
+                }
+                gpuMs = 0;
+                gpuN = 0;
+            }
+        }
+
         if (!shown) {
             shown = true;
             setLive(true);
