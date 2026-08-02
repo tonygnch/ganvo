@@ -38,7 +38,7 @@
             /* The one merchant-controllable knob: brand accent maps to
                primary_color. Default is Sankevi's lichen — the pale grey-green
                that grows on the north face of a Rhodope pine. */
-            --accent: {{ $store->primary_color ?: '#9dae86' }};
+            --accent: {{ $store->primary_color ?: '#c39a63' }};   /* catalogue timber, lifted to carry on the forest ground */
             /* Accent used as TEXT. The moss reads at 5.9:1 on the bark ground
                but only 2.8:1 on Daylight — below even the 3.0 large-text floor —
                so it has to be darkened per mode. Darkening it globally instead
@@ -60,25 +60,34 @@
                for --mono lands on the body face instead of a browser default. */
             --mono: var(--body);
 
-            /* Core palette — damp bark ground, birch cream ink, deep moss as
-               the supporting slab. Warm off-black throughout: every neutral
-               carries yellow, never blue. */
-            --bg: #15120d;
-            --surface: #1d1912;
-            --surface2: #262117;
-            --line: #332c21;
-            --line2: #473e2f;
-            --txt: #f1ebdd;
-            --muted: #b3aa97;
-            --faint: #8a806d;
-            --moss: #3e4e36;
-            --moss-soft: #4c5f42;
-            --deep: #100e0a;
+            /* Core palette — TAKEN FROM THE CLIENT'S OWN TRADE CATALOGUE
+               rather than invented. Sampled off the cover: the forest the
+               logo is printed in (#072922), the deep silhouette along its
+               foot (#071c15), the paper it is printed on (#f6e4cf) and the
+               timber the mark is filled with (#7c5931).
+
+               Dark mode inverts the catalogue: its deep forest becomes the
+               ground and its paper becomes the ink, so the two variants are
+               the same four colours seen from either side rather than two
+               unrelated schemes. Every neutral is a desaturated forest — the
+               greens carry through the greys instead of sitting on top of
+               them. */
+            --bg: #071c15;
+            --surface: #0b2a20;
+            --surface2: #103428;
+            --line: #1a4032;
+            --line2: #275446;
+            --txt: #f6e4cf;
+            --muted: #bdad92;
+            --faint: #9b8e76;
+            --moss: #2c5c46;
+            --moss-soft: #3a7359;
+            --deep: #04120d;
             /* Ink that sits ON the accent fill. Near-black green clears AA
                (7.0:1) against the default lichen; a merchant who picks a very
                dark accent should pick a light one instead — same trade the
                other curated themes make. */
-            --on-accent: #14180e;
+            --on-accent: #071c15;
             /* The one hook into chrome we cannot otherwise touch: the native
                <select> POPUP list, scrollbars and spin buttons. Without it the
                option list opens as a light menu over the bark theme. Flipped
@@ -633,9 +642,17 @@
         // modes — we cannot recolour someone else's artwork, and silently
         // showing nothing would be worse than showing it twice.
         $csSeal = $theme->on('brand_seal') ? $theme->image('seal_image') : null;
-        $csSealDaylight = ($csSeal && str_contains($csSeal, 'mark-cream.svg'))
-            ? str_replace('mark-cream.svg', 'mark.svg', $csSeal)
-            : $csSeal;
+        // Our own shipped mark has a light and a dark colourway, so pair them.
+        // Anything a merchant uploaded is used in both modes untouched — we
+        // cannot recolour someone else's artwork, and showing nothing would be
+        // worse than showing it twice.
+        $csSealDaylight = $csSeal;
+        foreach ([['mark-cream.png', 'mark-forest.png'], ['mark-cream.svg', 'mark.svg']] as [$night, $day]) {
+            if ($csSeal && str_contains($csSeal, $night)) {
+                $csSealDaylight = str_replace($night, $day, $csSeal);
+                break;
+            }
+        }
     @endphp
 
     @if ($csAnnouncement['enabled'] && $csAnnouncement['text'] !== '')

@@ -127,21 +127,24 @@ return [
         'light' => [
             'name' => 'Daylight',
             'vars' => [
-                '--bg' => '#f2ede1',
-                '--surface' => '#faf6ec',
-                '--surface2' => '#e8e1d1',
-                '--line' => '#d8cfbb',
-                '--line2' => '#bdb199',
-                '--txt' => '#1b1810',
-                '--muted' => '#5c5545',
+                // The catalogue right way up: its paper is the ground and the
+                // green its logo is printed in is the ink. Same four colours as
+                // the dark variant, swapped over.
+                '--bg' => '#f6e4cf',
+                '--surface' => '#fdf7ec',
+                '--surface2' => '#eeddc3',
+                '--line' => '#e0cdb0',
+                '--line2' => '#c6b18f',
+                '--txt' => '#072922',
+                '--muted' => '#4a5a4a',
                 // Darkened from #7d7461, which measured 3.96:1 on the Daylight
                 // ground — under AA for the 10.5–11px letterspaced labels this
                 // token exists to set (the gutter index, the capability
                 // numerals, the counted-fact captions, every .kicker).
-                '--faint' => '#736a59',
+                '--faint' => '#5f6b57',
                 // The footer/drawer slab must RISE off a pale page, not sink
                 // below it, or both lose their edge entirely.
-                '--deep' => '#221e16',
+                '--deep' => '#071c15',
             ],
         ],
     ],
@@ -175,10 +178,17 @@ return [
             'label' => 'Brand seal',
             'hint' => 'Small square mark. Used in the nav when no logo is set, on the hero plate and behind the footer.',
             'size' => '400×400',
-            // Cream colourway: the theme is dark-native and the seal sits on the
-            // bark header, the hero plate and the footer watermark. mark.svg is
-            // the walnut master for light grounds and print.
-            'default' => '/images/brand/sankevi/mark-cream.svg',
+            // THE CLIENT'S OWN MARK, lifted from their trade catalogue — the
+            // chevron tree above SANKEVI LTD. It replaces the S-as-sawn-boards
+            // seal we drew before we had ever seen their branding; that file
+            // stays in the repo (mark.svg / mark-cream.svg) rather than being
+            // deleted, because it is still the only VECTOR mark we have and
+            // the client has not sent artwork yet.
+            //
+            // Cream colourway by default: the theme is dark-native and the seal
+            // sits on the forest header, the hero plate and the footer
+            // watermark. mark-forest.png is the pair for light grounds.
+            'default' => '/images/brand/sankevi/mark-cream.png',
         ],
     ],
 
