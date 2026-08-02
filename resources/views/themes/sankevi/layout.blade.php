@@ -567,6 +567,18 @@
             /* the chamfer belongs to a plate sitting IN the page; at the screen
                edge it reads as a rendering fault, so the bleeding corners go */
             .shelf .pcard .pic { clip-path: none; }
+            /* AN ODD NUMBER OF PRODUCTS LEAVES THE LAST CARD ALONE IN ITS ROW.
+               Two columns, and the grid paints the hairline colour as its own
+               background so the 1px gaps show through — which means the empty
+               cell beside an orphan is not empty-looking at all. It renders as
+               a pale block half the screen wide, and the card next to it reads
+               as a product whose photograph stops halfway across.
+
+               `:last-child:nth-child(odd)` is exactly "alone in the last row"
+               while there are two columns: with 5 cards the 5th is odd, with 6
+               the 6th is even and already has a neighbour. Scoped inside this
+               query, so the 3- and 4-column layouts above are untouched. */
+            .shelf > *:last-child:nth-child(odd) { grid-column: 1 / -1; }
             .sec-head { margin: 66px 0 26px; }
             footer.site { margin-top: 76px; padding-top: 56px; }
         }
