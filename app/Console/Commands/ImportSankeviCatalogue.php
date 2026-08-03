@@ -233,7 +233,7 @@ class ImportSankeviCatalogue extends Command
             description: 'Рафт от масивна дървесина за стелажната система — гладко обработена повърхност и добра носимоспособност. '
                 . 'Избираш широчина и дължина; произвеждаме само комбинациите от списъка. '
                 . 'Цените са нето, в евро, без ДДС и без транспорт.',
-            imageStems: ['raft', 'shelves', 'shelf', 'raft'],
+            imageStems: ['raft', 'shelving-unit', 'shelves', 'shelf'],
         );
 
         $this->upsertMatrixProduct(
@@ -248,7 +248,7 @@ class ImportSankeviCatalogue extends Command
                 . 'тоест всяка следваща секция спестява по една рамка — по-малко материал, по-ниска цена, по-бърз монтаж. '
                 . 'Избираш широчина и дължина; произвеждаме само комбинациите от списъка. '
                 . 'Цените са нето, в евро, без ДДС и без транспорт.',
-            imageStems: ['stelazh', 'stands', 'stand', 'side-frame', 'frame'],
+            imageStems: ['stelazh', 'shelving-unit', 'stands', 'stand', 'side-frame', 'frame'],
         );
 
         foreach ($this->accessories() as $acc) {
