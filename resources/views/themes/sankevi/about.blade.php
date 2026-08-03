@@ -97,6 +97,7 @@
         .gal figure img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s cubic-bezier(.19, .74, .16, 1); }
         .gal figure:hover img { transform: scale(1.04); }
         @media (prefers-reduced-motion: reduce) { .gal figure:hover img { transform: none; } }
+        }
 
         .ab-cta { margin-top: 84px; text-align: center; }
 
@@ -152,7 +153,7 @@
                         </div>
                     @endif
                     <div class="tx">
-                        <h2>{!! __('site.storefront.sankevi.story_h2_html') !!}</h2>
+                        <h2>{!! $theme->copy('story_h2_html') !!}</h2>
                         <p>{{ $theme->copy('story_body') }}</p>
                     </div>
                 </section>

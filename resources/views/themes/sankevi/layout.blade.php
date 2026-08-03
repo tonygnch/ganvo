@@ -515,6 +515,17 @@
         .fgrid { display: grid; grid-template-columns: 2.2fr 1fr 1fr 1fr; gap: 46px; }
         .fgrid .logo { font-size: 23px; }
         .fgrid .ftag { color: var(--muted); max-width: 32ch; margin-top: 18px; font-size: 14.5px; }
+
+        /* CERTIFICATION LOCKUP. A chain-of-custody mark is a claim a buyer can
+           check, not decoration, so it carries its licence code and sits in the
+           brand column of every page rather than only on About.
+           One artwork, not two: the footer is a dark slab in BOTH modes (see
+           the html[data-mode="light"] footer.site rule below), so the cream
+           mark is correct throughout and there is no daylight swap to keep in
+           step. */
+        .fcert { display: flex; align-items: center; gap: 14px; margin-top: 26px; }
+        .fcert img { display: block; width: auto; height: 58px; }
+        .fcert .fcert-code { font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); line-height: 1.7; }
         .fcol h4 { font-size: 10.5px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--faint); margin-bottom: 18px; }
         .fcol a { display: block; font-size: 14.5px; margin-bottom: 11px; color: var(--muted); transition: color .25s ease; }
         .fcol a:hover { color: var(--accent-ink); }
@@ -653,6 +664,12 @@
                 break;
             }
         }
+
+        // The certification lockup. Both halves must be present to render:
+        // the mark without its licence code is an unverifiable badge, and the
+        // code without the mark is a bare string nobody reads.
+        $csCertMark = $theme->on('brand_cert') ? $theme->image('cert_image') : null;
+        $csCertCode = trim((string) $theme->copy('cert_code'));
     @endphp
 
     @if ($csAnnouncement['enabled'] && $csAnnouncement['text'] !== '')
@@ -796,6 +813,17 @@
                         <span>{{ $tenant->name }}</span>
                     </div>
                     <p class="ftag">{{ __('site.storefront.footer.tagline') }}</p>
+                    @if ($csCertMark)
+                        <div class="fcert">
+                            <img src="{{ $csCertMark }}"
+                                 alt="{{ __('site.storefront.sankevi.cert_alt') }}"
+                                 width="370" height="512" loading="lazy">
+                            <span class="fcert-code">
+                                {{ __('site.storefront.sankevi.cert_line') }}
+                                @if ($csCertCode)<br>{{ $csCertCode }}@endif
+                            </span>
+                        </div>
+                    @endif
                 </div>
                 <div class="fcol">
                     <h4>{{ __('site.storefront.footer.col_shop') }}</h4>

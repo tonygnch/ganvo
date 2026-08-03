@@ -89,6 +89,14 @@ return [
             'label' => 'Bark grain over the whole page',
             'default' => true,
         ],
+        /* A chain-of-custody mark is a claim a buyer can verify, so it is
+           toggleable rather than hard-coded: a merchant whose certification
+           lapses must be able to take it down themselves, without waiting on us
+           and without leaving a false claim in the footer meanwhile. */
+        'brand_cert' => [
+            'label' => 'Certification mark in the footer',
+            'default' => true,
+        ],
     ],
 
     'content' => [
@@ -101,6 +109,24 @@ return [
             'label' => 'Forest divider — the pull quote',
             'type' => 'textarea',
             'default_lang' => 'site.storefront.sankevi.forest_quote',
+        ],
+        /* The heading used to be read straight out of the lang file by the
+           Blade, so a merchant could rewrite the paragraph under it but not the
+           line itself — which left Sankevi with our invented "one family, one
+           saw" headline sitting on top of their real story. It is a copy slot
+           now, like every other line on the page. */
+        /* The licence NUMBER belongs to the merchant, not to the theme, and it
+           changes when a certificate is renewed under a new body. Keeping it as
+           editable copy means that renewal is a text edit, not a deploy. */
+        'cert_code' => [
+            'label' => 'Certification licence code',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.cert_code',
+        ],
+        'story_h2_html' => [
+            'label' => 'Workshop band — heading (HTML allowed)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.story_h2_html',
         ],
         'story_body' => [
             'label' => 'Workshop band — manifesto text',
@@ -189,6 +215,12 @@ return [
             // sits on the forest header, the hero plate and the footer
             // watermark. mark-forest.png is the pair for light grounds.
             'default' => '/images/brand/sankevi/mark-cream.png',
+        ],
+        'cert_image' => [
+            'label' => 'Certification mark',
+            'hint' => 'Shown in the footer beside the licence code. The footer is dark in both modes, so a light-on-dark artwork is correct.',
+            'size' => '370×512',
+            'default' => '/images/brand/sankevi/fsc-cream.png',
         ],
     ],
 

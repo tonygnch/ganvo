@@ -638,28 +638,24 @@ class StoreSettings extends Page implements HasForms
                             ->itemLabel(fn (array $state): ?string => trim(($state['value'] ?? '') . ' ' . ($state['label'] ?? '')) ?: null)
                             ->addActionLabel(__('admin.settings.action.add_number'))
                             ->columnSpanFull(),
-                        FileUpload::make('about_image_1')
-                            ->label(__('admin.settings.field.about_image', ['number' => 1]))
-                            ->image()
-                            ->disk('public')
-                            ->directory('about')
-                            ->maxSize(4096)
-                            ->helperText(__('admin.settings.help.about_images'))
-                            ->columnSpanFull(),
-                        FileUpload::make('about_image_2')
-                            ->label(__('admin.settings.field.about_image', ['number' => 2]))
-                            ->image()
-                            ->disk('public')
-                            ->directory('about')
-                            ->maxSize(4096)
-                            ->columnSpanFull(),
-                        FileUpload::make('about_image_3')
-                            ->label(__('admin.settings.field.about_image', ['number' => 3]))
-                            ->image()
-                            ->disk('public')
-                            ->directory('about')
-                            ->maxSize(4096)
-                            ->columnSpanFull(),
+                        /* GENERATED FROM THE CONSTANT, not written out one by
+                           one. The hydrate and save loops below already counted
+                           in ABOUT_IMAGE_SLOTS, so with the fields hand-listed
+                           raising it added storage a merchant had no way to
+                           fill — and lowering it would have orphaned an
+                           uploader that saved into nothing. One source now. */
+                        ...collect(range(1, Store::ABOUT_IMAGE_SLOTS))
+                            ->map(fn (int $n) => FileUpload::make("about_image_{$n}")
+                                ->label(__('admin.settings.field.about_image', ['number' => $n]))
+                                ->image()
+                                ->disk('public')
+                                ->directory('about')
+                                ->maxSize(4096)
+                                // The hint belongs to the group, so it goes on
+                                // the first one only rather than under all six.
+                                ->helperText($n === 1 ? __('admin.settings.help.about_images') : null)
+                                ->columnSpanFull())
+                            ->all(),
                     ]),
                     ]), // end Storefront tab
 

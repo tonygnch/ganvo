@@ -337,6 +337,9 @@ return [
             // directly above the merchant's own story and timeline on
             // /about, and platform copy claiming "four" over their own
             // "third generation" contradicts itself on one screen.
+            'cert_alt'        => 'FSC® chain-of-custody certification',
+            'cert_line'       => 'Certified timber',
+            'cert_code'       => 'FSC® CU-COC-879804',
             'story_h2_html'   => 'One family, <em>the same saw</em>',
             'story_body'      => 'The mill has stood in this clearing since our great-grandfather set the first blade in it. We still stack every board by hand, still dry it slowly, and still turn down the log that will not hold its shape.',
             'story_cta'       => 'Our story',

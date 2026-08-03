@@ -416,8 +416,25 @@ class Store extends Model
         ];
     }
 
-    /** How many story images the merchant can upload. */
-    public const ABOUT_IMAGE_SLOTS = 3;
+    /**
+     * How many story images the merchant can upload.
+     *
+     * Five, not three: the first is spent as the page's lead image, so three
+     * left a two-picture "gallery" — too few to walk through a production
+     * process, which is what most of these pages are actually about.
+     *
+     * Five and not more because the four that remain are exactly one row of the
+     * gallery grid at desktop width and two rows at tablet. Six would put a
+     * fifth tile alone on a row with three empty columns beside it, and there
+     * is no honest CSS answer to that: `span` cannot fill "the rest of the
+     * row" when auto-fit decides the column count, and asking it to span two
+     * invents an implicit column on phones. Sizing the cap to the grid is the
+     * fix that needs no hack.
+     *
+     * The form fields are generated from this number and aboutPage() takes the
+     * first N, so changing it here is the whole change.
+     */
+    public const ABOUT_IMAGE_SLOTS = 5;
 
     /**
      * History / about-page content, normalised. Same contract as
