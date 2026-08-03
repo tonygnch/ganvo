@@ -110,11 +110,6 @@ return [
             'type' => 'textarea',
             'default_lang' => 'site.storefront.sankevi.forest_quote',
         ],
-        /* The heading used to be read straight out of the lang file by the
-           Blade, so a merchant could rewrite the paragraph under it but not the
-           line itself — which left Sankevi with our invented "one family, one
-           saw" headline sitting on top of their real story. It is a copy slot
-           now, like every other line on the page. */
         /* The licence NUMBER belongs to the merchant, not to the theme, and it
            changes when a certificate is renewed under a new body. Keeping it as
            editable copy means that renewal is a text edit, not a deploy. */
@@ -122,6 +117,58 @@ return [
             'label' => 'Certification licence code',
             'type' => 'text',
             'default_lang' => 'site.storefront.sankevi.cert_code',
+        ],
+        /* The heading used to be read straight out of the lang file by the
+           Blade, so a merchant could rewrite the paragraph under it but not the
+           line itself — which left Sankevi with our invented "one family, one
+           saw" headline sitting on top of their real story. It is a copy slot
+           now, like every other line on the page. */
+        /* THE THREE COUNTERS in the "why us" band.
+           They used to be hard-coded in the Blade — a 40 km sourcing radius and
+           a 12% kiln moisture, described in the code as "yard constants". They
+           are nothing of the kind: they are claims about a particular business,
+           and for a merchant who does not fell their own timber they are simply
+           false. Sankevi shipped with all three of them on the page.
+
+           Value and label travel together as slots, because splitting them was
+           the other half of the bug: with the number in code and the label in
+           the lang file, correcting one silently left the other describing
+           something else.
+
+           The value is free text ("25+", "12%", "5") — the Blade takes the
+           leading digits for the count-up animation and keeps the rest as the
+           suffix, so a merchant types what they want to see rather than filling
+           in two fields. A value with no digits simply does not animate. */
+        'fact_1_value' => [
+            'label' => 'Why-us counter 1 — value',
+            'hint' => 'e.g. 25+ — digits animate, anything after them is shown as a suffix.',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.fact_1_value',
+        ],
+        'fact_1_label' => [
+            'label' => 'Why-us counter 1 — label',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.fact_1_label',
+        ],
+        'fact_2_value' => [
+            'label' => 'Why-us counter 2 — value',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.fact_2_value',
+        ],
+        'fact_2_label' => [
+            'label' => 'Why-us counter 2 — label',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.fact_2_label',
+        ],
+        'fact_3_value' => [
+            'label' => 'Why-us counter 3 — value',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.fact_3_value',
+        ],
+        'fact_3_label' => [
+            'label' => 'Why-us counter 3 — label',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.fact_3_label',
         ],
         'story_h2_html' => [
             'label' => 'Workshop band — heading (HTML allowed)',

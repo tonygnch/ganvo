@@ -379,8 +379,6 @@ return [
             // is turned by pointer or scroll with focus outside the control.
             'wheel_label'         => 'Product families',
             'wheel_selected'      => 'Selected: :name',
-            'stat_years_label'    => 'Years in one clearing',
-            'stat_radius_label'   => 'Km sourcing radius',
             // pickup_* are no longer referenced: the "off the stack" trio is
             // gone and the landing page shows no products at all. The keys
             // stay so a theme or translation still reading them cannot break.
@@ -411,17 +409,28 @@ return [
 
             // ——— WHY US. Reasons, not a biography: the family history lives
             // at /about and is pointed at from here with a single link.
+            // ——— THE FACTS IN THE "WHY US" BAND.
+            // Every number is printed in the client's catalogue or is a direct
+            // count of a list it enumerates. The value is free text: leading
+            // digits animate, the remainder is shown as a suffix.
+            'fact_1_value'    => '25+',
+            'fact_1_label'    => 'Years in woodworking',
+            'fact_2_value'    => '5',
+            'fact_2_label'    => 'Steps in production',
+            'fact_3_value'    => '34',
+            'fact_3_label'    => 'Sizes in the price list',
+
             'why_eyebrow'     => 'Why us',
             'why_h2_html'     => 'The reasons they <em>come back</em>',
-            'why_1_h'         => 'A quote within one working day',
-            'why_1_p'         => 'Send a list or a drawing. We price it to the last board and answer in writing.',
-            'why_2_h'         => 'The timber is ours from the start',
-            'why_2_p'         => 'Felled in certified forest within a 40 km radius. We know where every log came from.',
-            'why_3_h'         => 'One supplier for the whole build',
-            'why_3_p'         => 'Beams, boards, panelling, skirting and decking from one place — one delivery, one invoice.',
-            'why_4_h'         => 'The same person answers',
-            'why_4_p'         => 'Whoever takes the order is the one who cuts it. There is nobody to pass it along to.',
-            'why_about'       => 'Three generations in one place',
+            'why_1_h'         => 'We manufacture in-house',
+            'why_1_p'         => 'Sawing, drying, calibrating and packing all happen with us. We take the wood from raw timber to finished product.',
+            'why_2_h'         => '25 years for the Dutch market',
+            'why_2_p'         => 'We have worked with the Dutch market for 25 years. Reliable production and export experience stand behind our long-term partnerships with customers across Europe.',
+            'why_3_h'         => 'Modularity that saves material',
+            'why_3_p'         => 'The system extends sideways on a shared side frame. Each further bay saves one frame — less material for the same number of shelves.',
+            'why_4_h'         => 'The timber comes from around Velingrad',
+            'why_4_p'         => 'Our timber comes from the area around Velingrad — an area scientifically proven to have the cleanest air on the planet. Our materials come from FSC®-certified sources.',
+            'why_about'       => 'From log to finished product',
 
             // ——— THE STOCK BOOK (/shop). The catalogue is its own
             // destination, not a card grid: one row per item, the way the

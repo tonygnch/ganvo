@@ -93,14 +93,44 @@
             asset('/images/demo/sankevi/deck.webp'),
         ];
 
-        // Facts for the counters. Years come from the merchant's own founding
-        // year when they set one on the About page; the sourcing radius and the
-        // kiln target are yard constants, and they are numerals — identical in
-        // both locales — so only their labels are translated.
         $founded = (int) ($store->aboutPage()['founded_year'] ?? 0);
-        $yearsRunning = $founded ? max(1, (int) date('Y') - $founded) : 50;
-        $sourcingRadiusKm = 40;
-        $kilnMoisturePct = 12;
+
+        /*
+         | FACTS FOR THE COUNTERS — the merchant's, not ours.
+         |
+         | These were three hard-coded numbers with a comment calling them "yard
+         | constants": 50 years, a 40 km sourcing radius, 12% kiln moisture. Two
+         | of the three describe a business that fells and dries its own timber,
+         | and the 50 was a fallback that appeared whenever a merchant had not
+         | filled in a founding year — which is to say, it was a number the site
+         | invented and then animated at the visitor.
+         |
+         | Each is a copy slot now. Value and label come from the same place, so
+         | correcting one cannot leave the other describing something else.
+         |
+         | The value is free text; the leading digits drive the count-up and the
+         | remainder is the suffix, so "25+" and "12%" both work and a value with
+         | no digits ("FSC") renders as a plain word instead of animating from
+         | zero.
+         */
+        $factStrip = [];
+        foreach ([1, 2, 3] as $n) {
+            $raw = trim((string) $theme->copy("fact_{$n}_value"));
+            $label = trim((string) $theme->copy("fact_{$n}_label"));
+
+            if ($raw === '' || $label === '') {
+                continue;   // a half-filled slot is left out, not rendered blank
+            }
+
+            preg_match('/^\s*(\d+)(.*)$/u', $raw, $m);
+
+            $factStrip[] = [
+                'count'  => isset($m[1]) ? (int) $m[1] : null,
+                'text'   => isset($m[1]) ? $m[1] : $raw,
+                'suffix' => isset($m[2]) ? trim($m[2]) : '',
+                'label'  => $label,
+            ];
+        }
 
         // The marquee is built from the merchant's own name so it is never
         // Sankevi-specific: NAME · SAWMILL · SINCE 1974 · RHODOPES ·
@@ -917,20 +947,20 @@
                         @endif
                         <h2>{!! __('site.storefront.sankevi.why_h2_html') !!}</h2>
 
-                        @if ($theme->on('ledger_strip'))
+                        @if ($theme->on('ledger_strip') && $factStrip)
                             <div class="facts">
-                                <div>
-                                    <b><span data-gv-counter="{{ $yearsRunning }}">{{ $yearsRunning }}</span><i>+</i></b>
-                                    <span class="lb">{{ __('site.storefront.sankevi.stat_years_label') }}</span>
-                                </div>
-                                <div>
-                                    <b><span data-gv-counter="{{ $sourcingRadiusKm }}">{{ $sourcingRadiusKm }}</span></b>
-                                    <span class="lb">{{ __('site.storefront.sankevi.stat_radius_label') }}</span>
-                                </div>
-                                <div>
-                                    <b><span data-gv-counter="{{ $kilnMoisturePct }}">{{ $kilnMoisturePct }}</span><i>%</i></b>
-                                    <span class="lb">{{ __('site.storefront.sankevi.ledger_1_k') }}</span>
-                                </div>
+                                @foreach ($factStrip as $fact)
+                                    <div>
+                                        <b>
+                                            {{-- data-gv-counter only when there is
+                                                 something to count to; without it the
+                                                 script leaves the text alone. --}}
+                                            <span @if ($fact['count'] !== null) data-gv-counter="{{ $fact['count'] }}" @endif>{{ $fact['text'] }}</span>
+                                            @if ($fact['suffix'] !== '')<i>{{ $fact['suffix'] }}</i>@endif
+                                        </b>
+                                        <span class="lb">{{ $fact['label'] }}</span>
+                                    </div>
+                                @endforeach
                             </div>
                         @endif
 

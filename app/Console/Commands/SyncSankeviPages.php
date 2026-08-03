@@ -46,10 +46,17 @@ class SyncSankeviPages extends Command
 
     protected $description = "Write Sankevi's real About/Contact page content from the client catalogue";
 
-    /** Velingrad, plus the VAT number a trade buyer needs before they can invoice. */
-    private const ADDRESS = "България, гр. Велинград 4600\n"
-        ."ул. „Даскал Георги Чолаков“ 17 А\n"
-        .'ДДС № BG202597770';
+    /*
+     | Town and country only, at the client's instruction — no street, no postal
+     | code. They sell to trade buyers who ring or email; the yard is not a shop
+     | anyone walks into, so a street line invites visitors they do not want and
+     | is one more thing to keep correct.
+     |
+     | The VAT number used to ride along in this field. It went with the street:
+     | it is not an address, and it should not reappear here if this command is
+     | re-run.
+     */
+    private const ADDRESS = 'Велинград, България';
 
     private const PHONE = '+359 897 810 020';   // Атанас Санкев, търговски мениджър
     private const EMAIL = 'asankev@gmail.com';
@@ -176,15 +183,15 @@ class SyncSankeviPages extends Command
             'milestones' => [
                 [
                     'year' => '01',
-                    'title' => 'Обработка на дървесината',
-                    'text' => 'Суровите трупи минават през модерно бичево оборудване — за максимален добив '
-                        .'от всеки труп и постоянно качество.',
+                    'title' => 'Добив на дървесината',
+                    'text' => 'Дървесината идва от района на Велинград и от FSC® сертифицирани източници. '
+                        .'Работим с модерна база и линии с висок капацитет.',
                 ],
                 [
                     'year' => '02',
-                    'title' => 'Производствен капацитет',
-                    'text' => 'Модерна база и линии с висок капацитет — голям обем, произведен ефективно и '
-                        .'с еднаква прецизност.',
+                    'title' => 'Обработка на дървесината',
+                    'text' => 'Суровите трупи минават през модерно бичево оборудване — за максимален добив '
+                        .'от всеки труп и постоянно качество.',
                 ],
                 [
                     'year' => '03',
