@@ -71,6 +71,7 @@ class ImportSankeviCatalogue extends Command
      *     copied onto the public disk under the same relative path.
      */
     private const DISK_DIR = 'sankevi/catalogue';
+
     private const HANDOFF_DIR = 'images/sankevi/catalogue';
 
     /** Extensions accepted for a catalogue photograph, best first. */
@@ -161,7 +162,7 @@ class ImportSankeviCatalogue extends Command
 
         $tenant = Tenant::where('slug', self::TENANT_SLUG)->first();
         if (! $tenant) {
-            $this->error("No tenant with slug '" . self::TENANT_SLUG . "'.");
+            $this->error("No tenant with slug '".self::TENANT_SLUG."'.");
 
             return self::FAILURE;
         }
@@ -205,7 +206,7 @@ class ImportSankeviCatalogue extends Command
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
-            $this->error('Rolled back: ' . $e->getMessage());
+            $this->error('Rolled back: '.$e->getMessage());
 
             return self::FAILURE;
         }
@@ -231,8 +232,8 @@ class ImportSankeviCatalogue extends Command
             category: $cats['raftove'],
             matrix: $this->shelfMatrix(),
             description: 'Рафт от масивна дървесина за стелажната система — гладко обработена повърхност и добра носимоспособност. '
-                . 'Избираш широчина и дължина; произвеждаме само комбинациите от списъка. '
-                . 'Цените са нето, в евро, без ДДС и без транспорт.',
+                .'Избираш широчина и дължина; произвеждаме само комбинациите от списъка. '
+                .'Цените са нето, в евро, без ДДС и без транспорт.',
             imageStems: ['raft', 'shelving-unit', 'shelves', 'shelf'],
         );
 
@@ -243,11 +244,11 @@ class ImportSankeviCatalogue extends Command
             category: $cats['stelazhi'],
             matrix: $this->standMatrix(),
             description: 'Странична рамка — носещата част на стелажа. Отворите са пробити предварително, '
-                . 'така че рафтовете се преместват на височина без допълнително пробиване. '
-                . 'При разширяване настрани една рамка носи рафтовете и от двете си страни, '
-                . 'тоест всяка следваща секция спестява по една рамка — по-малко материал, по-ниска цена, по-бърз монтаж. '
-                . 'Избираш широчина и дължина; произвеждаме само комбинациите от списъка. '
-                . 'Цените са нето, в евро, без ДДС и без транспорт.',
+                .'така че рафтовете се преместват на височина без допълнително пробиване. '
+                .'При разширяване настрани една рамка носи рафтовете и от двете си страни, '
+                .'тоест всяка следваща секция спестява по една рамка — по-малко материал, по-ниска цена, по-бърз монтаж. '
+                .'Избираш широчина и дължина; произвеждаме само комбинациите от списъка. '
+                .'Цените са нето, в евро, без ДДС и без транспорт.',
             imageStems: ['stelazh', 'shelving-unit', 'stands', 'stand', 'side-frame', 'frame'],
         );
 
@@ -353,7 +354,7 @@ class ImportSankeviCatalogue extends Command
                     continue;
                 }
 
-                $sku = $slug . '-' . $this->dimKey($w) . 'x' . $this->dimKey($l);
+                $sku = $slug.'-'.$this->dimKey($w).'x'.$this->dimKey($l);
                 $keptSkus[] = $sku;
 
                 $variant = ProductVariant::firstOrNew([
@@ -361,7 +362,7 @@ class ImportSankeviCatalogue extends Command
                     'sku' => $sku,
                 ]);
                 $variant->fill([
-                    'label' => 'ш. ' . $this->metres($w) . ' × д. ' . $this->metres($l),
+                    'label' => 'ш. '.$this->metres($w).' × д. '.$this->metres($l),
                     'price_cents' => $this->cents($matrix[$w][$l]),
                     'stock_quantity' => $this->stock,
                     'sort_order' => $sort++,
@@ -410,7 +411,7 @@ class ImportSankeviCatalogue extends Command
             $product->restore();
         }
         if (! $product) {
-            $product = new Product();
+            $product = new Product;
             $product->tenant_id = $tenantId;
             $product->slug = $slug;
         }
@@ -475,21 +476,21 @@ class ImportSankeviCatalogue extends Command
     {
         $stems = array_values(array_unique(array_merge([$slug], $stems)));
 
-        $diskDir = storage_path('app/public/' . self::DISK_DIR);
+        $diskDir = storage_path('app/public/'.self::DISK_DIR);
         foreach ($stems as $stem) {
             foreach (self::IMAGE_EXTS as $ext) {
                 $file = "{$stem}.{$ext}";
                 if (is_file("{$diskDir}/{$file}")) {
-                    $this->imageLog[$slug] = "public disk: " . self::DISK_DIR . "/{$file}";
+                    $this->imageLog[$slug] = 'public disk: '.self::DISK_DIR."/{$file}";
 
-                    return self::DISK_DIR . '/' . $file;
+                    return self::DISK_DIR.'/'.$file;
                 }
             }
         }
 
         $handoff = public_path(self::HANDOFF_DIR);
         if (! is_dir($handoff)) {
-            $this->imageLog[$slug] = 'none — public/' . self::HANDOFF_DIR . ' does not exist';
+            $this->imageLog[$slug] = 'none — public/'.self::HANDOFF_DIR.' does not exist';
 
             return null;
         }
@@ -512,13 +513,13 @@ class ImportSankeviCatalogue extends Command
                         File::copy($src, $dst);
                     }
                 }
-                $this->imageLog[$slug] = "copied from public/" . self::HANDOFF_DIR . "/{$file}";
+                $this->imageLog[$slug] = 'copied from public/'.self::HANDOFF_DIR."/{$file}";
 
-                return self::DISK_DIR . '/' . $file;
+                return self::DISK_DIR.'/'.$file;
             }
         }
 
-        $this->imageLog[$slug] = 'none — no ' . implode('|', $stems) . '.{' . implode(',', self::IMAGE_EXTS) . '} in public/' . self::HANDOFF_DIR;
+        $this->imageLog[$slug] = 'none — no '.implode('|', $stems).'.{'.implode(',', self::IMAGE_EXTS).'} in public/'.self::HANDOFF_DIR;
 
         return null;
     }
@@ -526,7 +527,7 @@ class ImportSankeviCatalogue extends Command
     /** "0.29" => "0,29 м" — the client's own digits, Bulgarian decimal comma. */
     private function metres(string $v): string
     {
-        return str_replace('.', ',', $v) . ' м';
+        return str_replace('.', ',', $v).' м';
     }
 
     /** "0.421" => "0421", "1.50" => "150" — for SKUs. */

@@ -103,6 +103,7 @@ class SyncSankeviPages extends Command
      | checkout that only ran one of the commands.
      */
     private const DISK_DIR = 'sankevi/catalogue';
+
     private const HANDOFF_DIR = 'images/sankevi/catalogue';
 
     /**
@@ -134,6 +135,7 @@ class SyncSankeviPages extends Command
     ];
 
     private const PHONE = '+359 897 810 020';   // Атанас Санкев, търговски мениджър
+
     private const EMAIL = 'asankev@gmail.com';
 
     public function handle(): int
@@ -372,7 +374,8 @@ class SyncSankeviPages extends Command
         foreach (self::GALLERY as $file) {
             $src = "{$handoff}/{$file}";
             if (! is_file($src)) {
-                $this->warn("  missing source image: public/".self::HANDOFF_DIR."/{$file}");
+                $this->warn('  missing source image: public/'.self::HANDOFF_DIR."/{$file}");
+
                 continue;
             }
 
