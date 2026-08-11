@@ -41,7 +41,28 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+            /*
+             | ROOT-RELATIVE, not APP_URL-based, because this is a multi-tenant
+             | app and APP_URL names exactly ONE host.
+             |
+             | Every storefront runs on its own hostname — slug.ganvo.bg today,
+             | the merchant's own domain tomorrow — but Storage::url() was
+             | pinning every product photo, logo and gallery image to
+             | https://ganvo.bg/storage/... So a store served from
+             | sankevi.ganvo.bg was asking the CENTRAL domain for its pictures,
+             | and on production that path is blocked there: every image on
+             | every storefront 404'd, while the identical file served fine
+             | from the store's own host.
+             |
+             | A leading slash resolves against whatever host the page is on,
+             | which is right in all three cases — platform subdomain, custom
+             | domain, and local dev. Nothing needs the absolute form: no mail
+             | template uses this disk, and the og:image tags build their URL
+             | with url() from public_path, not from here.
+             |
+             | Overridable for the day assets move to a CDN or S3.
+             */
+            'url' => env('FILESYSTEM_PUBLIC_URL', '/storage'),
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
