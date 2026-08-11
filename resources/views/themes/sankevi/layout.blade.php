@@ -613,6 +613,11 @@
             .fgrid .ftag { font-size: 15px; margin-top: 16px; }
             .fcert img { height: 78px; }
         }
+        /* Below 360 the header genuinely runs out: 16px of slack against the
+           34px the mark needs. It is the only place it still comes off. */
+        @media (max-width: 359px) {
+            header.site .logo .seal { display: none; }
+        }
         @media (max-width: 430px) {
             /* Bulgarian used to overflow this cluster first, which is why the
                account link was dropped here and the cart word swapped for a
@@ -629,7 +634,7 @@
             .nav .right { gap: 13px; font-size: 11px; letter-spacing: .08em; --hit: 6px; }
             header.site .logo { font-size: 17px; letter-spacing: .1em; gap: 8px; min-width: 0; }
             header.site .logo span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-            header.site .logo .seal { display: none; }
+
             .bag { gap: 5px; }
             .toast { left: 18px; right: 18px; }
         }
