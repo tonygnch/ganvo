@@ -180,6 +180,15 @@ return [
         /* site.storefront.footer.tagline is shared by EVERY theme, so editing
            it to suit one merchant changes the footer of every store on the
            platform. A slot of its own, the way wick and forma already do it. */
+        /* The rotating tape's name. Blank means "use the store name" — it is
+           here because the tape is set in huge display caps, where a brand
+           often wants its full legal form while the header wordmark and the
+           order emails keep the short trading name. */
+        'marquee_name' => [
+            'label' => 'Rotating tape — name (blank = the store name)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.marquee_name',
+        ],
         'footer_tagline' => [
             'label' => 'Footer tagline',
             'type' => 'text',

@@ -134,8 +134,15 @@
 
         // The marquee is built from the merchant's own name so it is never
         // Sankevi-specific: NAME · SAWMILL · SINCE 1974 · RHODOPES ·
+        //
+        // Its own name slot, because the tape is set in huge display caps and a
+        // brand often wants its full legal form there — „САНКЕВИ ООД“ — while
+        // the header wordmark, the copyright line and the order emails keep the
+        // short trading name. Empty falls back to the tenant, so a merchant who
+        // never touches it sees no difference.
+        $marqueeName = trim((string) $theme->copy('marquee_name')) ?: $tenant->name;
         $marqueeWords = array_values(array_filter([
-            $tenant->name,
+            $marqueeName,
             __('site.storefront.sankevi.marquee_trade'),
             $founded ? __('site.storefront.sankevi.marquee_since', ['year' => $founded]) : null,
             __('site.storefront.sankevi.marquee_place'),
@@ -924,7 +931,7 @@
         {{-- The band itself is decorative repetition; a screen reader gets one
              sentence instead of the same four words eight times over. --}}
         <section class="vel" data-vel>
-            <span class="sr-only">{{ __('site.storefront.sankevi.marquee_sr', ['name' => $tenant->name]) }}</span>
+            <span class="sr-only">{{ __('site.storefront.sankevi.marquee_sr', ['name' => $marqueeName]) }}</span>
             <div class="vel-row" data-vel-row data-vel-dir="-1" data-vel-base="0.062" aria-hidden="true">
                 <div class="vel-seq">
                     @foreach ($marqueeWords as $word)

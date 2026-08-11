@@ -139,6 +139,10 @@ class SyncSankeviPages extends Command
      * sawmill on a meadow. None of that is Sankevi.
      */
     private const THEME_COPY = [
+        /* The rotating tape carries the full legal name; everything else — the
+           header wordmark, the copyright line, order emails — keeps the short
+           trading name, which is why this is a slot and not a tenant rename. */
+        'marquee_name' => 'САНКЕВИ ООД',
         'story_h2_html' => 'Естествено дърво, <em>умни рафтове</em>',
         'story_body' => 'Повече от 25 години обработваме дърво — от трупа до готовото изделие. '
             .'Дървесината идва от горите около Велинград, район с най-чистия въздух на планетата, '

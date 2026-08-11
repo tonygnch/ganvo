@@ -362,6 +362,7 @@ return [
             // carry the acts of the cinematic landing — hero, velocity band,
             // flowing family menu, story, forest and the closing call.
             'scroll_cue'          => 'Scroll',
+            'marquee_name'        => '',
             'marquee_trade'       => 'Manufacturer of high-quality solid wood products',
             'marquee_place'       => '',
             'marquee_since'       => 'since :year',
