@@ -712,12 +712,36 @@
             .why .facts { max-width: 560px; }
         }
         @media (max-width: 900px) {
-            .hero { height: auto; min-height: calc(100svh - var(--header-height)); padding-top: 26vh; }
+            /* THE HERO STOPS BEING A PORTRAIT SLOT.
+               At 100svh on a phone this is a 390x768 window, and object-fit:
+               cover put a 4:3 landscape photograph into it by scaling to the
+               HEIGHT — 1448x1086 drawn at 1208x906, of which 390px was visible.
+               Two thirds of the client's photograph was outside the frame and
+               what was left read as a close-up of one log.
+
+               A shorter hero is a wider crop for free: at 74svh the same
+               photograph shows about half its width, and the copy block still
+               has more room than it needs. The media oversizing comes down with
+               it — that -9% was another 9% of zoom nobody asked for, and it
+               exists only so the parallax drift never exposes an edge, which a
+               4% margin covers at this height. */
+            .hero { height: auto; min-height: calc(74svh - var(--header-height)); padding-top: 16vh; }
+            .hero .media { inset: -4% -3%; }
             .hero .foot { flex-direction: column; align-items: flex-start; gap: 26px; }
             .hero .cue { flex-direction: row; align-items: center; gap: 14px; }
             .hero .cue .rail { width: 46px; height: 1px; }
             .hero .cue .rail::after { width: 18px; height: 3px; left: auto; top: -1px; animation-name: cueSlide; }
             .closing .in { grid-template-columns: 1fr; align-items: start; }
+            /* This band runs edge to edge on purpose, so its content is the
+               only thing holding the page margin — and 18px of it against a
+               solid slab reads as touching the glass, before a curved corner or
+               a notch takes its own bite. Wider here than the transparent
+               sections, and env() adds whatever the device actually needs on
+               top. max(), so it can only ever grow. */
+            .closing .in {
+                padding-left: max(26px, calc(18px + env(safe-area-inset-left)));
+                padding-right: max(26px, calc(18px + env(safe-area-inset-right)));
+            }
             .forest { min-height: 62vh; }
         }
         @keyframes cueSlide { 0% { left: -20px; } 100% { left: 48px; } }

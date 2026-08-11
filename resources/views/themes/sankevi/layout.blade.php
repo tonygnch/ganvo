@@ -621,7 +621,10 @@
                instead of hiding in the drawer. What is still phone-only: the
                gaps tighten, the nav seal goes, and the wordmark is finally
                allowed to ellipsise. */
-            .wrap { padding: 0 18px; }
+            .wrap {
+                padding-left: max(18px, env(safe-area-inset-left));
+                padding-right: max(18px, env(safe-area-inset-right));
+            }
             .nav { gap: 10px; }
             .nav .right { gap: 13px; font-size: 11px; letter-spacing: .08em; --hit: 6px; }
             header.site .logo { font-size: 17px; letter-spacing: .1em; gap: 8px; min-width: 0; }
