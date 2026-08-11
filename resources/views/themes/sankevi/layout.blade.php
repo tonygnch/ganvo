@@ -512,9 +512,19 @@
             --accent-ink: var(--accent);
             color: var(--txt);
         }
-        .fgrid { display: grid; grid-template-columns: 2.2fr 1fr 1fr 1fr; gap: 46px; }
-        .fgrid .logo { font-size: 23px; }
-        .fgrid .ftag { color: var(--muted); max-width: 32ch; margin-top: 18px; font-size: 14.5px; }
+        /* THE FOOTER IS A SIGN-OFF, NOT A SECOND NAVIGATION.
+           It used to carry three columns of links repeating the header nav.
+           They are gone, and what is left — who this is, what they promise and
+           the certification backing it — gets the room they were using.
+           Brand left, certification right, on one line at desktop. */
+        .fgrid { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 48px; align-items: center; }
+        /* The seal is sized in em here (it is a fixed 26px in the header), so
+           the mark grows with the wordmark instead of being left behind by it.
+           nowrap is lifted for the same reason: at this size a long trade name
+           has to be allowed to fall onto a second line rather than ellipsise. */
+        .fgrid .logo { font-size: 38px; letter-spacing: .16em; gap: 16px; white-space: normal; }
+        .fgrid .logo .seal { width: 1.1em; height: 1.1em; }
+        .fgrid .ftag { color: var(--muted); max-width: 34ch; margin-top: 20px; font-size: 16px; line-height: 1.6; }
 
         /* CERTIFICATION LOCKUP. A chain-of-custody mark is a claim a buyer can
            check, not decoration, so it carries its licence code and sits in the
@@ -523,13 +533,11 @@
            the html[data-mode="light"] footer.site rule below), so the cream
            mark is correct throughout and there is no daylight swap to keep in
            step. */
-        .fcert { display: flex; align-items: center; gap: 14px; margin-top: 26px; }
-        .fcert img { display: block; width: auto; height: 58px; }
-        .fcert .fcert-code { font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); line-height: 1.7; }
-        .fcol h4 { font-size: 10.5px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--faint); margin-bottom: 18px; }
-        .fcol a { display: block; font-size: 14.5px; margin-bottom: 11px; color: var(--muted); transition: color .25s ease; }
-        .fcol a:hover { color: var(--accent-ink); }
+        .fcert { display: flex; align-items: center; gap: 18px; }
+        .fcert img { display: block; width: auto; height: 104px; }
+        .fcert .fcert-code { font-size: 11.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); line-height: 1.8; }
         .fbot { display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-top: 58px; padding-top: 24px; border-top: 1px solid var(--line); font-size: 11px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); }
+        .fbot .flang { display: inline-flex; gap: 16px; }
         .fbot a { color: var(--muted); }
         .fbot a:hover { color: var(--accent-ink); }
 
@@ -540,7 +548,7 @@
 
         @media (max-width: 1000px) {
             .shelf { grid-template-columns: repeat(3, 1fr); gap: 36px 20px; }
-            .fgrid { grid-template-columns: 1fr 1fr; gap: 34px; }
+            .fgrid { grid-template-columns: 1fr; gap: 40px; align-items: start; }
         }
         /* The header runs out of room well before the rest of the page does, and
            it is Bulgarian that decides when: НАЧАЛО МАГАЗИН КОНТАКТИ measures
@@ -601,6 +609,9 @@
             .shelf > *:last-child:nth-child(odd) { grid-column: 1 / -1; }
             .sec-head { margin: 66px 0 26px; }
             footer.site { margin-top: 76px; padding-top: 56px; }
+            .fgrid .logo { font-size: 26px; letter-spacing: .12em; gap: 12px; }
+            .fgrid .ftag { font-size: 15px; margin-top: 16px; }
+            .fcert img { height: 78px; }
         }
         @media (max-width: 430px) {
             /* Bulgarian used to overflow this cluster first, which is why the
@@ -613,9 +624,9 @@
             .wrap { padding: 0 18px; }
             .nav { gap: 10px; }
             .nav .right { gap: 13px; font-size: 11px; letter-spacing: .08em; --hit: 6px; }
-            .logo { font-size: 17px; letter-spacing: .1em; gap: 8px; min-width: 0; }
-            .logo span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-            .logo .seal { display: none; }
+            header.site .logo { font-size: 17px; letter-spacing: .1em; gap: 8px; min-width: 0; }
+            header.site .logo span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+            header.site .logo .seal { display: none; }
             .bag { gap: 5px; }
             .toast { left: 18px; right: 18px; }
         }
@@ -815,59 +826,32 @@
                         <span>{{ $tenant->name }}</span>
                     </div>
                     <p class="ftag">{{ $theme->copy('footer_tagline') }}</p>
-                    @if ($csCertMark)
-                        <div class="fcert">
-                            <img src="{{ $csCertMark }}"
-                                 alt="{{ __('site.storefront.sankevi.cert_alt') }}"
-                                 width="370" height="512" loading="lazy">
-                            <span class="fcert-code">
-                                {{ __('site.storefront.sankevi.cert_line') }}
-                                @if ($csCertCode)<br>{{ $csCertCode }}@endif
-                            </span>
-                        </div>
-                    @endif
                 </div>
-                <div class="fcol">
-                    <h4>{{ __('site.storefront.footer.col_shop') }}</h4>
-                    {{-- The stock book, then whatever sections the merchant
-                         actually keeps — the footer follows the same split as
-                         the nav: the catalogue is never the home page. --}}
-                    <a href="/shop">{{ __('site.storefront.footer.all_products') }}</a>
-                    @foreach (array_slice($csNavMenu, 0, 4) as $item)
-                        @if ($item['url'] && str_starts_with($item['url'], '/categories/'))
-                            <a href="{{ $item['url'] }}">{{ $item['label'] }}</a>
-                        @endif
-                    @endforeach
-                    <a href="/cart">{{ __('site.common.cart') }}</a>
-                </div>
-                <div class="fcol">
-                    <h4>{{ __('site.storefront.footer.col_help') }}</h4>
-                    <a href="#">{{ __('site.storefront.footer.shipping') }}</a>
-                    <a href="#">{{ __('site.storefront.footer.returns') }}</a>
-                    @if ($csContactOn)<a href="/contact">{{ __('site.storefront.footer.contact') }}</a>@endif
-                    @if ($csAboutOn)<a href="/about">{{ __('site.storefront.footer.about') }}</a>@endif
-                </div>
-                {{-- Account links and the language switcher share this column.
-                     Guard the COLUMN as well as the switcher: with one locale
-                     and account UI off it would otherwise render empty and the
-                     footer grid would carry a blank track. --}}
-                @if ($store->showsAccountUi() || count($languages) > 1)
-                    <div class="fcol">
-                        @if ($store->showsAccountUi())
-                            <h4>{{ __('site.common.my_account') }}</h4>
-                            <a href="{{ $customer ? '/account' : '/account/login' }}">{{ $customer ? __('site.common.my_account') : __('site.common.sign_in') }}</a>
-                        @endif
-                        @if (count($languages) > 1)
-                            <h4 style="margin-top: {{ $store->showsAccountUi() ? '24px' : '0' }};">{{ __('site.lang.switch') }}</h4>
-                            @foreach ($languages as $code => $name)
-                                <a href="/lang/{{ $code }}">{{ $name }}</a>
-                            @endforeach
-                        @endif
+
+                {{-- The certification, at a size that lets someone actually
+                     read the licence number off it. Its own grid cell now
+                     rather than tucked under the tagline. --}}
+                @if ($csCertMark)
+                    <div class="fcert">
+                        <img src="{{ $csCertMark }}"
+                             alt="{{ __('site.storefront.sankevi.cert_alt') }}"
+                             width="370" height="512" loading="lazy">
+                        <span class="fcert-code">
+                            {{ __('site.storefront.sankevi.cert_line') }}
+                            @if ($csCertCode)<br>{{ $csCertCode }}@endif
+                        </span>
                     </div>
                 @endif
             </div>
             <div class="fbot">
                 <span>© {{ date('Y') }} {{ $tenant->name }} — {{ __('site.common.all_rights') }}</span>
+                @if (count($languages) > 1)
+                    <span class="flang">
+                        @foreach ($languages as $code => $name)
+                            <a href="/lang/{{ $code }}">{{ $name }}</a>
+                        @endforeach
+                    </span>
+                @endif
                 <span>{!! __('site.common.powered_by', ['brand' => '<a href="http://' . config('ganvo.central_domain') . ':8000" target="_blank" rel="noopener">Ganvo</a>']) !!}</span>
             </div>
         </div>
