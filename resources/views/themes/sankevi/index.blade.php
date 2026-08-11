@@ -223,19 +223,27 @@
         .hero .media { position: absolute; inset: -9% -4%; }
         .hero .media .zoom { width: 100%; height: 100%; transform-origin: 52% 46%; }
         .hero .media img { width: 100%; height: 100%; object-fit: cover; }
-        /* THE SCRIM. Legibility is engineered, not hoped for: a radial vignette
-           closes the corners, a vertical ramp darkens the foot where the type
-           sits, and the last stop dissolves the photograph into the page. */
+        /* THE SCRIM. Legibility is engineered, not hoped for — but it was
+           engineered for a near-black end-grain close-up, and it buried the
+           daylit log stack the client sent: a sunlit photograph under .66 at
+           the top and .86 by two thirds down reads as a brown rectangle.
+
+           Retuned so the DARKENING FOLLOWS THE TYPE instead of covering the
+           frame. The vignette still closes the corners and the foot still
+           dissolves into the page, both much lighter; the contrast behind the
+           words is carried by .hero .lead::before below, which is local to the
+           copy block and is the right tool for it. Measured after the change
+           rather than assumed — see the commit. */
         .hero .veil {
             position: absolute; inset: 0; pointer-events: none;
             background:
-                radial-gradient(128% 96% at 50% 34%, transparent 4%, rgba(11, 9, 6, .42) 52%, rgba(11, 9, 6, .86) 100%),
-                linear-gradient(180deg, rgba(11, 9, 6, .66) 0%, rgba(11, 9, 6, .16) 20%, rgba(11, 9, 6, .38) 44%, rgba(11, 9, 6, .86) 68%, rgba(11, 9, 6, .96) 88%, var(--bg) 100%);
+                radial-gradient(132% 100% at 50% 32%, transparent 12%, rgba(11, 9, 6, .16) 58%, rgba(11, 9, 6, .52) 100%),
+                linear-gradient(180deg, rgba(11, 9, 6, .34) 0%, rgba(11, 9, 6, .04) 22%, rgba(11, 9, 6, .10) 46%, rgba(11, 9, 6, .44) 72%, rgba(11, 9, 6, .84) 90%, var(--bg) 100%);
         }
         html[data-mode="light"] .hero .veil {
             background:
-                radial-gradient(128% 96% at 50% 34%, transparent 4%, rgba(11, 9, 6, .5) 52%, rgba(11, 9, 6, .88) 100%),
-                linear-gradient(180deg, rgba(11, 9, 6, .72) 0%, rgba(11, 9, 6, .34) 24%, rgba(11, 9, 6, .66) 62%, rgba(11, 9, 6, .9) 92%, rgba(11, 9, 6, .96) 100%);
+                radial-gradient(132% 100% at 50% 32%, transparent 12%, rgba(11, 9, 6, .20) 58%, rgba(11, 9, 6, .56) 100%),
+                linear-gradient(180deg, rgba(11, 9, 6, .38) 0%, rgba(11, 9, 6, .10) 24%, rgba(11, 9, 6, .22) 60%, rgba(11, 9, 6, .58) 82%, rgba(11, 9, 6, .88) 96%, rgba(11, 9, 6, .94) 100%);
         }
         /* the ink over the photograph stays birch cream in BOTH modes — the
            hero is a night frame either way, so it never follows --txt */

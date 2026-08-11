@@ -299,7 +299,7 @@ return [
             'hero_sub'        => 'An established manufacturer of solid wood products, with many years of experience.',
             // The three things the yard does FOR the customer, in the order
             // they get asked: how will you cut it, how dry, when is it here.
-            'hero_note'       => 'Cut to spec · Dried to 12% · Delivered to site',
+            'hero_note'       => '',
             'hero_cta'        => 'Our products',
             'hero_cta2'       => 'Ask for a quote',
             'gx_home'         => 'The yard',
