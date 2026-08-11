@@ -138,11 +138,29 @@ class SyncSankeviPages extends Command
      * един и същи трион“ and a great-grandfather who put the first blade in a
      * sawmill on a meadow. None of that is Sankevi.
      */
+    /**
+     * Bands the client asked to switch off, after their August meeting.
+     *
+     * Both default to ON in the manifest, so without this a deployed store
+     * comes up showing the brand line above the headline and the forest band
+     * with its pull quote — the two things they asked to remove — while every
+     * other change on their list had already applied. Worse than either being
+     * wrong on its own, because it looks like the list was half-read.
+     */
+    private const SECTIONS = [
+        'hero_mark' => false,
+        'forest_band' => false,
+    ];
+
     private const THEME_COPY = [
         /* The rotating tape carries the full legal name; everything else — the
            header wordmark, the copyright line, order emails — keeps the short
            trading name, which is why this is a slot and not a tenant rename. */
         'marquee_name' => 'САНКЕВИ ООД',
+        /* site.storefront.footer.tagline is shared by every theme, so this one
+           HAS to be an override — editing the lang default would change the
+           footer of every store on the platform. */
+        'footer_tagline' => 'Високо качество, достъпни цени, коректно отношение.',
         'story_h2_html' => 'Естествено дърво, <em>умни рафтове</em>',
         'story_body' => 'Повече от 25 години обработваме дърво — от трупа до готовото изделие. '
             .'Дървесината идва от горите около Велинград, район с най-чистия въздух на планетата, '
@@ -208,7 +226,7 @@ class SyncSankeviPages extends Command
         $this->line('  about:   '.count($about['milestones']).' production steps, '.count($about['stats']).' numbers');
         $this->line('  gallery: '.count($about['images']).' images'.($copied ? " ({$copied} copied onto the public disk)" : ''));
         $this->line('  tape:    '.$announcement['text']);
-        $this->line('  theme:   '.count(self::THEME_COPY).' copy overrides');
+        $this->line('  theme:   '.count(self::THEME_COPY).' copy overrides, '.count(self::SECTIONS).' sections off');
 
         return self::SUCCESS;
     }
@@ -476,6 +494,9 @@ class SyncSankeviPages extends Command
         // images.<slot> is a SEPARATE bag from content.<slot> — ThemeCustomizer
         // reads the two with different resolvers, so a hero path written into
         // content is never looked at.
+        $sections = (array) data_get($settings, 'themes.sankevi.sections', []);
+        data_set($settings, 'themes.sankevi.sections', array_merge($sections, self::SECTIONS));
+
         $images = (array) data_get($settings, 'themes.sankevi.images', []);
         data_set($settings, 'themes.sankevi.images', array_merge($images, [
             'hero_image' => array_values(self::HERO_IMAGE)[0],
