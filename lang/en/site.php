@@ -294,13 +294,13 @@ return [
         // Sankevi — the forest-atelier theme. Written for a Rhodope sawmill,
         // but every string is merchant-overridable through the manifest.
         'sankevi' => [
-            'hero_kicker'     => 'Family sawmill · Rhodope mountains',
-            'hero_h1_html'    => 'From the log to <em>your size</em>',
-            'hero_sub'        => 'We saw, dry, treat and profile in one yard in the Rhodopes. Beams, boards, panelling, skirting and decking — from the catalogue or to your own spec.',
+            'hero_kicker'     => '',
+            'hero_h1_html'    => 'From raw timber to a <em>finished product</em>',
+            'hero_sub'        => 'An established manufacturer of solid wood products, with many years of experience.',
             // The three things the yard does FOR the customer, in the order
             // they get asked: how will you cut it, how dry, when is it here.
             'hero_note'       => 'Cut to spec · Dried to 12% · Delivered to site',
-            'hero_cta'        => 'Browse the timber',
+            'hero_cta'        => 'Our products',
             'hero_cta2'       => 'Ask for a quote',
             'gx_home'         => 'The yard',
             'gx_product'      => 'The plate',
@@ -345,7 +345,7 @@ return [
             'story_cta'       => 'Our story',
             'trade_eyebrow'   => 'Trade & sites',
             'trade_h2'        => 'Building big? Bring us the drawings.',
-            'trade_body'      => 'Project quantities, cutting to size and scheduled site delivery across the region — send the list and we will price it in full, timber by timber.',
+            'trade_body'      => 'Write or call us — every enquiry is answered personally.',
             'trade_row1'      => 'Volume pricing',
             'trade_row2'      => 'Cut to length',
             'trade_row3'      => 'Delivery to site',
@@ -362,13 +362,13 @@ return [
             // carry the acts of the cinematic landing — hero, velocity band,
             // flowing family menu, story, forest and the closing call.
             'scroll_cue'          => 'Scroll',
-            'marquee_trade'       => 'Sawmill',
-            'marquee_place'       => 'Rhodope mountains',
+            'marquee_trade'       => 'Manufacturer of high-quality solid wood products',
+            'marquee_place'       => '',
             'marquee_since'       => 'since :year',
             // What a screen reader gets instead of the decorative running band.
-            'marquee_sr'          => ':name — a family sawmill in the Rhodope mountains.',
+            'marquee_sr'          => ':name — manufacturer of high-quality solid wood products.',
             'families_eyebrow'    => 'What we cut',
-            'families_h2_html'    => 'Everything that leaves <em>the yard</em>',
+            'families_h2_html'    => 'Solid <em>wood products</em>',
             // The hint now describes the gesture, not a row: the full-width
             // flowing menu became a compact option wheel.
             'families_hint'       => 'Turn the wheel · ↑ ↓',
@@ -385,15 +385,15 @@ return [
             'pickup_eyebrow'      => 'Off the stack this week',
             'pickup_all'          => 'See everything in the yard',
             'closing_eyebrow'     => 'Next step',
-            'closing_h2_html'     => 'Bring us <em>the measurements</em>',
-            'closing_shop'        => 'Enter the yard',
+            'closing_h2_html'     => 'Get <em>in touch</em>',
+            'closing_shop'        => 'Contact us',
 
             // ——— WHAT WE OFFER. The family story moved wholesale to /about;
             // the landing page now talks about what the yard can DO, and why
             // you would place the order here rather than anywhere else.
             'offer_eyebrow'   => 'Capabilities',
-            'offer_h2_html'   => 'One yard, <em>every stage</em>',
-            'offer_lead'      => 'The log arrives here and leaves as a finished component. No subcontractor between the stages, no waiting on someone else, and nobody else to carry the blame for the quality.',
+            'offer_h2_html'   => 'The <em>production process</em>',
+            'offer_lead'      => 'From raw timber to a finished product.',
             'offer_1_h'       => 'Sawn to spec',
             'offer_1_p'       => 'We cut to your schedule of sections, not to a standard catalogue. Send the sizes — we send back quantities and a price.',
             'offer_2_h'       => 'Kiln drying',
@@ -415,22 +415,22 @@ return [
             // digits animate, the remainder is shown as a suffix.
             'fact_1_value'    => '25+',
             'fact_1_label'    => 'Years in woodworking',
-            'fact_2_value'    => '5',
-            'fact_2_label'    => 'Steps in production',
-            'fact_3_value'    => '34',
-            'fact_3_label'    => 'Sizes in the price list',
+            'fact_2_value'    => '20+',
+            'fact_2_label'    => 'Years on the Dutch market',
+            'fact_3_value'    => '30+',
+            'fact_3_label'    => 'Products in the catalogue',
 
             'why_eyebrow'     => 'Why us',
-            'why_h2_html'     => 'The reasons they <em>come back</em>',
-            'why_1_h'         => 'We manufacture in-house',
-            'why_1_p'         => 'Sawing, drying, calibrating and packing all happen with us. We take the wood from raw timber to finished product.',
+            'why_h2_html'     => 'Our <em>strengths</em>',
+            'why_1_h'         => 'Certified timber',
+            'why_1_p'         => 'FSC (Forest Stewardship Council) certification is an international standard proving that timber, paper and other forest products come from responsibly managed, environmentally sound and socially equitable forests. It guarantees traceability of the material from the forest to the end customer.',
             'why_2_h'         => '25 years for the Dutch market',
             'why_2_p'         => 'We have worked with the Dutch market for 25 years. Reliable production and export experience stand behind our long-term partnerships with customers across Europe.',
-            'why_3_h'         => 'Modularity that saves material',
-            'why_3_p'         => 'The system extends sideways on a shared side frame. Each further bay saves one frame — less material for the same number of shelves.',
-            'why_4_h'         => 'The timber comes from around Velingrad',
-            'why_4_p'         => 'Our timber comes from the area around Velingrad — an area scientifically proven to have the cleanest air on the planet. Our materials come from FSC®-certified sources.',
-            'why_about'       => 'From log to finished product',
+            'why_3_h'         => 'The complete production process',
+            'why_3_p'         => 'Initial cutting, kiln drying and bringing the timber down to 12% moisture. Calibrating to exact size, packing and transport to the end customer.',
+            'why_4_h'         => '',
+            'why_4_p'         => '',
+            'why_about'       => '',
 
             // ——— THE STOCK BOOK (/shop). The catalogue is its own
             // destination, not a card grid: one row per item, the way the

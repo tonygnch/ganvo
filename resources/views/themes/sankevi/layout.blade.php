@@ -795,7 +795,9 @@
             @endif
             <a href="/cart"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ __('site.common.cart') }}</a>
         </nav>
-        <div class="mfoot">{{ __('site.storefront.sankevi.hero_kicker') }}</div>
+        @if (trim(__('site.storefront.sankevi.hero_kicker')) !== '')
+            <div class="mfoot">{{ __('site.storefront.sankevi.hero_kicker') }}</div>
+        @endif
     </div>
 
     @if (session('cart.flash'))
@@ -812,7 +814,7 @@
                         @if ($csSeal)<span class="seal" aria-hidden="true" style="--seal: url('{{ $csSeal }}'); --seal-day: url('{{ $csSealDaylight }}');"></span>@endif
                         <span>{{ $tenant->name }}</span>
                     </div>
-                    <p class="ftag">{{ __('site.storefront.footer.tagline') }}</p>
+                    <p class="ftag">{{ $theme->copy('footer_tagline') }}</p>
                     @if ($csCertMark)
                         <div class="fcert">
                             <img src="{{ $csCertMark }}"

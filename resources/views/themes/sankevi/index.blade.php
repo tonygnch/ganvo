@@ -752,10 +752,16 @@
             <div class="veil" aria-hidden="true"></div>
 
             <div class="wrap lead">
-                <div class="mark rise" style="--d: .3s;">
-                    @if ($csSeal)<img src="{{ $csSeal }}" alt="" aria-hidden="true">@endif
-                    <span>{{ $csHero['title'] !== '' ? $csHero['title'] : $tenant->name }}</span>
-                </div>
+                {{-- The brand line above the headline. Switchable, because it
+                     is the one place on the page that repeats what the header
+                     already says two centimetres higher up, and a merchant
+                     whose headline stands on its own wants the room. --}}
+                @if ($theme->on('hero_mark'))
+                    <div class="mark rise" style="--d: .3s;">
+                        @if ($csSeal)<img src="{{ $csSeal }}" alt="" aria-hidden="true">@endif
+                        <span>{{ $csHero['title'] !== '' ? $csHero['title'] : $tenant->name }}</span>
+                    </div>
+                @endif
                 <div class="h1w">
                     <h1 style="--d: .38s;">
                         @if ($csHero['subtitle'] !== '')
@@ -964,18 +970,31 @@
                             </div>
                         @endif
 
-                        @if ($aboutOn)
+                        @if ($aboutOn && trim(__('site.storefront.sankevi.why_about')) !== '')
                             <a class="hist" href="/about">{{ __('site.storefront.sankevi.why_about') }}</a>
                         @endif
                     </div>
 
+                    {{-- Built first so the numbering counts the reasons that
+                         SURVIVE. Looping 1..4 and skipping inside would have
+                         printed 01, 02, 04 the moment a merchant cleared one. --}}
+                    @php
+                        $whyReasons = [];
+                        foreach (range(1, 4) as $n) {
+                            $h = trim(__('site.storefront.sankevi.why_' . $n . '_h'));
+                            if ($h === '') {
+                                continue;
+                            }
+                            $whyReasons[] = ['h' => $h, 'p' => trim(__('site.storefront.sankevi.why_' . $n . '_p'))];
+                        }
+                    @endphp
                     <ol class="list" data-gv-reveal data-gv-delay="0.1">
-                        @foreach (range(1, 4) as $n)
+                        @foreach ($whyReasons as $i => $reason)
                             <li>
-                                <span class="ix" aria-hidden="true">{{ sprintf('%02d', $n) }}</span>
+                                <span class="ix" aria-hidden="true">{{ sprintf('%02d', $i + 1) }}</span>
                                 <div>
-                                    <h3>{{ __('site.storefront.sankevi.why_' . $n . '_h') }}</h3>
-                                    <p>{{ __('site.storefront.sankevi.why_' . $n . '_p') }}</p>
+                                    <h3>{{ $reason['h'] }}</h3>
+                                    @if ($reason['p'] !== '')<p>{{ $reason['p'] }}</p>@endif
                                 </div>
                             </li>
                         @endforeach
@@ -996,12 +1015,36 @@
         @endif
 
         {{-- ============ ACT 7 — THE CLOSING CALL ============ --}}
+        {{-- The closing band used to pitch trade quantities and send visitors
+             back into the shop. It carries the merchant's actual contact
+             details now: the last thing on the page is how to reach them, and
+             the button goes to the contact page rather than round again.
+
+             The three rows fall back to the trade lines when the merchant has
+             no contact details on file, so the band never renders as a heading
+             above nothing. --}}
+        @php
+            $closingContact = $store->contactPage();
+            $closingRows = array_values(array_filter([
+                $closingContact['phone'] ?? '',
+                $closingContact['email'] ?? '',
+                // Address is multi-line by nature; only the first line belongs
+                // on a single chip.
+                trim(strtok((string) ($closingContact['address'] ?? ''), "\n")),
+            ]));
+        @endphp
         <section class="closing">
             <div class="wrap in">
                 <div data-gv-reveal>
                     <h2>{!! __('site.storefront.sankevi.closing_h2_html') !!}</h2>
                     <p>{{ $theme->copy('trade_body') }}</p>
-                    @if ($theme->on('trade_band'))
+                    @if ($closingRows)
+                        <div class="rows">
+                            @foreach ($closingRows as $row)
+                                <span class="row">{{ $row }}</span>
+                            @endforeach
+                        </div>
+                    @elseif ($theme->on('trade_band'))
                         <div class="rows">
                             <span class="row">{{ __('site.storefront.sankevi.trade_row1') }}</span>
                             <span class="row">{{ __('site.storefront.sankevi.trade_row2') }}</span>
@@ -1010,10 +1053,7 @@
                     @endif
                 </div>
                 <div class="cta" data-gv-reveal data-gv-delay="0.12">
-                    <a class="btn" href="/shop">{{ __('site.storefront.sankevi.closing_shop') }}</a>
-                    @if ($secondaryHref)
-                        <a class="btn outline" href="{{ $secondaryHref }}">{{ $secondaryLabel }}</a>
-                    @endif
+                    <a class="btn" href="{{ $contactOn ? '/contact' : '/shop' }}">{{ __('site.storefront.sankevi.closing_shop') }}</a>
                 </div>
             </div>
         </section>

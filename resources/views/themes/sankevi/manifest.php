@@ -93,6 +93,13 @@ return [
            toggleable rather than hard-coded: a merchant whose certification
            lapses must be able to take it down themselves, without waiting on us
            and without leaving a false claim in the footer meanwhile. */
+        /* The brand line above the hero headline. Off for a merchant whose
+           headline stands on its own — it otherwise repeats what the header
+           says a couple of centimetres higher. */
+        'hero_mark' => [
+            'label' => 'Brand line above the hero headline',
+            'default' => true,
+        ],
         'brand_cert' => [
             'label' => 'Certification mark in the footer',
             'default' => true,
@@ -169,6 +176,14 @@ return [
             'label' => 'Why-us counter 3 — label',
             'type' => 'text',
             'default_lang' => 'site.storefront.sankevi.fact_3_label',
+        ],
+        /* site.storefront.footer.tagline is shared by EVERY theme, so editing
+           it to suit one merchant changes the footer of every store on the
+           platform. A slot of its own, the way wick and forma already do it. */
+        'footer_tagline' => [
+            'label' => 'Footer tagline',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.footer.tagline',
         ],
         'story_h2_html' => [
             'label' => 'Workshop band — heading (HTML allowed)',

@@ -42,10 +42,15 @@ return new class extends Migration
 {
     private const SLUG = 'sankevi';
 
-    /** @var array<string, array<string, string>> */
+    /**
+     * ganvo:sankevi-catalogue used to run here too. It does not any more — see
+     * the note in ImportSankeviCatalogue: the client retired the shelving range
+     * and this migration would have quietly put it back on the next deploy.
+     *
+     * @var array<string, array<string, string>>
+     */
     private const COMMANDS = [
         'ganvo:sankevi-pages' => ['--slug' => self::SLUG],
-        'ganvo:sankevi-catalogue' => [],
     ];
 
     public function up(): void

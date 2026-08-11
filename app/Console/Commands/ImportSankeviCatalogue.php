@@ -48,6 +48,22 @@ use Illuminate\Support\Facades\File;
  * the line is made to order. --stock sets it; the default keeps the products
  * purchasable rather than badging them "изчерпан", which would be a false
  * claim in the other direction. Set the real figure when the owner gives one.
+ *
+ * SHELVING CATALOGUE RETIRED (client meeting, Aug 2026)
+ *
+ * The client has since repositioned: the storefront now presents six timber
+ * families — Греди, Ламперия, Челни дъски, Декинг, Плотове от масив, Детайли
+ * по поръчка — and the shelving categories this command creates (Рафтове,
+ * Стелажи, Аксесоари) were deleted at their request.
+ *
+ * So ganvo:sankevi-catalogue is NO LONGER wired into provisioning. Running it
+ * would recreate exactly what the client asked to remove, and because it runs
+ * from a migration that would have happened silently on the next deploy. The
+ * command is kept, not deleted: the prices and dimensions in it came from the
+ * client's own catalogue and are the only record of them in the repo.
+ *
+ * To bring the shelving range back, run it by hand:
+ *   php artisan ganvo:sankevi-catalogue
  */
 class ImportSankeviCatalogue extends Command
 {

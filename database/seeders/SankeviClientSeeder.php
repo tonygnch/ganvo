@@ -60,11 +60,10 @@ class SankeviClientSeeder extends Seeder
             $seeder->seedOnly(self::SLUG);
         }
 
-        // Only sankevi-pages takes --slug; sankevi-catalogue is hard-wired to
-        // the one store and errors on an option it does not declare.
+        // ganvo:sankevi-catalogue is deliberately NOT here — the client retired
+        // the shelving range, and seeding it back would undo that.
         foreach ([
             'ganvo:sankevi-pages' => ['--slug' => self::SLUG],
-            'ganvo:sankevi-catalogue' => [],
         ] as $command => $args) {
             $this->command?->info("  {$command}");
             Artisan::call($command, $args);
