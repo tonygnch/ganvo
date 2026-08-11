@@ -389,7 +389,15 @@
            the content column, or it pushes the nav past its own right edge (it
            did: 4px, which only body{overflow-x:hidden} was swallowing). */
         .nav .right { --hit: 10px; }
-        .nav .right .acct::after, .nav .right .bag::after {
+        /* The mode toggle and the currency switcher get the same band. They
+           were built without it and measured 34x34 and 41x18 — the currency
+           trigger is an inline-flex with no vertical padding, so its box was
+           just the 18px line box, a quarter of the 44px its own dropdown items
+           already have. Both need position:relative for the pseudo to anchor;
+           .menu already had it. */
+        .nav .right .gv-mode, .nav .right .menu summary { position: relative; }
+        .nav .right .acct::after, .nav .right .bag::after,
+        .nav .right .gv-mode::after, .nav .right .menu summary::after {
             content: ""; position: absolute; top: 50%; transform: translateY(-50%);
             left: calc(var(--hit) * -1); right: calc(var(--hit) * -1); height: 44px;
         }
@@ -403,7 +411,15 @@
         .nav .right .acct:hover { color: var(--txt); }
         .bag { color: var(--txt); }
         .bag .n { color: var(--accent-ink); font-variant-numeric: tabular-nums; line-height: 1; }
-        .menu-toggle { display: none; background: none; border: none; color: var(--txt); font-size: 20px; line-height: 1; padding: 6px; z-index: 80; }
+        .menu-toggle { display: none; position: relative; background: none; border: none; color: var(--txt); font-size: 20px; line-height: 1; padding: 6px; z-index: 80; }
+        /* 30x32 of glyph-plus-padding, and it is the ONLY way into the nav on a
+           phone — the links are display:none below 900. Centred pseudo rather
+           than more padding, which would have shoved the wordmark right. It
+           grows 7px each side into a 28px gap, so it reaches nothing else. */
+        .menu-toggle::after {
+            content: ""; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); width: 44px; height: 44px;
+        }
 
         /* dropdown — language, currency and the merchant's nav groups */
         .menu { position: relative; }
