@@ -107,6 +107,17 @@ class SyncSankeviPages extends Command
     private const HANDOFF_DIR = 'images/sankevi/catalogue';
 
     /**
+     * The hero photograph, supplied by the client after their August meeting.
+     *
+     * Source path in the repo => path on the public disk. It is not a catalogue
+     * photo, so it does not sit in the catalogue folder. The theme reads it
+     * through an images.hero_image override, and ThemeCustomizer::image()
+     * resolves that with Storage::disk('public') — which is why it has to be
+     * copied out of public/ rather than simply referenced there.
+     */
+    private const HERO_IMAGE = ['images/sankevi/hero.webp' => 'sankevi/hero.webp'];
+
+    /**
      * The tape across the top of every page.
      *
      * It used to read „Семейна дъскорезница в Родопите · Собствен добив ·
@@ -371,6 +382,10 @@ class SyncSankeviPages extends Command
         $handoff = public_path(self::HANDOFF_DIR);
         $copied = 0;
 
+        foreach (self::HERO_IMAGE as $from => $to) {
+            $copied += $this->publishOne(public_path($from), storage_path('app/public/'.$to)) ? 1 : 0;
+        }
+
         foreach (self::GALLERY as $file) {
             $src = "{$handoff}/{$file}";
             if (! is_file($src)) {
@@ -394,6 +409,26 @@ class SyncSankeviPages extends Command
         }
 
         return $copied;
+    }
+
+    /** Copy one file onto the disk unless it is already there, same size. */
+    private function publishOne(string $src, string $dst): bool
+    {
+        if (! is_file($src)) {
+            $this->warn("  missing source image: {$src}");
+
+            return false;
+        }
+
+        // Size, not mtime — see publishGallery().
+        if (is_file($dst) && filesize($dst) === filesize($src)) {
+            return false;
+        }
+
+        File::ensureDirectoryExists(dirname($dst));
+        File::copy($src, $dst);
+
+        return true;
     }
 
     /**
@@ -433,6 +468,14 @@ class SyncSankeviPages extends Command
     {
         $content = (array) data_get($settings, 'themes.sankevi.content', []);
         data_set($settings, 'themes.sankevi.content', array_merge($content, self::THEME_COPY));
+
+        // images.<slot> is a SEPARATE bag from content.<slot> — ThemeCustomizer
+        // reads the two with different resolvers, so a hero path written into
+        // content is never looked at.
+        $images = (array) data_get($settings, 'themes.sankevi.images', []);
+        data_set($settings, 'themes.sankevi.images', array_merge($images, [
+            'hero_image' => array_values(self::HERO_IMAGE)[0],
+        ]));
 
         return $settings;
     }
