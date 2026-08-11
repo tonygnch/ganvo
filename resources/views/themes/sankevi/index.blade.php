@@ -662,9 +662,18 @@
         .closing h2 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 4vw, 58px); line-height: 1; letter-spacing: 0; }
         .closing h2 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
         .closing p { color: rgba(244, 240, 228, .82); max-width: 46ch; margin-top: 22px; font-size: 15.5px; }
-        .closing .rows { display: flex; flex-direction: column; gap: 13px; margin: 30px 0 0; }
+        .closing .rows { display: flex; flex-direction: column; gap: 26px; margin: 30px 0 0; }
         .closing .rows .row { display: flex; align-items: center; gap: 12px; font-size: 11px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: rgba(244, 240, 228, .8); }
         .closing .rows .row::before { content: ""; width: 18px; height: 1px; background: var(--accent); }
+        /* The actionable two. 11px of letterspaced caps is a small thing to hit,
+           so the padding pulls each link up to a comfortable target without
+           moving it — the negative margin gives the space back to the layout,
+           and the rule only applies to <a>, so the address chip is unchanged. */
+        .closing .rows a.row { margin: -13px 0; padding: 13px 0; transition: color .25s ease; }
+        .closing .rows a.row:hover,
+        .closing .rows a.row:focus-visible { color: #fff; }
+        .closing .rows a.row:hover::before,
+        .closing .rows a.row:focus-visible::before { width: 30px; transition: width .25s ease; }
         .closing .cta { display: flex; flex-wrap: wrap; gap: 14px; }
         .closing .btn.outline { color: #f4f0e4; border-color: rgba(244, 240, 228, .35); }
         .closing .btn.outline:hover { border-color: var(--accent); color: var(--accent-ink); }
@@ -1040,13 +1049,34 @@
              above nothing. --}}
         @php
             $closingContact = $store->contactPage();
-            $closingRows = array_values(array_filter([
-                $closingContact['phone'] ?? '',
-                $closingContact['email'] ?? '',
-                // Address is multi-line by nature; only the first line belongs
-                // on a single chip.
-                trim(strtok((string) ($closingContact['address'] ?? ''), "\n")),
-            ]));
+
+            /*
+             | Each row carries its own destination, because a phone number a
+             | visitor has to copy out by hand is not a contact detail, it is a
+             | riddle. tel: and mailto: make the two that CAN be acted on
+             | actionable; the town is not one of them and stays plain text
+             | rather than becoming a link to nowhere.
+             */
+            $closingRows = [];
+
+            $closingPhone = trim((string) ($closingContact['phone'] ?? ''));
+            if ($closingPhone !== '') {
+                // Strip spaces and punctuation for the href — a dialler cannot
+                // parse „+359 897 810 020" — while the label keeps them.
+                $closingRows[] = ['text' => $closingPhone, 'href' => 'tel:'.preg_replace('/[^0-9+]/', '', $closingPhone)];
+            }
+
+            $closingEmail = trim((string) ($closingContact['email'] ?? ''));
+            if ($closingEmail !== '') {
+                $closingRows[] = ['text' => $closingEmail, 'href' => 'mailto:'.$closingEmail];
+            }
+
+            // Address is multi-line by nature; only the first line belongs on a
+            // single chip.
+            $closingPlace = trim(strtok((string) ($closingContact['address'] ?? ''), "\n"));
+            if ($closingPlace !== '') {
+                $closingRows[] = ['text' => $closingPlace, 'href' => null];
+            }
         @endphp
         <section class="closing">
             <div class="wrap in">
@@ -1056,7 +1086,11 @@
                     @if ($closingRows)
                         <div class="rows">
                             @foreach ($closingRows as $row)
-                                <span class="row">{{ $row }}</span>
+                                @if ($row['href'])
+                                    <a class="row" href="{{ $row['href'] }}">{{ $row['text'] }}</a>
+                                @else
+                                    <span class="row">{{ $row['text'] }}</span>
+                                @endif
                             @endforeach
                         </div>
                     @elseif ($theme->on('trade_band'))
