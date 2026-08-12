@@ -116,3 +116,56 @@ ganvo.bg, www.ganvo.bg {
         format console
     }
 }
+
+# ── Custom domain: sankevi.com ─────────────────────────────────────────────
+# A merchant's own domain, pointed straight at this box (A -> 173.249.5.42, no
+# Cloudflare in front of it), so unlike the *.ganvo.bg block this one gets a
+# real Let's Encrypt certificate on its own — no tls directive, no Origin CA.
+# Port 80 has to stay reachable for the ACME HTTP-01 challenge.
+#
+# BOTH hostnames are listed so Caddy gets a certificate for each, but only the
+# apex is a storefront: ResolveStorefrontTenant matches request host EXACTLY
+# against stores.custom_domain, which holds "sankevi.com". www therefore has to
+# be a redirect, not a second door — without it, www would 404 on a valid cert.
+#
+# For the next custom domain, copy this block and change the two hostnames. The
+# app needs nothing: the store row already carries the domain, and the merchant
+# verifies it from Store settings.
+sankevi.com, www.sankevi.com {
+    @www host www.sankevi.com
+    redir @www https://sankevi.com{uri} permanent
+
+    root * /var/www/ganvo/public
+    encode zstd gzip
+    php_fastcgi unix//run/php/php8.4-fpm.sock
+    file_server
+
+    @immutable {
+        path /build/* /images/* /favicon.ico
+    }
+    header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+    header {
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=31536000"
+        X-Frame-Options "SAMEORIGIN"
+        -Server
+    }
+
+    # /storage/* is deliberately NOT here — it is the public-disk symlink that
+    # serves the merchant's own product photos and gallery. Blocking it is what
+    # broke every image on ganvo.bg.
+    @blocked {
+        path /.env* /.git* /.htaccess /composer.* /artisan /docker-compose.yml
+    }
+    respond @blocked 404
+
+    log {
+        output file /var/log/caddy/sankevi.com.log {
+            roll_size 50mb
+            roll_keep 7
+        }
+        format console
+    }
+}
