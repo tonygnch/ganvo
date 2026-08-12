@@ -3,12 +3,13 @@
 namespace App\Filament\StoreAdmin\Pages;
 
 use App\Models\Store;
+use App\Themes\ThemeCustomizer;
 use App\Themes\ThemeRegistry;
 use BackedEnum;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Radio;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -87,8 +88,25 @@ class CustomizeTheme extends Page implements HasForms
                 $data["motif_text_{$id}"] = (string) data_get($saved, "motifs.{$id}.text", '');
             }
         }
-        foreach (($manifest['content'] ?? []) as $key => $field) {
-            $data["content_{$key}"] = (string) data_get($saved, "content.{$key}", '');
+        /*
+         | PREFILL WITH WHAT THE SITE ACTUALLY SAYS.
+         |
+         | This used to fill from the saved override alone, so every field a
+         | merchant had never touched came up EMPTY while the page rendered the
+         | theme's default underneath. Handing that panel to a shop owner means
+         | handing them a form of blank boxes and no way to discover what any of
+         | them currently control — and the first instinct, typing into one to
+         | find out, silently replaces copy that was already right.
+         |
+         | ThemeCustomizer::copy() resolves override-then-default, which is
+         | exactly what the storefront renders, so the field now shows the live
+         | text. save() below drops anything still equal to the default, so
+         | opening the page and saving it does not silently freeze every default
+         | into an override.
+         */
+        $resolver = ThemeCustomizer::for($store, $this->themeSlug);
+        foreach (array_keys($manifest['content'] ?? []) as $key) {
+            $data["content_{$key}"] = $resolver->copy($key);
         }
         foreach (array_keys($manifest['images'] ?? []) as $slot) {
             $path = data_get($saved, "images.{$slot}");
@@ -169,7 +187,7 @@ class CustomizeTheme extends Page implements HasForms
         // — Images: merchant photos for the theme's image slots —
         $imageFields = [];
         foreach (($manifest['images'] ?? []) as $slot => $field) {
-            $help = trim(($field['hint'] ?? '') . (isset($field['size']) ? ' ' . __('admin.theme.help.recommended_size', ['size' => $field['size']]) : ''));
+            $help = trim(($field['hint'] ?? '').(isset($field['size']) ? ' '.__('admin.theme.help.recommended_size', ['size' => $field['size']]) : ''));
             $imageFields[] = FileUpload::make("image_{$slot}")
                 ->label($field['label'] ?? $slot)
                 ->image()
@@ -185,6 +203,22 @@ class CustomizeTheme extends Page implements HasForms
         return $schema->statePath('data')->components([
             Tabs::make('customize')->tabs($tabs)->persistTabInQueryString(),
         ]);
+    }
+
+    /**
+     * The value a content slot shows when the store has no override — the same
+     * fallback ThemeCustomizer::copy() applies, so "is this still the default?"
+     * is answered the same way in both places.
+     *
+     * @param  array<string, mixed>  $field
+     */
+    private static function defaultFor(array $field): string
+    {
+        if (isset($field['default_lang'])) {
+            return (string) __($field['default_lang']);
+        }
+
+        return (string) ($field['default'] ?? '');
     }
 
     public function save(): void
@@ -212,11 +246,19 @@ class CustomizeTheme extends Page implements HasForms
                 }
             }
         }
-        foreach (array_keys($manifest['content'] ?? []) as $key) {
+        /*
+         | Store only what DIFFERS from the theme default. The fields arrive
+         | prefilled with the resolved text, so writing them back wholesale
+         | would turn every untouched default into a frozen override — and the
+         | store would then stop following any later correction to the theme's
+         | own copy. Clearing a field still means "give me the default back".
+         */
+        foreach (($manifest['content'] ?? []) as $key => $field) {
             $text = trim((string) ($state["content_{$key}"] ?? ''));
-            if ($text !== '') {
-                $settings['content'][$key] = $text;
+            if ($text === '' || $text === trim(self::defaultFor($field))) {
+                continue;
             }
+            $settings['content'][$key] = $text;
         }
         foreach (array_keys($manifest['images'] ?? []) as $slot) {
             $path = $state["image_{$slot}"] ?? null;
