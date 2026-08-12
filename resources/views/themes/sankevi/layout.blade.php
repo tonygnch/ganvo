@@ -861,7 +861,7 @@
                              alt="{{ __('site.storefront.sankevi.cert_alt') }}"
                              width="370" height="512" loading="lazy">
                         <span class="fcert-code">
-                            {{ __('site.storefront.sankevi.cert_line') }}
+                            {{ $theme->copy('cert_line') }}
                             @if ($csCertCode)<br>{{ $csCertCode }}@endif
                         </span>
                     </div>

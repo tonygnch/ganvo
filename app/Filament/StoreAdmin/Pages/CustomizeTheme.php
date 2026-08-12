@@ -3,6 +3,7 @@
 namespace App\Filament\StoreAdmin\Pages;
 
 use App\Models\Store;
+use App\Support\ThemeCopyHtml;
 use App\Themes\ThemeCustomizer;
 use App\Themes\ThemeRegistry;
 use BackedEnum;
@@ -255,6 +256,13 @@ class CustomizeTheme extends Page implements HasForms
          */
         foreach (($manifest['content'] ?? []) as $key => $field) {
             $text = trim((string) ($state["content_{$key}"] ?? ''));
+
+            // Slots ending in _html are echoed unescaped by the theme, so what
+            // a merchant types goes into the page as markup. Allowlist it.
+            if (ThemeCopyHtml::isHtmlSlot($key)) {
+                $text = ThemeCopyHtml::sanitize($text);
+            }
+
             if ($text === '' || $text === trim(self::defaultFor($field))) {
                 continue;
             }

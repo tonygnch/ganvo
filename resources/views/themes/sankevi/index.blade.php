@@ -143,9 +143,9 @@
         $marqueeName = trim((string) $theme->copy('marquee_name')) ?: $tenant->name;
         $marqueeWords = array_values(array_filter([
             $marqueeName,
-            __('site.storefront.sankevi.marquee_trade'),
+            $theme->copy('marquee_trade'),
             $founded ? __('site.storefront.sankevi.marquee_since', ['year' => $founded]) : null,
-            __('site.storefront.sankevi.marquee_place'),
+            $theme->copy('marquee_place'),
         ]));
 
         // THE WHEEL'S ITEMS — one per family, then one that opens the whole
@@ -163,7 +163,7 @@
             ];
         }
         $wheelItems[] = [
-            'name' => __('site.storefront.sankevi.families_all'),
+            'name' => $theme->copy('families_all'),
             'href' => '/shop',
             // The establishing shot of the whole yard — the only place on this
             // page it still earns its keep now that the hero shows end-grain.
@@ -815,11 +815,11 @@
                         @if ($csHero['subtitle'] !== '')
                             {{ $csHero['subtitle'] }}
                         @else
-                            {!! __('site.storefront.sankevi.hero_h1_html') !!}
+                            {!! $theme->copy('hero_h1_html') !!}
                         @endif
                     </h1>
                 </div>
-                <p class="sub rise" style="--d: .62s;">{{ __('site.storefront.sankevi.hero_sub') }}</p>
+                <p class="sub rise" style="--d: .62s;">{{ $theme->copy('hero_sub') }}</p>
 
                 {{-- The three answers, as plates. One editable field behind
                      them, so a merchant who sells something other than timber
@@ -835,9 +835,9 @@
 
                 <div class="foot">
                     <div class="cta rise" style="--d: 1s;">
-                        <a class="btn" href="/shop">{{ __('site.storefront.sankevi.hero_cta') }}</a>
+                        <a class="btn" href="/shop">{{ $theme->copy('hero_cta') }}</a>
                         @if ($contactOn)
-                            <a class="btn ghost" href="/contact">{{ __('site.storefront.sankevi.hero_cta2') }}</a>
+                            <a class="btn ghost" href="/contact">{{ $theme->copy('hero_cta2') }}</a>
                         @endif
                     </div>
                     <span class="cue rise" style="--d: 1.12s;" aria-hidden="true">
@@ -865,10 +865,10 @@
             <div class="wrap">
                 <div class="head" data-gv-reveal>
                     @if ($theme->on('gutter_index'))
-                        <span class="gx" aria-hidden="true">{{ __('site.storefront.sankevi.gx_home') }}</span>
+                        <span class="gx" aria-hidden="true">{{ $theme->copy('gx_home') }}</span>
                     @endif
                     <div>
-                        <h2>{!! __('site.storefront.sankevi.families_h2_html') !!}</h2>
+                        <h2>{!! $theme->copy('families_h2_html') !!}</h2>
                     </div>
                     {{-- The hint describes a GESTURE, and the gesture turns with
                          the wheel: up/down on a desktop column, left/right on a
@@ -948,19 +948,33 @@
                 <div class="wrap">
                     <div class="head" data-gv-reveal>
                         @if ($theme->on('gutter_index'))
-                            <span class="gx" aria-hidden="true">{{ __('site.storefront.sankevi.offer_eyebrow') }}</span>
+                            <span class="gx" aria-hidden="true">{{ $theme->copy('offer_eyebrow') }}</span>
                         @endif
-                        <h2>{!! __('site.storefront.sankevi.offer_h2_html') !!}</h2>
-                        <p class="lead">{{ __('site.storefront.sankevi.offer_lead') }}</p>
+                        <h2>{!! $theme->copy('offer_h2_html') !!}</h2>
+                        <p class="lead">{{ $theme->copy('offer_lead') }}</p>
                     </div>
 
                     <div class="grid" data-gv-reveal data-gv-delay="0.1">
-                        @foreach (range(1, 6) as $n)
+                        {{-- Built first, so the numerals count the cells that
+                             SURVIVE. Looping 1..6 and printing $n meant clearing
+                             a heading left an empty numbered cell behind — the
+                             same bug the reasons band had, one band lower. --}}
+                        @php
+                            $offerCells = [];
+                            foreach (range(1, 6) as $n) {
+                                $h = trim($theme->copy('offer_' . $n . '_h'));
+                                if ($h === '') {
+                                    continue;
+                                }
+                                $offerCells[] = ['h' => $h, 'p' => trim($theme->copy('offer_' . $n . '_p'))];
+                            }
+                        @endphp
+                        @foreach ($offerCells as $i => $cell)
                             <article class="cell">
-                                <span class="n" aria-hidden="true">{{ sprintf('%02d', $n) }}</span>
+                                <span class="n" aria-hidden="true">{{ sprintf('%02d', $i + 1) }}</span>
                                 <span class="rule" aria-hidden="true"></span>
-                                <h3>{{ __('site.storefront.sankevi.offer_' . $n . '_h') }}</h3>
-                                <p>{{ __('site.storefront.sankevi.offer_' . $n . '_p') }}</p>
+                                <h3>{{ $cell['h'] }}</h3>
+                                @if ($cell['p'] !== '')<p>{{ $cell['p'] }}</p>@endif
                             </article>
                         @endforeach
                     </div>
@@ -997,9 +1011,9 @@
                 <div class="wrap in">
                     <div class="aside" data-gv-reveal>
                         @if ($theme->on('gutter_index'))
-                            <span class="gx" aria-hidden="true">{{ __('site.storefront.sankevi.why_eyebrow') }}</span>
+                            <span class="gx" aria-hidden="true">{{ $theme->copy('why_eyebrow') }}</span>
                         @endif
-                        <h2>{!! __('site.storefront.sankevi.why_h2_html') !!}</h2>
+                        <h2>{!! $theme->copy('why_h2_html') !!}</h2>
 
                         @if ($theme->on('ledger_strip') && $factStrip)
                             <div class="facts">
@@ -1018,8 +1032,8 @@
                             </div>
                         @endif
 
-                        @if ($aboutOn && trim(__('site.storefront.sankevi.why_about')) !== '')
-                            <a class="hist" href="/about">{{ __('site.storefront.sankevi.why_about') }}</a>
+                        @if ($aboutOn && trim($theme->copy('why_about')) !== '')
+                            <a class="hist" href="/about">{{ $theme->copy('why_about') }}</a>
                         @endif
                     </div>
 
@@ -1057,7 +1071,7 @@
                 <img src="{{ $forestImageUrl }}" alt="" loading="lazy" data-gv-parallax="0.12">
                 <div class="q" data-gv-reveal>
                     <blockquote>{{ $theme->copy('forest_quote') }}</blockquote>
-                    <figcaption>{{ __('site.storefront.sankevi.forest_caption') }}</figcaption>
+                    <figcaption>{{ $theme->copy('forest_caption') }}</figcaption>
                 </div>
             </figure>
         @endif
@@ -1105,7 +1119,7 @@
         <section class="closing">
             <div class="wrap in">
                 <div data-gv-reveal>
-                    <h2>{!! __('site.storefront.sankevi.closing_h2_html') !!}</h2>
+                    <h2>{!! $theme->copy('closing_h2_html') !!}</h2>
                     <p>{{ $theme->copy('trade_body') }}</p>
                     @if ($closingRows)
                         <div class="rows">
@@ -1126,7 +1140,7 @@
                     @endif
                 </div>
                 <div class="cta" data-gv-reveal data-gv-delay="0.12">
-                    <a class="btn" href="{{ $contactOn ? '/contact' : '/shop' }}">{{ __('site.storefront.sankevi.closing_shop') }}</a>
+                    <a class="btn" href="{{ $contactOn ? '/contact' : '/shop' }}">{{ $theme->copy('closing_shop') }}</a>
                 </div>
             </div>
         </section>

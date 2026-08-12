@@ -20,10 +20,6 @@ return [
             'label' => 'Ledger strip (facts band under the hero)',
             'default' => true,
         ],
-        'species_band' => [
-            'label' => 'Species guide (four timbers + density gauges)',
-            'default' => true,
-        ],
         'forest_band' => [
             'label' => 'Full-bleed forest divider with pull quote',
             'default' => true,
@@ -47,10 +43,6 @@ return [
         ],
         'trade_band' => [
             'label' => 'Trade & sites callout (the moss slab)',
-            'default' => true,
-        ],
-        'news_band' => [
-            'label' => 'Price-list newsletter',
             'default' => true,
         ],
         // The catalogue at /shop is a separate destination from the landing
@@ -107,6 +99,206 @@ return [
     ],
 
     'content' => [
+        'hero_h1_html' => [
+            'label' => 'Hero — headline (HTML: wrap accent words in <em>)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.hero_h1_html',
+        ],
+        'hero_sub' => [
+            'label' => 'Hero — paragraph under the headline',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.hero_sub',
+        ],
+        'hero_cta' => [
+            'label' => 'Hero — primary button label (links to the shop)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.hero_cta',
+        ],
+        'hero_cta2' => [
+            'label' => 'Hero — secondary button label (links to the contact page)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.hero_cta2',
+        ],
+        'marquee_trade' => [
+            'label' => 'Rotating tape — trade line (keep it short, it is set in display caps)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.marquee_trade',
+        ],
+        'marquee_place' => [
+            'label' => 'Rotating tape — place (empty drops the word)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.marquee_place',
+        ],
+        'gx_home' => [
+            'label' => 'Families — vertical label in the left margin (max ~24 chars)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.gx_home',
+        ],
+        'families_h2_html' => [
+            'label' => 'Families — heading (HTML: wrap accent words in <em>)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.families_h2_html',
+        ],
+        'families_all' => [
+            'label' => 'Families — the "everything" entry, also the first shop chip',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.families_all',
+        ],
+        'offer_eyebrow' => [
+            'label' => 'Capabilities — vertical label in the left margin (max ~24 chars)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.offer_eyebrow',
+        ],
+        'offer_h2_html' => [
+            'label' => 'Capabilities — heading (HTML: wrap accent words in <em>)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.offer_h2_html',
+        ],
+        'offer_lead' => [
+            'label' => 'Capabilities — lead paragraph',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.offer_lead',
+        ],
+        'why_eyebrow' => [
+            'label' => 'Why us — vertical label in the left margin (max ~24 chars)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.why_eyebrow',
+        ],
+        'why_h2_html' => [
+            'label' => 'Why us — heading (HTML: wrap accent words in <em>)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.why_h2_html',
+        ],
+        'why_about' => [
+            'label' => 'Why us — link to the About page (empty hides the link)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.why_about',
+        ],
+        'forest_caption' => [
+            'label' => 'Divider — caption under the pull quote',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.forest_caption',
+        ],
+        'closing_h2_html' => [
+            'label' => 'Closing — heading (HTML: wrap accent words in <em>)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.closing_h2_html',
+        ],
+        'closing_shop' => [
+            'label' => 'Closing — button label',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.closing_shop',
+        ],
+        'story_eyebrow' => [
+            'label' => 'About — vertical label in the left margin (max ~24 chars)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.story_eyebrow',
+        ],
+        'cert_line' => [
+            'label' => 'Footer — certification caption',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.cert_line',
+        ],
+        'offer_1_h' => [
+            'label' => 'Capability 01 — heading (clear it to drop the cell)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.offer_1_h',
+        ],
+        'offer_1_p' => [
+            'label' => 'Capability 01 — text',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.offer_1_p',
+        ],
+        'offer_2_h' => [
+            'label' => 'Capability 02 — heading (clear it to drop the cell)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.offer_2_h',
+        ],
+        'offer_2_p' => [
+            'label' => 'Capability 02 — text',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.offer_2_p',
+        ],
+        'offer_3_h' => [
+            'label' => 'Capability 03 — heading (clear it to drop the cell)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.offer_3_h',
+        ],
+        'offer_3_p' => [
+            'label' => 'Capability 03 — text',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.offer_3_p',
+        ],
+        'offer_4_h' => [
+            'label' => 'Capability 04 — heading (clear it to drop the cell)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.offer_4_h',
+        ],
+        'offer_4_p' => [
+            'label' => 'Capability 04 — text',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.offer_4_p',
+        ],
+        'offer_5_h' => [
+            'label' => 'Capability 05 — heading (clear it to drop the cell)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.offer_5_h',
+        ],
+        'offer_5_p' => [
+            'label' => 'Capability 05 — text',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.offer_5_p',
+        ],
+        'offer_6_h' => [
+            'label' => 'Capability 06 — heading (clear it to drop the cell)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.offer_6_h',
+        ],
+        'offer_6_p' => [
+            'label' => 'Capability 06 — text',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.offer_6_p',
+        ],
+        'why_1_h' => [
+            'label' => 'Reason 01 — heading (clear it to drop the reason)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.why_1_h',
+        ],
+        'why_1_p' => [
+            'label' => 'Reason 01 — text',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.why_1_p',
+        ],
+        'why_2_h' => [
+            'label' => 'Reason 02 — heading (clear it to drop the reason)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.why_2_h',
+        ],
+        'why_2_p' => [
+            'label' => 'Reason 02 — text',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.why_2_p',
+        ],
+        'why_3_h' => [
+            'label' => 'Reason 03 — heading (clear it to drop the reason)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.why_3_h',
+        ],
+        'why_3_p' => [
+            'label' => 'Reason 03 — text',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.why_3_p',
+        ],
+        'why_4_h' => [
+            'label' => 'Reason 04 — heading (clear it to drop the reason)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.why_4_h',
+        ],
+        'why_4_p' => [
+            'label' => 'Reason 04 — text',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.why_4_p',
+        ],
         'hero_note' => [
             'label' => 'Hero — the capability line under the opening paragraph',
             'type' => 'text',
@@ -208,11 +400,6 @@ return [
             'label' => 'Trade & sites — text',
             'type' => 'textarea',
             'default_lang' => 'site.storefront.sankevi.trade_body',
-        ],
-        'news_body' => [
-            'label' => 'Newsletter — text',
-            'type' => 'textarea',
-            'default_lang' => 'site.storefront.promo.p',
         ],
     ],
 

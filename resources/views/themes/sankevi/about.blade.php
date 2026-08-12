@@ -117,12 +117,12 @@
         <div class="wrap about">
             <div class="page-head reveal">
                 @if ($theme->on('gutter_index'))
-                    <span class="gx" aria-hidden="true" style="top: 60px;">{{ __('site.storefront.sankevi.story_eyebrow') }}</span>
+                    <span class="gx" aria-hidden="true" style="top: 60px;">{{ $theme->copy('story_eyebrow') }}</span>
                 @endif
                 @if ($about['founded_year'])
                     <div class="crumb">{{ __('site.storefront.about.since', ['year' => $about['founded_year']]) }}</div>
                 @else
-                    <div class="crumb">{{ __('site.storefront.sankevi.story_eyebrow') }}</div>
+                    <div class="crumb">{{ $theme->copy('story_eyebrow') }}</div>
                 @endif
                 <h1>{{ $heading }}</h1>
                 <p>{{ $intro }}</p>
