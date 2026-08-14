@@ -2,16 +2,21 @@
 
 namespace App\Filament\StoreAdmin\Resources\Products\Schemas;
 
+use App\Models\ProductOption;
 use App\Models\ProductOptionValue;
+use App\Services\Money;
 use Closure;
+use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Callout;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -65,7 +70,7 @@ class ProductForm
                             ->required()
                             ->numeric()
                             ->step('0.01')
-                            ->prefix(fn () => \App\Services\Money::symbol(
+                            ->prefix(fn () => Money::symbol(
                                 auth()->user()?->tenant?->store?->currency ?? 'EUR'
                             ))
                             ->formatStateUsing(fn ($state) => $state !== null ? number_format($state / 100, 2, '.', '') : null)
@@ -178,6 +183,113 @@ class ProductForm
                     ->description(fn ($record): string => static::hasSavedOptions($record)
                         ? __('admin.products.section_help.combinations')
                         : __('admin.products.section_help.variants'))
+                    /*
+                     | FILL THE MATRIX IN ONE CLICK.
+                     |
+                     | Every combination the axes allow is already implied by
+                     | the axes; typing them out again is transcription, not a
+                     | decision. Four widths and seven lengths is 28 rows, each
+                     | needing two dropdowns before it says anything — and a
+                     | real catalogue wants most of them. So the merchant gets
+                     | the whole grid and deletes what they do not sell, which
+                     | is a handful of clicks instead of a hundred.
+                     |
+                     | Rows already present are kept untouched: this ADDS the
+                     | missing combinations, so pressing it twice is safe and
+                     | pressing it after adding an axis fills in only the new
+                     | pairings.
+                     |
+                     | Prices are left unset on purpose. A variant with no
+                     | price override sells at the product's price
+                     | (ProductVariant::effectivePriceCents), so an unedited row
+                     | is never wrong — where a prefilled copy of the base price
+                     | would look deliberate and quietly ship at the wrong
+                     | number for every size that differs.
+                     */
+                    ->headerActions([
+                        Action::make('generateCombinations')
+                            ->label(__('admin.products.action.generate_combinations'))
+                            ->icon('heroicon-o-squares-2x2')
+                            ->color('gray')
+                            ->visible(fn ($record): bool => static::hasSavedOptions($record))
+                            ->action(function (Get $get, Set $set, $record): void {
+                                $options = static::savedOptions($record);
+
+                                $axes = [];
+                                $valueTexts = [];
+                                foreach ($options as $option) {
+                                    $ids = $option->values->pluck('id')->map(fn ($id): int => (int) $id)->all();
+                                    if ($ids === []) {
+                                        continue;
+                                    }
+                                    $axes[(int) $option->id] = $ids;
+                                    foreach ($option->values as $value) {
+                                        $valueTexts[(int) $value->id] = $value->value;
+                                    }
+                                }
+
+                                if ($axes === []) {
+                                    return;
+                                }
+
+                                // Every pairing the axes allow.
+                                $combinations = [[]];
+                                foreach ($axes as $optionId => $valueIds) {
+                                    $next = [];
+                                    foreach ($combinations as $partial) {
+                                        foreach ($valueIds as $valueId) {
+                                            $next[] = $partial + [$optionId => $valueId];
+                                        }
+                                    }
+                                    $combinations = $next;
+                                }
+
+                                $rows = Arr::wrap($get('variants'));
+
+                                // What the merchant already has, so a second
+                                // press adds nothing and never duplicates.
+                                $existing = [];
+                                foreach ($rows as $row) {
+                                    $selection = static::selectedValueIds(Arr::wrap($row));
+                                    if ($selection !== []) {
+                                        $existing[static::combinationSignature($selection)] = true;
+                                    }
+                                }
+
+                                $added = 0;
+                                foreach ($combinations as $selection) {
+                                    if (isset($existing[static::combinationSignature($selection)])) {
+                                        continue;
+                                    }
+
+                                    $row = [
+                                        'label' => implode(' / ', array_map(
+                                            fn (int $valueId): string => (string) ($valueTexts[$valueId] ?? ''),
+                                            array_values($selection),
+                                        )),
+                                        'sku' => null,
+                                        'price_cents' => null,
+                                        'stock_quantity' => $get('stock_quantity') ?? 0,
+                                        'is_active' => true,
+                                    ];
+                                    foreach ($selection as $optionId => $valueId) {
+                                        $row[static::OPTION_FIELD_PREFIX.$optionId] = $valueId;
+                                    }
+
+                                    $rows[(string) Str::uuid()] = $row;
+                                    $added++;
+                                }
+
+                                $set('variants', $rows);
+
+                                Notification::make()
+                                    ->success()
+                                    ->title($added > 0
+                                        ? __('admin.products.notify.combinations_added', ['count' => $added])
+                                        : __('admin.products.notify.combinations_none'))
+                                    ->send();
+                            }),
+                    ])
                     ->schema([
                         // The mechanism, spelled out: there is no rule anywhere
                         // that forbids 200 см × 10 см. It is unbuyable purely
@@ -319,12 +431,32 @@ class ProductForm
     }
 
     /** Axes the product has actually stored — only those have ids to pair on. */
+    /**
+     * A stable fingerprint for one cell of the matrix, so "do we already have
+     * this pairing?" is a string comparison rather than a nested loop. Sorted
+     * by axis id, because two rows describing the same cell must produce the
+     * same signature whatever order their Selects came back in.
+     *
+     * @param  array<int, int>  $selection  option id => value id
+     */
+    protected static function combinationSignature(array $selection): string
+    {
+        ksort($selection);
+
+        $parts = [];
+        foreach ($selection as $optionId => $valueId) {
+            $parts[] = "{$optionId}:{$valueId}";
+        }
+
+        return implode('|', $parts);
+    }
+
     protected static function hasSavedOptions($record): bool
     {
         return (bool) $record?->exists && $record->options()->exists();
     }
 
-    /** @return EloquentCollection<int, \App\Models\ProductOption> */
+    /** @return EloquentCollection<int, ProductOption> */
     protected static function savedOptions($record): EloquentCollection
     {
         return $record?->exists
@@ -336,7 +468,7 @@ class ProductForm
      * The variant fields for a product with no axes: the merchant names the
      * variant himself. Unchanged behaviour for single-axis catalogues.
      *
-     * @return array<int, \Filament\Schemas\Components\Component>
+     * @return array<int, Component>
      */
     protected static function flatVariantFields(): array
     {
@@ -356,8 +488,8 @@ class ProductForm
      * the order lines and the confirmation e-mails all print it, so it has to
      * follow the selection instead of drifting away from it.
      *
-     * @param  EloquentCollection<int, \App\Models\ProductOption>  $options
-     * @return array<int, \Filament\Schemas\Components\Component>
+     * @param  EloquentCollection<int, ProductOption>  $options
+     * @return array<int, Component>
      */
     protected static function combinationFields(EloquentCollection $options): array
     {
@@ -365,7 +497,7 @@ class ProductForm
         $optionFields = [];
 
         foreach ($options as $option) {
-            $optionFields[] = static::OPTION_FIELD_PREFIX . $option->id;
+            $optionFields[] = static::OPTION_FIELD_PREFIX.$option->id;
 
             foreach ($option->values as $value) {
                 $valueTexts[(int) $value->id] = $value->value;
@@ -377,7 +509,7 @@ class ProductForm
         foreach ($options as $option) {
             $optionId = (int) $option->id;
 
-            $fields[] = Select::make(static::OPTION_FIELD_PREFIX . $optionId)
+            $fields[] = Select::make(static::OPTION_FIELD_PREFIX.$optionId)
                 ->label($option->name)
                 ->options($option->values->pluck('value', 'id')->all())
                 /*
@@ -415,7 +547,7 @@ class ProductForm
         return [...$fields, ...static::variantStockFields()];
     }
 
-    /** @return array<int, \Filament\Schemas\Components\Component> */
+    /** @return array<int, Component> */
     protected static function variantStockFields(): array
     {
         return [
@@ -427,7 +559,7 @@ class ProductForm
                 ->label(__('admin.products.field.price_override'))
                 ->numeric()
                 ->step('0.01')
-                ->prefix(fn () => \App\Services\Money::symbol(
+                ->prefix(fn () => Money::symbol(
                     auth()->user()?->tenant?->store?->currency ?? 'EUR'
                 ))
                 ->helperText(__('admin.products.help.price_override'))
@@ -468,7 +600,7 @@ class ProductForm
             ->pluck('product_option_value_id', 'product_option_id');
 
         foreach ($pinned as $optionId => $valueId) {
-            $data[static::OPTION_FIELD_PREFIX . $optionId] = (int) $valueId;
+            $data[static::OPTION_FIELD_PREFIX.$optionId] = (int) $valueId;
         }
 
         /*
@@ -484,7 +616,7 @@ class ProductForm
          | saves. A Callout above the rows says it has happened.
          */
         foreach ($options ?? [] as $option) {
-            $field = static::OPTION_FIELD_PREFIX . $option->id;
+            $field = static::OPTION_FIELD_PREFIX.$option->id;
 
             if (filled($data[$field] ?? null)) {
                 continue;
