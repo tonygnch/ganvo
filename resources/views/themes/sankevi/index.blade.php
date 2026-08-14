@@ -421,9 +421,19 @@
            history. The sticky aside IS the animation here — the numbers hold
            still and the arguments move against them.
            ================================================================= */
-        .why { position: relative; padding: clamp(96px, 16vh, 180px) 0 0; }
+        /* THE BAND NEEDS A FLOOR.
+           Top padding only meant the section ended on its last line of type,
+           and the closing band is a full-bleed slab of colour that starts
+           exactly there — so the counters' labels sat ON the green edge. Worse
+           while scrolling: the aside beside them is sticky, and a sticky
+           element stops at its container's bottom, which was the colour
+           boundary, so it appeared glued to the next section.
+           The reasons list also overhung the section by 34px — its last row's
+           padding had nothing under it — and that overhang was landing inside
+           the green. One floor fixes all three. */
+        .why { position: relative; padding: clamp(96px, 16vh, 180px) 0 clamp(64px, 9vh, 112px); }
         .why .in { display: grid; grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr); gap: clamp(34px, 6vw, 92px); align-items: start; }
-        .why .aside { position: sticky; top: calc(var(--header-height) + 46px); }
+        .why .aside { position: sticky; top: calc(var(--header-height) + 46px); padding-bottom: clamp(24px, 4vh, 48px); }
         .why h2 { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 3.3vw, 44px); line-height: 1.02; letter-spacing: 0; margin-top: 14px; }
         .why h2 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
 
