@@ -57,6 +57,27 @@ return [
         // The catalogue at /shop is a separate destination from the landing
         // page, so it gets its own switch: off leaves the stock book opening
         // on type alone, which is what a merchant with no wide shot wants.
+        /* The four rows of the product page's spec sheet. Each is a CLAIM —
+           free shipping, thirty-day returns, a one-minute checkout — printed
+           unconditionally by the platform whether or not the merchant offers
+           any of them. On by default so no existing store changes; with all
+           four off the block disappears rather than leaving an empty ruled box. */
+        'spec_shipping' => [
+            'label' => 'Product page — "free delivery" row (needs a free-shipping threshold)',
+            'default' => true,
+        ],
+        'spec_returns' => [
+            'label' => 'Product page — "easy returns" row',
+            'default' => true,
+        ],
+        'spec_checkout' => [
+            'label' => 'Product page — "fast checkout" row',
+            'default' => true,
+        ],
+        'spec_category' => [
+            'label' => 'Product page — category row',
+            'default' => true,
+        ],
         'shop_masthead' => [
             'label' => 'Shop masthead (photographic cover over the stock book)',
             'default' => true,

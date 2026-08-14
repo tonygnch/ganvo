@@ -357,7 +357,7 @@ return [
             'trade_cta'       => 'Request a quote',
             'related_eyebrow' => 'From the same stack',
             'card_action'     => 'View',
-            'pdp_note'        => 'Cut to length on request · Delivered nationwide',
+            'pdp_note'        => '',
             'pill_kiln'       => 'Kiln-dried',
             'pill_graded'     => 'Strength-graded',
             'pill_cut'        => 'Cut to size',

@@ -57,7 +57,12 @@
         .pinfo .stock .dot { width: 6px; height: 6px; background: var(--accent); animation: stockpulse 3s ease-in-out infinite; }
         @keyframes stockpulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent); } 60% { box-shadow: 0 0 0 7px transparent; } }
         @media (prefers-reduced-motion: reduce) { .pinfo .stock .dot { animation: none; } }
-        .pinfo p.desc { color: var(--muted); margin: 26px 0 30px; max-width: 50ch; font-size: 15.5px; }
+        /* pre-line so the merchant's own line breaks survive. A description is
+           one of the few fields a shop owner pastes into from elsewhere, and it
+           arrives as a list — bullets, sizes, a price line — all of which was
+           collapsing into a single paragraph. The text stays escaped; only the
+           whitespace is honoured. */
+        .pinfo p.desc { color: var(--muted); margin: 26px 0 30px; max-width: 50ch; font-size: 15.5px; white-space: pre-line; }
 
         /* the spec sheet — ruled key/value rows, tabular and unglamorous on
            purpose. A merchant sells the craft; a builder buys the numbers. */
@@ -158,6 +163,12 @@
                     @endif
 
                     @if ($product->description)
+                        {{-- pre-line, not nl2br: the merchant's newlines and
+                             blank lines survive while the text stays ESCAPED.
+                             A description is one of the few fields a shop owner
+                             pastes into from elsewhere, and it arrives full of
+                             line breaks and bullet characters that were
+                             collapsing into one paragraph. --}}
                         <p class="desc">{{ $product->description }}</p>
                     @endif
 
@@ -165,14 +176,40 @@
                          promises, which is all the structured data a product
                          carries today — but they read as a spec sheet, because
                          that is what this shopper scans for. --}}
-                    <div class="specs">
-                        <div class="row"><span class="k">{{ __('site.storefront.value_props.shipping_title') }}</span><span class="v">{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt]) : '' }}</span></div>
-                        <div class="row"><span class="k">{{ __('site.storefront.value_props.returns_title') }}</span><span class="v">{{ __('site.storefront.value_props.returns_sub') }}</span></div>
-                        <div class="row"><span class="k">{{ __('site.storefront.value_props.checkout_title') }}</span><span class="v">{{ __('site.storefront.value_props.checkout_sub') }}</span></div>
-                        @if ($primaryCategory)
-                            <div class="row"><span class="k">{{ __('site.storefront.controls.category') }}</span><span class="v">{{ $primaryCategory->name }}</span></div>
-                        @endif
-                    </div>
+                    {{-- EVERY ROW IS A CLAIM, so every row is a switch.
+                         These were the platform's own service promises printed
+                         unconditionally — free shipping, thirty-day returns,
+                         checkout "under a minute". A yard that quotes by
+                         enquiry offers none of the three, and the shipping row
+                         printed its title with an EMPTY value whenever no
+                         free-shipping threshold was set: a promise with nothing
+                         behind it. Off by default would break every existing
+                         store, so they default on and each can be turned off.
+                         With all four off the block goes entirely rather than
+                         leaving a ruled empty box. --}}
+                    @php
+                        $fsAmt = $store->freeShippingAmount();
+                        $specRows = [];
+                        if ($theme->on('spec_shipping') && $fsAmt) {
+                            $specRows[] = [__('site.storefront.value_props.shipping_title'), __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt])];
+                        }
+                        if ($theme->on('spec_returns')) {
+                            $specRows[] = [__('site.storefront.value_props.returns_title'), __('site.storefront.value_props.returns_sub')];
+                        }
+                        if ($theme->on('spec_checkout')) {
+                            $specRows[] = [__('site.storefront.value_props.checkout_title'), __('site.storefront.value_props.checkout_sub')];
+                        }
+                        if ($theme->on('spec_category') && $primaryCategory) {
+                            $specRows[] = [__('site.storefront.controls.category'), $primaryCategory->name];
+                        }
+                    @endphp
+                    @if ($specRows)
+                        <div class="specs">
+                            @foreach ($specRows as [$k, $v])
+                                <div class="row"><span class="k">{{ $k }}</span><span class="v">{{ $v }}</span></div>
+                            @endforeach
+                        </div>
+                    @endif
 
                     <form method="post" action="/cart/add/{{ $product->slug }}" data-gv-add>
                         @csrf
@@ -186,7 +223,9 @@
                             {{ __('site.storefront.product.add_to_cart') }} — <span data-vp-submit-price>@money($product->price_cents)</span>
                         </button>
                     </form>
-                    <p class="note">{{ __('site.storefront.sankevi.pdp_note') }}</p>
+                    @if (trim(__('site.storefront.sankevi.pdp_note')) !== '')
+                        <p class="note">{{ __('site.storefront.sankevi.pdp_note') }}</p>
+                    @endif
 
                     @include('storefront.partials.sticky-atc', ['product' => $product])
                 </div>
