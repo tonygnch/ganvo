@@ -20,6 +20,15 @@ return [
             'label' => 'Ledger strip (facts band under the hero)',
             'default' => true,
         ],
+        /* The brand line above the hero headline. Declared HERE, with the
+           bands, because that is where its value is written — SyncSankeviPages
+           and the customiser both store it under sections. Declared among the
+           motifs instead, save() rebuilt sections without it and the toggle
+           silently reverted to on. */
+        'hero_mark' => [
+            'label' => 'Brand line above the hero headline',
+            'default' => true,
+        ],
         'forest_band' => [
             'label' => 'Full-bleed forest divider with pull quote',
             'default' => true,
@@ -85,13 +94,6 @@ return [
            toggleable rather than hard-coded: a merchant whose certification
            lapses must be able to take it down themselves, without waiting on us
            and without leaving a false claim in the footer meanwhile. */
-        /* The brand line above the hero headline. Off for a merchant whose
-           headline stands on its own — it otherwise repeats what the header
-           says a couple of centimetres higher. */
-        'hero_mark' => [
-            'label' => 'Brand line above the hero headline',
-            'default' => true,
-        ],
         'brand_cert' => [
             'label' => 'Certification mark in the footer',
             'default' => true,

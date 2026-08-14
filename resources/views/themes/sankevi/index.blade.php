@@ -851,10 +851,12 @@
                             <a class="btn ghost" href="/contact">{!! $theme->editable('hero_cta2') !!}</a>
                         @endif
                     </div>
-                    <span class="cue rise" style="--d: 1.12s;" aria-hidden="true">
-                        <span class="rail"></span>
-                        {{ __('site.storefront.sankevi.scroll_cue') }}
-                    </span>
+                    @if (trim(__('site.storefront.sankevi.scroll_cue')) !== '')
+                        <span class="cue rise" style="--d: 1.12s;" aria-hidden="true">
+                            <span class="rail"></span>
+                            {{ __('site.storefront.sankevi.scroll_cue') }}
+                        </span>
+                    @endif
                 </div>
             </div>
         </section>

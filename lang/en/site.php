@@ -361,7 +361,7 @@ return [
             // shop window: the catalogue lives at /shop. The strings below
             // carry the acts of the cinematic landing — hero, velocity band,
             // flowing family menu, story, forest and the closing call.
-            'scroll_cue'          => 'Scroll',
+            'scroll_cue'          => '',
             'marquee_name'        => '',
             'marquee_trade'       => 'Manufacturer of high-quality solid wood products',
             'marquee_place'       => '',
