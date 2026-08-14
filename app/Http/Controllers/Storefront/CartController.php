@@ -11,6 +11,7 @@ use App\Themes\ThemeRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class CartController extends Controller
@@ -38,33 +39,34 @@ class CartController extends Controller
         $grand = max(0, $subtotal - $discountCents);
 
         return [
-            'ok'         => true,
-            'empty'      => $items->isEmpty(),
+            'ok' => true,
+            'empty' => $items->isEmpty(),
             'item_count' => $cart->itemCount(),
-            'lines'      => $items->map(fn ($row) => [
-                'line_id'         => $row['line_id'],
-                'quantity'        => $row['quantity'],
-                'subtotal'        => $fmt($row['subtotal_cents']),
+            'lines' => $items->map(fn ($row) => [
+                'line_id' => $row['line_id'],
+                'quantity' => $row['quantity'],
+                'subtotal' => $fmt($row['subtotal_cents']),
                 // Extended fields for the slide-out cart drawer; the cart
                 // page's own JS patches by line_id and ignores these.
-                'name'            => $row['product']->name,
-                'variant'         => $row['variant']->label ?? null,
-                'unit'            => $fmt($row['unit_price_cents']),
-                'image'           => $row['product']->image_path
-                    ? \Illuminate\Support\Facades\Storage::url($row['product']->image_path)
+                'name' => $row['product']->name,
+                'variant' => $row['variant']->label ?? null,
+                'unit' => $fmt($row['unit_price_cents']),
+                'image' => $row['product']->image_path
+                    ? Storage::url($row['product']->image_path)
                     : null,
-                'url'             => '/products/' . $row['product']->slug,
+                'url' => '/products/'.$row['product']->slug,
             ])->values()->all(),
-            'subtotal'        => $fmt($subtotal),
-            'discount'        => ($discount && $discountCents > 0) ? [
-                'name'   => $discount->name,
-                'amount' => '−' . $fmt($discountCents),
+            'subtotal' => $fmt($subtotal),
+            'discount' => ($discount && $discountCents > 0) ? [
+                'name' => $discount->name,
+                'amount' => '−'.$fmt($discountCents),
             ] : null,
             'applied_code' => $cart->appliedCode(),
-            'total'        => $fmt($grand),
-            'flash'        => $flash,
+            'total' => $fmt($grand),
+            'flash' => $flash,
         ];
     }
+
     public function show(): View
     {
         $tenant = app('current_tenant');
@@ -106,6 +108,7 @@ class CartController extends Controller
 
         if ($code === '') {
             $cart->removeDiscount();
+
             return $this->discountResponse($request, $cart, __('site.cart.discount_removed'));
         }
 
@@ -119,6 +122,7 @@ class CartController extends Controller
             // Stored their input so they can see what they typed when
             // they get back to the cart, but flag the failure.
             $cart->removeDiscount();
+
             return $this->discountResponse($request, $cart, __('site.cart.discount_invalid'), false);
         }
 
@@ -129,6 +133,7 @@ class CartController extends Controller
     {
         $cart = Cart::forCurrent();
         $cart->removeDiscount();
+
         return $this->discountResponse($request, $cart, __('site.cart.discount_removed'));
     }
 
@@ -143,6 +148,7 @@ class CartController extends Controller
         if ($request->wantsJson()) {
             return response()->json($this->cartState($cart, $flash) + ['ok' => $ok]);
         }
+
         return redirect('/cart')->with('cart.flash', $flash);
     }
 
@@ -160,13 +166,31 @@ class CartController extends Controller
             ? (int) $request->input('variant_id')
             : null;
 
+        /*
+         | ORDERING BY AREA.
+         |
+         | A product priced per m² is asked for in m², not in boards: the
+         | customer wants twenty square metres of paneling and does not know,
+         | or care, that this size covers 0,2233 of one. So the page sends the
+         | AREA and the count is worked out here.
+         |
+         | Recomputed server-side even though the page shows the same figure —
+         | the page's arithmetic is a courtesy to the customer, not an input we
+         | can trust, and quantity is what ends up on an invoice.
+         |
+         | Rounds UP: boards are not cut to order at checkout, and shipping
+         | 89,6 of them is not a thing. The customer is told the real figure
+         | before they submit.
+         */
+        $requestedMeasure = (float) str_replace(',', '.', (string) $request->input('measure', ''));
+
         // Force variant selection when the product has any active
         // variants — otherwise the customer would be ordering an
         // ambiguous "default" version.
         if ($product->hasVariants() && ! $variantId) {
             if ($request->wantsJson()) {
                 return response()->json([
-                    'ok'    => false,
+                    'ok' => false,
                     'flash' => __('site.storefront.cart.pick_a_variant'),
                 ], 422);
             }
@@ -186,13 +210,38 @@ class CartController extends Controller
             }
         }
 
+        // Turn the requested area into whole pieces. Anything we cannot
+        // measure falls back to one, which is the behaviour every product had
+        // before areas existed.
+        $quantity = 1;
+        $coversMeasure = null;
+
+        if ($product->isPricedByMeasure() && $requestedMeasure > 0 && isset($variant)) {
+            $perPiece = $variant->measure();
+
+            if ($perPiece !== null && $perPiece > 0) {
+                $quantity = max(1, (int) ceil($requestedMeasure / $perPiece));
+                $coversMeasure = $quantity * $perPiece;
+            }
+        }
+
         $cart = Cart::forCurrent();
-        $cart->add($product->id, $variantId);
+        $cart->add($product->id, $variantId, $quantity);
 
         $flashName = $variantId
             ? sprintf('%s — %s', $product->name, $variant->label)
             : $product->name;
-        $flash = __('site.storefront.added_to_cart', ['name' => $flashName]);
+        $flash = $coversMeasure !== null
+            // Say what they are actually getting: they asked for 20 m² and are
+            // being sold 90 boards, which is 20,1. Rounding silently would show
+            // up as a surprise on the quote.
+            ? __('site.storefront.added_to_cart_measure', [
+                'name' => $flashName,
+                'qty' => $quantity,
+                'measure' => rtrim(rtrim(number_format($coversMeasure, 2, '.', ''), '0'), '.'),
+                'unit' => $product->priceUnitSuffix(),
+            ])
+            : __('site.storefront.added_to_cart', ['name' => $flashName]);
 
         // Async path — the slide-out cart drawer adds without navigation.
         if ($request->wantsJson()) {
@@ -214,6 +263,7 @@ class CartController extends Controller
             // removes it) so the JS can fade the row out rather than just
             // re-rendering a stale subtotal.
             $stillPresent = collect($cart->items())->contains('line_id', $lineId);
+
             return response()->json($this->cartState($cart) + ['line_removed' => ! $stillPresent, 'line_id' => $lineId]);
         }
 

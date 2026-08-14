@@ -81,6 +81,12 @@ class Product extends Model
             : (string) __('site.units.'.$this->price_unit);
     }
 
+    /** „м²" on its own — the suffix carries a leading slash for prices. */
+    public function priceUnitShort(): string
+    {
+        return trim(str_replace('/', '', $this->priceUnitSuffix()));
+    }
+
     public function isPricedByMeasure(): bool
     {
         return ($this->price_unit ?? self::UNIT_PIECE) !== self::UNIT_PIECE;

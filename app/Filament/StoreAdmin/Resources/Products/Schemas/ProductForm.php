@@ -217,6 +217,72 @@ class ProductForm
                      | number for every size that differs.
                      */
                     ->headerActions([
+                        /*
+                         | REPRICE WHAT IS ALREADY THERE.
+                         |
+                         | Switching a product to per-m² does not touch rows
+                         | that already carry a typed price — an override wins
+                         | over the product price, by design. Without this, a
+                         | page quoting 8,20 €/м² sells a 20 m² order for
+                         | whatever the old per-piece numbers happened to add up
+                         | to, and the arithmetic visibly does not close.
+                         |
+                         | Separate from Generate on purpose: one adds rows, this
+                         | one overwrites prices the merchant may have set by
+                         | hand, and those should not happen behind a single
+                         | click. Rows whose dimensions do not parse keep what
+                         | they have and are reported.
+                         */
+                        Action::make('recalculatePrices')
+                            ->label(__('admin.products.action.recalculate_prices'))
+                            ->icon('heroicon-o-calculator')
+                            ->color('gray')
+                            ->requiresConfirmation()
+                            ->modalDescription(__('admin.products.help.recalculate_prices'))
+                            ->visible(fn (Get $get, $record): bool => static::hasSavedOptions($record)
+                                && (Product::UNIT_DIMENSIONS[$get('price_unit') ?? Product::UNIT_PIECE] ?? 0) > 0)
+                            ->action(function (Get $get, Set $set, $record): void {
+                                $options = static::savedOptions($record);
+                                $valueTexts = [];
+                                foreach ($options as $option) {
+                                    foreach ($option->values as $value) {
+                                        $valueTexts[(int) $value->id] = $value->value;
+                                    }
+                                }
+
+                                $dimensions = Product::UNIT_DIMENSIONS[$get('price_unit') ?? Product::UNIT_PIECE] ?? 0;
+                                $unitPrice = (int) round(((float) $get('price_cents')) * 100);
+
+                                $rows = Arr::wrap($get('variants'));
+                                $done = 0;
+                                $skipped = 0;
+
+                                foreach ($rows as $key => $row) {
+                                    $selection = static::selectedValueIds(Arr::wrap($row));
+                                    $measure = static::measureFor($selection, $valueTexts, $dimensions);
+
+                                    if ($measure === null || $unitPrice <= 0) {
+                                        $skipped++;
+
+                                        continue;
+                                    }
+
+                                    $rows[$key]['price_cents'] = number_format(
+                                        ((int) round($unitPrice * $measure)) / 100, 2, '.', ''
+                                    );
+                                    $done++;
+                                }
+
+                                $set('variants', $rows);
+
+                                Notification::make()
+                                    ->success()
+                                    ->title(__('admin.products.notify.prices_recalculated', ['count' => $done]))
+                                    ->body($skipped > 0
+                                        ? __('admin.products.notify.prices_skipped', ['count' => $skipped])
+                                        : null)
+                                    ->send();
+                            }),
                         Action::make('generateCombinations')
                             ->label(__('admin.products.action.generate_combinations'))
                             ->icon('heroicon-o-squares-2x2')

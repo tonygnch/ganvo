@@ -569,6 +569,8 @@ return [
             'tax_included' => 'с включен данък',
             'in_stock_full' => 'В наличност и готов за изпращане',
             'in_stock_low' => 'Само :count бр. в наличност',
+            'how_much' => 'Колко ви трябва (:unit)',
+            'covers' => '≈ :qty бр. — покрива :measure',
             'add_to_cart' => 'Добави в кошницата',
             'wishlist' => 'Запази за по-късно',
             'perks' => [
@@ -639,6 +641,7 @@ return [
             'subscribe' => 'Абонирай се',
             'subscribed' => 'Абониран ✓',
         ],
+        'added_to_cart_measure' => 'Добавено: :name — :qty бр. (:measure :unit)',
         'added_to_cart' => ':name беше добавен в кошницата ти.',
         'sign_in_for_checkout' => 'Моля, влез в акаунта си, за да завършиш поръчката.',
         // Съобщения, свързани с варианти

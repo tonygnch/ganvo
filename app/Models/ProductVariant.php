@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Dimension;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -49,6 +50,48 @@ class ProductVariant extends Model
      * The effective price for this variant: its override when set,
      * otherwise the parent product's price. Returned in cents.
      */
+    /**
+     * How much of the product's unit ONE of these is — the area of a single
+     * board in m², the length of one length in metres.
+     *
+     * Read from the dimensions already written on the axes (see Dimension), so
+     * a merchant does not restate them. Null when the product is sold by the
+     * piece, or when any axis does not parse: a customer asking for 20 m² of
+     * something whose size we cannot read must be told, not quietly given a
+     * guessed quantity.
+     */
+    public function measure(): ?float
+    {
+        $product = $this->product;
+        $needed = $product?->unitDimensions() ?? 0;
+
+        if ($needed < 1) {
+            return null;
+        }
+
+        // Axis order, so "width then length" is taken in the order the merchant
+        // declared rather than whatever the pivot returns.
+        $values = $this->optionValues()
+            ->join('product_options', 'product_options.id', '=', 'product_option_values.product_option_id')
+            ->orderBy('product_options.sort_order')
+            ->pluck('product_option_values.value');
+
+        $lengths = [];
+        foreach ($values as $text) {
+            $metres = Dimension::toMetres((string) $text);
+            if ($metres === null) {
+                return null;
+            }
+            $lengths[] = $metres;
+        }
+
+        if (count($lengths) < $needed) {
+            return null;
+        }
+
+        return array_product(array_slice($lengths, 0, $needed));
+    }
+
     public function effectivePriceCents(): int
     {
         return $this->price_cents !== null

@@ -62,6 +62,7 @@
                                data-price-formatted="@money($priceCents)"
                                data-stock="{{ $variant->stock_quantity }}"
                                data-label="{{ $variant->label }}"
+                               data-measure="{{ $variant->measure() ?? '' }}"
                                {{ $outOfStock ? 'disabled' : '' }}>
                         <span class="vp-option-body">
                             <span class="vp-option-label">{{ $variant->label }}</span>

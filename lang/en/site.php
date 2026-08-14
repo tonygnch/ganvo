@@ -568,6 +568,8 @@ return [
             'tax_included' => 'tax included',
             'in_stock_full' => 'In stock and ready to ship',
             'in_stock_low' => 'Only :count left in stock',
+            'how_much' => 'How much do you need (:unit)',
+            'covers' => '≈ :qty pcs — covers :measure',
             'add_to_cart' => 'Add to cart',
             'wishlist' => 'Save for later',
             'perks' => [
@@ -638,6 +640,7 @@ return [
             'subscribe' => 'Subscribe',
             'subscribed' => 'Subscribed ✓',
         ],
+        'added_to_cart_measure' => 'Added: :name — :qty pcs (:measure :unit)',
         'added_to_cart' => 'Added :name to your cart.',
         'sign_in_for_checkout' => 'Please sign in to complete checkout.',
         // Variant-related cart messages

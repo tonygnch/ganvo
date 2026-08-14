@@ -62,6 +62,12 @@
            arrives as a list — bullets, sizes, a price line — all of which was
            collapsing into a single paragraph. The text stays escaped; only the
            whitespace is honoured. */
+        .measure { margin: 0 0 16px; }
+        .measure label { display: block; font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+        .measure input { width: 100%; padding: 13px 14px; background: var(--surface); color: var(--txt); border: 1px solid var(--line2); font: inherit; font-size: 15px; }
+        .measure input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+        .measure-out { display: block; margin-top: 8px; font-size: 12.5px; color: var(--muted); min-height: 1.2em; }
+
         .pinfo p.desc { color: var(--muted); margin: 26px 0 30px; max-width: 50ch; font-size: 15.5px; white-space: pre-line; }
 
         /* the spec sheet — ruled key/value rows, tabular and unglamorous on
@@ -219,6 +225,39 @@
                             @include('storefront.partials.variant-picker')
                         @endif
 
+                        {{-- HOW MUCH, in the unit the price is quoted in.
+                             Only for products sold by measure: a shopper buying
+                             a bench wants one bench, but a shopper buying
+                             paneling wants twenty square metres and has no idea
+                             how many boards that is. The count is worked out
+                             here as they type AND again on the server, which is
+                             the figure that counts — this one exists so the
+                             rounding is visible before they commit. --}}
+                        @if ($product->isPricedByMeasure())
+                            @php
+                                /* variant id => how much of the unit ONE is.
+                                   Published here rather than on the picker
+                                   because the picker has two modes — radios for
+                                   a flat list, a hidden input for an option
+                                   matrix — and only the second is used by a
+                                   product with axes. A map keyed by id works
+                                   for both, and leaves the shared partial and
+                                   its script alone. */
+                                $measureMap = $product->variants
+                                    ->mapWithKeys(fn ($v) => [$v->id => $v->measure()])
+                                    ->filter()
+                                    ->all();
+                            @endphp
+                            <div class="measure" data-measure-box
+                                 data-gv-measures='@json($measureMap)'>
+                                <label for="gv-measure">{{ __('site.storefront.product.how_much', ['unit' => $product->priceUnitShort()]) }}</label>
+                                <input type="number" id="gv-measure" name="measure"
+                                       min="0.01" step="0.01" inputmode="decimal"
+                                       placeholder="0,00" data-measure-input>
+                                <span class="measure-out" data-measure-out aria-live="polite"></span>
+                            </div>
+                        @endif
+
                         <button type="submit" class="btn block" data-vp-submit @if ($product->hasVariants()) disabled @endif>
                             {{ __('site.storefront.product.add_to_cart') }} — <span data-vp-submit-price>@money($product->price_cents)</span>
                         </button>
@@ -343,4 +382,47 @@
             })();
         </script>
     @endpush
+
+    <script>
+    // Shows what the typed area rounds to, in whole pieces, using the area the
+    // picker publishes for the selected size. Purely informational — the server
+    // recomputes the same sum and its answer is the one that is ordered.
+    (function () {
+        var box = document.querySelector('[data-measure-box]');
+        if (!box) return;
+        var input = box.querySelector('[data-measure-input]');
+        var out = box.querySelector('[data-measure-out]');
+        var tpl = @json(__('site.storefront.product.covers'));
+
+        var measures = {};
+        try { measures = JSON.parse(box.getAttribute('data-gv-measures') || '{}'); } catch (e) {}
+
+        function selectedMeasure() {
+            // Works for both picker modes: the checked radio in a flat list,
+            // the hidden input a matrix keeps up to date.
+            var field = document.querySelector('input[name="variant_id"]:checked')
+                     || document.querySelector('input[name="variant_id"][type="hidden"]');
+            var id = field && field.value;
+            var m = id ? parseFloat(measures[id]) : NaN;
+            return isFinite(m) && m > 0 ? m : null;
+        }
+
+        function render() {
+            var want = parseFloat(String(input.value).replace(',', '.'));
+            var per = selectedMeasure();
+            if (!isFinite(want) || want <= 0 || per === null) { out.textContent = ''; return; }
+            var pieces = Math.max(1, Math.ceil(want / per));
+            var covers = (pieces * per).toFixed(2).replace(/\.?0+$/, '');
+            out.textContent = tpl.replace(':qty', pieces).replace(':measure', covers);
+        }
+
+        input.addEventListener('input', render);
+        document.addEventListener('change', function (e) {
+            if (e.target && (e.target.name === 'variant_id' || e.target.closest('[data-vp-mx]'))) {
+                // the matrix rewrites the hidden value during its own handler
+                setTimeout(render, 0);
+            }
+        });
+    })();
+    </script>
 @endsection
