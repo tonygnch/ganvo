@@ -178,6 +178,12 @@ Route::domain($centralDomain)->group(function () {
 
     // ---- StoreAdmin AJAX endpoints (Filament pages call these directly) ----
     Route::middleware('auth')->group(function () {
+        // The merchant's own storefront, rendered for the Customize theme
+        // page's side-by-side preview. Central domain on purpose: the iframe
+        // has to be same-origin for the page to script it.
+        Route::get('/store/theme/preview', [\App\Http\Controllers\StoreAdmin\ThemePreviewController::class, 'show'])
+            ->name('store.theme.preview');
+
         // Categories drag-tree persistence — see CategoryTreeController.
         Route::post('/store/categories/reorder', [\App\Http\Controllers\StoreAdmin\CategoryTreeController::class, 'reorder'])
             ->name('store.categories.reorder');

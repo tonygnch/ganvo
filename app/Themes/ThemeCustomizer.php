@@ -3,6 +3,8 @@
 namespace App\Themes;
 
 use App\Models\Store;
+use App\Support\ThemeCopyHtml;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
 
 /**
@@ -28,17 +30,33 @@ class ThemeCustomizer
     /** @var array<string, self> request-scope cache */
     private static array $instances = [];
 
+    /**
+     * Whether copy is being rendered INTO THE ADMIN'S PREVIEW rather than to a
+     * visitor. Set once per request by the preview controller; never true on a
+     * public storefront.
+     */
+    private static bool $editMode = false;
+
+    public static function enableEditMode(): void
+    {
+        self::$editMode = true;
+    }
+
+    public static function editModeEnabled(): bool
+    {
+        return self::$editMode;
+    }
+
     private function __construct(
         private readonly ?Store $store,
         private readonly string $slug,
         private readonly array $manifest,
         private readonly array $settings,
-    ) {
-    }
+    ) {}
 
     public static function for(?Store $store, string $slug): self
     {
-        $key = ($store?->id ?? 0) . ':' . $slug;
+        $key = ($store?->id ?? 0).':'.$slug;
         if (! isset(self::$instances[$key])) {
             $manifest = ThemeRegistry::manifest($slug);
             $settings = $store
@@ -63,6 +81,53 @@ class ThemeCustomizer
         }
 
         return (string) ($field['default'] ?? '');
+    }
+
+    /**
+     * A copy slot rendered for the page, tagged so the admin preview can find
+     * it — the difference between a form of 54 unlabelled boxes and clicking
+     * the sentence you want to change.
+     *
+     * ALSO THE ONE PLACE ESCAPING IS DECIDED. Call sites used to choose:
+     * {{ }} for prose, {!! !!} for the headings that carry <em>. That put the
+     * decision next to 30 different strings and made "which of these is
+     * unescaped?" a question you answered by grepping. Here, a slot whose name
+     * ends in _html gets the same allowlist the merchant's input is sanitised
+     * against on save, and everything else is escaped. Call sites are all
+     * {!! $theme->editable('slot') !!} and no longer have a choice to get wrong.
+     */
+    public function editable(string $key): HtmlString
+    {
+        $value = $this->copy($key);
+
+        $html = ThemeCopyHtml::isHtmlSlot($key)
+            ? ThemeCopyHtml::sanitize($value)
+            : e($value);
+
+        if (! self::$editMode) {
+            return new HtmlString($html);
+        }
+
+        // The wrapper is inline so it cannot disturb the layout it sits in;
+        // everything visual about it lives in the preview's injected CSS.
+        return new HtmlString(
+            '<span class="gv-edit" data-gv-slot="'.e($key).'">'.$html.'</span>'
+        );
+    }
+
+    /**
+     * The slot tag on its own, for text that is assembled in PHP before it is
+     * echoed — the capability cells, the reasons, the counters. Those are built
+     * into arrays first (so the list can renumber when one is cleared), so they
+     * cannot go through editable(); the attribute goes on the element instead.
+     *
+     * Empty outside the preview, so slot names never appear in public HTML.
+     */
+    public function slotAttr(string $key): HtmlString
+    {
+        return new HtmlString(
+            self::$editMode ? ' data-gv-slot="'.e($key).'"' : ''
+        );
     }
 
     /** Is a section or motif enabled? Unknown ids default to on. */
@@ -92,7 +157,7 @@ class ThemeCustomizer
     {
         $override = trim((string) data_get($this->settings, "images.{$slot}", ''));
         if ($override !== '') {
-            return \Illuminate\Support\Facades\Storage::disk('public')->url($override);
+            return Storage::disk('public')->url($override);
         }
         $default = $this->manifest['images'][$slot]['default'] ?? null;
 
@@ -132,7 +197,7 @@ class ThemeCustomizer
         $font = $this->manifest['fonts'][data_get($this->settings, 'font', '')] ?? null;
         if ($font) {
             if (! empty($font['link'])) {
-                $out .= '<link href="' . e($font['link']) . '" rel="stylesheet">' . "\n";
+                $out .= '<link href="'.e($font['link']).'" rel="stylesheet">'."\n";
             }
             foreach (($font['vars'] ?? []) as $var => $value) {
                 $vars[$var] = $value;
@@ -141,7 +206,7 @@ class ThemeCustomizer
 
         $css = '';
         foreach ($vars as $var => $value) {
-            $css .= e($var) . ':' . str_replace(['<', '>', '{', '}'], '', $value) . ';';
+            $css .= e($var).':'.str_replace(['<', '>', '{', '}'], '', $value).';';
         }
         if ($css !== '') {
             $css = ":root{{$css}}";
@@ -174,10 +239,10 @@ class ThemeCustomizer
         foreach (($this->manifest['modes'] ?? []) as $mode => $def) {
             $css = '';
             foreach (($def['vars'] ?? []) as $var => $value) {
-                $css .= e($var) . ':' . str_replace(['<', '>', '{', '}'], '', $value) . ';';
+                $css .= e($var).':'.str_replace(['<', '>', '{', '}'], '', $value).';';
             }
             if ($css !== '') {
-                $out .= 'html[data-mode="' . e($mode) . '"]{' . $css . '}';
+                $out .= 'html[data-mode="'.e($mode).'"]{'.$css.'}';
             }
         }
 

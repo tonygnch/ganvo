@@ -849,7 +849,7 @@
                         @if ($csSeal)<span class="seal" aria-hidden="true" style="--seal: url('{{ $csSeal }}'); --seal-day: url('{{ $csSealDaylight }}');"></span>@endif
                         <span>{{ $tenant->name }}</span>
                     </div>
-                    <p class="ftag">{{ $theme->copy('footer_tagline') }}</p>
+                    <p class="ftag">{!! $theme->editable('footer_tagline') !!}</p>
                 </div>
 
                 {{-- The certification, at a size that lets someone actually
@@ -861,7 +861,7 @@
                              alt="{{ __('site.storefront.sankevi.cert_alt') }}"
                              width="370" height="512" loading="lazy">
                         <span class="fcert-code">
-                            {{ $theme->copy('cert_line') }}
+                            {!! $theme->editable('cert_line') !!}
                             @if ($csCertCode)<br>{{ $csCertCode }}@endif
                         </span>
                     </div>

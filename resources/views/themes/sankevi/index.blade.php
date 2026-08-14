@@ -129,6 +129,7 @@
                 'text'   => isset($m[1]) ? $m[1] : $raw,
                 'suffix' => isset($m[2]) ? trim($m[2]) : '',
                 'label'  => $label,
+                'labelSlot' => "fact_{$n}_label",
             ];
         }
 
@@ -815,11 +816,11 @@
                         @if ($csHero['subtitle'] !== '')
                             {{ $csHero['subtitle'] }}
                         @else
-                            {!! $theme->copy('hero_h1_html') !!}
+                            {!! $theme->editable('hero_h1_html') !!}
                         @endif
                     </h1>
                 </div>
-                <p class="sub rise" style="--d: .62s;">{{ $theme->copy('hero_sub') }}</p>
+                <p class="sub rise" style="--d: .62s;">{!! $theme->editable('hero_sub') !!}</p>
 
                 {{-- The three answers, as plates. One editable field behind
                      them, so a merchant who sells something other than timber
@@ -835,9 +836,9 @@
 
                 <div class="foot">
                     <div class="cta rise" style="--d: 1s;">
-                        <a class="btn" href="/shop">{{ $theme->copy('hero_cta') }}</a>
+                        <a class="btn" href="/shop">{!! $theme->editable('hero_cta') !!}</a>
                         @if ($contactOn)
-                            <a class="btn ghost" href="/contact">{{ $theme->copy('hero_cta2') }}</a>
+                            <a class="btn ghost" href="/contact">{!! $theme->editable('hero_cta2') !!}</a>
                         @endif
                     </div>
                     <span class="cue rise" style="--d: 1.12s;" aria-hidden="true">
@@ -865,10 +866,10 @@
             <div class="wrap">
                 <div class="head" data-gv-reveal>
                     @if ($theme->on('gutter_index'))
-                        <span class="gx" aria-hidden="true">{{ $theme->copy('gx_home') }}</span>
+                        <span class="gx" aria-hidden="true">{!! $theme->editable('gx_home') !!}</span>
                     @endif
                     <div>
-                        <h2>{!! $theme->copy('families_h2_html') !!}</h2>
+                        <h2>{!! $theme->editable('families_h2_html') !!}</h2>
                     </div>
                     {{-- The hint describes a GESTURE, and the gesture turns with
                          the wheel: up/down on a desktop column, left/right on a
@@ -948,10 +949,10 @@
                 <div class="wrap">
                     <div class="head" data-gv-reveal>
                         @if ($theme->on('gutter_index'))
-                            <span class="gx" aria-hidden="true">{{ $theme->copy('offer_eyebrow') }}</span>
+                            <span class="gx" aria-hidden="true">{!! $theme->editable('offer_eyebrow') !!}</span>
                         @endif
-                        <h2>{!! $theme->copy('offer_h2_html') !!}</h2>
-                        <p class="lead">{{ $theme->copy('offer_lead') }}</p>
+                        <h2>{!! $theme->editable('offer_h2_html') !!}</h2>
+                        <p class="lead">{!! $theme->editable('offer_lead') !!}</p>
                     </div>
 
                     <div class="grid" data-gv-reveal data-gv-delay="0.1">
@@ -966,15 +967,16 @@
                                 if ($h === '') {
                                     continue;
                                 }
-                                $offerCells[] = ['h' => $h, 'p' => trim($theme->copy('offer_' . $n . '_p'))];
+                                $offerCells[] = ['h' => $h, 'p' => trim($theme->copy('offer_' . $n . '_p')),
+                                    'hSlot' => 'offer_' . $n . '_h', 'pSlot' => 'offer_' . $n . '_p'];
                             }
                         @endphp
                         @foreach ($offerCells as $i => $cell)
                             <article class="cell">
                                 <span class="n" aria-hidden="true">{{ sprintf('%02d', $i + 1) }}</span>
                                 <span class="rule" aria-hidden="true"></span>
-                                <h3>{{ $cell['h'] }}</h3>
-                                @if ($cell['p'] !== '')<p>{{ $cell['p'] }}</p>@endif
+                                <h3{!! $theme->slotAttr($cell['hSlot']) !!}>{{ $cell['h'] }}</h3>
+                                @if ($cell['p'] !== '')<p{!! $theme->slotAttr($cell['pSlot']) !!}>{{ $cell['p'] }}</p>@endif
                             </article>
                         @endforeach
                     </div>
@@ -1011,9 +1013,9 @@
                 <div class="wrap in">
                     <div class="aside" data-gv-reveal>
                         @if ($theme->on('gutter_index'))
-                            <span class="gx" aria-hidden="true">{{ $theme->copy('why_eyebrow') }}</span>
+                            <span class="gx" aria-hidden="true">{!! $theme->editable('why_eyebrow') !!}</span>
                         @endif
-                        <h2>{!! $theme->copy('why_h2_html') !!}</h2>
+                        <h2>{!! $theme->editable('why_h2_html') !!}</h2>
 
                         @if ($theme->on('ledger_strip') && $factStrip)
                             <div class="facts">
@@ -1026,14 +1028,14 @@
                                             <span @if ($fact['count'] !== null) data-gv-counter="{{ $fact['count'] }}" @endif>{{ $fact['text'] }}</span>
                                             @if ($fact['suffix'] !== '')<i>{{ $fact['suffix'] }}</i>@endif
                                         </b>
-                                        <span class="lb">{{ $fact['label'] }}</span>
+                                        <span class="lb"{!! $theme->slotAttr($fact['labelSlot']) !!}>{{ $fact['label'] }}</span>
                                     </div>
                                 @endforeach
                             </div>
                         @endif
 
                         @if ($aboutOn && trim($theme->copy('why_about')) !== '')
-                            <a class="hist" href="/about">{{ $theme->copy('why_about') }}</a>
+                            <a class="hist" href="/about">{!! $theme->editable('why_about') !!}</a>
                         @endif
                     </div>
 
@@ -1043,11 +1045,12 @@
                     @php
                         $whyReasons = [];
                         foreach (range(1, 4) as $n) {
-                            $h = trim(__('site.storefront.sankevi.why_' . $n . '_h'));
+                            $h = trim($theme->copy('why_' . $n . '_h'));
                             if ($h === '') {
                                 continue;
                             }
-                            $whyReasons[] = ['h' => $h, 'p' => trim(__('site.storefront.sankevi.why_' . $n . '_p'))];
+                            $whyReasons[] = ['h' => $h, 'p' => trim($theme->copy('why_' . $n . '_p')),
+                                'hSlot' => 'why_' . $n . '_h', 'pSlot' => 'why_' . $n . '_p'];
                         }
                     @endphp
                     <ol class="list" data-gv-reveal data-gv-delay="0.1">
@@ -1055,8 +1058,8 @@
                             <li>
                                 <span class="ix" aria-hidden="true">{{ sprintf('%02d', $i + 1) }}</span>
                                 <div>
-                                    <h3>{{ $reason['h'] }}</h3>
-                                    @if ($reason['p'] !== '')<p>{{ $reason['p'] }}</p>@endif
+                                    <h3{!! $theme->slotAttr($reason['hSlot']) !!}>{{ $reason['h'] }}</h3>
+                                    @if ($reason['p'] !== '')<p{!! $theme->slotAttr($reason['pSlot']) !!}>{{ $reason['p'] }}</p>@endif
                                 </div>
                             </li>
                         @endforeach
@@ -1070,8 +1073,8 @@
             <figure class="forest">
                 <img src="{{ $forestImageUrl }}" alt="" loading="lazy" data-gv-parallax="0.12">
                 <div class="q" data-gv-reveal>
-                    <blockquote>{{ $theme->copy('forest_quote') }}</blockquote>
-                    <figcaption>{{ $theme->copy('forest_caption') }}</figcaption>
+                    <blockquote>{!! $theme->editable('forest_quote') !!}</blockquote>
+                    <figcaption>{!! $theme->editable('forest_caption') !!}</figcaption>
                 </div>
             </figure>
         @endif
@@ -1119,8 +1122,8 @@
         <section class="closing">
             <div class="wrap in">
                 <div data-gv-reveal>
-                    <h2>{!! $theme->copy('closing_h2_html') !!}</h2>
-                    <p>{{ $theme->copy('trade_body') }}</p>
+                    <h2>{!! $theme->editable('closing_h2_html') !!}</h2>
+                    <p>{!! $theme->editable('trade_body') !!}</p>
                     @if ($closingRows)
                         <div class="rows">
                             @foreach ($closingRows as $row)
@@ -1140,7 +1143,7 @@
                     @endif
                 </div>
                 <div class="cta" data-gv-reveal data-gv-delay="0.12">
-                    <a class="btn" href="{{ $contactOn ? '/contact' : '/shop' }}">{{ $theme->copy('closing_shop') }}</a>
+                    <a class="btn" href="{{ $contactOn ? '/contact' : '/shop' }}">{!! $theme->editable('closing_shop') !!}</a>
                 </div>
             </div>
         </section>

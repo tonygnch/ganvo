@@ -551,6 +551,7 @@ Leave a blank line between paragraphs.',
         ],
         'text' => [
             'customizing' => 'Customizing the :theme theme.',
+            'preview_hint'    => 'Click any text in the page to jump to its field. Double-click to edit it in place.',
             'saved_per_theme' => 'Settings are saved per theme — switching themes keeps each theme\'s customizations.',
         ],
     ],
