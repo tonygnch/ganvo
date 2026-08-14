@@ -640,7 +640,7 @@ return [
             'subscribe' => 'Subscribe',
             'subscribed' => 'Subscribed ✓',
         ],
-        'added_to_cart_measure' => 'Added: :name — :qty pcs (:measure :unit)',
+        'added_to_cart_measure' => 'Added: :name — :measure :unit',
         'added_to_cart' => 'Added :name to your cart.',
         'sign_in_for_checkout' => 'Please sign in to complete checkout.',
         // Variant-related cart messages

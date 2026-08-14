@@ -94,6 +94,7 @@
         .line .plate { display: block; font-size: 10px; font-weight: 500; letter-spacing: .2em; color: var(--accent-ink); margin-bottom: 7px; }
         .line .plate::after { content: var(--plate-label, "№ ") counter(plate, decimal-leading-zero); }
         .lines.no-sheet .line .plate { display: none; }
+        .line .asked { margin-top: 6px; font-size: 12.5px; font-weight: 500; color: var(--accent-ink); }
         .line .t { font-family: var(--display); font-weight: 500; font-size: 23px; line-height: 1.15; }
         .line .t a { transition: color .25s ease; }
         .line .t a:hover { color: var(--accent-ink); }
@@ -228,6 +229,13 @@
                                     <div>
                                         <span class="plate" aria-hidden="true"></span>
                                         <div class="t"><a href="/products/{{ $product->slug }}">{{ $product->name }}</a></div>
+                                        {{-- The amount the shopper asked for, in
+                                             their own unit. It is the whole point
+                                             of the line for a product sold by
+                                             area, and the yard quotes from it. --}}
+                                        @if (($row['measure'] ?? null))
+                                            <div class="asked">{{ rtrim(rtrim(number_format($row['measure'], 2, '.', ''), '0'), '.') }} {{ $product->priceUnitShort() }}</div>
+                                        @endif
                                         @if ($dims !== [])
                                             {{-- axes spelled out (Length 200 cm · Width 20 cm) --}}
                                             <div class="dims">

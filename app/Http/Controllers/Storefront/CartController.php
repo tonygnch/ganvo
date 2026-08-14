@@ -210,36 +210,26 @@ class CartController extends Controller
             }
         }
 
-        // Turn the requested area into whole pieces. Anything we cannot
-        // measure falls back to one, which is the behaviour every product had
-        // before areas existed.
-        $quantity = 1;
-        $coversMeasure = null;
-
-        if ($product->isPricedByMeasure() && $requestedMeasure > 0 && isset($variant)) {
-            $perPiece = $variant->measure();
-
-            if ($perPiece !== null && $perPiece > 0) {
-                $quantity = max(1, (int) ceil($requestedMeasure / $perPiece));
-                $coversMeasure = $quantity * $perPiece;
-            }
-        }
-
+        // The amount rides along unchanged. It is NOT converted into a piece
+        // count and it does not price the line: this shop quotes by hand, and
+        // guessing how many boards make twenty square metres is the yard's job,
+        // not the checkout's.
         $cart = Cart::forCurrent();
-        $cart->add($product->id, $variantId, $quantity);
+        $cart->add(
+            $product->id,
+            $variantId,
+            1,
+            $product->isPricedByMeasure() && $requestedMeasure > 0 ? $requestedMeasure : null,
+        );
 
         $flashName = $variantId
             ? sprintf('%s — %s', $product->name, $variant->label)
             : $product->name;
-        $flash = $coversMeasure !== null
-            // Say what they are actually getting: they asked for 20 m² and are
-            // being sold 90 boards, which is 20,1. Rounding silently would show
-            // up as a surprise on the quote.
+        $flash = ($product->isPricedByMeasure() && $requestedMeasure > 0)
             ? __('site.storefront.added_to_cart_measure', [
                 'name' => $flashName,
-                'qty' => $quantity,
-                'measure' => rtrim(rtrim(number_format($coversMeasure, 2, '.', ''), '0'), '.'),
-                'unit' => $product->priceUnitSuffix(),
+                'measure' => rtrim(rtrim(number_format($requestedMeasure, 2, '.', ''), '0'), '.'),
+                'unit' => $product->priceUnitShort(),
             ])
             : __('site.storefront.added_to_cart', ['name' => $flashName]);
 

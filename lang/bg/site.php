@@ -641,7 +641,7 @@ return [
             'subscribe' => 'Абонирай се',
             'subscribed' => 'Абониран ✓',
         ],
-        'added_to_cart_measure' => 'Добавено: :name — :qty бр. (:measure :unit)',
+        'added_to_cart_measure' => 'Добавено: :name — :measure :unit',
         'added_to_cart' => ':name беше добавен в кошницата ти.',
         'sign_in_for_checkout' => 'Моля, влез в акаунта си, за да завършиш поръчката.',
         // Съобщения, свързани с варианти

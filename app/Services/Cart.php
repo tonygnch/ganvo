@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Discount;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Tenant;
@@ -17,20 +18,36 @@ use Illuminate\Support\Facades\Session;
  */
 class Cart
 {
-    public function __construct(private readonly Tenant $tenant)
-    {
-    }
+    public function __construct(private readonly Tenant $tenant) {}
 
     public static function forCurrent(): self
     {
         return new self(app('current_tenant'));
     }
 
-    public function add(int $productId, ?int $variantId = null, int $quantity = 1): void
+    /**
+     * @param  float|null  $measure  How much the shopper asked for, in the
+     *                               product's own unit — 20 for "20 m²". Carried
+     *                               to the enquiry unchanged; it does not price
+     *                               the line, because a yard quoting by hand is
+     *                               the one who decides what 20 m² costs.
+     */
+    public function add(int $productId, ?int $variantId = null, int $quantity = 1, ?float $measure = null): void
     {
         $items = $this->rawItems();
         $key = $this->lineKey($productId, $variantId);
-        $items[$key] = ($items[$key] ?? 0) + $quantity;
+        $line = $items[$key] ?? ['qty' => 0, 'measure' => null];
+
+        $line['qty'] = (int) $line['qty'] + $quantity;
+
+        // Adding the same size again REPLACES the amount rather than summing
+        // it: "I need 20 m²" then "actually 30" is a correction, not thirty
+        // more on top of twenty.
+        if ($measure !== null && $measure > 0) {
+            $line['measure'] = $measure;
+        }
+
+        $items[$key] = $line;
         $this->save($items);
     }
 
@@ -45,7 +62,7 @@ class Cart
         if ($quantity <= 0) {
             unset($items[$lineId]);
         } else {
-            $items[$lineId] = $quantity;
+            $items[$lineId]['qty'] = $quantity;
         }
         $this->save($items);
     }
@@ -74,6 +91,7 @@ class Cart
      *     variant: ?ProductVariant,
      *     unit_price_cents: int,
      *     quantity: int,
+     *     measure: float|null,
      *     subtotal_cents: int,
      * }>
      */
@@ -109,7 +127,9 @@ class Cart
                 ->keyBy('id');
 
         $rows = collect();
-        foreach ($raw as $lineId => $qty) {
+        foreach ($raw as $lineId => $line) {
+            $qty = (int) $line['qty'];
+            $measure = $line['measure'] ?? null;
             [$pid, $vid] = $this->parseLineKey($lineId);
             $product = $products->get($pid);
             if (! $product) {
@@ -133,6 +153,7 @@ class Cart
                 'variant' => $variant,
                 'unit_price_cents' => $unit,
                 'quantity' => $qty,
+                'measure' => $measure,
                 'subtotal_cents' => $unit * $qty,
             ]);
         }
@@ -158,7 +179,7 @@ class Cart
 
     public function itemCount(): int
     {
-        return array_sum($this->rawItems());
+        return (int) array_sum(array_column($this->rawItems(), 'qty'));
     }
 
     public function isEmpty(): bool
@@ -210,9 +231,9 @@ class Cart
      * caller-provided shipping (defaults to {@see defaultShippingCents()}).
      * Returns null when nothing applies.
      */
-    public function appliedDiscount(?int $shippingCents = null): ?\App\Models\Discount
+    public function appliedDiscount(?int $shippingCents = null): ?Discount
     {
-        return \App\Services\DiscountEngine::forCurrent()->resolve(
+        return DiscountEngine::forCurrent()->resolve(
             $this->appliedCode(),
             $this->subtotalCents(),
             $shippingCents ?? $this->defaultShippingCents()
@@ -225,6 +246,7 @@ class Cart
         if (! $d) {
             return 0;
         }
+
         return $d->amountOff(
             $this->subtotalCents(),
             $shippingCents ?? $this->defaultShippingCents()
@@ -240,6 +262,7 @@ class Cart
         if (app()->bound('display_currency')) {
             return app('display_currency');
         }
+
         return strtoupper($this->tenant->store->currency ?? 'EUR');
     }
 
@@ -252,13 +275,13 @@ class Cart
     /** Base-currency total converted into the customer's display currency. */
     public function displayTotalCents(): int
     {
-        return \App\Services\Money::convert($this->totalCents(), $this->displayRate());
+        return Money::convert($this->totalCents(), $this->displayRate());
     }
 
     /** Build a line key from a product + (optional) variant id. */
     public function lineKey(int $productId, ?int $variantId): string
     {
-        return $productId . ':' . ($variantId ?: 0);
+        return $productId.':'.($variantId ?: 0);
     }
 
     /**
@@ -272,6 +295,7 @@ class Cart
         $parts = explode(':', $lineId, 2);
         $pid = (int) ($parts[0] ?? 0);
         $vid = (int) ($parts[1] ?? 0);
+
         return [$pid, $vid > 0 ? $vid : null];
     }
 
@@ -284,11 +308,30 @@ class Cart
         if (! empty($items) && is_int(array_key_first($items))) {
             $migrated = [];
             foreach ($items as $pid => $qty) {
-                $migrated[$pid . ':0'] = $qty;
+                $migrated[$pid.':0'] = $qty;
             }
             $items = $migrated;
             Session::put($this->key(), $items);
         }
+
+        /*
+         | A line used to be a bare integer. It is now ['qty' => n, 'measure' =>
+         | f|null], because a shopper buying by area states an amount that has
+         | to reach the enquiry. Normalised on every read rather than migrated
+         | once: a cart already open in someone's browser is a live session, and
+         | it must not start throwing when the shape changes underneath it.
+         */
+        foreach ($items as $key => $line) {
+            if (! is_array($line)) {
+                $items[$key] = ['qty' => (int) $line, 'measure' => null];
+            } else {
+                $items[$key] = [
+                    'qty' => (int) ($line['qty'] ?? 0),
+                    'measure' => isset($line['measure']) ? (float) $line['measure'] : null,
+                ];
+            }
+        }
+
         return $items;
     }
 

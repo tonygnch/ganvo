@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Storefront;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Store;
 use App\Notifications\OrderPlaced;
 use App\Services\Cart;
 use App\Services\Countries;
+use App\Services\Money;
 use App\Services\Payments\StripeConnectService;
 use App\Themes\ThemeRegistry;
 use Illuminate\Http\JsonResponse;
@@ -36,6 +38,7 @@ class CheckoutController extends Controller
         // Account-required stores: bounce to login.
         if ($store->requiresAccountCheckout() && ! Auth::guard('customer')->check()) {
             session()->put('url.intended', '/checkout');
+
             return redirect('/account/login')
                 ->with('cart.flash', __('site.storefront.sign_in_for_checkout'));
         }
@@ -142,7 +145,7 @@ class CheckoutController extends Controller
 
         $displayCurrency = $cart->displayCurrency();
         $displayRate = $cart->displayRate();
-        $displayTotal = \App\Services\Money::convert($grandTotal, $displayRate);
+        $displayTotal = Money::convert($grandTotal, $displayRate);
 
         // The same Order build in both modes — only `status` +
         // `payment_method` differ.
@@ -183,7 +186,7 @@ class CheckoutController extends Controller
                 //   stub    — legacy demo path, marked paid instantly
                 'status' => ($isStripe || $isEnquiry) ? 'pending' : 'paid',
                 'payment_method' => $isStripe ? 'stripe' : ($isEnquiry ? 'enquiry' : 'stub'),
-                'order_flow' => $isEnquiry ? \App\Models\Store::FLOW_ENQUIRY : \App\Models\Store::FLOW_PAYMENT,
+                'order_flow' => $isEnquiry ? Store::FLOW_ENQUIRY : Store::FLOW_PAYMENT,
                 'shipping_address' => [
                     'line' => $data['address_line'],
                     'region' => $data['address_region'] ?? null,
@@ -210,6 +213,13 @@ class CheckoutController extends Controller
                     'variant_label' => $row['variant']?->label,
                     'unit_price_cents' => $row['unit_price_cents'],
                     'quantity' => $row['quantity'],
+                    // What the customer asked for, in their words: the enquiry
+                    // should say "20 m²", not leave the yard to work it out
+                    // from a piece count.
+                    'measure_quantity' => $row['measure'] ?? null,
+                    'measure_unit' => ($row['measure'] ?? null) !== null
+                        ? $row['product']->priceUnitShort()
+                        : null,
                     'subtotal_cents' => $row['subtotal_cents'],
                 ]);
             }
@@ -239,6 +249,7 @@ class CheckoutController extends Controller
             } catch (ApiErrorException $e) {
                 // Surface so JS can retry / show error.
                 $order->update(['status' => 'failed']);
+
                 return response()->json([
                     'error' => 'stripe_error',
                     'message' => $e->getMessage(),
@@ -252,7 +263,7 @@ class CheckoutController extends Controller
                 'client_secret' => $intent->client_secret,
                 'publishable_key' => config('cashier.key'),
                 'stripe_account_id' => $tenant->stripe_account_id,
-                'return_url' => url('/orders/' . $order->order_number),
+                'return_url' => url('/orders/'.$order->order_number),
                 'order_number' => $order->order_number,
             ]);
         }
@@ -264,7 +275,7 @@ class CheckoutController extends Controller
         Notification::route('mail', $order->customer_email)
             ->notify(new OrderPlaced($order->fresh('items')));
 
-        return redirect('/orders/' . $order->order_number);
+        return redirect('/orders/'.$order->order_number);
     }
 
     /**
@@ -278,17 +289,17 @@ class CheckoutController extends Controller
         $methodIds = array_column($store->shippingMethods(), 'id');
 
         return $request->validate([
-            'customer_email'    => ['required', 'email', 'max:255'],
-            'customer_name'     => ['required', 'string', 'max:255'],
-            'customer_phone'    => ['nullable', 'string', 'max:60'],
-            'address_line'      => ['required', 'string', 'max:255'],
-            'address_region'    => ['nullable', 'string', 'max:120'],
-            'city'              => ['required', 'string', 'max:120'],
-            'postal_code'       => ['required', 'string', 'max:30'],
-            'country'           => ['required', 'string', 'size:2', Rule::in(array_keys(Countries::LIST))],
-            'shipping_method'   => ['required', 'string', Rule::in($methodIds)],
-            'notes'             => ['nullable', 'string', 'max:2000'],
-            'marketing_opt_in'  => ['nullable', 'boolean'],
+            'customer_email' => ['required', 'email', 'max:255'],
+            'customer_name' => ['required', 'string', 'max:255'],
+            'customer_phone' => ['nullable', 'string', 'max:60'],
+            'address_line' => ['required', 'string', 'max:255'],
+            'address_region' => ['nullable', 'string', 'max:120'],
+            'city' => ['required', 'string', 'max:120'],
+            'postal_code' => ['required', 'string', 'max:30'],
+            'country' => ['required', 'string', 'size:2', Rule::in(array_keys(Countries::LIST))],
+            'shipping_method' => ['required', 'string', Rule::in($methodIds)],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'marketing_opt_in' => ['nullable', 'boolean'],
         ]);
     }
 
@@ -301,6 +312,7 @@ class CheckoutController extends Controller
         if ($request->expectsJson() || $request->isXmlHttpRequest()) {
             return response()->json($body, $status);
         }
+
         return redirect($redirectTo);
     }
 }

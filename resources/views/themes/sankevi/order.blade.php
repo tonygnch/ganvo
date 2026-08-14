@@ -269,6 +269,9 @@
                                      snapshot carries them separately, and a list is read
                                      by its dimensions. --}}
                                 <div class="name">{{ $item->product_name }}</div>
+                                @if ($item->measure_quantity)
+                                    <div class="cutline">{{ rtrim(rtrim(number_format($item->measure_quantity, 2, '.', ''), '0'), '.') }} {{ $item->measure_unit }}</div>
+                                @endif
                                 @if ($item->variant_label)
                                     <div class="cutline">{{ $item->variant_label }}</div>
                                 @endif

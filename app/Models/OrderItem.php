@@ -16,7 +16,8 @@ class OrderItem extends Model
         'unit_price_cents',
         'quantity',
         'subtotal_cents',
-    ];
+        'measure_quantity',
+        'measure_unit', ];
 
     public function order(): BelongsTo
     {
