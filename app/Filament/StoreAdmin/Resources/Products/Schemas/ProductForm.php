@@ -2,9 +2,11 @@
 
 namespace App\Filament\StoreAdmin\Resources\Products\Schemas;
 
+use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\ProductOptionValue;
 use App\Services\Money;
+use App\Support\Dimension;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
@@ -65,6 +67,14 @@ class ProductForm
                     ->description(__('admin.products.section_help.pricing'))
                     ->columns(2)
                     ->schema([
+                        Select::make('price_unit')
+                            ->label(__('admin.products.field.price_unit'))
+                            ->options(Product::priceUnitOptions())
+                            ->default(Product::UNIT_PIECE)
+                            ->selectablePlaceholder(false)
+                            ->native(false)
+                            ->live()
+                            ->helperText(__('admin.products.help.price_unit')),
                         TextInput::make('price_cents')
                             ->label(__('admin.shared.field.price'))
                             ->required()
@@ -256,10 +266,47 @@ class ProductForm
                                     }
                                 }
 
+                                // Read the unit off the LIVE form, not the
+                                // saved record: a merchant who has just switched
+                                // to m² expects this press to use it.
+                                $dimensions = Product::UNIT_DIMENSIONS[$get('price_unit') ?? Product::UNIT_PIECE] ?? 0;
+                                $unitPrice = (int) round(((float) $get('price_cents')) * 100);
+
                                 $added = 0;
+                                $unpriced = 0;
                                 foreach ($combinations as $selection) {
                                     if (isset($existing[static::combinationSignature($selection)])) {
                                         continue;
+                                    }
+
+                                    /*
+                                     | A size priced by the metre already knows
+                                     | what it costs — 8,20 per m² on 0,29 ×
+                                     | 0,77 m is 1,83 — so the row arrives
+                                     | priced. Unreadable dimensions leave the
+                                     | price null (the product price stands) and
+                                     | are counted for the notification.
+                                     */
+                                    $price = null;
+                                    if ($dimensions > 0 && $unitPrice > 0) {
+                                        $measure = static::measureFor($selection, $valueTexts, $dimensions);
+                                        if ($measure === null) {
+                                            $unpriced++;
+                                        } else {
+                                            /*
+                                             | A DECIMAL, not cents. This row
+                                             | goes into the repeater's form
+                                             | state, and that field holds what
+                                             | the merchant would type — its
+                                             | dehydrate multiplies by 100 on
+                                             | the way to the column. Handing it
+                                             | cents priced 0,421 × 0,77 m at
+                                             | 266,00 instead of 2,66.
+                                             */
+                                            $price = number_format(
+                                                ((int) round($unitPrice * $measure)) / 100, 2, '.', ''
+                                            );
+                                        }
                                     }
 
                                     $row = [
@@ -268,7 +315,7 @@ class ProductForm
                                             array_values($selection),
                                         )),
                                         'sku' => null,
-                                        'price_cents' => null,
+                                        'price_cents' => $price,
                                         'stock_quantity' => $get('stock_quantity') ?? 0,
                                         'is_active' => true,
                                     ];
@@ -287,6 +334,9 @@ class ProductForm
                                     ->title($added > 0
                                         ? __('admin.products.notify.combinations_added', ['count' => $added])
                                         : __('admin.products.notify.combinations_none'))
+                                    ->body($unpriced > 0
+                                        ? __('admin.products.notify.combinations_unpriced', ['count' => $unpriced])
+                                        : null)
                                     ->send();
                             }),
                     ])
@@ -431,6 +481,44 @@ class ProductForm
     }
 
     /** Axes the product has actually stored — only those have ids to pair on. */
+    /**
+     * The measure one combination represents, in the product's own unit — m²
+     * for two dimensions, m³ for three, metres for one.
+     *
+     * Returns null when ANY axis fails to parse, rather than a partial figure:
+     * half a measurement is not a smaller measurement, it is a wrong one, and
+     * the caller leaves that price alone and says which value it could not
+     * read.
+     *
+     * @param  array<int, int>  $selection  option id => value id
+     * @param  array<int, string>  $valueTexts  value id => the text as typed
+     */
+    protected static function measureFor(array $selection, array $valueTexts, int $dimensions): ?float
+    {
+        if ($dimensions < 1 || count($selection) < $dimensions) {
+            return null;
+        }
+
+        $lengths = [];
+        foreach ($selection as $valueId) {
+            $metres = Dimension::toMetres((string) ($valueTexts[$valueId] ?? ''));
+            if ($metres === null) {
+                return null;
+            }
+            $lengths[] = $metres;
+        }
+
+        // More axes than the unit needs (a colour beside width and length) is
+        // normal — take the dimensions in axis order and ignore the rest.
+        $lengths = array_slice($lengths, 0, $dimensions);
+
+        if (count($lengths) < $dimensions) {
+            return null;
+        }
+
+        return array_product($lengths);
+    }
+
     /**
      * A stable fingerprint for one cell of the matrix, so "do we already have
      * this pairing?" is a string comparison rather than a nested loop. Sorted

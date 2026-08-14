@@ -495,7 +495,7 @@
                                      section's: the real one is quoted once the
                                      cut is chosen. --}}
                                 @if ($axes->isNotEmpty())<span class="from">{{ __('site.storefront.sankevi.shop_from') }}</span>@endif
-                                <b class="pr">@money($product->price_cents)</b>
+                                <b class="pr">@money($product->price_cents)@if ($u = $product->priceUnitSuffix())<i class="pu">{{ $u }}</i>@endif</b>
                             </span>
                             <span class="open">{{ __('site.storefront.sankevi.shop_open') }} <i aria-hidden="true">→</i></span>
                         </div>

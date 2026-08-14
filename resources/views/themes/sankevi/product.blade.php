@@ -144,7 +144,7 @@
                     </div>
 
                     <h1>{{ $product->name }}</h1>
-                    <div class="price"><span data-vp-price>@money($product->price_cents)</span></div>
+                    <div class="price"><span data-vp-price>@money($product->price_cents)</span>@if ($u = $product->priceUnitSuffix())<i class="pu">{{ $u }}</i>@endif</div>
 
                     @if (! $product->hasVariants() && $product->stock_quantity > 0)
                         <div class="stock">

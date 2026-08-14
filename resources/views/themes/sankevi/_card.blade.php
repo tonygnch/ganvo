@@ -35,7 +35,7 @@
     </div>
     <h3>{{ $product->name }}</h3>
     <div class="foot">
-        <span class="pr">@money($product->price_cents)</span>
+        <span class="pr">@money($product->price_cents)@if ($u = $product->priceUnitSuffix())<i class="pu">{{ $u }}</i>@endif</span>
         <span class="add">{{ __('site.storefront.sankevi.card_action') }}</span>
     </div>
 </a>

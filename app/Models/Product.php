@@ -24,7 +24,7 @@ class Product extends Model
         'stock_quantity',
         'image_path',
         'is_active',
-    ];
+        'price_unit', ];
 
     protected $casts = [
         'is_active' => 'boolean',
@@ -33,6 +33,63 @@ class Product extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
+    }
+
+    /**
+     * How this product's price is quoted.
+     *
+     * PIECE is the default and the behaviour every product had before units
+     * existed: the price is the price. The other three say the price is per
+     * unit of MEASURE, and a given size's price follows from its dimensions —
+     * 8,20 per m² on a 0,29 × 0,77 m shelf is 1,83.
+     *
+     * DIMENSIONS says how many lengths a unit needs, which is also how many of
+     * the product's axes have to parse as dimensions before a price can be
+     * worked out.
+     */
+    public const UNIT_PIECE = 'piece';
+
+    public const UNIT_SQM = 'sqm';
+
+    public const UNIT_LM = 'lm';
+
+    public const UNIT_CBM = 'cbm';
+
+    public const UNIT_DIMENSIONS = [
+        self::UNIT_PIECE => 0,
+        self::UNIT_LM => 1,
+        self::UNIT_SQM => 2,
+        self::UNIT_CBM => 3,
+    ];
+
+    /** @return array<string, string> */
+    public static function priceUnitOptions(): array
+    {
+        return [
+            self::UNIT_PIECE => __('admin.products.unit.piece'),
+            self::UNIT_SQM => __('admin.products.unit.sqm'),
+            self::UNIT_LM => __('admin.products.unit.lm'),
+            self::UNIT_CBM => __('admin.products.unit.cbm'),
+        ];
+    }
+
+    /** The short suffix a price carries on the storefront: „/ м²". */
+    public function priceUnitSuffix(): string
+    {
+        return $this->price_unit === self::UNIT_PIECE
+            ? ''
+            : (string) __('site.units.'.$this->price_unit);
+    }
+
+    public function isPricedByMeasure(): bool
+    {
+        return ($this->price_unit ?? self::UNIT_PIECE) !== self::UNIT_PIECE;
+    }
+
+    /** How many dimensions this product's unit needs. */
+    public function unitDimensions(): int
+    {
+        return self::UNIT_DIMENSIONS[$this->price_unit ?? self::UNIT_PIECE] ?? 0;
     }
 
     public function categories(): BelongsToMany
@@ -176,6 +233,7 @@ class Product extends Model
                 'alt' => $img->alt_text ?: $this->name,
             ]);
         }
+
         return $out;
     }
 }

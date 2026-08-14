@@ -1,6 +1,11 @@
 <?php
 
 return [
+    'units' => [
+        'sqm' => '/ м²',
+        'lm' => '/ л.м',
+        'cbm' => '/ м³',
+    ],
     'lang' => [
         'switch' => 'Език',
         'en' => 'English',

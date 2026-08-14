@@ -500,6 +500,12 @@
         .pcard:hover .add { color: var(--accent-ink); }
         @media (prefers-reduced-motion: reduce) { .pcard .pic img, .pcard:hover .pic img { transform: none; transition: none; } }
 
+        /* The unit beside a price. Lighter and smaller than the figure — it
+           qualifies the number rather than competing with it — and never
+           wraps away from it. */
+        .pu { font-style: normal; font-size: .72em; font-weight: 500; letter-spacing: .04em;
+              color: var(--muted); margin-left: .35em; white-space: nowrap; }
+
         /* ===== footer — the yard at closing time ===== */
         footer.site { position: relative; overflow: hidden; margin-top: 110px; padding: 74px 0 34px; background: var(--deep); border-top: 1px solid var(--line); }
 
