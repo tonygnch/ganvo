@@ -69,6 +69,11 @@
         .qty input { width: 120px; padding: 13px 14px; background: var(--surface); color: var(--txt); border: 1px solid var(--line2); font: inherit; font-size: 15px; text-align: center; font-variant-numeric: tabular-nums; }
         .qty input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 
+        /* The form sits directly under the price now, and the price
+           carries no margin of its own — the air used to come from the
+           description that followed it. Put it on the form so the gap holds
+           whether or not the stock line is between them. */
+        .pinfo form[data-gv-add] { margin-top: 26px; }
         .pinfo p.desc { color: var(--muted); margin: 26px 0 30px; max-width: 50ch; font-size: 15.5px; white-space: pre-line; }
 
         /* the spec sheet — ruled key/value rows, tabular and unglamorous on
@@ -170,6 +175,58 @@
                         </div>
                     @endif
 
+                    {{-- ORDER OF THE COLUMN: price, then the things you act
+                         on, then the things you read.
+                         
+                         The description and the spec rows used to sit between
+                         the price and the add-to-cart form, which pushed the
+                         only interactive part of the page below a paragraph the
+                         merchant pastes in from elsewhere — on a long one the
+                         buy button started below the fold. Options, quantity and
+                         the button now follow the price directly, and the
+                         reading matter follows them. --}}
+                    <form method="post" action="/cart/add/{{ $product->slug }}" data-gv-add>
+                        @csrf
+                        @if ($product->hasVariants())
+                            {{-- Flat list or dependent option matrix — the partial
+                                 decides; the theme only supplies the skin. --}}
+                            @include('storefront.partials.variant-picker')
+                        @endif
+
+                        {{-- HOW MANY. A whole number, because everything in
+                             this catalogue is a countable thing — boards,
+                             brackets, pins — and half a bracket is not an order.
+                             There was no quantity field at all before: a
+                             customer wanting fifty boards had to add one, fifty
+                             times, or fix it in the cart afterwards. --}}
+                        <div class="qty">
+                            <label for="gv-qty">{{ __('site.storefront.product.quantity') }}</label>
+                            <div class="qty-row">
+                                <input type="number" id="gv-qty" name="quantity"
+                                       value="1" min="1" step="1" inputmode="numeric"
+                                       pattern="[0-9]*"
+                                       @if ($product->isPricedByMeasure()) aria-describedby="gv-qty-unit" @endif>
+                                {{-- The unit the number is counted in, beside the
+                                     box rather than only in the price. A product
+                                     quoted per m² is ordered in m², and without
+                                     this the field is a bare number that could
+                                     mean either. Products sold by the piece show
+                                     nothing: "1 бр." beside every quantity is
+                                     noise. --}}
+                                @if ($product->isPricedByMeasure())
+                                    <span class="qty-unit" id="gv-qty-unit">{{ $product->priceUnitShort() }}</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn block" data-vp-submit @if ($product->hasVariants()) disabled @endif>
+                            {{ __('site.storefront.product.add_to_cart') }} — <span data-vp-submit-price>@money($product->price_cents)</span>
+                        </button>
+                    </form>
+                    @if (trim(__('site.storefront.sankevi.pdp_note')) !== '')
+                        <p class="note">{{ __('site.storefront.sankevi.pdp_note') }}</p>
+                    @endif
+
                     @if ($product->description)
                         {{-- pre-line, not nl2br: the merchant's newlines and
                              blank lines survive while the text stays ESCAPED.
@@ -240,48 +297,6 @@
                                 </div>
                             @endforeach
                         </div>
-                    @endif
-
-                    <form method="post" action="/cart/add/{{ $product->slug }}" data-gv-add>
-                        @csrf
-                        @if ($product->hasVariants())
-                            {{-- Flat list or dependent option matrix — the partial
-                                 decides; the theme only supplies the skin. --}}
-                            @include('storefront.partials.variant-picker')
-                        @endif
-
-                        {{-- HOW MANY. A whole number, because everything in
-                             this catalogue is a countable thing — boards,
-                             brackets, pins — and half a bracket is not an order.
-                             There was no quantity field at all before: a
-                             customer wanting fifty boards had to add one, fifty
-                             times, or fix it in the cart afterwards. --}}
-                        <div class="qty">
-                            <label for="gv-qty">{{ __('site.storefront.product.quantity') }}</label>
-                            <div class="qty-row">
-                                <input type="number" id="gv-qty" name="quantity"
-                                       value="1" min="1" step="1" inputmode="numeric"
-                                       pattern="[0-9]*"
-                                       @if ($product->isPricedByMeasure()) aria-describedby="gv-qty-unit" @endif>
-                                {{-- The unit the number is counted in, beside the
-                                     box rather than only in the price. A product
-                                     quoted per m² is ordered in m², and without
-                                     this the field is a bare number that could
-                                     mean either. Products sold by the piece show
-                                     nothing: "1 бр." beside every quantity is
-                                     noise. --}}
-                                @if ($product->isPricedByMeasure())
-                                    <span class="qty-unit" id="gv-qty-unit">{{ $product->priceUnitShort() }}</span>
-                                @endif
-                            </div>
-                        </div>
-
-                        <button type="submit" class="btn block" data-vp-submit @if ($product->hasVariants()) disabled @endif>
-                            {{ __('site.storefront.product.add_to_cart') }} — <span data-vp-submit-price>@money($product->price_cents)</span>
-                        </button>
-                    </form>
-                    @if (trim(__('site.storefront.sankevi.pdp_note')) !== '')
-                        <p class="note">{{ __('site.storefront.sankevi.pdp_note') }}</p>
                     @endif
 
                     @include('storefront.partials.sticky-atc', ['product' => $product])
