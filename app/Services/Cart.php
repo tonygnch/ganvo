@@ -18,6 +18,15 @@ use Illuminate\Support\Facades\Session;
  */
 class Cart
 {
+    /**
+     * Resolved lines for THIS request, or null before the first resolve.
+     *
+     * items() runs two queries and is now what itemCount() is built on, so the
+     * header badge alone would have cost every page two extra round trips.
+     * Cleared by save(), so a mutation is never served a stale snapshot.
+     */
+    private ?Collection $resolved = null;
+
     public function __construct(private readonly Tenant $tenant) {}
 
     public static function forCurrent(): self
@@ -97,9 +106,13 @@ class Cart
      */
     public function items(): Collection
     {
+        if ($this->resolved !== null) {
+            return $this->resolved;
+        }
+
         $raw = $this->rawItems();
         if (empty($raw)) {
-            return collect();
+            return $this->resolved = collect();
         }
 
         // Parse keys back into (productId, variantId) tuples.
@@ -127,12 +140,15 @@ class Cart
                 ->keyBy('id');
 
         $rows = collect();
+        $orphans = [];
         foreach ($raw as $lineId => $line) {
             $qty = (int) $line['qty'];
             $measure = $line['measure'] ?? null;
             [$pid, $vid] = $this->parseLineKey($lineId);
             $product = $products->get($pid);
             if (! $product) {
+                $orphans[] = $lineId;
+
                 continue;
             }
             $variant = $vid ? $variants->get($vid) : null;
@@ -141,6 +157,8 @@ class Cart
             // — falling back to the bare product would lose the
             // customer's selection without warning.
             if ($vid && ! $variant) {
+                $orphans[] = $lineId;
+
                 continue;
             }
             $unit = $variant
@@ -158,7 +176,26 @@ class Cart
             ]);
         }
 
-        return $rows->values();
+        /*
+         | A DROPPED LINE HAS TO LEAVE THE SESSION, not just this list.
+         |
+         | Lines above are skipped when their product or variant has gone —
+         | deactivated, deleted, or replaced when a merchant regenerated a size
+         | matrix. Skipping them silently left them in the session for good,
+         | where itemCount() still counted them: the bag in the header read 10
+         | while the cart page showed nothing, and no amount of shopping could
+         | clear it because nothing ever removed the lines.
+         |
+         | So the read heals the cart. It is a write from a getter, which is
+         | usually worth avoiding — but the alternative is a customer stuck with
+         | a permanent phantom basket, and only a read can tell that a line has
+         | become unresolvable.
+         */
+        if ($orphans !== []) {
+            $this->save(array_diff_key($raw, array_flip($orphans)));
+        }
+
+        return $this->resolved = $rows->values();
     }
 
     /**
@@ -177,9 +214,14 @@ class Cart
         return $this->items()->sum('subtotal_cents');
     }
 
+    /**
+     * How many things are in the bag — counted from the RESOLVED lines, so the
+     * badge in the header can never disagree with the cart page. Counting the
+     * raw session instead is what produced "10 in the bag, nothing in the cart".
+     */
     public function itemCount(): int
     {
-        return (int) array_sum(array_column($this->rawItems(), 'qty'));
+        return (int) $this->items()->sum('quantity');
     }
 
     public function isEmpty(): bool
@@ -338,6 +380,8 @@ class Cart
     private function save(array $items): void
     {
         Session::put($this->key(), $items);
+        // Anything that writes has just invalidated the resolved snapshot.
+        $this->resolved = null;
     }
 
     private function key(): string
