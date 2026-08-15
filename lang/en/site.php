@@ -570,6 +570,7 @@ return [
             'in_stock_low' => 'Only :count left in stock',
             'how_much' => 'How much do you need (:unit)',
             'covers' => '≈ :qty pcs — covers :measure',
+            'quantity' => 'Quantity',
             'add_to_cart' => 'Add to cart',
             'wishlist' => 'Save for later',
             'perks' => [

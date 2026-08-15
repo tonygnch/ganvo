@@ -182,8 +182,6 @@ class CartController extends Controller
          | 89,6 of them is not a thing. The customer is told the real figure
          | before they submit.
          */
-        $requestedMeasure = (float) str_replace(',', '.', (string) $request->input('measure', ''));
-
         // Force variant selection when the product has any active
         // variants — otherwise the customer would be ordering an
         // ambiguous "default" version.
@@ -210,28 +208,25 @@ class CartController extends Controller
             }
         }
 
-        // The amount rides along unchanged. It is NOT converted into a piece
-        // count and it does not price the line: this shop quotes by hand, and
-        // guessing how many boards make twenty square metres is the yard's job,
-        // not the checkout's.
+        /*
+         | HOW MANY, as a whole number.
+         |
+         | Everything in this catalogue is a countable thing — boards, brackets,
+         | pins — so the quantity is an integer and nothing is derived from it.
+         | Clamped rather than validated away: a pasted "0", a negative, or
+         | "abc" all become 1, which is what the button says it does. The upper
+         | bound is there so a typo of 999999 cannot be turned into a stock
+         | reservation or a line total that overflows the layout.
+         */
+        $quantity = (int) $request->input('quantity', 1);
+        $quantity = max(1, min($quantity, 9999));
         $cart = Cart::forCurrent();
-        $cart->add(
-            $product->id,
-            $variantId,
-            1,
-            $product->isPricedByMeasure() && $requestedMeasure > 0 ? $requestedMeasure : null,
-        );
+        $cart->add($product->id, $variantId, $quantity);
 
         $flashName = $variantId
             ? sprintf('%s — %s', $product->name, $variant->label)
             : $product->name;
-        $flash = ($product->isPricedByMeasure() && $requestedMeasure > 0)
-            ? __('site.storefront.added_to_cart_measure', [
-                'name' => $flashName,
-                'measure' => rtrim(rtrim(number_format($requestedMeasure, 2, '.', ''), '0'), '.'),
-                'unit' => $product->priceUnitShort(),
-            ])
-            : __('site.storefront.added_to_cart', ['name' => $flashName]);
+        $flash = __('site.storefront.added_to_cart', ['name' => $flashName]);
 
         // Async path — the slide-out cart drawer adds without navigation.
         if ($request->wantsJson()) {

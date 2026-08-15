@@ -571,6 +571,7 @@ return [
             'in_stock_low' => 'Само :count бр. в наличност',
             'how_much' => 'Колко ви трябва (:unit)',
             'covers' => '≈ :qty бр. — покрива :measure',
+            'quantity' => 'Количество',
             'add_to_cart' => 'Добави в кошницата',
             'wishlist' => 'Запази за по-късно',
             'perks' => [

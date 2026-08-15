@@ -62,11 +62,10 @@
            arrives as a list — bullets, sizes, a price line — all of which was
            collapsing into a single paragraph. The text stays escaped; only the
            whitespace is honoured. */
-        .measure { margin: 0 0 16px; }
-        .measure label { display: block; font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
-        .measure input { width: 100%; padding: 13px 14px; background: var(--surface); color: var(--txt); border: 1px solid var(--line2); font: inherit; font-size: 15px; }
-        .measure input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-        .measure-out { display: block; margin-top: 8px; font-size: 12.5px; color: var(--muted); min-height: 1.2em; }
+        .qty { margin: 0 0 16px; }
+        .qty label { display: block; font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+        .qty input { width: 120px; padding: 13px 14px; background: var(--surface); color: var(--txt); border: 1px solid var(--line2); font: inherit; font-size: 15px; text-align: center; font-variant-numeric: tabular-nums; }
+        .qty input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 
         .pinfo p.desc { color: var(--muted); margin: 26px 0 30px; max-width: 50ch; font-size: 15.5px; white-space: pre-line; }
 
@@ -225,22 +224,18 @@
                             @include('storefront.partials.variant-picker')
                         @endif
 
-                        {{-- HOW MUCH, in the unit the price is quoted in.
-                             Only for products sold by measure: a shopper buying
-                             a bench wants one bench, but a shopper buying
-                             paneling wants twenty square metres and has no idea
-                             how many boards that is. The count is worked out
-                             here as they type AND again on the server, which is
-                             the figure that counts — this one exists so the
-                             rounding is visible before they commit. --}}
-                        @if ($product->isPricedByMeasure())
-                            <div class="measure">
-                                <label for="gv-measure">{{ __('site.storefront.product.how_much', ['unit' => $product->priceUnitShort()]) }}</label>
-                                <input type="number" id="gv-measure" name="measure"
-                                       min="0.01" step="0.01" inputmode="decimal"
-                                       placeholder="0,00" data-measure-input>
-                            </div>
-                        @endif
+                        {{-- HOW MANY. A whole number, because everything in
+                             this catalogue is a countable thing — boards,
+                             brackets, pins — and half a bracket is not an order.
+                             There was no quantity field at all before: a
+                             customer wanting fifty boards had to add one, fifty
+                             times, or fix it in the cart afterwards. --}}
+                        <div class="qty">
+                            <label for="gv-qty">{{ __('site.storefront.product.quantity') }}</label>
+                            <input type="number" id="gv-qty" name="quantity"
+                                   value="1" min="1" step="1" inputmode="numeric"
+                                   pattern="[0-9]*">
+                        </div>
 
                         <button type="submit" class="btn block" data-vp-submit @if ($product->hasVariants()) disabled @endif>
                             {{ __('site.storefront.product.add_to_cart') }} — <span data-vp-submit-price>@money($product->price_cents)</span>
