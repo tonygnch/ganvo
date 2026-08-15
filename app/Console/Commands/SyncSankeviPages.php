@@ -150,6 +150,9 @@ class SyncSankeviPages extends Command
     private const SECTIONS = [
         'hero_mark' => false,
         'forest_band' => false,
+        // The scrolling tape. The yard's own line already opens the page; the
+        // client did not want it repeated eight times sliding past.
+        'velocity_band' => false,
     ];
 
     private const THEME_COPY = [

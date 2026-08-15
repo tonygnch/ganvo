@@ -50,6 +50,15 @@ return [
             'label' => 'Reasons to choose us (+ the counted facts)',
             'default' => true,
         ],
+        // The scrolling tape between the capabilities grid and what follows:
+        // two rows of the brand line sliding opposite ways as you scroll. It is
+        // pure texture — the screen reader gets one sentence instead of the same
+        // four words eight times — so a merchant who finds it busy can drop it
+        // without losing anything the page says elsewhere.
+        'velocity_band' => [
+            'label' => 'Scrolling brand tape (the two sliding rows)',
+            'default' => true,
+        ],
         'trade_band' => [
             'label' => 'Trade & sites callout (the moss slab)',
             'default' => true,

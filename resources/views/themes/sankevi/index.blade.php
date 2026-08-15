@@ -998,7 +998,9 @@
 
         {{-- ============ ACT 4 — SCROLL VELOCITY ============ --}}
         {{-- The band itself is decorative repetition; a screen reader gets one
-             sentence instead of the same four words eight times over. --}}
+             sentence instead of the same four words eight times over — which is
+             also why it is switchable: nothing on the page depends on it. --}}
+        @if ($theme->on('velocity_band'))
         <section class="vel" data-vel>
             <span class="sr-only">{{ __('site.storefront.sankevi.marquee_sr', ['name' => $marqueeName]) }}</span>
             <div class="vel-row" data-vel-row data-vel-dir="-1" data-vel-base="0.062" aria-hidden="true">
@@ -1016,6 +1018,7 @@
                 </div>
             </div>
         </section>
+        @endif
 
         {{-- ============ ACT 5 — WHY ============
              The reasons, and the only place the landing page still mentions
