@@ -197,17 +197,33 @@
                     @php
                         $fsAmt = $store->freeShippingAmount();
                         $specRows = [];
-                        if ($theme->on('spec_shipping') && $fsAmt) {
-                            $specRows[] = [__('site.storefront.value_props.shipping_title'), __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt])];
+
+                        /*
+                         | The merchant's own rows win outright. A yard that
+                         | delivers in three days and a florist that delivers in
+                         | three hours were advertising the same sentence, and
+                         | neither had written it — so anything typed here
+                         | REPLACES the platform's promises rather than joining
+                         | them, including the category row. Half the block
+                         | theirs and half ours would be the harder thing to
+                         | reason about, not the kinder one.
+                         */
+                        foreach ($product->specRows() ?? [] as $gvRow) {
+                            $specRows[] = [$gvRow['label'], $gvRow['value']];
                         }
-                        if ($theme->on('spec_returns')) {
-                            $specRows[] = [__('site.storefront.value_props.returns_title'), __('site.storefront.value_props.returns_sub')];
-                        }
-                        if ($theme->on('spec_checkout')) {
-                            $specRows[] = [__('site.storefront.value_props.checkout_title'), __('site.storefront.value_props.checkout_sub')];
-                        }
-                        if ($theme->on('spec_category') && $primaryCategory) {
-                            $specRows[] = [__('site.storefront.controls.category'), $primaryCategory->name];
+                        if (! $specRows) {
+                            if ($theme->on('spec_shipping') && $fsAmt) {
+                                $specRows[] = [__('site.storefront.value_props.shipping_title'), __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt])];
+                            }
+                            if ($theme->on('spec_returns')) {
+                                $specRows[] = [__('site.storefront.value_props.returns_title'), __('site.storefront.value_props.returns_sub')];
+                            }
+                            if ($theme->on('spec_checkout')) {
+                                $specRows[] = [__('site.storefront.value_props.checkout_title'), __('site.storefront.value_props.checkout_sub')];
+                            }
+                            if ($theme->on('spec_category') && $primaryCategory) {
+                                $specRows[] = [__('site.storefront.controls.category'), $primaryCategory->name];
+                            }
                         }
                     @endphp
                     @if ($specRows)

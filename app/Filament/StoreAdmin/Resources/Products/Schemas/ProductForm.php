@@ -495,6 +495,49 @@ class ProductForm
                             ->columnSpanFull(),
                     ]),
 
+                /*
+                 | THE ROWS UNDER THE PRICE.
+                 |
+                 | These were the platform's own promises — free delivery,
+                 | thirty-day returns, checkout "under a minute" — printed from
+                 | lang strings on every product of every store. The merchant
+                 | could switch a row off but never say anything else, so a yard
+                 | delivering in three days and a florist delivering in three
+                 | hours advertised the same sentence, and neither had written
+                 | it.
+                 |
+                 | Collapsed by default: most products will never need this, and
+                 | an expanded empty repeater on every product page reads as a
+                 | field someone forgot to fill in.
+                 */
+                Section::make(__('admin.products.section.spec_rows'))
+                    ->description(__('admin.products.section_help.spec_rows'))
+                    ->collapsed()
+                    ->schema([
+                        Repeater::make('spec_rows')
+                            ->label(__('admin.products.section.spec_rows'))
+                            ->hiddenLabel()
+                            // No default row. One would turn "I opened this
+                            // product" into a saved override on every product
+                            // the merchant so much as looks at.
+                            ->defaultItems(0)
+                            ->reorderable()
+                            ->collapsible()
+                            ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
+                            ->schema([
+                                TextInput::make('label')
+                                    ->label(__('admin.products.field.spec_label'))
+                                    ->placeholder(__('admin.products.placeholder.spec_label'))
+                                    ->maxLength(60),
+                                TextInput::make('value')
+                                    ->label(__('admin.products.field.spec_value'))
+                                    ->placeholder(__('admin.products.placeholder.spec_value'))
+                                    ->maxLength(120),
+                            ])
+                            ->columns(2)
+                            ->columnSpanFull(),
+                    ]),
+
                 Section::make(__('admin.products.section.categories'))
                     ->description(__('admin.products.section_help.categories'))
                     ->schema([

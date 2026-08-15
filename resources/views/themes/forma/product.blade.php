@@ -203,11 +203,22 @@
                         <p class="desc">{{ $product->description }}</p>
                     @endif
 
-                    <ul class="perks">
-                        <li>{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt]) : '' }}</li>
-                        <li>{{ __('site.storefront.value_props.returns_sub') }}</li>
-                        <li>{{ __('site.storefront.value_props.checkout_sub') }}</li>
-                    </ul>
+                    @if ($gvSpecRows = $product->specRows())
+                        {{-- Per-product rows, when the merchant has written any (Products →
+                         Rows under the price). Otherwise the theme's own rows stand,
+                         which is why adding this changed no existing page. --}}
+                        <ul class="perks">
+                            @foreach ($gvSpecRows as $gvRow)
+                                <li>@if ($gvRow['label'])<strong>{{ $gvRow['label'] }}</strong> @endif{{ $gvRow['value'] }}</li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <ul class="perks">
+                            <li>{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt]) : '' }}</li>
+                            <li>{{ __('site.storefront.value_props.returns_sub') }}</li>
+                            <li>{{ __('site.storefront.value_props.checkout_sub') }}</li>
+                        </ul>
+                    @endif
 
                     <form method="post" action="/cart/add/{{ $product->slug }}">
                         @csrf

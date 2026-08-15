@@ -24,11 +24,49 @@ class Product extends Model
         'stock_quantity',
         'image_path',
         'is_active',
-        'price_unit', ];
+        'price_unit',
+        'spec_rows',
+    ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'spec_rows' => 'array',
     ];
+
+    /**
+     * The label/sub-line rows printed under this product's price, or NULL when
+     * the merchant has written none and the theme's own rows should stand.
+     *
+     * EMPTY MEANS "NO OPINION", NOT "SHOW NOTHING". The two are tempting to
+     * distinguish — null for untouched, [] for deliberately cleared — but the
+     * form cannot express the difference: an empty repeater is the only thing
+     * a merchant can leave behind, and Filament saves it as [], not null. So a
+     * merchant who opened a product and pressed Save would have silently
+     * blanked its rows. Hiding the block entirely is already a job the theme
+     * switches do (Customize theme → the four spec rows), and it belongs there:
+     * it is a store-wide decision, not a per-product one.
+     *
+     * Rows are trimmed and the entirely-blank ones dropped, so a repeater row
+     * the merchant opened and abandoned does not print a ruled empty line.
+     */
+    public function specRows(): ?array
+    {
+        if (! is_array($this->spec_rows)) {
+            return null;
+        }
+
+        $rows = [];
+        foreach ($this->spec_rows as $row) {
+            $label = trim((string) ($row['label'] ?? ''));
+            $value = trim((string) ($row['value'] ?? ''));
+            if ($label === '' && $value === '') {
+                continue;
+            }
+            $rows[] = ['label' => $label, 'value' => $value];
+        }
+
+        return $rows ?: null;
+    }
 
     public function tenant(): BelongsTo
     {

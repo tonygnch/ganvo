@@ -65,11 +65,25 @@
                             <button type="button" class="wishlist" title="{{ __('site.storefront.product.wishlist') }}">♡</button>
                         </div>
                     </form>
-                    <div class="accordion">
-                        <details open><summary>{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.product.perks.shipping', ['amount' => $fsAmt]) : '' }}<span class="mk"></span></summary><div class="ac-body">{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt]) : '' }}</div></details>
-                        <details><summary>{{ __('site.storefront.product.perks.returns') }}<span class="mk"></span></summary><div class="ac-body">{{ __('site.storefront.value_props.returns_sub') }}</div></details>
-                        <details><summary>{{ __('site.storefront.product.perks.fast') }}<span class="mk"></span></summary><div class="ac-body">{{ __('site.storefront.value_props.checkout_sub') }}</div></details>
-                    </div>
+                    @if ($gvSpecRows = $product->specRows())
+                        {{-- Per-product rows, when the merchant has written any (Products →
+                         Rows under the price). Otherwise the theme's own rows stand,
+                         which is why adding this changed no existing page. --}}
+                        <div class="accordion">
+                            @foreach ($gvSpecRows as $gvI => $gvRow)
+                                <details @if ($gvI === 0) open @endif>
+                                    <summary>{{ $gvRow['label'] }}<span class="mk"></span></summary>
+                                    <div class="ac-body">{{ $gvRow['value'] }}</div>
+                                </details>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="accordion">
+                            <details open><summary>{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.product.perks.shipping', ['amount' => $fsAmt]) : '' }}<span class="mk"></span></summary><div class="ac-body">{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt]) : '' }}</div></details>
+                            <details><summary>{{ __('site.storefront.product.perks.returns') }}<span class="mk"></span></summary><div class="ac-body">{{ __('site.storefront.value_props.returns_sub') }}</div></details>
+                            <details><summary>{{ __('site.storefront.product.perks.fast') }}<span class="mk"></span></summary><div class="ac-body">{{ __('site.storefront.value_props.checkout_sub') }}</div></details>
+                        </div>
+                    @endif
                 </div>
             </div>
             @if ($related->isNotEmpty())

@@ -176,20 +176,34 @@
                         </div>
                     </form>
 
-                    <div class="acc">
-                        <details open>
-                            <summary>{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.product.perks.shipping', ['amount' => $fsAmt]) : '' }}<span class="marker"></span></summary>
-                            <div class="b">{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt]) : '' }}</div>
-                        </details>
-                        <details>
-                            <summary>{{ __('site.storefront.product.perks.returns') }}<span class="marker"></span></summary>
-                            <div class="b">{{ __('site.storefront.value_props.returns_sub') }}</div>
-                        </details>
-                        <details>
-                            <summary>{{ __('site.storefront.product.perks.fast') }}<span class="marker"></span></summary>
-                            <div class="b">{{ __('site.storefront.value_props.checkout_sub') }}</div>
-                        </details>
-                    </div>
+                    @if ($gvSpecRows = $product->specRows())
+                        {{-- Per-product rows, when the merchant has written any (Products →
+                         Rows under the price). Otherwise the theme's own rows stand,
+                         which is why adding this changed no existing page. --}}
+                        <div class="acc">
+                            @foreach ($gvSpecRows as $gvI => $gvRow)
+                                <details @if ($gvI === 0) open @endif>
+                                    <summary>{{ $gvRow['label'] }}<span class="marker"></span></summary>
+                                    <div class="b">{{ $gvRow['value'] }}</div>
+                                </details>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="acc">
+                            <details open>
+                                <summary>{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.product.perks.shipping', ['amount' => $fsAmt]) : '' }}<span class="marker"></span></summary>
+                                <div class="b">{{ ($fsAmt = $store->freeShippingAmount()) ? __('site.storefront.value_props.shipping_sub', ['amount' => $fsAmt]) : '' }}</div>
+                            </details>
+                            <details>
+                                <summary>{{ __('site.storefront.product.perks.returns') }}<span class="marker"></span></summary>
+                                <div class="b">{{ __('site.storefront.value_props.returns_sub') }}</div>
+                            </details>
+                            <details>
+                                <summary>{{ __('site.storefront.product.perks.fast') }}<span class="marker"></span></summary>
+                                <div class="b">{{ __('site.storefront.value_props.checkout_sub') }}</div>
+                            </details>
+                        </div>
+                    @endif
                 </div>
             </div>
 
