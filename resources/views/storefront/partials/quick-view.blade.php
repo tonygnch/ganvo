@@ -14,7 +14,7 @@
  | Variant products get a "view details" link instead of a direct add.
  | Include once in a theme layout, near </body>.
 --}}
-<div x-data x-cloak>
+<div class="gv-drawer-root" x-data x-cloak>
     <div class="gv-qv"
          x-show="$store.gvQv.open"
          x-transition:enter="gv-fade-enter" x-transition:enter-start="gv-fade-off"

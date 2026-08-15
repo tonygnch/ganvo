@@ -40,6 +40,20 @@ html[data-mode='dark'] .gv-mode[data-gv-mode-alt='dark'] .gv-sun { display: bloc
 
 /* ─── slide-out cart drawer ─────────────────────────────────────────────── */
 
+/*
+ | WHY THIS EXISTS: a `position: fixed` element still paints inside the nearest
+ | ancestor that creates a STACKING CONTEXT, not against the viewport. Themes
+ | wrap their body children in one — sankevi does `body > * { position:
+ | relative; z-index: 1 }` — so the drawer's own z-index of 200 was being judged
+ | inside a container whose z-index was 1, and the sticky header (z-index 60,
+ | a sibling of that container) painted straight over the open drawer.
+ |
+ | The root carries the order for the whole drawer, veil included, so the panel
+ | competes with the page rather than with its own wrapper. Raising .gv-drawer
+ | alone cannot fix this: no value beats an ancestor that has already lost.
+ */
+.gv-drawer-root { position: relative; z-index: 200; }
+
 .gv-drawer-veil {
     position: fixed;
     inset: 0;

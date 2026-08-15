@@ -7,7 +7,9 @@
  | Include once in a theme layout, near </body>:
  |   @include('storefront.partials.cart-drawer')
 --}}
-<div x-data x-cloak>
+{{-- The class is not decoration: it carries the drawer's stacking order.
+     See .gv-drawer-root in resources/css/storefront.css. --}}
+<div class="gv-drawer-root" x-data x-cloak>
     {{-- veil --}}
     <div class="gv-drawer-veil"
          x-show="$store.gvCart.open"
