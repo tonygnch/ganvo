@@ -342,7 +342,7 @@
                         @elseif ($isSearch)
                             {!! __('site.storefront.sankevi.shop_h1_search_html', ['q' => '<em>' . e($filters['q']) . '</em>']) !!}
                         @else
-                            {!! __('site.storefront.sankevi.shop_h1_html') !!}
+                            {!! $theme->editable('shop_h1_html') !!}
                         @endif
                     </h1>
                     <p class="rise" style="--d: .22s;">
@@ -406,7 +406,7 @@
                         <span>{{ __('site.storefront.controls.in_stock_only') }}</span>
                     </label>
                     <div class="go">
-                        <button type="submit" class="btn">{{ __('site.storefront.sankevi.shop_refine') }}</button>
+                        <button type="submit" class="btn">{!! $theme->editable('shop_refine') !!}</button>
                         @if ($hasActiveFilters)
                             <a class="clear" href="/shop">{{ __('site.storefront.controls.clear') }}</a>
                         @endif

@@ -141,6 +141,21 @@ return [
             'type' => 'textarea',
             'default_lang' => 'site.storefront.sankevi.hero_sub',
         ],
+        /* THE SHOP PAGE. Both of these were bare __() calls — the only copy
+           on /shop a merchant could see but not touch. The heading shows only
+           when nothing is filtered; pick a category and it becomes that
+           category's own name, so this is the "everything" title. */
+        'shop_h1_html' => [
+            'label' => 'Shop page — heading (no filter applied)',
+            'hint' => 'Wrap a word in <em> to give it the accent colour.',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.shop_h1_html',
+        ],
+        'shop_refine' => [
+            'label' => 'Shop page — filter button label',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.shop_refine',
+        ],
         'hero_cta' => [
             'label' => 'Hero — primary button label (links to the shop)',
             'type' => 'text',

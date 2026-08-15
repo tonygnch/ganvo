@@ -171,6 +171,9 @@ class SyncSankeviPages extends Command
            („Греди", „Ламперия", „Челни дъски"), which is why it is not the
            lower-case the request was typed in. */
         'families_all' => 'Всички продукти',
+        /* „Подбор" is the theme's own word for the filter button and stays
+           the default; this client wanted the plainer one. */
+        'shop_refine' => 'Филтър',
         'story_h2_html' => 'Естествено дърво, <em>умни рафтове</em>',
         'story_body' => 'Повече от 25 години обработваме дърво — от трупа до готовото изделие. '
             .'Дървесината идва от горите около Велинград, район с най-чистия въздух на планетата, '
