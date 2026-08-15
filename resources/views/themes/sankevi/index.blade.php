@@ -557,12 +557,20 @@
 
         /* ── the plate ─────────────────────────────────────────────────── */
         .ow-plate { position: relative; height: calc(var(--ow-row) * 5.3); overflow: hidden; background: var(--surface2); }
-        .ow-pl { position: absolute; inset: 0; display: block; color: #f4efe2; opacity: 0; transition: opacity .5s ease; }
+        /* ONLY THE VISIBLE PLATE IS CLICKABLE.
+           All seven are rendered and stacked so that turning the wheel never
+           waits on an image, and the six that are not selected are hidden with
+           opacity alone — which hides them from the eye and from nobody else.
+           They still took pointer events, so the LAST one in source order sat
+           on top of the whole photograph and swallowed every click: the plate
+           read „Греди" and the click went to /shop, whichever family was
+           showing. Transparent is not absent. */
+        .ow-pl { position: absolute; inset: 0; display: block; color: #f4efe2; opacity: 0; pointer-events: none; transition: opacity .5s ease; }
         .ow-pl img { width: 100%; height: 100%; object-fit: cover; }
         .ow-pl::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11, 9, 6, .04) 0%, rgba(11, 9, 6, .22) 40%, rgba(11, 9, 6, .84) 100%); }
         /* with JS off nothing is "selected", so the first family stands in */
-        .ow:not(.is-live) .ow-pl:first-child { opacity: 1; }
-        .ow.is-live .ow-pl.is-sel { opacity: 1; }
+        .ow:not(.is-live) .ow-pl:first-child { opacity: 1; pointer-events: auto; }
+        .ow.is-live .ow-pl.is-sel { opacity: 1; pointer-events: auto; }
         .ow-pl .cap { position: absolute; z-index: 2; left: clamp(18px, 2.2vw, 30px); right: clamp(18px, 2.2vw, 30px); bottom: clamp(15px, 2vw, 24px); display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; }
         .ow-pl .nm { font-family: var(--display); font-weight: 500; font-size: clamp(26px, 3.3vw, 46px); line-height: 1.02; letter-spacing: 0; text-shadow: 0 2px 26px rgba(9, 7, 4, .6); }
         .ow-pl .go { flex-shrink: 0; display: inline-flex; align-items: center; gap: 10px; padding-bottom: 6px; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: rgba(244, 239, 226, .78); }
