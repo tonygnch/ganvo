@@ -246,7 +246,14 @@
                                         @elseif ($variant)
                                             <div class="m">{{ $variant->label }}</div>
                                         @endif
-                                        <div class="unit">{{ __('site.cart.unit_each', ['price' => \App\Services\Money::display($row['unit_price_cents'], $displayRate ?? 1.0, $displayCurrency ?? $store->currency)]) }}</div>
+                                        {{-- Counted in the product's own unit. A
+                                             line quoted per m² that says "бр."
+                                             beside its quantity contradicts the
+                                             box the customer just typed into. --}}
+                                        <div class="unit">{{ __('site.cart.unit_each_of', [
+                                            'price' => \App\Services\Money::display($row['unit_price_cents'], $displayRate ?? 1.0, $displayCurrency ?? $store->currency),
+                                            'unit' => $product->isPricedByMeasure() ? $product->priceUnitShort() : __('site.cart.unit_piece'),
+                                        ]) }}</div>
                                     </div>
                                     <div class="qty-cell">
                                         <div class="qty" aria-label="{{ __('site.cart.quantity_label') }}">
