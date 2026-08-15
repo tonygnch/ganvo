@@ -490,6 +490,24 @@ return [
             'size' => '2100×900',
             'default' => '/images/demo/sankevi/endgrain.webp',
         ],
+        /* THE BROWSER TAB. Its own slot rather than reusing seal_image,
+           because the two are sized and coloured for different grounds: the
+           seal sits on the forest header at 26px and ships cream, while a tab
+           strip is usually light. The pair below is the client's own mark in
+           both colourways, and the partial hands the browser whichever suits
+           the scheme it is drawing in. */
+        'favicon' => [
+            'label' => 'Browser tab icon',
+            'hint' => 'Square mark for the browser tab. Shown on light tab bars; upload a light-coloured version below for dark ones.',
+            'size' => '180×180',
+            'default' => '/images/brand/sankevi/favicon.png',
+        ],
+        'favicon_dark' => [
+            'label' => 'Browser tab icon — dark mode',
+            'hint' => 'Optional. Used when the browser is in dark mode, where a dark mark would disappear.',
+            'size' => '180×180',
+            'default' => '/images/brand/sankevi/favicon-dark.png',
+        ],
         'seal_image' => [
             'label' => 'Brand seal',
             'hint' => 'Small square mark. Used in the nav when no logo is set, on the hero plate and behind the footer.',
