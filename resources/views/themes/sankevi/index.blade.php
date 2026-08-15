@@ -569,78 +569,23 @@
         .ow-pl .go svg { width: 26px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.2; transition: transform .5s cubic-bezier(.19, .74, .16, 1); }
         .ow-pl:hover .go svg { transform: translateX(8px); }
 
-        /* ── PHONE PRESENTATION ───────────────────────────────────────
-           The phone used to get the desktop wheel rotated a quarter turn: the
-           same arc, the same numbers, one CSS transform. It cost the words —
-           they read bottom-to-top, which is what the owner accepted in order
-           to have an arc at all, and later asked to have back.
+        /* ── ONE CONTROL AT EVERY WIDTH ───────────────────────────────
+           The phone had its own geometry twice over: first the desktop wheel
+           rotated a quarter turn (which stood the words on end), then a
+           horizontal strip (which stood them up but lost the arc). Both were
+           built to spend a handset's width rather than its height.
 
-           Standing them up is not another transform. On the arc the items
-           stack along one axis and their text runs along the perpendicular
-           one; upright text would run each name through its neighbours. So the
-           phone now has its own geometry — see the strip in the media query
-           below — while everything that is not geometry stays shared. */
-        .ow-turn { display: contents; }
-        /* ── PHONE: A HORIZONTAL STRIP ─────────────────────────────────
-           NOT the desktop wheel turned. It was, and the words read
-           bottom-to-top — the price the owner paid for having an arc on a
-           phone at all.
+           It is now simply the desktop wheel — same upright column, same arc,
+           same reading direction, same up/down gesture — because a control
+           that behaves the same everywhere is one thing to learn and one thing
+           to maintain. The column is narrower on a phone and its rows are
+           shorter (see the media query further down); nothing else differs.
 
-           UPRIGHT WORDS CANNOT LIVE ON THAT ARC. The arc stacks its items
-           along one axis and runs their text along the perpendicular one, so
-           standing the text up would drive every name straight through its
-           neighbours. Keeping them apart means spacing by each name's own
-           WIDTH, and that is a different geometry — not a different transform.
-
-           So the phone gets a strip: one name on the read-line, its
-           neighbours peeking in from either side and fading out. Everything
-           else about the control is untouched — the same drag, the same
-           smoothing, the same plate binding, the same spoken status. */
-        @media (max-width: 760px) {
-            .ow.is-horiz.is-live .ow-turn {
-                display: block; position: relative; height: var(--ow-strip, 96px);
-            }
-            .ow.is-horiz.is-live .ow-wheel {
-                position: absolute; inset: 0; width: auto; height: auto;
-                /* Feathered at both ends — where names enter and leave. The
-                   window is wide (8/92, not the column's 17/83) because the
-                   NEIGHBOURS have to survive it: at one step out their near
-                   edge sits ~150px from centre, and a fade that reached zero
-                   at 136px erased the very thing that tells a thumb there is
-                   more to the left and right. Distance-dimming is already
-                   handled by --ow-p; this only softens the hard cut. */
-                -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
-                mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
-                /* touch-action is read in SCREEN directions: pan-y leaves the
-                   browser free to scroll the page on an up/down swipe while the
-                   strip still claims the left/right ones. */
-                touch-action: pan-y;
-            }
-            /* The same two marks the desktop wheel has, in the strip's axes:
-               the binding along the floor, the read-line tick under centre. */
-            .ow.is-horiz.is-live .ow-wheel::before {
-                left: 0; right: 0; top: auto; bottom: 0; width: auto; height: 1px;
-                background: linear-gradient(90deg, transparent, var(--line2) 22%, var(--line2) 78%, transparent);
-            }
-            .ow.is-horiz.is-live .ow-wheel::after {
-                left: 50%; top: auto; bottom: 0; width: 1px; height: 15px;
-                transform: translateX(-50%); background: var(--accent);
-            }
-            /* Centred, then moved along the line. The origin is the middle and
-               not the spine: nothing hinges here, the names simply travel. */
-            .ow.is-horiz.is-live .ow-item {
-                left: 50%; top: 50%; height: auto; margin-top: 0;
-                transform-origin: 50% 50%;
-                transform: translate3d(calc(-50% + var(--ow-x, 0px)), -50%, 0);
-            }
-            .ow.is-horiz.is-live .ow-item a {
-                align-items: baseline; gap: 11px;
-                font-size: clamp(19px, 5.2vw, 28px);
-            }
-        }
-        /* one hint or the other, never both */
-        .hint-h { display: none; }
-        @media (max-width: 760px) { .hint-v { display: none; } .hint-h { display: inline; } }
+           WHAT IT COSTS: `touch-action: none` on the wheel claims the vertical
+           gesture inside its own box, so a drag starting on the wheel turns it
+           rather than scrolling the page. That is the desktop behaviour, kept
+           deliberately — the box is a few hundred pixels tall and the page
+           scrolls normally on either side of it. */
 
         /* ── REDUCED MOTION. Not "the wheel without the animation" — a wheel
            that snaps has no arc to read. JS flags .is-flat and switches the
@@ -655,7 +600,7 @@
            leaves the box at both ends, where the fade is all that stands
            between the outer names and a hard cut. Being the same mask on the
            same element, it needs no rule of its own to get there. */
-        .ow.is-flat:not(.is-horiz) .ow-wheel { -webkit-mask-image: none; mask-image: none; }
+        .ow.is-flat .ow-wheel { -webkit-mask-image: none; mask-image: none; }
 
         /* =================================================================
            ACT 6 — FOREST. Full bleed, one line of type, nothing else.
@@ -895,12 +840,9 @@
                     <div>
                         <h2>{!! $theme->editable('families_h2_html') !!}</h2>
                     </div>
-                    {{-- The hint describes a GESTURE, and the gesture turns with
-                         the wheel: up/down on a desktop column, left/right on a
-                         phone's horizontal strip. Both are rendered and the CSS
-                         shows whichever matches, so no JS decides copy. --}}
-                    <span class="hint hint-v">{{ __('site.storefront.sankevi.families_hint') }}</span>
-                    <span class="hint hint-h">{{ __('site.storefront.sankevi.families_hint_h') }}</span>
+                    {{-- The hint describes the GESTURE, and there is only one
+                         of them now — up/down, at every width. --}}
+                    <span class="hint">{{ __('site.storefront.sankevi.families_hint') }}</span>
                 </div>
 
                 <div class="ow" data-ow data-gv-reveal data-gv-delay="0.1">
@@ -909,13 +851,6 @@
                          preventDefault, so without this the wheel would turn
                          AND the page would slide out from under it. Scoped to
                          this one 300px box; the rest of the act scrolls. --}}
-                    {{-- ow-turn only exists for the phone. A rotated element
-                         still occupies its UNROTATED box in the layout, so the
-                         turned wheel needs a parent that reserves the footprint
-                         it actually paints into. On desktop the wrapper is
-                         display:contents — no box, no effect, the wheel stays a
-                         direct grid item of .ow. --}}
-                    <div class="ow-turn">
                     <nav class="ow-wheel" data-ow-wheel data-lenis-prevent
                          aria-label="{{ __('site.storefront.sankevi.wheel_label') }}">
                         <ul class="ow-list">
@@ -929,7 +864,6 @@
                             @endforeach
                         </ul>
                     </nav>
-                    </div>
 
                     {{-- The plates. Every one of them repeats a link the wheel
                          already exposes by name, so they are a pointer
@@ -1329,7 +1263,6 @@
         if (!root) return;
 
         var wheel = root.querySelector('[data-ow-wheel]');
-        var turn = root.querySelector('.ow-turn');
         var items = [].slice.call(root.querySelectorAll('[data-ow-item]'));
         var plates = [].slice.call(root.querySelectorAll('[data-ow-pl]'));
         var status = root.querySelector('[data-ow-status]');
@@ -1374,13 +1307,6 @@
         var tiltRad = TILT * Math.PI / 180;
         var rowH = 46;
         var R = rowH / tiltRad;
-        /* WHICH SCREEN AXIS THE INPUT ARRIVES ON.
-           Above 760 the wheel is an upright column and the gesture is
-           up/down. Below it the control is a horizontal strip and the gesture
-           is left/right — the natural one on a handset, and the direction the
-           names now run. `horiz` is that switch, and the geometry in render()
-           reads it to choose between the arc and the strip. */
-        var horiz = false;
 
         // The row height is a CSS decision, so the geometry reads it back
         // rather than duplicating the media query in here.
@@ -1394,31 +1320,8 @@
                length, so that one number is published from here — and only
                while turned, because a display:contents wrapper reports a
                clientWidth of 0. */
-            if (horiz) {
-                /* ONE UNIFORM STEP, taken from the WIDEST name rather than each
-                   name's own width. Per-name spacing would sit tighter, but the
-                   run WRAPS: the distance from the last name back to the first
-                   has to be the same travelling either way, and only a uniform
-                   step guarantees that. Wide enough for the longest name is
-                   wide enough that no two ever collide. */
-                var widest = 0;
-                for (var q = 0; q < n; q++) {
-                    if (items[q].offsetWidth > widest) widest = items[q].offsetWidth;
-                }
-                /* +22 rather than a rounder number: the widest name here is
-                   193px on a 390px screen, and every pixel of gap beyond what
-                   stops a collision is a pixel the neighbours do not get to
-                   show. Enough to separate the two longest, and no more. */
-                step = widest + 22;
-                /* Tall enough for the name and the floor beneath it. Measured,
-                   because category names are merchant-authored and the type
-                   scales with the viewport. */
-                root.style.setProperty('--ow-strip',
-                    Math.max(78, Math.min(items[0].offsetHeight + 46, 150)) + 'px');
-            }
         }
 
-        var step = 0;   // phone strip: centre-to-centre, set by measure()
         var cur = 0, target = 0, sel = -1, raf = 0, lastT = 0, onScreen = true;
 
         function norm(i) { return ((i % n) + n) % n; }
@@ -1471,12 +1374,7 @@
                 var cd = out ? (d < 0 ? -RANGE : RANGE) : d;
                 var p = Math.min(1, Math.abs(d) / RANGE);
                 var x = 0, y, r = 0;
-                if (horiz) {
-                    // The strip: one axis, one step, no lean and no rotation.
-                    // The words staying upright IS the point of it.
-                    x = cd * step;
-                    y = 0;
-                } else if (flat) {
+                if (flat) {
                     // Reduced motion: a plain stack. No arc to read means no
                     // reason to rotate, lean or blur anything.
                     y = cd * rowH;
@@ -1548,7 +1446,7 @@
         wheel.addEventListener('wheel', function (e) {
             // Horizontally the sideways axis leads, but a trackpad that only
             // reports deltaY should still turn it rather than do nothing.
-            var d = horiz ? (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY) : e.deltaY;
+            var d = e.deltaY;
             if (e.deltaMode === 1) d *= 16;                    // lines
             else if (e.deltaMode === 2) d *= wheel.clientHeight;   // the run, turned or not
             if (!d) return;
@@ -1575,12 +1473,12 @@
         var down = false, moved = false, sy = 0, st = 0, pid = -1, dragEnd = 0;
         wheel.addEventListener('pointerdown', function (e) {
             if (e.button > 0) return;
-            down = true; moved = false; sy = horiz ? e.clientX : e.clientY; st = target; pid = e.pointerId;
+            down = true; moved = false; sy = e.clientY; st = target; pid = e.pointerId;
             clearTimeout(snapT);
         });
         wheel.addEventListener('pointermove', function (e) {
             if (!down) return;
-            var dy = (horiz ? e.clientX : e.clientY) - sy;
+            var dy = e.clientY - sy;
             if (!moved) {
                 if (Math.abs(dy) < DRAG_PX) return;   // still a click
                 moved = true;
@@ -1634,8 +1532,8 @@
         wheel.addEventListener('keydown', function (e) {
             if (e.altKey || e.ctrlKey || e.metaKey) return;
             var to = -1;
-            var next = horiz ? 'ArrowRight' : 'ArrowDown';
-            var prev = horiz ? 'ArrowLeft' : 'ArrowUp';
+            var next = 'ArrowDown';
+            var prev = 'ArrowUp';
             if (e.key === next) to = norm(sel + 1);
             else if (e.key === prev) to = norm(sel - 1);
             else if (e.key === 'Home') to = 0;
@@ -1656,14 +1554,14 @@
 
         // ── lifecycle ─────────────────────────────────────────────────────
         /*
-         | THE WHEEL IS LIVE AT EVERY WIDTH — only its ORIENTATION changes.
+         | THE WHEEL IS LIVE AT EVERY WIDTH, and it is the same wheel at all
+         | of them — one upright column, one arc, one up/down gesture.
          |
-         | It was desktop-only once. Squeezed into a 354px phone COLUMN the arc
-         | showed three legible names out of eight with two thirds of the box
-         | empty, so the phone fell back to a plain list. Turning the same arc
-         | on its side fixed the real problem: laid horizontally it spends the
-         | width a handset actually has, and a sideways swipe is the natural
-         | gesture there.
+         | It has been three things: desktop-only with a plain list on phones,
+         | then the arc turned on its side (which stood the words on end), then
+         | a horizontal strip (upright words, no arc). Each traded something the
+         | previous one had. Keeping the desktop control everywhere trades the
+         | handset's width for its height and keeps the rest.
          |
          | Without JS the markup is still a plain list of real links, every
          | family visible and tappable, so nothing is duplicated to get there.
@@ -1677,15 +1575,7 @@
            upright column, so Up/Down did nothing on a visibly vertical wheel
            and the box swallowed the page scroll it had claimed with
            touch-action: none. One predicate, one source of truth. */
-        var turned = window.matchMedia('(max-width: 760px)');
 
-        function orient() {
-            var want = turned.matches;
-            if (want === horiz) return false;
-            horiz = want;
-            root.classList.toggle('is-horiz', horiz);
-            return true;
-        }
 
         function setLive(on) {
             if (on === root.classList.contains('is-live')) return;
@@ -1710,7 +1600,6 @@
         window.addEventListener('resize', function () {
             clearTimeout(rz);
             rz = setTimeout(function () {
-                orient();
                 measure(); render();
             }, 160);
         }, { passive: true });
@@ -1724,16 +1613,12 @@
         document.addEventListener('visibilitychange', function () { run(); });
 
         if (flat) root.classList.add('is-flat');
-        orient();
-        // The wheel is live at every width now — only its ORIENTATION changes.
         setLive(true);
 
-        /* Measured once more when the webfont lands. The strip's step is
-           derived from how wide the NAMES are, and at first paint they are
-           still set in the fallback face: "Целият склад" measured 136px there
-           and 145px once Oswald swapped in. Names would have sat 9px closer
-           together for the whole session. Harmless where the font is already
-           cached; the guard is for the first visit. */
+        /* Measured once more when the webfont lands: row height comes back
+           from CSS, but the arc's radius is derived from it and the names are
+           still set in the fallback face at first paint. Harmless where the
+           font is already cached; the guard is for the first visit. */
         if (document.fonts && document.fonts.ready) {
             document.fonts.ready.then(function () { measure(); render(); });
         }
