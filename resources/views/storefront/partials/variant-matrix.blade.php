@@ -37,7 +37,18 @@
             break;
         }
     }
-    $selection = $default !== null ? $combos[$default] : [];
+    /*
+     | NOTHING IS PRE-SELECTED ON SCREEN.
+     |
+     | $default still feeds the hidden input below, so a no-JS form posts a real
+     | variant. But the CHIPS start blank, because a shopper who has not chosen a
+     | size has not chosen one, and the price shown above them is the product's
+     | RANGE. Highlighting a size they never picked made that range a
+     | contradiction, and made the cheapest variant look like the price.
+     |
+     | The script clears the hidden input to match, before first paint.
+     */
+    $selection = [];
     $chosen = $default !== null ? $meta[$default] : null;
 
     // Prices are formatted server-side (currency + FX are request state the
@@ -147,6 +158,19 @@
         // storefront JS kit, so this may not assume Alpine or any helper.
         (function () {
             if (window.__vpMatrixBound) return;
+
+            /*
+             | Drop the server's default BEFORE the first paint.
+             |
+             | It exists so the form still posts without JS. With JS the shopper
+             | has chosen nothing yet, so nothing may look chosen. This runs
+             | synchronously — the markup above is already parsed and the browser
+             | has not painted — so no chip flashes on and back off. paintAll()
+             | below still has to wait for [data-vp-submit], which is parsed
+             | after us.
+             */
+            document.querySelectorAll('[data-vp-mx] input[data-vp-opt]:checked')
+                .forEach(function (el) { el.checked = false; });
             window.__vpMatrixBound = true;
 
             function matrixOf(box) {

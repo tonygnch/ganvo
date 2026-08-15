@@ -495,7 +495,17 @@
                                      section's: the real one is quoted once the
                                      cut is chosen. --}}
                                 @if ($axes->isNotEmpty())<span class="from">{{ __('site.storefront.sankevi.shop_from') }}</span>@endif
-                                <b class="pr">@money($product->price_cents)@if ($u = $product->priceUnitSuffix())<i class="pu">{{ $u }}</i>@endif</b>
+                                @php
+                                    $gvRange = $product->priceRange();
+                                    $gvCur = $displayCurrency ?? (isset($store) ? $store->currency : 'EUR');
+                                    $gvPrice = $gvRange
+                                        ? __('site.storefront.product.price_range', [
+                                            'min' => \App\Services\Money::display($gvRange[0], $displayRate ?? 1.0, $gvCur),
+                                            'max' => \App\Services\Money::display($gvRange[1], $displayRate ?? 1.0, $gvCur),
+                                        ])
+                                        : \App\Services\Money::display((int) $product->price_cents, $displayRate ?? 1.0, $gvCur);
+                                @endphp
+                                <b class="pr">{{ $gvPrice }}@if (! $gvRange && ($u = $product->priceUnitSuffix()))<i class="pu">{{ $u }}</i>@endif</b>
                             </span>
                             <span class="open">{{ __('site.storefront.sankevi.shop_open') }} <i aria-hidden="true">→</i></span>
                         </div>

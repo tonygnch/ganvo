@@ -35,7 +35,17 @@
     </div>
     <h3>{{ $product->name }}</h3>
     <div class="foot">
-        <span class="pr">@money($product->price_cents)@if ($u = $product->priceUnitSuffix())<i class="pu">{{ $u }}</i>@endif</span>
+        @php
+            $gvRange = $product->priceRange();
+            $gvCur = $displayCurrency ?? (isset($store) ? $store->currency : 'EUR');
+            $gvPrice = $gvRange
+                ? __('site.storefront.product.price_range', [
+                    'min' => \App\Services\Money::display($gvRange[0], $displayRate ?? 1.0, $gvCur),
+                    'max' => \App\Services\Money::display($gvRange[1], $displayRate ?? 1.0, $gvCur),
+                ])
+                : \App\Services\Money::display((int) $product->price_cents, $displayRate ?? 1.0, $gvCur);
+        @endphp
+        <span class="pr">{{ $gvPrice }}@if (! $gvRange && ($u = $product->priceUnitSuffix()))<i class="pu">{{ $u }}</i>@endif</span>
         <span class="add">{{ __('site.storefront.sankevi.card_action') }}</span>
     </div>
 </a>

@@ -162,7 +162,23 @@
                     </div>
 
                     <h1>{{ $product->name }}</h1>
-                    <div class="price"><span data-vp-price>@money($product->price_cents)</span>@if ($u = $product->priceUnitSuffix())<i class="pu" data-vp-price-unit>{{ $u }}</i>@endif</div>
+                    @php
+                        $gvRange = $product->priceRange();
+                        $gvCur = $displayCurrency ?? (isset($store) ? $store->currency : 'EUR');
+                        $gvPrice = $gvRange
+                            ? __('site.storefront.product.price_range', [
+                                'min' => \App\Services\Money::display($gvRange[0], $displayRate ?? 1.0, $gvCur),
+                                'max' => \App\Services\Money::display($gvRange[1], $displayRate ?? 1.0, $gvCur),
+                            ])
+                            : \App\Services\Money::display((int) $product->price_cents, $displayRate ?? 1.0, $gvCur);
+                    @endphp
+                    {{-- A RANGE until the shopper picks a size, then the picker
+                         swaps in that variant's exact price. The unit suffix is
+                         rendered only when there is no range: a range is built
+                         from variant prices, which are per-item totals, and
+                         „€4.22 – €17.25 / м²" would quote a rate the yard does
+                         not charge. --}}
+                    <div class="price"><span data-vp-price>{{ $gvPrice }}</span>@if (! $gvRange && ($u = $product->priceUnitSuffix()))<i class="pu" data-vp-price-unit>{{ $u }}</i>@endif</div>
 
                     @if (! $product->hasVariants() && $product->stock_quantity > 0)
                         <div class="stock">
@@ -220,7 +236,13 @@
                         </div>
 
                         <button type="submit" class="btn block" data-vp-submit @if ($product->hasVariants()) disabled @endif>
-                            {{ __('site.storefront.product.add_to_cart') }} — <span data-vp-submit-price>@money($product->price_cents)</span>
+                            {{-- The price rides in a wrapper the picker shows and
+                                 hides. Unresolved, the button said „ДОБАВИ — €22.00"
+                                 using the base price, which on this catalogue is
+                                 usually not a price anything can be bought at. Now
+                                 it is just „ДОБАВИ В КОШНИЦАТА" until a size names
+                                 a real one. --}}
+                            {{ __('site.storefront.product.add_to_cart') }}<span data-vp-price-when-picked @if ($gvRange) hidden @endif> — <span data-vp-submit-price>@money($product->price_cents)</span></span>
                         </button>
                     </form>
                     @if (trim(__('site.storefront.sankevi.pdp_note')) !== '')

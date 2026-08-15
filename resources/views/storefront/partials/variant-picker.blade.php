@@ -134,7 +134,7 @@
         /* [hidden] is a UA rule and loses to any theme that sets display on
            its price-unit suffix. This is the one place that matters, so it
            wins outright. */
-        [data-vp-price-unit][hidden] { display: none !important; }
+        [data-vp-price-unit][hidden], [data-vp-price-when-picked][hidden] { display: none !important; }
         .vp-option.vp-out .vp-option-body {
             opacity: .4;
             cursor: not-allowed;
@@ -226,6 +226,9 @@
                     var prices = scope.querySelectorAll('[data-vp-price], [data-vp-submit-price]');
                     var stocks = scope.querySelectorAll('[data-vp-stock]');
                     var units = scope.querySelectorAll('[data-vp-price-unit]');
+                    // Shown only once a variant names a real price — see the
+                    // add-to-cart button.
+                    var whenPicked = scope.querySelectorAll('[data-vp-price-when-picked]');
 
                     if (! checked) {
                         prices.forEach(function (el) { el.textContent = baseText(el); });
@@ -234,6 +237,7 @@
                             el.classList.remove('vp-stock-out');
                         });
                         units.forEach(function (el) { el.hidden = false; });
+                        whenPicked.forEach(function (el) { el.hidden = true; });
                         if (submit) submit.disabled = true;
                         return;
                     }
@@ -263,6 +267,7 @@
                      | does. Themes opt in by tagging the suffix element.
                      */
                     units.forEach(function (el) { el.hidden = true; });
+                    whenPicked.forEach(function (el) { el.hidden = false; });
 
                     // Flat mode disables out-of-stock radios, so a resolved
                     // variant is always buyable there; matrix mode can land on

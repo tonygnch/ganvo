@@ -68,6 +68,44 @@ class Product extends Model
         return $rows ?: null;
     }
 
+    /**
+     * The cheapest and dearest a shopper can ACTUALLY pay, as [min, max] cents,
+     * or null when there is only one price to quote.
+     *
+     * The headline used to be products.price_cents, and on this catalogue that
+     * is frequently a price nobody can buy at: twelve of the fifteen products
+     * with variants carry a base BELOW their cheapest variant, so a board
+     * advertised at 11.50 started at 18.00 once you picked a size. A range is
+     * the honest version of one number.
+     *
+     * A variant with a null price inherits the product's, which is why the base
+     * still feeds the calculation rather than being ignored. Null comes back
+     * when there is nothing to range over — one variant, or several that all
+     * cost the same — because "3.50 – 3.50" is worse than "3.50".
+     */
+    public function priceRange(): ?array
+    {
+        // Prefer the loaded relation: these are rendered once per card on a
+        // listing page, and going back to the database for each would turn one
+        // query into fifty.
+        $variants = $this->relationLoaded('variants')
+            ? $this->variants->where('is_active', true)
+            : $this->activeVariants()->get();
+
+        $prices = $variants
+            ->map(fn ($v): int => (int) ($v->price_cents ?? $this->price_cents))
+            ->filter(fn (int $cents): bool => $cents > 0);
+
+        if ($prices->count() < 2) {
+            return null;
+        }
+
+        $min = (int) $prices->min();
+        $max = (int) $prices->max();
+
+        return $min === $max ? null : [$min, $max];
+    }
+
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
