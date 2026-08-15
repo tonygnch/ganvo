@@ -756,12 +756,19 @@
             .forest { min-height: 62vh; }
         }
         @keyframes cueSlide { 0% { left: -20px; } 100% { left: 48px; } }
-        /* One column below 760: the plate leads, the index follows it. Two
-           240px columns side by side would give the arc no room to curve
-           into and the photograph no room to be a photograph. */
+        /* One column below 760 — two 240px columns side by side would give the
+           arc no room to curve into and the photograph no room to be a
+           photograph.
+
+           THE WHEEL LEADS, the plate follows. It used to be the other way
+           round, and that put the control BELOW the thing it controls: turning
+           the arc changed a photograph the phone had already scrolled past, so
+           the two never appeared to be connected. Source order already reads
+           wheel-then-plate, which is why this now needs no `order` at all —
+           the override that reversed them is what has gone. */
         @media (max-width: 760px) {
             .ow { --ow-row: 52px; grid-template-columns: minmax(0, 1fr); gap: 22px; }
-            .ow-plate { order: -1; height: 250px; }
+            .ow-plate { height: 250px; }
 
             /* THE PHONE PRESENTATION — the wheel never goes live here (see the
                script), so this styles the plain list it leaves behind: two
