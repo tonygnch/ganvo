@@ -164,6 +164,13 @@ class SyncSankeviPages extends Command
            HAS to be an override — editing the lang default would change the
            footer of every store on the platform. */
         'footer_tagline' => 'Високо качество, достъпни цени, коректно отношение.',
+        /* The wheel's last item — the one that opens the whole catalogue
+           rather than one family. „Целият склад" is the theme's own default and
+           stays that way for any other yard using it; this client asked for the
+           plainer wording. Capitalised like every sibling on the wheel
+           („Греди", „Ламперия", „Челни дъски"), which is why it is not the
+           lower-case the request was typed in. */
+        'families_all' => 'Всички продукти',
         'story_h2_html' => 'Естествено дърво, <em>умни рафтове</em>',
         'story_body' => 'Повече от 25 години обработваме дърво — от трупа до готовото изделие. '
             .'Дървесината идва от горите около Велинград, район с най-чистия въздух на планетата, '

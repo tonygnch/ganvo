@@ -446,7 +446,7 @@ return [
             'shop_h1_search_html' => 'Search for :q',
             'shop_intro' => 'One row, one item in the yard: the sizes we mill it in, and the price of the smallest section. Open a row for the full specification.',
             'shop_refine' => 'Refine',
-            'shop_all' => 'The whole yard',
+            'shop_all' => 'All products',
             'shop_choose' => 'Choose by :axes',
             'shop_from' => 'from',
             'shop_open' => 'View the entry',
