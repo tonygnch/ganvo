@@ -38,6 +38,7 @@
         .wishlist:hover { border-color: var(--accent); color: var(--accent); }
         .accordion { border-top: 1px solid var(--line); margin-top: 30px; }
         .accordion details { border-bottom: 1px solid var(--line); }
+        .accordion .plain { border-bottom: 1px solid var(--line); padding-top: 16px; }
         .accordion summary { padding: 16px 0; font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; list-style: none; cursor: pointer; }
         .accordion summary::-webkit-details-marker { display: none; }
         .accordion summary .mk::after { content: "+"; } .accordion details[open] summary .mk::after { content: "−"; }
@@ -71,10 +72,18 @@
                          which is why adding this changed no existing page. --}}
                         <div class="accordion">
                             @foreach ($gvSpecRows as $gvI => $gvRow)
-                                <details @if ($gvI === 0) open @endif>
-                                    <summary>{{ $gvRow['label'] }}<span class="mk"></span></summary>
-                                    <div class="ac-body">{{ $gvRow['value'] }}</div>
-                                </details>
+                                @if (trim($gvRow['label']) !== '')
+                                    <details @if ($gvI === 0) open @endif>
+                                        <summary>{{ $gvRow['label'] }}<span class="mk"></span></summary>
+                                        <div class="ac-body">{{ $gvRow['value'] }}</div>
+                                    </details>
+                                @else
+                                    {{-- Nothing to put in the summary, so there is
+                                         nothing to disclose: a bare line rather than
+                                         a nameless row with a marker that opens onto
+                                         its own only content. --}}
+                                    <div class="ac-body plain">{{ $gvRow['value'] }}</div>
+                                @endif
                             @endforeach
                         </div>
                     @else

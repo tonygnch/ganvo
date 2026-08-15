@@ -105,6 +105,7 @@
 
         .acc { margin-top: 28px; border-top: 2.5px solid var(--ink); }
         .acc details { border-bottom: 2.5px solid var(--ink); }
+        .acc .plain { border-bottom: 2.5px solid var(--ink); padding-top: 16px; }
         .acc summary { padding: 16px 0; font-family: var(--display); font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; display: flex; justify-content: space-between; list-style: none; cursor: pointer; transition: color .15s ease; }
         .acc summary:hover { color: var(--muted); }
         .acc summary:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
@@ -211,10 +212,18 @@
                          which is why adding this changed no existing page. --}}
                         <div class="acc">
                             @foreach ($gvSpecRows as $gvI => $gvRow)
-                                <details @if ($gvI === 0) open @endif>
-                                    <summary>{{ $gvRow['label'] }}<span class="marker"></span></summary>
-                                    <div class="b">{{ $gvRow['value'] }}</div>
-                                </details>
+                                @if (trim($gvRow['label']) !== '')
+                                    <details @if ($gvI === 0) open @endif>
+                                        <summary>{{ $gvRow['label'] }}<span class="marker"></span></summary>
+                                        <div class="b">{{ $gvRow['value'] }}</div>
+                                    </details>
+                                @else
+                                    {{-- Nothing to put in the summary, so there is
+                                         nothing to disclose: a bare line rather than
+                                         a nameless row with a marker that opens onto
+                                         its own only content. --}}
+                                    <div class="b plain">{{ $gvRow['value'] }}</div>
+                                @endif
                             @endforeach
                         </div>
                     @else

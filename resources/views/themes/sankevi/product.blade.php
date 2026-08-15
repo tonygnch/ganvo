@@ -75,6 +75,7 @@
            purpose. A merchant sells the craft; a builder buys the numbers. */
         .specs { border-top: 1px solid var(--line); margin-bottom: 32px; }
         .specs .row { display: grid; grid-template-columns: 40% 1fr; gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--line); align-items: baseline; }
+        .specs .row.full { grid-template-columns: 1fr; }
         .specs .row .k { font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); }
         .specs .row .v { color: var(--txt); font-size: 14.5px; }
 
@@ -229,7 +230,14 @@
                     @if ($specRows)
                         <div class="specs">
                             @foreach ($specRows as [$k, $v])
-                                <div class="row"><span class="k">{{ $k }}</span><span class="v">{{ $v }}</span></div>
+                                {{-- A row with no label is a sentence, not a
+                                     key/value pair, so it takes the whole line
+                                     instead of sitting in the value column with
+                                     40% of empty space beside it. --}}
+                                <div class="row @if (trim($k) === '') full @endif">
+                                    @if (trim($k) !== '')<span class="k">{{ $k }}</span>@endif
+                                    <span class="v">{{ $v }}</span>
+                                </div>
                             @endforeach
                         </div>
                     @endif

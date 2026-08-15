@@ -84,6 +84,7 @@
         /* accordion */
         .acc { margin-top: 30px; border-top: 1px solid var(--ink); }
         .acc details { border-bottom: 1px solid var(--rule); }
+        .acc .plain { border-bottom: 1px solid var(--rule); padding-top: 16px; }
         .acc summary { padding: 16px 0; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; display: flex; justify-content: space-between; list-style: none; cursor: pointer; transition: color .25s var(--ease-soft); }
         .acc summary:hover { color: var(--accent); }
         .acc summary::-webkit-details-marker { display: none; }
@@ -182,10 +183,18 @@
                          which is why adding this changed no existing page. --}}
                         <div class="acc">
                             @foreach ($gvSpecRows as $gvI => $gvRow)
-                                <details @if ($gvI === 0) open @endif>
-                                    <summary>{{ $gvRow['label'] }}<span class="marker"></span></summary>
-                                    <div class="b">{{ $gvRow['value'] }}</div>
-                                </details>
+                                @if (trim($gvRow['label']) !== '')
+                                    <details @if ($gvI === 0) open @endif>
+                                        <summary>{{ $gvRow['label'] }}<span class="marker"></span></summary>
+                                        <div class="b">{{ $gvRow['value'] }}</div>
+                                    </details>
+                                @else
+                                    {{-- Nothing to put in the summary, so there is
+                                         nothing to disclose: a bare line rather than
+                                         a nameless row with a marker that opens onto
+                                         its own only content. --}}
+                                    <div class="b plain">{{ $gvRow['value'] }}</div>
+                                @endif
                             @endforeach
                         </div>
                     @else
