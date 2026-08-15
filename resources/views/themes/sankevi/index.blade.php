@@ -569,68 +569,73 @@
         .ow-pl .go svg { width: 26px; height: 10px; fill: none; stroke: currentColor; stroke-width: 1.2; transition: transform .5s cubic-bezier(.19, .74, .16, 1); }
         .ow-pl:hover .go svg { transform: translateX(8px); }
 
-        /* ── TURNED (phones) ──────────────────────────────────────────────
-           NOT a horizontal variant of the wheel — the wheel itself, rotated a
-           quarter turn. Every number that makes the arc what it is (--ow-row,
-           TILT, CURVE, RANGE), the binding, the read-line tick, the index
-           numerals and the edge fade are the DESKTOP ones, untouched; the only
-           thing that changes is which way up the box is hung.
+        /* ── PHONE PRESENTATION ───────────────────────────────────────
+           The phone used to get the desktop wheel rotated a quarter turn: the
+           same arc, the same numbers, one CSS transform. It cost the words —
+           they read bottom-to-top, which is what the owner accepted in order
+           to have an arc at all, and later asked to have back.
 
-           An earlier attempt rebuilt a sideways wheel out of its own
-           parameters — its own spacing, its own hinge, no numerals — and it
-           read as a different control. This one cannot drift from the desktop
-           wheel, because it IS the desktop wheel.
-
-           -90° and not +90°: it puts item 01 at the LEFT with later items to
-           the right, so a leftward drag brings the next family in from the
-           right the way every horizontal carousel does. (+90° is the prettier
-           turn — the binding would land under the plate rather than along the
-           floor — but it runs the list right-to-left and inverts the drag.)
-           The words end up reading bottom-to-top, which is the part the owner
-           accepted in order to get the arc.
-
-           Being rotated, the element's own HEIGHT is what a visitor sees as
-           WIDTH: --ow-run is that on-screen width, and since CSS cannot read a
-           parent's width into a length the JS publishes it. --ow-depth is the
-           on-screen height — however far the longest name reaches from the
-           spine. */
+           Standing them up is not another transform. On the arc the items
+           stack along one axis and their text runs along the perpendicular
+           one; upright text would run each name through its neighbours. So the
+           phone now has its own geometry — see the strip in the media query
+           below — while everything that is not geometry stays shared. */
         .ow-turn { display: contents; }
+        /* ── PHONE: A HORIZONTAL STRIP ─────────────────────────────────
+           NOT the desktop wheel turned. It was, and the words read
+           bottom-to-top — the price the owner paid for having an arc on a
+           phone at all.
+
+           UPRIGHT WORDS CANNOT LIVE ON THAT ARC. The arc stacks its items
+           along one axis and runs their text along the perpendicular one, so
+           standing the text up would drive every name straight through its
+           neighbours. Keeping them apart means spacing by each name's own
+           WIDTH, and that is a different geometry — not a different transform.
+
+           So the phone gets a strip: one name on the read-line, its
+           neighbours peeking in from either side and fading out. Everything
+           else about the control is untouched — the same drag, the same
+           smoothing, the same plate binding, the same spoken status. */
         @media (max-width: 760px) {
-            /* Only the value before JS has measured the real names — see
-               measure(), which overwrites this from the widest of them. */
-            .ow.is-horiz { --ow-depth: 180px; }
             .ow.is-horiz.is-live .ow-turn {
-                display: block; position: relative; height: var(--ow-depth);
+                display: block; position: relative; height: var(--ow-strip, 96px);
             }
             .ow.is-horiz.is-live .ow-wheel {
-                position: absolute; top: 50%; left: 50%;
-                width: var(--ow-depth);
-                height: var(--ow-run, 320px);
-                transform-origin: 50% 50%;
-                transform: translate(-50%, -50%) rotate(-90deg);
-                /* The desktop fade runs along the element's own Y — which the
-                   turn carries round to the on-screen LEFT and RIGHT, exactly
-                   where the arc enters and leaves, so it needs no help there.
-                   The second layer feathers the element's far X edge, which
-                   lands on the on-screen TOP: the outer end of every name.
-                   Without it a name longer than the depth ceiling would meet a
-                   bare overflow:hidden cut in the middle of a letter.
-                   INTERSECTED; where mask-composite is unsupported the layers
-                   merely add, which is the harmless direction to fail. */
-                -webkit-mask-image:
-                    linear-gradient(180deg, transparent 0, #000 17%, #000 83%, transparent 100%),
-                    linear-gradient(90deg, #000 0, #000 92%, transparent 100%);
-                mask-image:
-                    linear-gradient(180deg, transparent 0, #000 17%, #000 83%, transparent 100%),
-                    linear-gradient(90deg, #000 0, #000 92%, transparent 100%);
-                -webkit-mask-composite: source-in;
-                mask-composite: intersect;
-                /* The column claims every gesture with `none`. Turned, it must
-                   claim only the sideways ones — touch-action is read in SCREEN
-                   directions, not the element's own, so pan-y leaves the browser
-                   free to scroll the page on an up/down swipe while the wheel
-                   still takes the left/right ones. */
+                position: absolute; inset: 0; width: auto; height: auto;
+                /* Feathered at both ends — where names enter and leave. The
+                   window is wide (8/92, not the column's 17/83) because the
+                   NEIGHBOURS have to survive it: at one step out their near
+                   edge sits ~150px from centre, and a fade that reached zero
+                   at 136px erased the very thing that tells a thumb there is
+                   more to the left and right. Distance-dimming is already
+                   handled by --ow-p; this only softens the hard cut. */
+                -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+                mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+                /* touch-action is read in SCREEN directions: pan-y leaves the
+                   browser free to scroll the page on an up/down swipe while the
+                   strip still claims the left/right ones. */
                 touch-action: pan-y;
+            }
+            /* The same two marks the desktop wheel has, in the strip's axes:
+               the binding along the floor, the read-line tick under centre. */
+            .ow.is-horiz.is-live .ow-wheel::before {
+                left: 0; right: 0; top: auto; bottom: 0; width: auto; height: 1px;
+                background: linear-gradient(90deg, transparent, var(--line2) 22%, var(--line2) 78%, transparent);
+            }
+            .ow.is-horiz.is-live .ow-wheel::after {
+                left: 50%; top: auto; bottom: 0; width: 1px; height: 15px;
+                transform: translateX(-50%); background: var(--accent);
+            }
+            /* Centred, then moved along the line. The origin is the middle and
+               not the spine: nothing hinges here, the names simply travel. */
+            .ow.is-horiz.is-live .ow-item {
+                left: 50%; top: 50%; height: auto; margin-top: 0;
+                transform-origin: 50% 50%;
+                transform: translate3d(calc(-50% + var(--ow-x, 0px)), -50%, 0);
+            }
+            .ow.is-horiz.is-live .ow-item a {
+                align-items: baseline; gap: 11px;
+                font-size: clamp(19px, 5.2vw, 28px);
             }
         }
         /* one hint or the other, never both */
@@ -1369,17 +1374,12 @@
         var tiltRad = TILT * Math.PI / 180;
         var rowH = 46;
         var R = rowH / tiltRad;
-        /* ORIENTATION. A vertical wheel in a 354px phone column showed three
-           legible names out of eight with two thirds of the box empty. So on a
-           phone the whole control is ROTATED a quarter turn (see the CSS): it
-           then spends the width a handset actually has, and a sideways swipe is
-           the natural gesture there.
-
-           Nothing below this line knows about that. The geometry, the arc and
-           every parameter stay exactly what they are on a desktop — the turn is
-           one CSS transform, not a second wheel. `horiz` therefore means only
-           "the box is turned", and all it changes is which SCREEN axis an input
-           arrives on. */
+        /* WHICH SCREEN AXIS THE INPUT ARRIVES ON.
+           Above 760 the wheel is an upright column and the gesture is
+           up/down. Below it the control is a horizontal strip and the gesture
+           is left/right — the natural one on a handset, and the direction the
+           names now run. `horiz` is that switch, and the geometry in render()
+           reads it to choose between the arc and the strip. */
         var horiz = false;
 
         // The row height is a CSS decision, so the geometry reads it back
@@ -1394,36 +1394,31 @@
                length, so that one number is published from here — and only
                while turned, because a display:contents wrapper reports a
                clientWidth of 0. */
-            if (horiz && turn) {
-                root.style.setProperty('--ow-run', turn.clientWidth + 'px');
-                /* And the DEPTH — how far the longest name reaches out from
-                   the spine — is measured rather than guessed. Upright, a name
-                   has the column's whole width to run into and the slack is
-                   enormous; turned, it has only the strip's on-screen height,
-                   and a hard 180px (tuned to this shop's seven names) left
-                   about 6px of it. Category names are merchant-authored free
-                   text: "Обработени первази" already measures 194px and would
-                   have been guillotined mid-letter, at full opacity, on the
-                   read-line. Clamped at both ends — never a sliver, never a
-                   strip taller than the plate above it — and the far end is
-                   feathered below, so a name past even the ceiling dissolves
-                   instead of being cut. */
-                var reach = 0;
+            if (horiz) {
+                /* ONE UNIFORM STEP, taken from the WIDEST name rather than each
+                   name's own width. Per-name spacing would sit tighter, but the
+                   run WRAPS: the distance from the last name back to the first
+                   has to be the same travelling either way, and only a uniform
+                   step guarantees that. Wide enough for the longest name is
+                   wide enough that no two ever collide. */
+                var widest = 0;
                 for (var q = 0; q < n; q++) {
-                    var w = items[q].offsetLeft + items[q].offsetWidth;
-                    if (w > reach) reach = w;
+                    if (items[q].offsetWidth > widest) widest = items[q].offsetWidth;
                 }
-                /* +22 is not slack, it is the feather's clearance: the mask
-                   below dissolves the last 8% of the depth, and a name whose
-                   tip landed inside that would be dimmed for no reason. 22px
-                   is wider than 8% of any depth this can produce, so an
-                   ordinary name is never touched by it and only one that has
-                   pushed past the 300px ceiling ever meets it. */
-                root.style.setProperty('--ow-depth',
-                    Math.max(150, Math.min(reach + 22, 300)) + 'px');
+                /* +22 rather than a rounder number: the widest name here is
+                   193px on a 390px screen, and every pixel of gap beyond what
+                   stops a collision is a pixel the neighbours do not get to
+                   show. Enough to separate the two longest, and no more. */
+                step = widest + 22;
+                /* Tall enough for the name and the floor beneath it. Measured,
+                   because category names are merchant-authored and the type
+                   scales with the viewport. */
+                root.style.setProperty('--ow-strip',
+                    Math.max(78, Math.min(items[0].offsetHeight + 46, 150)) + 'px');
             }
         }
 
+        var step = 0;   // phone strip: centre-to-centre, set by measure()
         var cur = 0, target = 0, sel = -1, raf = 0, lastT = 0, onScreen = true;
 
         function norm(i) { return ((i % n) + n) % n; }
@@ -1476,7 +1471,12 @@
                 var cd = out ? (d < 0 ? -RANGE : RANGE) : d;
                 var p = Math.min(1, Math.abs(d) / RANGE);
                 var x = 0, y, r = 0;
-                if (flat) {
+                if (horiz) {
+                    // The strip: one axis, one step, no lean and no rotation.
+                    // The words staying upright IS the point of it.
+                    x = cd * step;
+                    y = 0;
+                } else if (flat) {
                     // Reduced motion: a plain stack. No arc to read means no
                     // reason to rotate, lean or blur anything.
                     y = cd * rowH;
@@ -1728,13 +1728,12 @@
         // The wheel is live at every width now — only its ORIENTATION changes.
         setLive(true);
 
-        /* Measured once more when the webfont lands. --ow-depth is derived from
-           how wide the NAMES are, and at first paint they are still set in the
-           fallback face: "Целият склад" measured 136px there and 145px once
-           Oswald swapped in. The strip was therefore sized 9px too shallow for
-           the whole session — enough to push the tip of the longest name into
-           the feather that is meant never to touch it. Harmless where the
-           font is already cached; the guard is for the first visit. */
+        /* Measured once more when the webfont lands. The strip's step is
+           derived from how wide the NAMES are, and at first paint they are
+           still set in the fallback face: "Целият склад" measured 136px there
+           and 145px once Oswald swapped in. Names would have sat 9px closer
+           together for the whole session. Harmless where the font is already
+           cached; the guard is for the first visit. */
         if (document.fonts && document.fonts.ready) {
             document.fonts.ready.then(function () { measure(); render(); });
         }
