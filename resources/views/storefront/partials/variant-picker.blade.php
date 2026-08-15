@@ -131,6 +131,10 @@
            designs); the selected variant's price still updates the main
            price via the data-vp-price hook. */
         .vp-option-price, .vp-option-meta { display: none; }
+        /* [hidden] is a UA rule and loses to any theme that sets display on
+           its price-unit suffix. This is the one place that matters, so it
+           wins outright. */
+        [data-vp-price-unit][hidden] { display: none !important; }
         .vp-option.vp-out .vp-option-body {
             opacity: .4;
             cursor: not-allowed;
@@ -168,30 +172,97 @@
                     return hidden && hidden.value ? hidden : null;
                 }
 
+                /*
+                 | WHICH ELEMENTS A SELECTION IS ALLOWED TO REWRITE.
+                 |
+                 | This used to be root.closest('form'), and that was the bug.
+                 | Every theme puts the headline price ABOVE the add-to-cart
+                 | form and the button price INSIDE it, so a form-scoped query
+                 | reached the button and silently missed the headline. The
+                 | shopper was shown two different prices for the same board
+                 | and the big one was the wrong one — on all 13 themes, in
+                 | flat mode and matrix mode alike.
+                 |
+                 | The page is the honest scope: [data-vp-root] is emitted once
+                 | per picker, no include site sits in a loop, and no listing
+                 | card tags its price with data-vp-price — so every page that
+                 | exists today has exactly one picker and nothing unrelated to
+                 | hit.
+                 |
+                 | If a page ever grows a SECOND picker, "the page" stops being
+                 | unambiguous, so we fall back to the form: still wrong for the
+                 | headline, but wrong locally instead of two pickers
+                 | overwriting each other's prices. Replace this guard with
+                 | something better if that day comes — do not just widen it.
+                 */
+                function textScope(root) {
+                    return document.querySelectorAll('[data-vp-root]').length > 1
+                        ? (root.closest('form') || document)
+                        : document;
+                }
+
+                // What the SERVER wrote, kept so an un-resolved selection can
+                // go back to it. Matrix mode really does un-resolve: changing
+                // an upper axis clears a now-impossible lower pick, and leaving
+                // the last variant's price sitting under chips that name no
+                // variant is the same lie in a different place.
+                function baseText(el) {
+                    if (el.dataset.vpBase === undefined) {
+                        el.dataset.vpBase = el.textContent;
+                    }
+                    return el.dataset.vpBase;
+                }
+
                 function updateForm(root) {
                     var checked = resolved(root);
                     var form = root.closest('form');
-                    var scope = form || document;
-                    var submit = scope.querySelector('[data-vp-submit]');
+                    // The submit button stays FORM-scoped on purpose. It is a
+                    // control, not a readout: disabling the wrong button blocks
+                    // a sale, so it must never be reached across a form
+                    // boundary. Unchanged from before.
+                    var submit = (form || document).querySelector('[data-vp-submit]');
+
+                    var scope = textScope(root);
+                    var prices = scope.querySelectorAll('[data-vp-price], [data-vp-submit-price]');
+                    var stocks = scope.querySelectorAll('[data-vp-stock]');
+                    var units = scope.querySelectorAll('[data-vp-price-unit]');
+
                     if (! checked) {
+                        prices.forEach(function (el) { el.textContent = baseText(el); });
+                        stocks.forEach(function (el) {
+                            el.textContent = baseText(el);
+                            el.classList.remove('vp-stock-out');
+                        });
+                        units.forEach(function (el) { el.hidden = false; });
                         if (submit) submit.disabled = true;
                         return;
                     }
+
                     var price = checked.getAttribute('data-price-formatted');
                     var stock = parseInt(checked.getAttribute('data-stock'), 10) || 0;
 
-                    scope.querySelectorAll('[data-vp-price]').forEach(function (el) {
+                    prices.forEach(function (el) {
+                        baseText(el);
                         el.textContent = price;
                     });
-                    scope.querySelectorAll('[data-vp-submit-price]').forEach(function (el) {
-                        el.textContent = price;
-                    });
-                    scope.querySelectorAll('[data-vp-stock]').forEach(function (el) {
+                    stocks.forEach(function (el) {
+                        baseText(el);
                         el.textContent = stock > 0 ? stock : '0';
                         // Toggle a class so themes can re-style on
                         // out-of-stock without us caring about copy.
                         el.classList.toggle('vp-stock-out', stock <= 0);
                     });
+
+                    /*
+                     | A variant price is what ONE of that variant costs. The
+                     | headline it replaces may be a RATE — sankevi quotes
+                     | decking at „22.00 / м²" — and pinning „/ м²" onto a
+                     | per-board total advertises a rate five times cheaper
+                     | than the shop charges. So the unit retracts along with
+                     | the rate it belonged to, and comes back if the selection
+                     | does. Themes opt in by tagging the suffix element.
+                     */
+                    units.forEach(function (el) { el.hidden = true; });
 
                     // Flat mode disables out-of-stock radios, so a resolved
                     // variant is always buyable there; matrix mode can land on
