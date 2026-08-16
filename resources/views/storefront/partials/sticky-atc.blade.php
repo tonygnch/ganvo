@@ -21,6 +21,30 @@
         var bar = document.querySelector('[data-gv-sticky]');
         var form = document.querySelector('form[action^="/cart/add/"]');
         if (! bar || ! form) return;
+
+        /*
+         | HOIST IT TO THE BODY.
+         |
+         | This bar is position: fixed, and fixed means "relative to the
+         | viewport" only while no ancestor has a transform, filter or
+         | perspective — any of those makes that ancestor the containing block
+         | instead. Themes include this inside the product column, and those
+         | columns animate in: sankevi's .pinfo is left carrying
+         | `transform: matrix(1, 0, 0, 1, 0, 0)` once its reveal finishes. An
+         | IDENTITY transform, doing nothing visible, and enough to pin the bar
+         | to the bottom of the column — 2966px down a 850px screen, sitting in
+         | the page like an ordinary block instead of hovering over it.
+         |
+         | Reparenting is the fix rather than hunting transforms out of every
+         | theme's animations, because any future wrapper could reintroduce one
+         | and the failure is silent. At body level nothing can capture it.
+         |
+         | Safe here: the bar is display:none until this script adds .gv-on, so
+         | a reader without JS never had it in the first place.
+         */
+        if (bar.parentElement !== document.body) {
+            document.body.appendChild(bar);
+        }
         var anchor = form.querySelector('button[type="submit"]') || form;
 
         // Show the bar only while the real button is off-screen.
