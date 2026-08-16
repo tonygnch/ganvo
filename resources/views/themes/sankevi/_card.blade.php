@@ -45,7 +45,7 @@
                 ])
                 : \App\Services\Money::display((int) $product->price_cents, $displayRate ?? 1.0, $gvCur);
         @endphp
-        <span class="pr">{{ $gvPrice }}@if (! $gvRange && ($u = $product->priceUnitSuffix()))<i class="pu">{{ $u }}</i>@endif</span>
+        <span class="pr">{{ $gvPrice }}@if ($u = $product->priceUnitSuffix())<i class="pu">{{ $u }}</i>@endif</span>
         <span class="add">{{ __('site.storefront.sankevi.card_action') }}</span>
     </div>
 </a>

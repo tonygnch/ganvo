@@ -134,7 +134,7 @@
         /* [hidden] is a UA rule and loses to any theme that sets display on
            its price-unit suffix. This is the one place that matters, so it
            wins outright. */
-        [data-vp-price-unit][hidden], [data-vp-price-when-picked][hidden] { display: none !important; }
+        [data-vp-price-when-picked][hidden] { display: none !important; }
         .vp-option.vp-out .vp-option-body {
             opacity: .4;
             cursor: not-allowed;
@@ -225,7 +225,6 @@
                     var scope = textScope(root);
                     var prices = scope.querySelectorAll('[data-vp-price], [data-vp-submit-price]');
                     var stocks = scope.querySelectorAll('[data-vp-stock]');
-                    var units = scope.querySelectorAll('[data-vp-price-unit]');
                     // Shown only once a variant names a real price — see the
                     // add-to-cart button.
                     var whenPicked = scope.querySelectorAll('[data-vp-price-when-picked]');
@@ -236,7 +235,6 @@
                             el.textContent = baseText(el);
                             el.classList.remove('vp-stock-out');
                         });
-                        units.forEach(function (el) { el.hidden = false; });
                         whenPicked.forEach(function (el) { el.hidden = true; });
                         if (submit) submit.disabled = true;
                         return;
@@ -257,16 +255,6 @@
                         el.classList.toggle('vp-stock-out', stock <= 0);
                     });
 
-                    /*
-                     | A variant price is what ONE of that variant costs. The
-                     | headline it replaces may be a RATE — sankevi quotes
-                     | decking at „22.00 / м²" — and pinning „/ м²" onto a
-                     | per-board total advertises a rate five times cheaper
-                     | than the shop charges. So the unit retracts along with
-                     | the rate it belonged to, and comes back if the selection
-                     | does. Themes opt in by tagging the suffix element.
-                     */
-                    units.forEach(function (el) { el.hidden = true; });
                     whenPicked.forEach(function (el) { el.hidden = false; });
 
                     // Flat mode disables out-of-stock radios, so a resolved

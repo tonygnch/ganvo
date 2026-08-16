@@ -176,12 +176,16 @@
                             : \App\Services\Money::display((int) $product->price_cents, $displayRate ?? 1.0, $gvCur);
                     @endphp
                     {{-- A RANGE until the shopper picks a size, then the picker
-                         swaps in that variant's exact price. The unit suffix is
-                         rendered only when there is no range: a range is built
-                         from variant prices, which are per-item totals, and
-                         „€4.22 – €17.25 / м²" would quote a rate the yard does
-                         not charge. --}}
-                    <div class="price"><span data-vp-price>{{ $gvPrice }}</span>@if (! $gvRange && ($u = $product->priceUnitSuffix()))<i class="pu" data-vp-price-unit>{{ $u }}</i>@endif</div>
+                         swaps in that variant's exact price.
+
+                         THE UNIT STAYS THROUGH ALL OF IT. On a product priced by
+                         measure the quantity box counts in м² and the line total
+                         is price × quantity, so every price on the page is a
+                         RATE — the base, the range and the chosen variant alike.
+                         Hiding the suffix on the range and on the resolved price
+                         made the only per-m² product on the site quote three
+                         different-looking kinds of number. --}}
+                    <div class="price"><span data-vp-price>{{ $gvPrice }}</span>@if ($u = $product->priceUnitSuffix())<i class="pu">{{ $u }}</i>@endif</div>
 
                     @if (! $product->hasVariants() && $product->stock_quantity > 0)
                         <div class="stock">

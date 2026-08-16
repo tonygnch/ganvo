@@ -87,6 +87,13 @@ class Cart
     {
         Session::forget($this->key());
         Session::forget($this->discountKey());
+        /*
+         | The resolved snapshot has to go with it. This is the one mutation
+         | that does not run through save(), so it was the one that could leave
+         | itemCount() answering from a basket that no longer exists — emptied
+         | in the same request, and still reporting what was in it.
+         */
+        $this->resolved = null;
     }
 
     /**
