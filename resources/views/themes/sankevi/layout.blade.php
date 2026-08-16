@@ -665,9 +665,25 @@
             .shelf {
                 margin-left: calc(50% - 50vw); margin-right: calc(50% - 50vw);
                 width: 100vw; max-width: 100vw;
-                gap: 30px 1px;            /* a hairline between the columns */
-                background: var(--line);  /* which is this, showing through */
+                gap: 30px 1px;
+                /*
+                 | ONE SURFACE, NOT A STACK OF SHELVES.
+                 |
+                 | The grid used to be painted --line so that both gaps showed
+                 | as rules. That works for the 1px column gap and not at all
+                 | for the 30px row gap, which came out as a tan band across the
+                 | screen — a third colour between plates that are --bg above
+                 | and below it, and against the --bg seam closing the page.
+                 |
+                 | So the surface is the plate colour throughout, and the one
+                 | gap that should read as a rule draws its own: a 1px shadow
+                 | off the left-hand card, filling the column gap exactly and
+                 | costing no layout. Skipped on an orphan, which spans both
+                 | columns and has nothing to its right but the screen edge.
+                 */
+                background: var(--bg);
             }
+            .shelf .pcard:nth-child(odd):not(:last-child) { box-shadow: 1px 0 0 var(--line); }
             /* The photographs run to the screen edge here, which left the price
                doing the same — 4px under it and then the end of the card. It is
                the last line on the plate and wants a margin, not a ledge. */
