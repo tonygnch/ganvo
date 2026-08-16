@@ -367,7 +367,11 @@
                controls ran to most of a phone screen, so the shop opened on its
                own filters instead of on any stock. */
             .sift {
-                position: fixed; top: 0; right: 0; bottom: 0; z-index: 200;
+                /* Opens from the LEFT, the side its tab is on. A panel that
+                   flies in from the far edge makes the button you pressed feel
+                   like it belongs to something else; coming from under the tab
+                   it reads as that tab unfolding. */
+                position: fixed; top: 0; left: 0; bottom: 0; z-index: 200;
                 width: min(380px, 90vw);
                 /* align-items: stretch, explicitly. The desktop rule is a grid
                    with `align-items: end` — sensible there, where the fields sit
@@ -376,10 +380,10 @@
                    it to the right edge of the panel. */
                 display: flex; flex-direction: column; align-items: stretch; gap: 0;
                 margin: 0; padding: 58px 22px 26px;
-                background: var(--surface); border-left: 1px solid var(--line2);
-                box-shadow: -24px 0 60px -30px rgba(0, 0, 0, .55);
+                background: var(--surface); border-right: 1px solid var(--line2);
+                box-shadow: 24px 0 60px -30px rgba(0, 0, 0, .55);
                 overflow-y: auto; overscroll-behavior: contain;
-                transform: translateX(102%); visibility: hidden;
+                transform: translateX(-102%); visibility: hidden;
                 transition: transform .42s cubic-bezier(.19, .7, .16, 1), visibility .42s;
             }
             .sift.is-open { transform: none; visibility: visible; }
