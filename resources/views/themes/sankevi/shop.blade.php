@@ -301,17 +301,13 @@
                    WebKit to show up. */
                 width: 100%;
                 min-height: min(56vw, 260px); aspect-ratio: 16 / 10;
-                /* NO PLANED CORNER ON A FULL-BLEED PHOTOGRAPH.
-                   The notch is a 26px diagonal bitten out of the top-left and
-                   bottom-right — on the desktop spread the plate is inset and
-                   it reads as a cut edge, deliberate. Stacked on a phone the
-                   photograph runs to both screen edges, and the same diagonal
-                   reads as the image failing to reach them: a wedge of page
-                   showing through at the corner, with nothing to explain it.
-                   Worth knowing if this ever looks fine in a measurement:
-                   clip-path does not change the element's box, so the geometry
-                   says the image fills the screen while the pixels do not. */
-                clip-path: none;
+                /* The planed corner stays. It was taken off here once, on the
+                   reading that a diagonal bitten out of a full-bleed photograph
+                   looks like the photograph failing to reach the edge. The
+                   thing that actually looked like a gap was a gap — the plate
+                   was 46px short on iOS (see the width above) — and with that
+                   fixed the notch reads as what it is on every other surface in
+                   the theme. */
             }
             /* top veil for the sheet number, bottom veil to hand the band over
                to the entry beneath it */
