@@ -48,10 +48,9 @@ class ImportTenant extends Command
             return self::FAILURE;
         }
 
-        $path = (string) $this->argument('bundle');
-        if (! is_file($path)) {
-            $this->error("No such file: {$path}");
+        $path = $this->resolveBundle((string) $this->argument('bundle'));
 
+        if ($path === null) {
             return self::FAILURE;
         }
 
@@ -109,6 +108,58 @@ class ImportTenant extends Command
         $this->line('  run `php artisan optimize:clear` if the site looks stale');
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Find the bundle, and when it is not there say what IS.
+     *
+     * The export stamps the date into the filename, so the path someone types
+     * from memory — or copies out of a README — is usually right about the
+     * directory and wrong about the name. "No such file" makes that a guessing
+     * game; listing the directory ends it.
+     *
+     * A relative path is resolved against the project root rather than the
+     * working directory, because this is normally run through `docker exec`,
+     * where the working directory is not where anyone thinks it is.
+     */
+    private function resolveBundle(string $given): ?string
+    {
+        foreach ([$given, base_path($given)] as $candidate) {
+            if (is_file($candidate)) {
+                return $candidate;
+            }
+        }
+
+        $this->error("No such file: {$given}");
+
+        $dir = storage_path('app/exports');
+        $found = is_dir($dir) ? glob($dir.'/*.zip') : [];
+
+        if ($found === [] || $found === false) {
+            $this->line("Nothing in {$dir} either — run ganvo:tenant-export first.");
+
+            return null;
+        }
+
+        $this->newLine();
+        $this->line('Bundles available:');
+        foreach ($found as $file) {
+            $this->line(sprintf('  %s   (%s)', $file, $this->humanBytes(filesize($file) ?: 0)));
+        }
+
+        return null;
+    }
+
+    private function humanBytes(int $bytes): string
+    {
+        foreach (['B', 'KB', 'MB', 'GB'] as $unit) {
+            if ($bytes < 1024) {
+                return round($bytes, 1).$unit;
+            }
+            $bytes /= 1024;
+        }
+
+        return round($bytes, 1).'TB';
     }
 
     /** Match the tenant by slug — the one identifier that means the same thing on both machines. */
