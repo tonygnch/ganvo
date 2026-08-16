@@ -519,7 +519,7 @@ class NewThemesDemoSeeder extends Seeder
                 // hero_h1_html and lose the <em> that puts the accent colour
                 // on "вашия размер" — the one coloured word in the headline.
                 // Empty means the theme copy shows through, accent and all.
-                'hero' => ['Семейна дъскорезница · Родопите', '', 'Разгледай материала'],
+                'hero' => ['', '', 'Разгледай материала'],
                 // Sankevi sells by length AND width, and the two interact —
                 // seedOptionMatrix() below wires the real dependency.
                 'sizes' => [],
