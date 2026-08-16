@@ -266,7 +266,7 @@
                         <div class="noorder">
                             <p class="t">{{ __('site.storefront.product.not_orderable_title') }}</p>
                             <p class="b">{{ __('site.storefront.product.not_orderable_body') }}</p>
-                            <a class="btn block" href="/contact">{{ __('site.storefront.product.not_orderable_cta') }}</a>
+                            <a class="btn block" href="/contact" data-gv-atc-anchor>{{ __('site.storefront.product.not_orderable_cta') }}</a>
                         </div>
                     @endif
 
@@ -342,9 +342,9 @@
                         </div>
                     @endif
 
-                    @if ($product->isOrderable())
-                        @include('storefront.partials.sticky-atc', ['product' => $product])
-                    @endif
+                    {{-- Rendered either way: the partial decides whether it
+                         offers a basket or a phone call. --}}
+                    @include('storefront.partials.sticky-atc', ['product' => $product])
                 </div>
             </div>
 

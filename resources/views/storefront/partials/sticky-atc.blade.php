@@ -17,7 +17,16 @@
         <div class="gv-variant" data-vp-label></div>
         <div class="gv-price" data-vp-sticky-price>@money($product->price_cents)</div>
     </div>
-    <button type="button" class="gv-btn" data-gv-sticky-btn>{{ __('site.storefront.product.add_to_cart') }}</button>
+    {{-- MIRRORS THE PAGE'S OWN BUTTON. A product that is not for sale online
+         shows a way to get in touch instead of an add-to-cart, and the bar has
+         to say the same thing: offering "add to cart" at the bottom of a page
+         whose only button says "get in touch" is a contradiction the shopper
+         can only resolve by scrolling back up to check. --}}
+    @if ($product->isOrderable())
+        <button type="button" class="gv-btn" data-gv-sticky-btn>{{ __('site.storefront.product.add_to_cart') }}</button>
+    @else
+        <a class="gv-btn" href="/contact">{{ __('site.storefront.product.not_orderable_cta') }}</a>
+    @endif
 </div>
 
 @push('scripts')
@@ -25,7 +34,7 @@
     (function () {
         var bar = document.querySelector('[data-gv-sticky]');
         var form = document.querySelector('form[action^="/cart/add/"]');
-        if (! bar || ! form) return;
+        if (! bar) return;
 
         /*
          | HOIST IT TO THE BODY.
@@ -50,7 +59,17 @@
         if (bar.parentElement !== document.body) {
             document.body.appendChild(bar);
         }
-        var anchor = form.querySelector('button[type="submit"]') || form;
+        /*
+         | WHAT THE BAR SHADOWS. Normally the add-to-cart form, but a product
+         | that is not for sale online has no form at all — it offers a way to
+         | get in touch, and the bar shadows that instead. Themes mark whichever
+         | it is with data-gv-atc-anchor; a form's own submit button is found
+         | without one, so nothing had to change to keep working.
+         */
+        var anchor = (form && form.querySelector('button[type="submit"]'))
+            || document.querySelector('[data-gv-atc-anchor]')
+            || form;
+        if (! anchor) return;
 
         // Show the bar only while the real button is off-screen.
         if ('IntersectionObserver' in window) {
@@ -62,14 +81,17 @@
         }
 
         // Mirror the variant picker's live price when present.
-        var live = form.querySelector('[data-vp-submit-price]') || document.querySelector('[data-vp-price]');
+        var live = (form && form.querySelector('[data-vp-submit-price]')) || document.querySelector('[data-vp-price]');
         var mine = bar.querySelector('[data-vp-sticky-price]');
         if (live && mine) {
             new MutationObserver(function () { mine.textContent = live.textContent; })
                 .observe(live, { childList: true, characterData: true, subtree: true });
         }
 
-        bar.querySelector('[data-gv-sticky-btn]').addEventListener('click', function () {
+        var go = bar.querySelector('[data-gv-sticky-btn]');
+        if (! go || ! form) return;      // the contact link is a plain <a>, no wiring
+
+        go.addEventListener('click', function () {
             /*
              | The page's own button is disabled until a variant resolves; this
              | one cannot be, because it is what a shopper reaches for when the
