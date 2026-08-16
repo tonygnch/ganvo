@@ -2,8 +2,12 @@
     /*
      | Sankevi product card — a plate in the catalogue: the photograph cut at
      | two corners, its sheet number and section set in the spec voice beneath,
-     | the name in the serif and the price on a ruled foot.
+     | the name in the serif and the price alone on a ruled foot.
      | Expects $product, optional $badge.
+     |
+     | No "виж" beside the price: the whole plate is the link, so the label
+     | only repeated what tapping already does — and it was the thing crowding
+     | a price range off its line on a phone.
      */
     $badge = $badge ?? null;
     // When the including page passes gvDelay, the card animates via the
@@ -46,6 +50,5 @@
                 : \App\Services\Money::display((int) $product->price_cents, $displayRate ?? 1.0, $gvCur);
         @endphp
         <span class="pr">{{ $gvPrice }}@if ($u = $product->priceUnitSuffix())<i class="pu">{{ $u }}</i>@endif</span>
-        <span class="add">{{ __('site.storefront.sankevi.card_action') }}</span>
     </div>
 </a>
