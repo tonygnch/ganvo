@@ -161,16 +161,21 @@
         .rail .chips .pill:hover { border-color: var(--accent); color: var(--accent-ink); }
         .rail .chips .pill.on, .rail .chips .pill.on:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
         /* A SUBSECTION IS THE SAME CHIP, SPOKEN LOWER.
-           The difference is weight, not another device: no border of its own,
-           a quieter ground and ink, and the type a half-step down. Set beside
-           the ruled sections it reads as something inside one of them rather
-           than another one of them — which is what the dashes and the little
-           connector rule were trying to say, and saying too loudly. */
+           The difference is weight, not another device: filled instead of
+           ruled, the type a half-step down, and set in from the section it
+           belongs to. Beside the outlined sections it reads as something
+           inside one of them rather than another one of them.
+
+           Filled with --line, the colour the sections are ruled in: it is
+           plainly the same family, and it is a shade the eye can find. The
+           first try used --surface2, eight values off the page ground — a
+           distinction on paper and invisible on a screen. */
         .rail .chips .pill.sub {
             font-size: 10px; letter-spacing: .13em; padding: 5px 11px;
-            border-color: transparent; background: var(--surface2); color: var(--faint);
+            margin-left: 5px;
+            border-color: transparent; background: var(--line); color: var(--txt);
         }
-        .rail .chips .pill.sub:hover { background: var(--line); color: var(--accent-ink); border-color: transparent; }
+        .rail .chips .pill.sub:hover { background: var(--line2); color: var(--accent-ink); border-color: transparent; }
         .rail .chips .pill.sub.on, .rail .chips .pill.sub.on:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
         .rail .tally { margin-left: auto; display: flex; align-items: baseline; gap: 12px; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
         .rail .tally .q { color: var(--accent-ink); text-transform: none; letter-spacing: .04em; font-size: 12px; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; }
