@@ -350,6 +350,16 @@
         @keyframes tick { to { transform: translateX(-50%); } }
         .tick[data-static="1"] .track { animation: none; }
         @media (prefers-reduced-motion: reduce) { .tick .track { animation-play-state: paused; } }
+        /* The ticker was the one thing in the header that did not come down
+           with the rest of it: 11px and .22em tracking at every width, while
+           the wordmark beside it drops from 27px to 17px. That left the strip
+           shouting at a phone — the widest-set type on the screen, above a
+           smaller logo — and eating 36px of a short viewport before the page
+           had said anything. Tracking is cut harder than size, because on
+           uppercase it is what makes a line read as LOUD rather than small. */
+        @media (max-width: 760px) {
+            .tick .track { font-size: 9.5px; letter-spacing: .13em; gap: 24px; padding: 7px 0; }
+        }
 
         /* ===== header — a thin rule over the yard gate ===== */
         header.site { position: sticky; top: 0; z-index: 60; background: color-mix(in srgb, var(--bg) 86%, transparent); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
