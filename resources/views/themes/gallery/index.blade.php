@@ -2,7 +2,7 @@
 
 @section('content')
     @php
-        $isFiltered = ($filters['q'] ?? null) || ($filters['category'] ?? null) || ($filters['min_price'] ?? null) !== null || ($filters['max_price'] ?? null) !== null || ($filters['in_stock'] ?? false) || (($filters['sort'] ?? 'newest') !== 'newest') || $products->currentPage() > 1;
+        $isFiltered = ($filters['q'] ?? null) || ($filters['category'] ?? null) || ($filters['min_price'] ?? null) !== null || ($filters['max_price'] ?? null) !== null || ($filters['in_stock'] ?? false) || (($filters['sort'] ?? 'category') !== 'category') || $products->currentPage() > 1;
         $featured = $products->take(8);
         $heroProduct = $featured->first();
         $heroImg = $heroProduct && $heroProduct->image_path ? \Illuminate\Support\Facades\Storage::url($heroProduct->image_path) : null;

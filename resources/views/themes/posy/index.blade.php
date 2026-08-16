@@ -7,7 +7,7 @@
             || ($filters['min_price'] ?? null) !== null
             || ($filters['max_price'] ?? null) !== null
             || ($filters['in_stock'] ?? false)
-            || (($filters['sort'] ?? 'newest') !== 'newest')
+            || (($filters['sort'] ?? 'category') !== 'category')
             || $products->currentPage() > 1;
 
         $csHero = $store->heroBanner();

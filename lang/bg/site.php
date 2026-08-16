@@ -606,6 +606,7 @@ return [
             'search' => 'Търсене',
             'search_placeholder' => 'Търси продукти…',
             'sort' => 'Сортирай',
+            'sort_category' => 'По категория',
             'sort_newest' => 'Най-нови',
             'sort_price_asc' => 'Цена · възходящо',
             'sort_price_desc' => 'Цена · низходящо',

@@ -54,7 +54,9 @@ class StorefrontController extends Controller
         $store = $tenant->store;
         $theme = $this->themeFor($store);
 
-        $filters = $this->extractFilters($request);
+        // The whole catalogue opens in the merchant's category order, so the
+        // shop reads the way the category chips above it do.
+        $filters = $this->extractFilters($request, 'category');
         $query = $this->buildProductQuery($tenant, $filters);
 
         // 12 per page is a clean 3×4 / 4×3 grid on most themes; small
@@ -93,7 +95,16 @@ class StorefrontController extends Controller
             || ($filters['min_price'] ?? null) !== null
             || ($filters['max_price'] ?? null) !== null
             || ($filters['in_stock'] ?? false)
-            || (($filters['sort'] ?? 'newest') !== 'newest')
+            /*
+             | AGAINST THIS LISTING'S RESTING ORDER, not against 'newest'.
+             |
+             | A sort the shopper picked means they are browsing, and the theme
+             | sends them to the shop view instead of the brand page. The
+             | catalogue's default is now 'category', so comparing with
+             | 'newest' made every arrival look like a deliberate sort — and
+             | the landing page rendered the product grid.
+             */
+            || (($filters['sort'] ?? 'category') !== 'category')
             || (method_exists($products, 'currentPage') && $products->currentPage() > 1);
     }
 
@@ -137,13 +148,18 @@ class StorefrontController extends Controller
      * the view can rely on. Always present keys; nullable values where
      * "no filter applied" makes sense.
      *
+     * $default is what "no choice" means, and it is not the same everywhere:
+     * the full catalogue opens in the merchant's own category order, while a
+     * category page — where every product shares one category and that order
+     * says nothing — opens newest-first as it always has.
+     *
      * @return array{q: ?string, sort: string, category: ?string, min_price: ?int, max_price: ?int, in_stock: bool}
      */
-    private function extractFilters(Request $request): array
+    private function extractFilters(Request $request, string $default = 'newest'): array
     {
         $sort = $request->query('sort');
-        if (! in_array($sort, ['newest', 'price_asc', 'price_desc', 'name_asc'], true)) {
-            $sort = 'newest';
+        if (! in_array($sort, ['newest', 'price_asc', 'price_desc', 'name_asc', 'category'], true)) {
+            $sort = $default;
         }
 
         // Prices arrive in major units (€9.99); convert to cents to match
@@ -151,12 +167,12 @@ class StorefrontController extends Controller
         $toCents = fn ($v) => ($v === null || $v === '') ? null : (int) round(((float) $v) * 100);
 
         return [
-            'q'         => trim((string) $request->query('q', '')) ?: null,
-            'sort'      => $sort,
-            'category'  => trim((string) $request->query('category', '')) ?: null,
+            'q' => trim((string) $request->query('q', '')) ?: null,
+            'sort' => $sort,
+            'category' => trim((string) $request->query('category', '')) ?: null,
             'min_price' => $toCents($request->query('min_price')),
             'max_price' => $toCents($request->query('max_price')),
-            'in_stock'  => $request->query('in_stock') === '1',
+            'in_stock' => $request->query('in_stock') === '1',
         ];
     }
 
@@ -165,10 +181,10 @@ class StorefrontController extends Controller
         $query = $tenant->products()->where('is_active', true);
 
         if ($filters['q']) {
-            $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
+            $term = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']).'%';
             $query->where(function ($q) use ($term) {
                 $q->where('name', 'like', $term)
-                  ->orWhere('description', 'like', $term);
+                    ->orWhere('description', 'like', $term);
             });
         }
 
@@ -177,7 +193,7 @@ class StorefrontController extends Controller
             // duplicate rows when a product is in multiple categories.
             $query->whereHas('categories', function ($q) use ($filters, $tenant) {
                 $q->where('slug', $filters['category'])
-                  ->where('tenant_id', $tenant->id);
+                    ->where('tenant_id', $tenant->id);
             });
         }
 
@@ -191,12 +207,70 @@ class StorefrontController extends Controller
             $query->where('stock_quantity', '>', 0);
         }
 
-        return match ($filters['sort']) {
-            'price_asc'  => $query->orderBy('price_cents'),
-            'price_desc' => $query->orderByDesc('price_cents'),
-            'name_asc'   => $query->orderBy('name'),
-            default      => $query->orderByDesc('created_at'),
+        return $this->applySort($query, $filters['sort']);
+    }
+
+    /**
+     * The one place a product list decides its order.
+     *
+     * Columns are qualified because a category page's query reaches products
+     * through the pivot, where a bare `name` has more than one candidate.
+     */
+    private function applySort($query, string $sort)
+    {
+        return match ($sort) {
+            'price_asc' => $query->orderBy('products.price_cents'),
+            'price_desc' => $query->orderByDesc('products.price_cents'),
+            'name_asc' => $query->orderBy('products.name'),
+            'category' => $this->orderByCategoryOrder($query),
+            default => $query->orderByDesc('products.created_at')->orderByDesc('products.id'),
         };
+    }
+
+    /**
+     * Order products by where their category sits in the merchant's own
+     * running order — the same order the category chips are drawn in.
+     *
+     * A CHILD CATEGORY'S sort_order IS SCOPED TO ITS SIBLINGS, so it cannot be
+     * compared with a root's: Sankevi has a "Плотове за маси" nested under
+     * "Плотове от масив" at sort_order 0, which read as first-in-the-shop
+     * rather than fourth, inside its parent. So the key resolves to the root
+     * first and only then places the child within it, and a root sorts ahead
+     * of its own children.
+     *
+     * min() picks a lane for a product filed under several categories — the
+     * earliest one it belongs to, which is where a shopper scanning the
+     * catalogue in category order would first look for it.
+     *
+     * Soft-deleted categories are excluded: their pivot rows outlive them, and
+     * a deleted category should not still be placing products. A product with
+     * no category at all sorts last rather than first, which is what NULL
+     * would otherwise do in both MySQL and SQLite.
+     */
+    private function orderByCategoryOrder($query)
+    {
+        $join = 'from categories c
+                 inner join category_product cp on cp.category_id = c.id
+                 where cp.product_id = products.id
+                   and c.deleted_at is null';
+
+        $root = '(select min(coalesce(parent.sort_order, c.sort_order))
+                    from categories c
+                    left join categories parent on parent.id = c.parent_id
+                    inner join category_product cp on cp.category_id = c.id
+                   where cp.product_id = products.id
+                     and c.deleted_at is null)';
+
+        // -1, not 0: a child may itself sit at sort_order 0, and then "the
+        // parent's own products come first" would rest on the tiebreaker
+        // below rather than on the rule.
+        $within = "(select min(case when c.parent_id is null then -1 else c.sort_order end) {$join})";
+
+        return $query
+            ->orderByRaw("coalesce({$root}, 2147483647)")
+            ->orderByRaw("coalesce({$within}, 0)")
+            ->orderByDesc('products.created_at')
+            ->orderByDesc('products.id');
     }
 
     public function product(Request $request): View
@@ -251,10 +325,10 @@ class StorefrontController extends Controller
         $query = $category->products()->where('is_active', true);
 
         if ($filters['q']) {
-            $term = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']) . '%';
+            $term = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']).'%';
             $query->where(function ($q) use ($term) {
                 $q->where('name', 'like', $term)
-                  ->orWhere('description', 'like', $term);
+                    ->orWhere('description', 'like', $term);
             });
         }
         if ($filters['min_price'] !== null) {
@@ -266,12 +340,7 @@ class StorefrontController extends Controller
         if ($filters['in_stock']) {
             $query->where('stock_quantity', '>', 0);
         }
-        $query = match ($filters['sort']) {
-            'price_asc'  => $query->orderBy('price_cents'),
-            'price_desc' => $query->orderBy('price_cents', 'desc'),
-            'name_asc'   => $query->orderBy('name'),
-            default      => $query->orderBy('products.created_at', 'desc'),
-        };
+        $query = $this->applySort($query, $filters['sort']);
 
         $products = $query->paginate(12)->withQueryString();
 

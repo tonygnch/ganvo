@@ -20,7 +20,9 @@
         || $filters['min_price'] !== null
         || $filters['max_price'] !== null
         || $filters['in_stock']
-        || ($filters['sort'] ?? 'newest') !== 'newest';
+        // 'category' is this listing's resting order, so it is not a filter
+        // the shopper has applied and must not light up the "clear" affordance.
+        || ! in_array($filters['sort'] ?? 'category', ['category', null], true);
     // For price input display, convert cents back to major units.
     $minPriceDisplay = $filters['min_price'] !== null ? number_format($filters['min_price'] / 100, 2, '.', '') : '';
     $maxPriceDisplay = $filters['max_price'] !== null ? number_format($filters['max_price'] / 100, 2, '.', '') : '';
@@ -44,6 +46,10 @@
             <label class="cat-field">
                 <span class="cat-label">{{ __('site.storefront.controls.sort') }}</span>
                 <select name="sort">
+                    {{-- The catalogue's own order, and what it opens on. Only
+                         offered here: on a category page every product shares
+                         the category, so it would sort nothing. --}}
+                    <option value="category"   @selected($filters['sort'] === 'category')>{{ __('site.storefront.controls.sort_category') }}</option>
                     <option value="newest"     @selected($filters['sort'] === 'newest')>{{ __('site.storefront.controls.sort_newest') }}</option>
                     <option value="price_asc"  @selected($filters['sort'] === 'price_asc')>{{ __('site.storefront.controls.sort_price_asc') }}</option>
                     <option value="price_desc" @selected($filters['sort'] === 'price_desc')>{{ __('site.storefront.controls.sort_price_desc') }}</option>

@@ -42,13 +42,13 @@
     } elseif ($isSearch) {
         $title = __('site.storefront.controls.search') . ': ' . $filters['q'];
     }
-    $activeSort = $filters['sort'] ?? 'newest';
+    $activeSort = $filters['sort'] ?? 'category';
     $hasActiveFilters = $filters['q']
         || $activeCategory
         || $filters['min_price'] !== null
         || $filters['max_price'] !== null
         || $filters['in_stock']
-        || $activeSort !== 'newest';
+        || $activeSort !== 'category';
 
     /* How many filters are actually on, for the badge on the drawer's button.
        A count, not a dot: "3" tells a shopper the list they are looking at has
@@ -56,7 +56,7 @@
        The category is not counted — it is already shown as a selected chip. */
     $activeFilterCount = collect([
         filled($filters['q'] ?? null),
-        ($filters['sort'] ?? 'newest') !== 'newest',
+        ($filters['sort'] ?? 'category') !== 'category',
         filled($minPriceInput ?? null),
         filled($maxPriceInput ?? null),
         (bool) ($filters['in_stock'] ?? false),
@@ -75,7 +75,7 @@
             'min_price' => $minPriceInput ?: null,
             'max_price' => $maxPriceInput ?: null,
             'in_stock'  => $filters['in_stock'] ? '1' : null,
-            'sort'      => $activeSort !== 'newest' ? $activeSort : null,
+            'sort'      => $activeSort !== 'category' ? $activeSort : null,
         ], fn ($v) => $v !== null && $v !== '');
 
         return '/shop' . ($params ? '?' . http_build_query($params) : '');
@@ -517,6 +517,12 @@
                     <label class="f f-sort">
                         <span>{{ __('site.storefront.controls.sort') }}</span>
                         <select name="sort" data-sift-auto>
+                            {{-- The yard's own order, and what the shop opens
+                                 on: sections in the order the chips above run.
+                                 Not offered on a category page, where every
+                                 product shares the category and it sorts
+                                 nothing. --}}
+                            <option value="category" @selected($activeSort === 'category')>{{ __('site.storefront.controls.sort_category') }}</option>
                             <option value="newest" @selected($activeSort === 'newest')>{{ __('site.storefront.controls.sort_newest') }}</option>
                             <option value="price_asc" @selected($activeSort === 'price_asc')>{{ __('site.storefront.controls.sort_price_asc') }}</option>
                             <option value="price_desc" @selected($activeSort === 'price_desc')>{{ __('site.storefront.controls.sort_price_desc') }}</option>

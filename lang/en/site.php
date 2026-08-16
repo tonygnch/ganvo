@@ -605,6 +605,7 @@ return [
             'search' => 'Search',
             'search_placeholder' => 'Search products…',
             'sort' => 'Sort by',
+            'sort_category' => 'By category',
             'sort_newest' => 'Newest',
             'sort_price_asc' => 'Price · low to high',
             'sort_price_desc' => 'Price · high to low',
