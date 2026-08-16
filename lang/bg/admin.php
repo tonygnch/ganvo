@@ -373,6 +373,7 @@ return [
             'spec_value' => 'При поръчки над €50.00',
         ],
         'field' => [
+            'bulk_options' => 'Списък с опции',
             'is_orderable' => 'Може да се поръчва',
             'spec_label' => 'Заглавие',
             'spec_value' => 'Пояснение',
@@ -400,12 +401,15 @@ return [
             'price_override' => 'Остави празно, за да се използва цената на продукта.',
         ],
         'ph' => [
+            'bulk_options' => "Дължина: 2000 мм; 3000 мм; 4000 мм\n\nШирочина\n96 мм\n121 мм",
             'option' => 'напр. Дължина',
             'value' => 'напр. 100 см',
             'variant_label' => 'напр. Малък / Червен',
             'sku' => 'По желание — твоят складов код.',
         ],
         'action' => [
+            'bulk_options' => 'Добави наведнъж',
+            'bulk_options_submit' => 'Добави',
             'recalculate_prices' => 'Преизчисли цените',
             'generate_combinations' => 'Генерирай комбинации',
             'add_image' => 'Добави изображение',
@@ -415,6 +419,8 @@ return [
             'add_combination' => 'Добави комбинация',
         ],
         'notify' => [
+            'bulk_options_added' => 'Добавени :axes оси и :values стойности.',
+            'bulk_options_none' => 'Нищо за добавяне — провери формата на списъка.',
             'prices_skipped' => 'При :count размера не се разчитат размерите — цените им са запазени.',
             'prices_recalculated' => 'Преизчислени :count цени.',
             'combinations_unpriced' => 'При :count от тях размерите не се разчитат — цената им остава по продукта.',

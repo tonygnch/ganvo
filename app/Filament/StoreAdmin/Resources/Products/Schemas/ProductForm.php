@@ -138,7 +138,101 @@ class ProductForm
                     ]),
 
                 Section::make(__('admin.products.section.options'))
+                    ->key('options-section')
                     ->description(__('admin.products.section_help.options'))
+                    /*
+                     | PASTE THE AXES INSTEAD OF CLICKING THEM.
+                     |
+                     | Every value is a repeater row with one box in it, so a
+                     | product with three lengths and four widths costs seven
+                     | "add" clicks and seven fields before it says anything —
+                     | and a merchant arriving with a catalogue has that list
+                     | already written down. This takes the list.
+                     |
+                     | Merges rather than replaces: an axis whose name is already
+                     | there gains only the values it is missing, and nothing
+                     | typed by hand is thrown away. Pressing it twice does
+                     | nothing the first press did not.
+                     */
+                    ->headerActions([
+                        Action::make('bulkOptions')
+                            ->label(__('admin.products.action.bulk_options'))
+                            ->icon('heroicon-m-clipboard-document-list')
+                            ->modalWidth('lg')
+                            ->modalSubmitActionLabel(__('admin.products.action.bulk_options_submit'))
+                            ->schema([
+                                Textarea::make('bulk')
+                                    ->label(__('admin.products.field.bulk_options'))
+                                    ->helperText(__('admin.products.help.bulk_options'))
+                                    ->placeholder(__('admin.products.ph.bulk_options'))
+                                    ->rows(9)
+                                    ->required(),
+                            ])
+                            ->action(function (array $data, Get $get, Set $set): void {
+                                // Parsed first, so a malformed paste changes nothing.
+                                $parsed = static::parseBulkOptions((string) ($data['bulk'] ?? ''));
+
+                                if ($parsed === []) {
+                                    Notification::make()
+                                        ->warning()
+                                        ->title(__('admin.products.notify.bulk_options_none'))
+                                        ->send();
+
+                                    return;
+                                }
+
+                                $rows = Arr::wrap($get('options'));
+
+                                // Index what is already there by name, so a
+                                // second paste tops an axis up instead of
+                                // adding a second one with the same label.
+                                $byName = [];
+                                foreach ($rows as $key => $row) {
+                                    $name = mb_strtolower(trim((string) ($row['name'] ?? '')));
+                                    if ($name !== '') {
+                                        $byName[$name] = $key;
+                                    }
+                                }
+
+                                $axes = 0;
+                                $values = 0;
+
+                                foreach ($parsed as $name => $incoming) {
+                                    $key = $byName[mb_strtolower($name)] ?? null;
+
+                                    if ($key === null) {
+                                        $key = (string) Str::uuid();
+                                        $rows[$key] = ['name' => $name, 'values' => []];
+                                        $byName[mb_strtolower($name)] = $key;
+                                        $axes++;
+                                    }
+
+                                    $existing = [];
+                                    foreach (Arr::wrap($rows[$key]['values'] ?? []) as $v) {
+                                        $existing[] = mb_strtolower(trim((string) ($v['value'] ?? '')));
+                                    }
+
+                                    foreach ($incoming as $value) {
+                                        if (in_array(mb_strtolower($value), $existing, true)) {
+                                            continue;
+                                        }
+                                        $rows[$key]['values'][(string) Str::uuid()] = ['value' => $value];
+                                        $existing[] = mb_strtolower($value);
+                                        $values++;
+                                    }
+                                }
+
+                                $set('options', $rows);
+
+                                Notification::make()
+                                    ->success()
+                                    ->title(__('admin.products.notify.bulk_options_added', [
+                                        'axes' => $axes,
+                                        'values' => $values,
+                                    ]))
+                                    ->send();
+                            }),
+                    ])
                     ->schema([
                         // Bound to the options() hasMany, with the values as a
                         // nested relationship repeater — Filament saves those
@@ -655,6 +749,69 @@ class ProductForm
         }
 
         return implode('|', $parts);
+    }
+
+    /**
+     * Read pasted axes into ['Axis name' => ['value', 'value', …]].
+     *
+     * ONE AXIS PER BLOCK, blocks separated by a blank line. The first line of a
+     * block names the axis; a colon after the name is optional and anything
+     * following it counts as values. Every other line in the block is a value,
+     * as is anything separated from its neighbour by a semicolon.
+     *
+     * SEMICOLON AND NOT COMMA is why this is hand-rolled rather than an
+     * explode(','). The sizes in this catalogue are Bulgarian decimals —
+     * „0,29 м" — and splitting on commas would quietly turn every one of them
+     * into two values, „0" and „29 м", on every axis.
+     *
+     * Order is preserved, blanks are dropped, and duplicates inside a block are
+     * collapsed: this is a list someone typed, not a validated import.
+     *
+     * @return array<string, list<string>>
+     */
+    protected static function parseBulkOptions(string $input): array
+    {
+        $out = [];
+
+        foreach (preg_split('/\R\s*\R/u', trim($input)) ?: [] as $block) {
+            $lines = array_values(array_filter(
+                array_map('trim', preg_split('/\R/u', trim($block)) ?: []),
+                fn (string $l): bool => $l !== ''
+            ));
+
+            if ($lines === []) {
+                continue;
+            }
+
+            $head = array_shift($lines);
+            $name = $head;
+            $inline = '';
+
+            if (str_contains($head, ':')) {
+                [$name, $inline] = array_map('trim', explode(':', $head, 2));
+            }
+
+            $name = trim($name);
+            if ($name === '') {
+                continue;
+            }
+
+            $values = [];
+            foreach (array_merge($inline === '' ? [] : [$inline], $lines) as $line) {
+                foreach (explode(';', $line) as $piece) {
+                    $piece = trim($piece);
+                    if ($piece !== '' && ! in_array($piece, $values, true)) {
+                        $values[] = $piece;
+                    }
+                }
+            }
+
+            if ($values !== []) {
+                $out[$name] = array_merge($out[$name] ?? [], $values);
+            }
+        }
+
+        return $out;
     }
 
     protected static function hasSavedOptions($record): bool
