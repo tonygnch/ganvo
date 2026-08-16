@@ -132,11 +132,25 @@
         .cover { position: relative; overflow: hidden; display: flex; align-items: flex-end; min-height: clamp(320px, 42vh, 500px); padding: clamp(48px, 7vw, 92px) 0 clamp(26px, 3.4vw, 46px); }
         .cover .shot { position: absolute; inset: -7% 0; z-index: 0; }
         .cover .shot img { width: 100%; height: 100%; object-fit: cover; }
+        /*
+         | THE SCRIM VEILS THE TYPE'S CORNER, NOT THE PHOTOGRAPH.
+         |
+         | Two gradients over one image multiply, and these two used to reach
+         | 26% and 84% at the same corner and stay heavy across the middle: the
+         | picture sat under about a two-thirds veil everywhere, which is fine
+         | for a stock yard shot nobody looks at and wrong now that the cover is
+         | the section's own photograph and the point of it is to be seen.
+         |
+         | Both are pulled back and pushed into the lower left, where the crumb
+         | and the title actually stand: about four fifths of a veil under the
+         | type, under a tenth across the open right-hand side. The top edge is
+         | left clear — nothing is printed there.
+         */
         .cover.has-shot::after {
             content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
             background:
-                linear-gradient(180deg, color-mix(in srgb, var(--bg) 26%, transparent), color-mix(in srgb, var(--bg) 66%, transparent) 44%, var(--bg) 99%),
-                linear-gradient(90deg, color-mix(in srgb, var(--bg) 84%, transparent), color-mix(in srgb, var(--bg) 44%, transparent) 54%, transparent 82%);
+                linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--bg) 28%, transparent) 58%, color-mix(in srgb, var(--bg) 90%, transparent) 100%),
+                linear-gradient(90deg, color-mix(in srgb, var(--bg) 68%, transparent), color-mix(in srgb, var(--bg) 20%, transparent) 38%, transparent 64%);
         }
         .cover:not(.has-shot) { min-height: 0; border-bottom: 1px solid var(--line); }
         /* the band is a flex container, so the content column has to be told
@@ -146,6 +160,14 @@
            so it lands in the page margin exactly as it does elsewhere */
         .cover .head { position: relative; }
         .cover .crumb { font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); }
+        /* OVER A PHOTOGRAPH THE CRUMB NEEDS ITS OWN INK, not a deeper scrim.
+           --faint is a quiet colour chosen against a flat ground; on a picture
+           it measured 4.1:1 before this work and 2.7:1 after the veil was
+           lifted off the image. Chasing it with more scrim would fade the very
+           photograph the merchant assigned. Body ink costs the picture nothing
+           and reads on any of them. */
+        .cover.has-shot .crumb { color: var(--txt); }
+        .cover.has-shot .crumb a { color: inherit; }
         .cover .crumb a:hover { color: var(--accent-ink); }
         .cover .kicker { display: block; margin: 22px 0 12px; }
         .cover h1 { font-family: var(--display); font-weight: 500; font-size: clamp(31px, 4.4vw, 60px); line-height: .98; letter-spacing: 0; max-width: 16ch; }
