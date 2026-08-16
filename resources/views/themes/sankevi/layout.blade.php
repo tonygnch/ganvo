@@ -686,8 +686,13 @@
             .shelf .pcard:nth-child(odd):not(:last-child) { box-shadow: 1px 0 0 var(--line); }
             /* The photographs run to the screen edge here, which left the price
                doing the same — 4px under it and then the end of the card. It is
-               the last line on the plate and wants a margin, not a ledge. */
-            .shelf .pcard { background: var(--bg); padding-bottom: 18px; }
+               the last line on the plate and wants a margin, not a ledge.
+
+               And with the surface one colour now, the margin alone does not
+               say where a plate stops: the rule does. It closes the card the
+               way the one above the price opens its foot, so the catalogue
+               reads as ruled entries rather than photographs adrift on cream. */
+            .shelf .pcard { background: var(--bg); padding-bottom: 18px; border-bottom: 1px solid var(--line); }
             .shelf .pcard .line,
             .shelf .pcard h3,
             .shelf .pcard .foot { padding-left: 14px; padding-right: 14px; }
