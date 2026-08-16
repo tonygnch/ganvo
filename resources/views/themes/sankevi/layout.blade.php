@@ -504,9 +504,17 @@
         .m-drawer.open nav a:nth-child(3) { transition-delay: .19s; } .m-drawer.open nav a:nth-child(4) { transition-delay: .25s; }
         .m-drawer.open nav a:nth-child(5) { transition-delay: .31s; } .m-drawer.open nav a:nth-child(6) { transition-delay: .37s; }
         .m-drawer nav a .ix { font-family: var(--body); font-size: 11px; font-weight: 500; letter-spacing: .2em; color: var(--accent-ink); }
+        /* The errands, under the index and clear of it: a pair of buttons that
+           share the line, arriving just after the last name in the list. */
+        .m-drawer .mactions { position: relative; z-index: 2; display: flex; gap: 10px; margin-top: 36px; opacity: 0; transform: translateY(16px); transition: opacity .5s ease .34s, transform .55s cubic-bezier(.19, .74, .16, 1) .34s; }
+        .m-drawer.open .mactions { opacity: 1; transform: none; }
+        .m-drawer .mactions .btn { flex: 1 1 0; min-width: 0; padding-left: 18px; padding-right: 18px; }
+        .m-drawer .mactions .n { font-variant-numeric: tabular-nums; opacity: .8; }
+        /* A drawer this size fits them side by side; a small phone does not. */
+        @media (max-width: 380px) { .m-drawer .mactions { flex-direction: column; } }
         .m-drawer .mfoot { position: absolute; bottom: 30px; left: 26px; right: 26px; z-index: 2; font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--faint); opacity: 0; transition: opacity .5s ease .4s; }
         .m-drawer.open .mfoot { opacity: 1; }
-        @media (prefers-reduced-motion: reduce) { .m-drawer nav a, .m-drawer .mfoot { opacity: 1 !important; transform: none !important; transition: none !important; } }
+        @media (prefers-reduced-motion: reduce) { .m-drawer nav a, .m-drawer .mfoot, .m-drawer .mactions { opacity: 1 !important; transform: none !important; transition: none !important; } }
 
         /* ===== section + page heads. The headline is the loudest thing on
            any page; the label above it is the quietest. ===== */
@@ -935,11 +943,20 @@
                 @if ($csAboutOn)<a href="/about"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ __('site.storefront.footer.about') }}</a>@endif
                 @if ($csContactOn)<a href="/contact"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ __('site.storefront.footer.contact') }}</a>@endif
             @endif
-            @if ($store->showsAccountUi())
-                <a href="{{ $customer ? '/account' : '/account/login' }}"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ $customer ? __('site.common.my_account') : __('site.common.sign_in') }}</a>
-            @endif
-            <a href="/cart"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ __('site.common.cart') }}</a>
         </nav>
+
+        {{-- THE ACCOUNT AND THE BASKET ARE NOT SECTIONS OF THE SITE.
+             They were numbered into the index beside Магазин and За нас, which
+             said they were places to read — they are things to do, and one of
+             them is where a shopper's order lives. Out of the numbering and
+             onto their own buttons, so the index lists the site and the buttons
+             carry the errands. --}}
+        <div class="mactions">
+            @if ($store->showsAccountUi())
+                <a class="btn outline" href="{{ $customer ? '/account' : '/account/login' }}">{{ $customer ? __('site.common.my_account') : __('site.common.sign_in') }}</a>
+            @endif
+            <a class="btn" href="/cart">{{ __('site.common.cart') }} <span class="n">{{ $cartCount }}</span></a>
+        </div>
         @if (trim(__('site.storefront.sankevi.hero_kicker')) !== '')
             <div class="mfoot">{{ __('site.storefront.sankevi.hero_kicker') }}</div>
         @endif
