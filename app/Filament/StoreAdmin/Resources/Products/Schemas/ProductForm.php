@@ -605,8 +605,83 @@ class ProductForm
                  | field someone forgot to fill in.
                  */
                 Section::make(__('admin.products.section.spec_rows'))
+                    ->key('spec-rows-section')
                     ->description(__('admin.products.section_help.spec_rows'))
                     ->collapsed()
+                    /*
+                     | THE SAME PASTE, FOR THE ROWS UNDER THE PRICE.
+                     |
+                     | These arrive as a list — the bullets out of a product
+                     | description, one claim per line — and adding them one
+                     | repeater row at a time is transcription. One line here is
+                     | one row.
+                     |
+                     | A COLON SPLITS A HEADING OFF, and only the first one, so
+                     | „Цена: от 15 до 20 €" keeps its own colon in the value.
+                     | A line without one becomes a row with no heading, which
+                     | is a real shape: an unlabelled row takes the whole width
+                     | on the storefront, and a pasted list of claims is mostly
+                     | that kind.
+                     |
+                     | Bullet characters are eaten, because a list copied out of
+                     | a description brings them along and „• Сушени" is not a
+                     | claim anyone typed on purpose.
+                     */
+                    ->headerActions([
+                        Action::make('bulkSpecRows')
+                            ->label(__('admin.products.action.bulk_options'))
+                            ->icon('heroicon-m-clipboard-document-list')
+                            ->modalWidth('lg')
+                            ->modalSubmitActionLabel(__('admin.products.action.bulk_options_submit'))
+                            ->schema([
+                                Textarea::make('bulk')
+                                    ->label(__('admin.products.field.bulk_spec_rows'))
+                                    ->helperText(__('admin.products.help.bulk_spec_rows'))
+                                    ->placeholder(__('admin.products.ph.bulk_spec_rows'))
+                                    ->rows(9)
+                                    ->required(),
+                            ])
+                            ->action(function (array $data, Get $get, Set $set): void {
+                                $parsed = static::parseBulkSpecRows((string) ($data['bulk'] ?? ''));
+
+                                if ($parsed === []) {
+                                    Notification::make()
+                                        ->warning()
+                                        ->title(__('admin.products.notify.bulk_options_none'))
+                                        ->send();
+
+                                    return;
+                                }
+
+                                $rows = Arr::wrap($get('spec_rows'));
+
+                                // Signature of what is already there, so a
+                                // second paste of the same list adds nothing.
+                                $seen = [];
+                                foreach ($rows as $row) {
+                                    $seen[] = mb_strtolower(trim((string) ($row['label'] ?? ''))
+                                        .'|'.trim((string) ($row['value'] ?? '')));
+                                }
+
+                                $added = 0;
+                                foreach ($parsed as $row) {
+                                    $sig = mb_strtolower($row['label'].'|'.$row['value']);
+                                    if (in_array($sig, $seen, true)) {
+                                        continue;
+                                    }
+                                    $rows[(string) Str::uuid()] = $row;
+                                    $seen[] = $sig;
+                                    $added++;
+                                }
+
+                                $set('spec_rows', $rows);
+
+                                Notification::make()
+                                    ->success()
+                                    ->title(__('admin.products.notify.bulk_spec_rows_added', ['count' => $added]))
+                                    ->send();
+                            }),
+                    ])
                     ->schema([
                         Repeater::make('spec_rows')
                             ->label(__('admin.products.section.spec_rows'))
@@ -809,6 +884,52 @@ class ProductForm
             if ($values !== []) {
                 $out[$name] = array_merge($out[$name] ?? [], $values);
             }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Read a pasted list into spec rows: one line, one row.
+     *
+     * The FIRST colon splits a heading off the front; later ones stay in the
+     * value, so „Цена: от 15 до 20 € на брой" keeps its meaning instead of
+     * losing everything after the second colon. A line with no colon becomes a
+     * row with no heading — a real shape, and the common one when a merchant
+     * pastes the bullets out of a description.
+     *
+     * Leading bullet characters are stripped: a list copied from prose brings
+     * them along, and „• Сушени" is not a claim anyone typed on purpose.
+     *
+     * @return list<array{label: string, value: string}>
+     */
+    protected static function parseBulkSpecRows(string $input): array
+    {
+        $out = [];
+
+        foreach (preg_split('/\R/u', trim($input)) ?: [] as $line) {
+            // The bullet glyphs a paste actually carries, plus the hyphens
+            // people type instead. Trailing separators go too.
+            $line = trim(preg_replace('/^[\s\x{2022}\x{00B7}\x{25CF}\x{2013}\x{2014}\-\*]+/u', '', $line) ?? $line);
+            $line = rtrim($line, " \t;");
+
+            if ($line === '') {
+                continue;
+            }
+
+            $label = '';
+            $value = $line;
+
+            if (str_contains($line, ':')) {
+                [$maybeLabel, $rest] = array_map('trim', explode(':', $line, 2));
+                // A colon with nothing after it is punctuation, not a split.
+                if ($maybeLabel !== '' && $rest !== '') {
+                    $label = $maybeLabel;
+                    $value = $rest;
+                }
+            }
+
+            $out[] = ['label' => $label, 'value' => $value];
         }
 
         return $out;
