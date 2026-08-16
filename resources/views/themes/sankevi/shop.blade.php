@@ -154,31 +154,77 @@
 
         /* ===== THE RAIL — sections, tally and the order form. No panel: a
            ruled strip, the way the yard's own paperwork is ruled. ===== */
-        .rail { padding: 30px 0 0; }
-        .rail .sections { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-        .rail .chips { display: flex; gap: 9px; flex-wrap: wrap; min-width: 0; }
-        .rail .chips .pill { transition: color .25s ease, border-color .25s ease, background-color .25s ease; }
-        .rail .chips .pill:hover { border-color: var(--accent); color: var(--accent-ink); }
-        .rail .chips .pill.on, .rail .chips .pill.on:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-        /* A SUBSECTION IS THE SAME CHIP, SPOKEN LOWER.
-           The difference is weight, not another device: filled instead of
-           ruled, the type a half-step down, and set in from the section it
-           belongs to. Beside the outlined sections it reads as something
-           inside one of them rather than another one of them.
-
-           Filled with --line, the colour the sections are ruled in: it is
-           plainly the same family, and it is a shade the eye can find. The
-           first try used --surface2, eight values off the page ground — a
-           distinction on paper and invisible on a screen. */
-        .rail .chips .pill.sub {
-            font-size: 10px; letter-spacing: .13em; padding: 5px 11px;
-            margin-left: 5px;
-            border-color: transparent; background: var(--line); color: var(--txt);
+        /*
+         | ===== THE INDEX PLATE =====
+         |
+         | The sections used to be chips: seven outlined boxes whose widths came
+         | from their words — 77px for ДЕКИНГ against 233px for ГРЕДИ И ДЕТАЙЛИ
+         | ПО ПОРЪЧКА — wrapping into rows that each ended somewhere different.
+         | Seven shapes and a torn right edge, which is what read as chaotic.
+         |
+         | A plate instead. Two things do the work:
+         |
+         |   1. THE CELLS GROW. flex: 1 0 auto means the leftover space on a row
+         |      is shared out among the cells on it rather than left as a hole
+         |      after the last one. Every row therefore ends flush with the one
+         |      above it, whatever the labels happen to be, and the block has
+         |      four straight edges instead of a ragged one.
+         |
+         |   2. THE LATTICE IS THE CONTAINER. The rules between cells are the
+         |      plate's own ground showing through 1px gaps and 1px of padding —
+         |      no borders on the cells, so nothing has to be de-duplicated at
+         |      the seams or lined up by hand when the row count changes.
+         |
+         | Which leaves the state to typography: ink, weight, and one accent bar.
+         */
+        .rail {
+            --rail-ground: var(--bg);   /* what the cells are; the gaps are not */
+            --rail-hair: var(--line2);
+            padding: 30px 0 0;
         }
-        .rail .chips .pill.sub:hover { background: var(--line2); color: var(--accent-ink); border-color: transparent; }
-        .rail .chips .pill.sub.on, .rail .chips .pill.sub.on:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-        .rail .tally { margin-left: auto; display: flex; align-items: baseline; gap: 12px; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+        /* КАТЕГОРИЯ ————————————————— 7 ПРОДУКТА */
+        .rail .railhead { display: flex; align-items: center; gap: 14px; margin: 0 0 10px; }
+        .rail .railhead-k, .rail .tally { font-size: 10px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; white-space: nowrap; line-height: 1; }
+        .rail .railhead-k { color: var(--faint); }
+        .rail .railhead-rule { flex: 1 1 auto; min-width: 16px; height: 1px; background: var(--rail-hair); }
+        .rail .tally { display: flex; align-items: baseline; gap: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
         .rail .tally .q { color: var(--accent-ink); text-transform: none; letter-spacing: .04em; font-size: 12px; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; }
+
+        .rail .plate { display: flex; flex-wrap: wrap; align-items: stretch; gap: 1px; padding: 1px; background: var(--rail-hair); }
+        .rail .plate a {
+            flex: 1 0 auto;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 38px; padding: 9px 16px;
+            background: var(--rail-ground); color: var(--muted); text-align: center;
+            font-size: 10.5px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase;
+            white-space: nowrap; transition: color .18s ease, box-shadow .18s ease;
+        }
+        .rail .plate a:hover { color: var(--txt); box-shadow: inset 0 -1px 0 var(--accent); }
+        /* The section the pick sits inside — same promotion, quiet bar, so the
+           plate says "you are in here" in grey and the accent says "this is what
+           is filtering the list". */
+        .rail .plate a.trail { color: var(--txt); font-weight: 600; box-shadow: inset 0 -3px 0 var(--rail-hair); }
+        .rail .plate a.on { color: var(--txt); font-weight: 600; box-shadow: inset 0 -3px 0 var(--accent); }
+        /* Inset, so the lattice cannot clip it, and in body ink rather than the
+           accent — which is merchant-set and could land anywhere on the scale. */
+        .rail .plate a:focus-visible { outline: 2px solid var(--txt); outline-offset: -4px; color: var(--txt); }
+
+        /* The subsection band — filled ground, a planed corner, and the parent
+           named in words. A different kind of object, not a smaller chip. */
+        .rail .subrail {
+            display: flex; align-items: baseline; gap: 20px;
+            padding: 12px 22px 12px 22px; background: var(--line);
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%);
+        }
+        .rail .subrail-parent { flex: 0 0 auto; color: var(--faint); font-size: 9.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; white-space: nowrap; }
+        .rail .subrail-parent::after { content: "\203A"; margin-left: 9px; }
+        .rail .subrail-list { display: flex; flex-wrap: wrap; gap: 8px 24px; min-width: 0; }
+        .rail .subrail-list a { position: relative; display: inline-block; color: var(--muted); padding-bottom: 4px; font-size: 10.5px; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; transition: color .18s ease, box-shadow .18s ease; }
+        .rail .subrail-list a + a::before { content: ""; position: absolute; left: -14px; top: .5em; width: 3px; height: 3px; background: var(--faint); }
+        .rail .subrail-list a:hover { color: var(--txt); box-shadow: inset 0 -1px 0 var(--accent); }
+        .rail .subrail-list a.on { color: var(--txt); font-weight: 600; box-shadow: inset 0 -3px 0 var(--accent); }
+        .rail .subrail-list a:focus-visible { outline: 2px solid var(--txt); outline-offset: 3px; }
 
         /* the order form — bare fields on hairlines, labels in the spec voice */
         /* Ruled off the chips above it and nothing else: the stock book below
@@ -461,7 +507,62 @@
             }
             /* The grid placements these fields used to need are gone with the
                grid: in the drawer they are one column, in order. */
-            .rail .tally { margin-left: 0; width: 100%; white-space: normal; }
+
+            /* TWO EQUAL COLUMNS. On a phone the plate stops sizing cells to
+               their words entirely — every cell is half the line, so the block
+               is a rectangle of even bricks and a long name wraps inside its own
+               cell rather than pushing the row about.
+
+               An odd count leaves the last cell alone on its row, where it grows
+               to the full width. That is the same thing the product grid does
+               with an orphan card (layout's .shelf rule), so it reads as this
+               catalogue's habit rather than as an accident. */
+            .rail .plate a {
+                flex: 1 1 calc(50% - 1px);
+                white-space: normal; text-wrap: balance;
+                min-height: 46px; padding: 11px 12px;
+                font-size: 10px; letter-spacing: .13em; line-height: 1.55;
+            }
+            /* The band lies down: parent on its own line, children stacked and
+               ruled, and the marker moves to the left edge where it cannot be
+               confused with the rule under each row. */
+            .rail .subrail {
+                flex-direction: column; align-items: stretch; gap: 0;
+                padding: 12px 16px 16px;
+                clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+            }
+            .rail .subrail-parent { margin: 0 0 8px; }
+            .rail .subrail-list { flex-direction: column; gap: 0; }
+            .rail .subrail-list a { padding: 10px 0 10px 13px; }
+            .rail .subrail-list a + a { border-top: 1px solid var(--line2); }
+            .rail .subrail-list a + a::before { display: none; }
+            .rail .subrail-list a:hover { box-shadow: inset 1px 0 0 var(--accent); }
+            .rail .subrail-list a.on { box-shadow: inset 3px 0 0 var(--accent); }
+            .rail .subrail-list a:focus-visible { outline-offset: -2px; }
+        }
+        /* BETWEEN THE ONE-LINE AND THE TWO-COLUMN CASE the cells are still sized
+           by their words, and when only one wraps it has a whole row to grow
+           into: at 1024 "ДЮШЕМЕ" became a 942px banner — flush, and absurd. A
+           quarter-width basis puts four on the first line, so whatever wraps
+           lands with company and grows to a third instead of to everything. */
+        @media (min-width: 761px) and (max-width: 1150px) {
+            .rail .plate a { flex: 1 1 calc(25% - 1px); white-space: normal; text-wrap: balance; }
+        }
+        @media (max-width: 359px) {
+            /* Below this two columns leave about 140px of type room, which the
+               longer names cannot hold without breaking mid-word. One cell to a
+               line instead — still flush, still a rectangle, just taller. */
+            .rail .plate a { flex: 1 1 100%; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .rail .plate a, .rail .subrail-list a { transition: none; }
+        }
+        /* box-shadow is dropped in forced colours, and it is carrying the whole
+           marker — so give the pick something the mode keeps. */
+        @media (forced-colors: active) {
+            .rail .plate a.on, .rail .subrail-list a.on {
+                text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 5px;
+            }
         }
         @media (max-width: 430px) {
             .entry .body, .entry.rev .body { padding: 22px 18px 0; }
@@ -516,42 +617,71 @@
 
         <div class="wrap">
             <div class="rail">
-                {{-- Sections of the yard + the live count. --}}
-                <div class="sections">
-                    @if ($categories->isNotEmpty())
-                        <div class="chips">
-                            <a href="{{ $chipUrl(null) }}" class="pill {{ $activeCategory ? '' : 'on' }}">{{ __('site.storefront.sankevi.shop_all') }}</a>
-                            {{-- The sections, and — once one is opened — what is
-                                 filed inside it.
+                @php
+                    /*
+                     | The section whose contents are on screen: the open one, or
+                     | the parent of the open subsection.
+                     */
+                    $gvOpenRoot = null;
+                    if ($activeCat) {
+                        $gvOpenRoot = $activeCat->parent_id
+                            ? $categories->firstWhere('id', $activeCat->parent_id)
+                            : $activeCat;
+                    }
+                    $gvSubs = $gvOpenRoot ? $gvOpenRoot->children : collect();
+                @endphp
 
-                                 Subsections stay folded away until their own
-                                 section is the one being looked at. Drawn all
-                                 the time they are noise on every visit, and
-                                 they need a treatment to tell them from the
-                                 sections; drawn in context they are plainly
-                                 the inside of the chip beside them, and can be
-                                 the same pill as everything else.
+                {{-- The head line: what this is, and how much of it there is. --}}
+                <div class="railhead">
+                    <span class="railhead-k">{{ __('site.storefront.controls.category') }}</span>
+                    <span class="railhead-rule" aria-hidden="true"></span>
+                    <span class="tally">
+                        {{ trans_choice('site.storefront.controls.result_count', $products->total(), ['count' => $products->total()]) }}
+                        @if ($filters['q'])<span class="q">“{{ $filters['q'] }}”</span>@endif
+                    </span>
+                </div>
 
-                                 A subsection's own chip keeps them open, or
-                                 narrowing to one would take away the way
-                                 back to its siblings. --}}
-                            @foreach ($categories as $cat)
-                                <a href="{{ $chipUrl($cat->slug) }}" class="pill {{ $activeCategory === $cat->slug ? 'on' : '' }}"
-                                   @if ($activeCategory === $cat->slug) aria-current="true" @endif>{{ $cat->name }}</a>
-                                @if ($activeCategory === $cat->slug || $cat->children->contains('slug', $activeCategory))
-                                    @foreach ($cat->children as $sub)
-                                        <a href="{{ $chipUrl($sub->slug) }}" class="pill sub {{ $activeCategory === $sub->slug ? 'on' : '' }}"
-                                           @if ($activeCategory === $sub->slug) aria-current="true" @endif>{{ $sub->name }}</a>
-                                    @endforeach
-                                @endif
-                            @endforeach
+                @if ($categories->isNotEmpty())
+                    {{-- THE INDEX PLATE.
+                         Not chips. Seven boxes of seven different widths are seven
+                         different shapes, and they wrapped into rows that ended
+                         short — the reason the rail read as chaotic.
+
+                         Here the labels sit on one plate and every row is flush:
+                         the cells grow to fill the line they land on, so leftover
+                         space is absorbed into the cells instead of left as a hole
+                         at the end. The only geometry is the 1px lattice, which is
+                         the container's own ground showing through the gaps — no
+                         borders, nothing to line up by hand. --}}
+                    <nav class="plate" aria-label="{{ __('site.storefront.controls.category') }}">
+                        <a href="{{ $chipUrl(null) }}" class="{{ $activeCategory ? '' : 'on' }}"
+                           @if (! $activeCategory) aria-current="page" @endif>{{ __('site.storefront.sankevi.shop_all') }}</a>
+                        @foreach ($categories as $cat)
+                            @php
+                                $gvPick = $activeCategory === $cat->slug;
+                                $gvTrail = ! $gvPick && $gvOpenRoot && $gvOpenRoot->id === $cat->id;
+                            @endphp
+                            <a href="{{ $chipUrl($cat->slug) }}" class="{{ $gvPick ? 'on' : ($gvTrail ? 'trail' : '') }}"
+                               @if ($gvPick) aria-current="page" @endif>{{ $cat->name }}</a>
+                        @endforeach
+                    </nav>
+
+                    {{-- Subsections are a different KIND of thing, not a quieter
+                         chip: their own filled band under the plate, carrying the
+                         parent's name in words. The relation is stated rather than
+                         drawn, which is what the rest of this catalogue does. --}}
+                    @if ($gvSubs->isNotEmpty())
+                        <div class="subrail">
+                            <span class="subrail-parent">{{ $gvOpenRoot->name }}</span>
+                            <div class="subrail-list">
+                                @foreach ($gvSubs as $sub)
+                                    <a href="{{ $chipUrl($sub->slug) }}" class="{{ $activeCategory === $sub->slug ? 'on' : '' }}"
+                                       @if ($activeCategory === $sub->slug) aria-current="page" @endif>{{ $sub->name }}</a>
+                                @endforeach
+                            </div>
                         </div>
                     @endif
-                    <div class="tally">
-                        <span>{{ trans_choice('site.storefront.controls.result_count', $products->total(), ['count' => $products->total()]) }}</span>
-                        @if ($filters['q'])<span class="q">“{{ $filters['q'] }}”</span>@endif
-                    </div>
-                </div>
+                @endif
 
                 {{-- The order form. Every key the controller reads is here, and
                      `category` rides along hidden so searching never silently
