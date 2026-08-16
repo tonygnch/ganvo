@@ -286,6 +286,16 @@ html.gv-drawer-open { overflow: hidden; }
 .gv-sticky-atc .gv-info { min-width: 0; }
 .gv-sticky-atc .gv-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gv-sticky-atc .gv-price { font-size: 13px; color: var(--primary, #111); font-variant-numeric: tabular-nums; }
+/* The chosen variant. :empty rather than a JS toggle — the picker writes the
+   label and nothing has to remember to hide the line again when it clears. */
+.gv-sticky-atc .gv-variant {
+    font-size: 12px;
+    color: var(--text-muted, var(--muted, #6b7280));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.gv-sticky-atc .gv-variant:empty { display: none; }
 
 .gv-sticky-atc .gv-btn {
     margin-left: auto;

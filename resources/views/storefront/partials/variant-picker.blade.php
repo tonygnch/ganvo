@@ -43,7 +43,7 @@
 @endphp
 
 @if ($useMatrix || $variants->isNotEmpty())
-    <div class="vp" data-vp-root>
+    <div class="vp" data-vp-root tabindex="-1">
         @if ($useMatrix)
             @include('storefront.partials.variant-matrix', ['matrix' => $matrix])
         @else
@@ -77,6 +77,9 @@
                 @endforeach
             </div>
         @endif
+        {{-- Only ever shown when something tried to buy without choosing.
+             Hidden again the moment a variant resolves. --}}
+        <p class="vp-need" data-vp-need role="status" hidden>{{ __('site.storefront.cart.pick_a_variant') }}</p>
     </div>
 
     <style>
@@ -95,6 +98,19 @@
             font-weight: 600;
         }
         .vp-options { display: flex; flex-wrap: wrap; gap: .5rem; }
+        .vp-need { margin: .6rem 0 0; font-size: .8125rem; font-weight: 600;
+            color: var(--accent-ink, var(--accent, #b45309)); }
+        /* A brief ring, so a shopper sent here from the sticky bar can see
+           WHERE they landed rather than just that the page moved. */
+        [data-vp-root].vp-needed { animation: vpNeeded 1.4s ease-out; border-radius: 4px; }
+        /* The container is only focusable programmatically, so it must not
+           paint the browser's default ring on a mouse click. */
+        [data-vp-root]:focus { outline: none; }
+        @keyframes vpNeeded {
+            0%, 45% { box-shadow: 0 0 0 3px var(--accent, #b45309); }
+            100% { box-shadow: 0 0 0 3px transparent; }
+        }
+        @media (prefers-reduced-motion: reduce) { [data-vp-root].vp-needed { animation: none; } }
         .vp-option { position: relative; cursor: pointer; display: inline-block; }
         .vp-option input { position: absolute; opacity: 0; pointer-events: none; }
         .vp-option-body {
@@ -213,6 +229,49 @@
                     return el.dataset.vpBase;
                 }
 
+                /*
+                 | ASK FOR A CHOICE INSTEAD OF POSTING ONE THAT DOES NOT EXIST.
+                 |
+                 | The page's own button is disabled until a variant resolves,
+                 | but the sticky bar's is not — it re-submits the form from the
+                 | bottom of the screen, where the picker is nowhere in sight.
+                 | That reached the server, which refused, and the refusal used
+                 | to arrive as a page reload.
+                 |
+                 | Returns true when the caller may go ahead. When it returns
+                 | false it has already said why, moved the shopper to the
+                 | picker and put focus on the first thing they can press.
+                 */
+                window.gvNeedsVariant = function () {
+                    var root = document.querySelector('[data-vp-root]');
+                    if (! root || resolved(root)) return false;
+
+                    var note = root.querySelector('[data-vp-need]');
+                    if (note) note.hidden = false;
+
+                    root.classList.remove('vp-needed');
+                    void root.offsetWidth;           // restart the ring
+                    root.classList.add('vp-needed');
+
+                    root.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+                    /*
+                     | Focus the PICKER, not the first radio inside it. Those
+                     | radios are opacity:0 — the chips are their labels — so
+                     | focusing one moves the caret somewhere invisible and the
+                     | shopper cannot see where they are. The container takes
+                     | tabindex="-1" so it can hold focus without entering the
+                     | tab order, which puts the next Tab on the first chip and
+                     | reads the note (role="status") on the way.
+                     |
+                     | Delayed past the smooth scroll: focusing mid-flight makes
+                     | the browser jump to the element and cancels the animation.
+                     */
+                    setTimeout(function () { root.focus({ preventScroll: true }); }, 420);
+
+                    return true;
+                };
+
                 function updateForm(root) {
                     var checked = resolved(root);
                     var form = root.closest('form');
@@ -240,8 +299,20 @@
                         return;
                     }
 
+                    // Chosen — the nudge has done its job.
+                    var note = root.querySelector('[data-vp-need]');
+                    if (note) note.hidden = true;
+                    root.classList.remove('vp-needed');
+
                     var price = checked.getAttribute('data-price-formatted');
                     var stock = parseInt(checked.getAttribute('data-stock'), 10) || 0;
+                    var label = checked.getAttribute('data-label') || '';
+
+                    // The chosen variant's name, for anywhere that shows it
+                    // away from the picker — the sticky bar most of all.
+                    scope.querySelectorAll('[data-vp-label]').forEach(function (el) {
+                        el.textContent = label;
+                    });
 
                     prices.forEach(function (el) {
                         baseText(el);

@@ -10,6 +10,11 @@
 <div class="gv-sticky-atc" data-gv-sticky aria-hidden="true">
     <div class="gv-info">
         <div class="gv-name">{{ $product->name }}</div>
+        {{-- The chosen size, filled by the picker. Empty until one is chosen,
+             and hidden while empty so the bar does not carry a blank line —
+             it is the one place a shopper can buy without the picker in
+             sight, so it has to say WHICH thing it would add. --}}
+        <div class="gv-variant" data-vp-label></div>
         <div class="gv-price" data-vp-sticky-price>@money($product->price_cents)</div>
     </div>
     <button type="button" class="gv-btn" data-gv-sticky-btn>{{ __('site.storefront.product.add_to_cart') }}</button>
@@ -65,6 +70,14 @@
         }
 
         bar.querySelector('[data-gv-sticky-btn]').addEventListener('click', function () {
+            /*
+             | The page's own button is disabled until a variant resolves; this
+             | one cannot be, because it is what a shopper reaches for when the
+             | picker is off-screen. So it asks first: gvNeedsVariant() moves
+             | them to the picker and says why, and we do not post something the
+             | server would only refuse.
+             */
+            if (window.gvNeedsVariant && window.gvNeedsVariant()) return;
             form.requestSubmit();
         });
     })();

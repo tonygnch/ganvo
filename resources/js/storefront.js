@@ -192,9 +192,18 @@ Alpine.store('gvCart', {
                 headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
                 body: new FormData(form),
             });
-            if (!res.ok) throw new Error(String(res.status));
-            const state = await res.json();
-            if (state.ok === false) { this.flash = state.flash || ''; return; }
+            /*
+             | A REFUSAL IS NOT A FAILURE. The server answers "pick a variant"
+             | and "this is not orderable" with 422 and a JSON body, and this
+             | used to throw on the status before reading it — landing in the
+             | catch, which re-submits the form natively and reloads the whole
+             | page to show one sentence. Read the body first: if the server
+             | explained itself, say so and stay put. Only something we cannot
+             | read at all is worth degrading for.
+             */
+            const state = await res.json().catch(() => null);
+            if (state && state.ok === false) { this.flash = state.flash || ''; return; }
+            if (!res.ok || !state) throw new Error(String(res.status));
             this.apply(state);
             this.openDrawer();
         } catch {
