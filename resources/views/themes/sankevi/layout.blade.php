@@ -7,6 +7,14 @@
     <title>{{ ($title ?? null) ? $title . ' — ' . $tenant->name : $tenant->name }}</title>
     @include('storefront.partials.mode-boot')
 
+    @if ($theme->on('boot_screen'))
+        {{-- Decided BEFORE the body paints: a visitor who has already seen the
+             opening screen this visit must not watch it flash on every link
+             they follow. In the head, and inline, because a class added after
+             first paint is a class added too late. --}}
+        <script>try { if (sessionStorage.getItem('gvBooted')) document.documentElement.classList.add('gv-booted'); } catch (e) {}</script>
+    @endif
+
     {{-- Sankevi hard-codes its typography, like the other curated themes:
          Alegreya (a calligraphic, slightly restless serif — the voice of the
          story) over Commissioner (a quiet humanist grotesque that carries the
@@ -504,6 +512,51 @@
         .m-drawer.open nav a:nth-child(3) { transition-delay: .19s; } .m-drawer.open nav a:nth-child(4) { transition-delay: .25s; }
         .m-drawer.open nav a:nth-child(5) { transition-delay: .31s; } .m-drawer.open nav a:nth-child(6) { transition-delay: .37s; }
         .m-drawer nav a .ix { font-family: var(--body); font-size: 11px; font-weight: 500; letter-spacing: .2em; color: var(--accent-ink); }
+        /* ===== THE OPENING SCREEN =====
+           The mark fills from the bottom, the way a vessel does — the one
+           motion a yard would recognise. Two copies of the seal, both drawn as
+           masks so the colour is ours and the artwork is the merchant's: one
+           standing empty, one filling and clipped to the level.
+
+           mask, not an <img>, because it has to be recoloured to the accent —
+           and a merchant's uploaded PNG cannot be. */
+        .boot {
+            position: fixed; inset: 0; z-index: 200; display: flex;
+            flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+            background: var(--deep);
+            transition: opacity .5s ease, visibility .5s;
+        }
+        .boot.gone { opacity: 0; visibility: hidden; }
+        html.gv-booted .boot { display: none; }   /* seen already this visit */
+        .boot-mk { position: relative; width: 74px; height: 74px; }
+        .boot-mk i {
+            position: absolute; inset: 0; display: block;
+            -webkit-mask: var(--seal) center / contain no-repeat;
+            mask: var(--seal) center / contain no-repeat;
+        }
+        .boot-mk .g { background: color-mix(in srgb, var(--txt) 18%, transparent); }
+        .boot-mk .f { background: var(--accent); animation: gvBootFill 1.6s cubic-bezier(.62, .04, .36, 1) infinite; }
+        @keyframes gvBootFill {
+            0%        { clip-path: inset(100% 0 0 0); }
+            62%, 100% { clip-path: inset(0 0 0 0); }
+        }
+        .boot-nm {
+            font-family: var(--display); font-weight: 500; font-size: 15px;
+            letter-spacing: .34em; text-transform: uppercase;
+            color: color-mix(in srgb, var(--txt) 52%, transparent);
+        }
+        /* A DARK SLAB IN BOTH MODES, like the drawer and the footer — so in
+           Daylight it needs the dark-ground ink. --txt goes to walnut there,
+           and the ghost mark and the wordmark, both mixed from it, sank into
+           the ground and left a mark filling out of nothing. */
+        html[data-mode="light"] .boot { --txt: #f1ebdd; }
+
+        /* Nothing to watch and nothing to wait for: the mark simply stands. */
+        @media (prefers-reduced-motion: reduce) {
+            .boot-mk .f { animation: none; clip-path: inset(0 0 0 0); }
+            .boot { transition: none; }
+        }
+
         /* The errands, under the index and clear of it: a pair of buttons that
            share the line, arriving just after the last name in the list. */
         .m-drawer .mactions { position: relative; z-index: 2; display: flex; gap: 10px; margin-top: 36px; opacity: 0; transform: translateY(16px); transition: opacity .5s ease .34s, transform .55s cubic-bezier(.19, .74, .16, 1) .34s; }
@@ -788,6 +841,29 @@
      before it sells a cutting list. --}}
 <body class="{{ $theme->on('planed_corner') ? '' : 'no-cut' }} {{ $theme->on('gutter_index') ? '' : 'no-gx' }} {{ $theme->on('bark_texture') ? '' : 'no-grain' }}"
       data-gv-motion='{"duration":1.15,"ease":"power3.out","distance":34,"stagger":0.11,"scroll":{"lerp":0.09,"wheelMultiplier":0.95}}'>
+    @if ($theme->on('boot_screen') && ($csBootMark = $theme->image('seal_image')))
+        {{--
+         | THE OPENING SCREEN. First thing in the body so it is painted before
+         | anything it is covering, and removed the moment the page is ready.
+         |
+         | The mark fills from the bottom like a vessel — the one motion a yard
+         | would recognise — rather than spinning, which is a machine's idle.
+         | Drawn by masking the seal twice, so a merchant who uploads their own
+         | artwork gets their own mark filling, raster or vector alike.
+         |
+         | THREE WAYS OUT, because a loader that fails to leave is worse than no
+         | loader at all: the load event, a 5s failsafe, and — for a reader with
+         | no JavaScript at all — a <noscript> rule that never shows it.
+        --}}
+        <div class="boot" id="gvBoot" aria-hidden="true">
+            <div class="boot-mk" style="--seal: url('{{ $csBootMark }}')">
+                <i class="g"></i><i class="f"></i>
+            </div>
+            <span class="boot-nm">{{ $tenant->name }}</span>
+        </div>
+        <noscript><style>.boot { display: none !important; }</style></noscript>
+    @endif
+
     @php
         $csAnnouncement = $store->announcementBar();
         // The contact and history pages can each be switched off per store;
@@ -1009,6 +1085,31 @@
     </footer>
 
     <script>
+        // The opening screen leaves. Three ways, and the earliest wins:
+        // the load event, a 5s failsafe for a stalled asset, and the reader's
+        // own back button (pageshow fires from the bfcache, where load does
+        // not — without it, going back would land on a screen that never
+        // lifts). The flag is set the moment it is dismissed, so the next page
+        // in this visit never shows it at all.
+        (function () {
+            var boot = document.getElementById('gvBoot');
+            if (! boot) return;
+            var left = false;
+            function leave() {
+                if (left) return;
+                left = true;
+                try { sessionStorage.setItem('gvBooted', '1'); } catch (e) {}
+                boot.classList.add('gone');
+                // Out of the layer entirely once it has faded, so nothing can
+                // sit over the page and swallow a tap.
+                setTimeout(function () { boot.remove(); }, 600);
+            }
+            if (document.readyState === 'complete') { leave(); }
+            else { addEventListener('load', leave); }
+            setTimeout(leave, 5000);
+            addEventListener('pageshow', function (e) { if (e.persisted) leave(); });
+        })();
+
         // Ticker — set duration from the merchant's px/sec rate so perceived
         // speed is length-independent. The track holds two identical halves and
         // translates -50%; duration = halfWidth / pps. data-pps="0" = static.
