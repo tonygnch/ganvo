@@ -35,7 +35,25 @@
     // that family's name — in the browser tab, the masthead and the crumb.
     // Leaving the generic heading up made every section look like the same
     // page and told the tab nothing.
-    $activeCat = $activeCategory ? $categories->firstWhere('slug', $activeCategory) : null;
+    /*
+     | LOOK THROUGH THE SUBSECTIONS TOO. This searched the roots alone, from
+     | when they were the only thing a chip could select. A subsection picked
+     | from the rail found nothing here, so the page went back to its generic
+     | heading and tab title while showing that subsection's products.
+     */
+    $activeCat = null;
+    if ($activeCategory) {
+        foreach ($categories as $gvCat) {
+            if ($gvCat->slug === $activeCategory) {
+                $activeCat = $gvCat;
+                break;
+            }
+            if ($gvSub = $gvCat->children->firstWhere('slug', $activeCategory)) {
+                $activeCat = $gvSub;
+                break;
+            }
+        }
+    }
     $isSearch = filled($filters['q'] ?? null);
     if ($activeCat) {
         $title = $activeCat->name;
@@ -81,7 +99,23 @@
         return '/shop' . ($params ? '?' . http_build_query($params) : '');
     };
 
-    $coverUrl = $theme->on('shop_masthead') ? $theme->image('shop_image') : null;
+    /*
+     | THE COVER FOLLOWS THE SECTION.
+     |
+     | A section carries its own photograph — the merchant assigns it beside
+     | the name — and the shop was printing the same yard shot over every one
+     | of them. Now picking a section changes the picture to that section's,
+     | and the generic cover is what the whole catalogue gets.
+     |
+     | Falls back rather than blanking: a section with no photograph of its own
+     | keeps the shop's, which is a better cover than none.
+     */
+    $coverUrl = null;
+    if ($theme->on('shop_masthead')) {
+        $coverUrl = $activeCat && $activeCat->image_path
+            ? \Illuminate\Support\Facades\Storage::url($activeCat->image_path)
+            : $theme->image('shop_image');
+    }
     $sheetMark = $theme->on('sheet_marks') ? trim($theme->label('sheet_marks')) : null;
     $csContactOn = $store->contactPage()['enabled'];
 @endphp
@@ -126,6 +160,18 @@
         .rail .chips .pill { transition: color .25s ease, border-color .25s ease, background-color .25s ease; }
         .rail .chips .pill:hover { border-color: var(--accent); color: var(--accent-ink); }
         .rail .chips .pill.on, .rail .chips .pill.on:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+        /* A SUBSECTION IS THE SAME CHIP, SPOKEN LOWER.
+           The difference is weight, not another device: no border of its own,
+           a quieter ground and ink, and the type a half-step down. Set beside
+           the ruled sections it reads as something inside one of them rather
+           than another one of them — which is what the dashes and the little
+           connector rule were trying to say, and saying too loudly. */
+        .rail .chips .pill.sub {
+            font-size: 10px; letter-spacing: .13em; padding: 5px 11px;
+            border-color: transparent; background: var(--surface2); color: var(--faint);
+        }
+        .rail .chips .pill.sub:hover { background: var(--line); color: var(--accent-ink); border-color: transparent; }
+        .rail .chips .pill.sub.on, .rail .chips .pill.sub.on:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
         .rail .tally { margin-left: auto; display: flex; align-items: baseline; gap: 12px; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
         .rail .tally .q { color: var(--accent-ink); text-transform: none; letter-spacing: .04em; font-size: 12px; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; }
 
@@ -489,7 +535,7 @@
                                    @if ($activeCategory === $cat->slug) aria-current="true" @endif>{{ $cat->name }}</a>
                                 @if ($activeCategory === $cat->slug || $cat->children->contains('slug', $activeCategory))
                                     @foreach ($cat->children as $sub)
-                                        <a href="{{ $chipUrl($sub->slug) }}" class="pill {{ $activeCategory === $sub->slug ? 'on' : '' }}"
+                                        <a href="{{ $chipUrl($sub->slug) }}" class="pill sub {{ $activeCategory === $sub->slug ? 'on' : '' }}"
                                            @if ($activeCategory === $sub->slug) aria-current="true" @endif>{{ $sub->name }}</a>
                                     @endforeach
                                 @endif
