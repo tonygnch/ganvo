@@ -560,6 +560,15 @@ class ProductForm
                         Toggle::make('is_active')
                             ->label(__('admin.products.field.is_active'))
                             ->default(true),
+                        /* SHOWN and ORDERABLE are different questions, and
+                           merchants were answering the second with the first —
+                           hiding a product outright to stop people buying it,
+                           which threw away the listing and the photograph to
+                           switch off a button. */
+                        Toggle::make('is_orderable')
+                            ->label(__('admin.products.field.is_orderable'))
+                            ->helperText(__('admin.products.help.is_orderable'))
+                            ->default(true),
                     ]),
             ]);
     }

@@ -126,9 +126,17 @@ class Cart
             }
         }
 
+        /*
+         | Only products that are still BOTH shown and orderable. A merchant who
+         | switches ordering off for a board has said it cannot be bought, and a
+         | basket someone filled ten minutes earlier is not an exception — the
+         | line drops the same way an unpublished product's already does, and
+         | items() prunes it from the session below.
+         */
         $products = Product::where('tenant_id', $this->tenant->id)
             ->whereIn('id', array_keys($productIds))
             ->where('is_active', true)
+            ->where('is_orderable', true)
             ->get()
             ->keyBy('id');
 

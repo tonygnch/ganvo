@@ -182,6 +182,25 @@ class CartController extends Controller
          | 89,6 of them is not a thing. The customer is told the real figure
          | before they submit.
          */
+        /*
+         | NOT FOR SALE ONLINE.
+         |
+         | The product page hides its whole buy form for these, but hiding a
+         | form is a courtesy to the customer, not a rule: this endpoint is a
+         | plain POST and anything that can be hidden can be posted anyway. The
+         | rule is here.
+         */
+        if (! $product->isOrderable()) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'ok' => false,
+                    'flash' => __('site.storefront.product.not_orderable_flash'),
+                ], 422);
+            }
+
+            return back()->with('cart.flash', __('site.storefront.product.not_orderable_flash'));
+        }
+
         // Force variant selection when the product has any active
         // variants — otherwise the customer would be ordering an
         // ambiguous "default" version.

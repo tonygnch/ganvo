@@ -64,6 +64,9 @@
            whitespace is honoured. */
         .qty { margin: 0 0 16px; }
         .qty label { display: block; font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
+        .noorder { margin-top: 26px; padding: 22px 0 0; border-top: 1px solid var(--line); }
+        .noorder .t { font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--accent-ink); margin: 0 0 10px; }
+        .noorder .b { color: var(--muted); font-size: 14.5px; margin: 0 0 18px; max-width: 46ch; }
         .qty-row { display: flex; align-items: center; gap: 10px; }
         .qty-unit { font-size: 13px; font-weight: 500; letter-spacing: .08em; color: var(--muted); }
         .qty input { width: 120px; padding: 13px 14px; background: var(--surface); color: var(--txt); border: 1px solid var(--line2); font: inherit; font-size: 15px; text-align: center; font-variant-numeric: tabular-nums; }
@@ -201,52 +204,66 @@
                          buy button started below the fold. Options, quantity and
                          the button now follow the price directly, and the
                          reading matter follows them. --}}
-                    <form method="post" action="/cart/add/{{ $product->slug }}" data-gv-add>
-                        @csrf
-                        @if ($product->hasVariants())
-                            {{-- Flat list or dependent option matrix — the partial
-                                 decides; the theme only supplies the skin. --}}
-                            @include('storefront.partials.variant-picker')
-                        @endif
+                    @if ($product->isOrderable())
+                        <form method="post" action="/cart/add/{{ $product->slug }}" data-gv-add>
+                            @csrf
+                            @if ($product->hasVariants())
+                                {{-- Flat list or dependent option matrix — the partial
+                                     decides; the theme only supplies the skin. --}}
+                                @include('storefront.partials.variant-picker')
+                            @endif
 
-                        {{-- HOW MANY. A whole number, because everything in
-                             this catalogue is a countable thing — boards,
-                             brackets, pins — and half a bracket is not an order.
-                             There was no quantity field at all before: a
-                             customer wanting fifty boards had to add one, fifty
-                             times, or fix it in the cart afterwards. --}}
-                        <div class="qty">
-                            <label for="gv-qty">{{ __('site.storefront.product.quantity') }}</label>
-                            <div class="qty-row">
-                                <input type="number" id="gv-qty" name="quantity"
-                                       value="1" min="1" step="1" inputmode="numeric"
-                                       pattern="[0-9]*"
-                                       @if ($product->isPricedByMeasure()) aria-describedby="gv-qty-unit" @endif>
-                                {{-- The unit the number is counted in, beside the
-                                     box rather than only in the price. A product
-                                     quoted per m² is ordered in m², and without
-                                     this the field is a bare number that could
-                                     mean either. Products sold by the piece show
-                                     nothing: "1 бр." beside every quantity is
-                                     noise. --}}
-                                @if ($product->isPricedByMeasure())
-                                    <span class="qty-unit" id="gv-qty-unit">{{ $product->priceUnitShort() }}</span>
-                                @endif
+                            {{-- HOW MANY. A whole number, because everything in
+                                 this catalogue is a countable thing — boards,
+                                 brackets, pins — and half a bracket is not an order.
+                                 There was no quantity field at all before: a
+                                 customer wanting fifty boards had to add one, fifty
+                                 times, or fix it in the cart afterwards. --}}
+                            <div class="qty">
+                                <label for="gv-qty">{{ __('site.storefront.product.quantity') }}</label>
+                                <div class="qty-row">
+                                    <input type="number" id="gv-qty" name="quantity"
+                                           value="1" min="1" step="1" inputmode="numeric"
+                                           pattern="[0-9]*"
+                                           @if ($product->isPricedByMeasure()) aria-describedby="gv-qty-unit" @endif>
+                                    {{-- The unit the number is counted in, beside the
+                                         box rather than only in the price. A product
+                                         quoted per m² is ordered in m², and without
+                                         this the field is a bare number that could
+                                         mean either. Products sold by the piece show
+                                         nothing: "1 бр." beside every quantity is
+                                         noise. --}}
+                                    @if ($product->isPricedByMeasure())
+                                        <span class="qty-unit" id="gv-qty-unit">{{ $product->priceUnitShort() }}</span>
+                                    @endif
+                                </div>
                             </div>
-                        </div>
 
-                        <button type="submit" class="btn block" data-vp-submit @if ($product->hasVariants()) disabled @endif>
-                            {{-- The price rides in a wrapper the picker shows and
-                                 hides. Unresolved, the button said „ДОБАВИ — €22.00"
-                                 using the base price, which on this catalogue is
-                                 usually not a price anything can be bought at. Now
-                                 it is just „ДОБАВИ В КОШНИЦАТА" until a size names
-                                 a real one. --}}
-                            {{ __('site.storefront.product.add_to_cart') }}<span data-vp-price-when-picked @if ($gvRange) hidden @endif> — <span data-vp-submit-price>@money($product->price_cents)</span></span>
-                        </button>
-                    </form>
-                    @if (trim(__('site.storefront.sankevi.pdp_note')) !== '')
-                        <p class="note">{{ __('site.storefront.sankevi.pdp_note') }}</p>
+                            <button type="submit" class="btn block" data-vp-submit @if ($product->hasVariants()) disabled @endif>
+                                {{-- The price rides in a wrapper the picker shows and
+                                     hides. Unresolved, the button said „ДОБАВИ — €22.00"
+                                     using the base price, which on this catalogue is
+                                     usually not a price anything can be bought at. Now
+                                     it is just „ДОБАВИ В КОШНИЦАТА" until a size names
+                                     a real one. --}}
+                                {{ __('site.storefront.product.add_to_cart') }}<span data-vp-price-when-picked @if ($gvRange) hidden @endif> — <span data-vp-submit-price>@money($product->price_cents)</span></span>
+                            </button>
+                        </form>
+                        @if (trim(__('site.storefront.sankevi.pdp_note')) !== '')
+                            <p class="note">{{ __('site.storefront.sankevi.pdp_note') }}</p>
+                        @endif
+                    @else
+                        {{-- SHOWN BUT NOT SOLD HERE. The merchant still wants
+                             the listing, the photograph and the search hit —
+                             only the button goes. Telling the customer WHY,
+                             and where to go instead, is the difference between
+                             a product that is sold another way and one that
+                             looks broken. --}}
+                        <div class="noorder">
+                            <p class="t">{{ __('site.storefront.product.not_orderable_title') }}</p>
+                            <p class="b">{{ __('site.storefront.product.not_orderable_body') }}</p>
+                            <a class="btn block" href="/contact">{{ __('site.storefront.product.not_orderable_cta') }}</a>
+                        </div>
                     @endif
 
                     @if ($product->description)
@@ -321,7 +338,9 @@
                         </div>
                     @endif
 
-                    @include('storefront.partials.sticky-atc', ['product' => $product])
+                    @if ($product->isOrderable())
+                        @include('storefront.partials.sticky-atc', ['product' => $product])
+                    @endif
                 </div>
             </div>
 

@@ -24,12 +24,14 @@ class Product extends Model
         'stock_quantity',
         'image_path',
         'is_active',
+        'is_orderable',
         'price_unit',
         'spec_rows',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_orderable' => 'boolean',
         'spec_rows' => 'array',
     ];
 
@@ -104,6 +106,22 @@ class Product extends Model
         $max = (int) $prices->max();
 
         return $min === $max ? null : [$min, $max];
+    }
+
+    /**
+     * Can a customer put this in a basket?
+     *
+     * SEPARATE FROM is_active ON PURPOSE. Active answers "does this appear in
+     * the shop"; this answers "can it be bought there". A yard has plenty of
+     * the second kind — priced on the day, cut to spec, sold by the lorry —
+     * and hiding them was the only way to stop an order, which threw away the
+     * listing and the photograph to switch off a button.
+     *
+     * Null-safe for rows read before the column existed.
+     */
+    public function isOrderable(): bool
+    {
+        return (bool) ($this->is_orderable ?? true);
     }
 
     public function tenant(): BelongsTo
