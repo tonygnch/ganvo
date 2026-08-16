@@ -500,7 +500,7 @@
         .shelf { display: grid; grid-template-columns: repeat(4, 1fr); gap: 46px 26px; padding-top: 10px; counter-reset: sheet; }
         /* a column, so the price rules line up across a row even when one name
            runs to two lines */
-        .pcard { display: flex; flex-direction: column; color: inherit; position: relative; counter-increment: sheet; }
+        .pcard { display: flex; flex-direction: column; color: inherit; position: relative; counter-increment: sheet; container-type: inline-size; }
         .pcard .pic { position: relative; aspect-ratio: 4 / 5; min-height: 120px; overflow: hidden; display: grid; place-items: center; background: linear-gradient(150deg, var(--surface2), #191510); margin-bottom: 16px; }
         .pcard .pic::before { content: ""; position: absolute; inset: 0; z-index: 2; background: linear-gradient(180deg, transparent 55%, rgba(16, 14, 10, .55)); opacity: 0; transition: opacity .45s ease; }
         .pcard:hover .pic::before { opacity: 1; }
@@ -515,10 +515,34 @@
         .pcard .badge { position: absolute; top: 12px; right: 13px; z-index: 3; font-size: 10px; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; padding: 5px 10px; background: var(--accent); color: var(--on-accent); }
         .pcard h3 { font-family: var(--display); font-weight: 500; font-size: 23px; line-height: 1.15; margin: 6px 0 12px; transition: color .3s ease; }
         .pcard:hover h3 { color: var(--accent-ink); }
-        .pcard .foot { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); }
-        .pcard .pr { font-family: var(--display); font-weight: 500; font-size: 19px; font-variant-numeric: tabular-nums; }
-        .pcard .add { font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); transition: color .3s ease; }
+        .pcard .foot { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+        .pcard .pr { font-family: var(--display); font-weight: 500; font-size: 19px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .pcard .add { font-size: 10.5px; font-weight: 500; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); transition: color .3s ease; margin-left: auto; }
         .pcard:hover .add { color: var(--accent-ink); }
+
+        /*
+         | A PRICE RANGE HAS TO HOLD ONE LINE.
+         |
+         | Two figures and a unit run about twice the width of one, and in the
+         | two-up grid a phone gets that broke across rows. The foot is
+         | bottom-anchored, so a taller foot starts higher — and the card fell
+         | out of step with the one beside it, which is precisely what the
+         | column layout above exists to prevent. The ruled feet no longer
+         | agreed, and "виж" ended up floating beside the first half of a price.
+         |
+         | Measured against THE CARD, not the viewport: this same partial is
+         | full-width on a category page, where 19px sits comfortably and has no
+         | business shrinking. A container query asks the only question that
+         | matters — how much room does this card actually have.
+         |
+         | nowrap keeps the figures together and flex-wrap catches the rest: an
+         | unusually long price drops "виж" to its own line instead of splitting
+         | the number or spilling out of the card.
+         */
+        @container (max-width: 240px) {
+            .pcard .foot { gap: 8px; }
+            .pcard .pr { font-size: 17px; }
+        }
         @media (prefers-reduced-motion: reduce) { .pcard .pic img, .pcard:hover .pic img { transform: none; transition: none; } }
 
         /* The unit beside a price. Lighter and smaller than the figure — it
@@ -635,6 +659,15 @@
             .shelf .pcard .line,
             .shelf .pcard h3,
             .shelf .pcard .foot { padding-left: 14px; padding-right: 14px; }
+            /* Below about 430 the two columns leave a foot too narrow for a
+               price AND its label, and something has to give. It is "виж" — the
+               whole card is already the link, and a price that stays on its
+               line is worth more than a word repeating what a tap does. Scoped
+               to here because the gutter above is what costs the 28px; a
+               desktop card of the same width has the room and keeps its label. */
+            @container (max-width: 212px) {
+                .pcard .add { display: none; }
+            }
             /* the chamfer belongs to a plate sitting IN the page; at the screen
                edge it reads as a rendering fault, so the bleeding corners go */
             .shelf .pcard .pic { clip-path: none; }
