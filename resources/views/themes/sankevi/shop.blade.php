@@ -130,7 +130,11 @@
         .rail .tally .q { color: var(--accent-ink); text-transform: none; letter-spacing: .04em; font-size: 12px; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; }
 
         /* the order form — bare fields on hairlines, labels in the spec voice */
-        .sift { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(0, 1.15fr) minmax(0, .62fr) minmax(0, .62fr) auto auto; gap: 0 22px; align-items: end; margin-top: 26px; padding: 22px 0 24px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line2); }
+        /* Ruled off the chips above it and nothing else: the stock book below
+           opens with its own full-width rule, so a second one here landed 4px
+           short of it, inset against a band that bleeds — two lines where the
+           page only ever meant one. */
+        .sift { display: grid; grid-template-columns: minmax(0, 1.9fr) minmax(0, 1.15fr) minmax(0, .62fr) minmax(0, .62fr) auto auto; gap: 0 22px; align-items: end; margin-top: 26px; padding: 22px 0 24px; border-top: 1px solid var(--line); }
         .sift .f { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
         .sift .f > span { font-size: 10px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: var(--faint); }
         .sift input[type="search"], .sift input[type="number"], .sift select {
