@@ -324,15 +324,37 @@
 
         @media (max-width: 760px) {
             .sift-open {
-                display: inline-flex; align-items: center; gap: 9px; margin-top: 18px;
-                padding: 12px 20px; background: var(--accent); color: var(--on-accent);
-                border: none; font: inherit; font-size: 11px; font-weight: 600;
-                letter-spacing: .2em; text-transform: uppercase; cursor: pointer;
+                display: grid; place-items: center;
+                /* Low on the edge rather than centred: the middle of the screen
+                   is where the page's own headings and photographs are, and the
+                   tab sat on top of them. Down here it is also where a thumb
+                   already is. */
+                position: fixed; left: 0; bottom: 96px;
+                z-index: 120;                     /* under the veil (190), over the page */
+                width: 48px; height: 52px;        /* a real touch target, 44 minimum */
+                padding: 0; border: none; cursor: pointer;
+                background: var(--accent); color: var(--on-accent);
+                /* the theme's planed corner, on the two edges that face the page */
+                clip-path: polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%);
+                box-shadow: 6px 0 22px -12px rgba(0, 0, 0, .55);
             }
+            .sift-open svg { width: 21px; height: 21px; }
+            /* Out of the way while the panel it opens is open. */
+            .sift-open[aria-expanded="true"] { opacity: 0; pointer-events: none; }
+            /* INSIDE the button, not hanging off it: the tab is clipped for its
+               planed corner, and a clip-path cuts anything outside the box —
+               a badge at top:-6px was being erased rather than overlapped. */
             .sift-open .n {
-                display: inline-grid; place-items: center; min-width: 18px; height: 18px;
-                padding: 0 5px; border-radius: 9px; background: var(--on-accent);
-                color: var(--accent); font-size: 10px; letter-spacing: 0;
+                position: absolute; top: 3px; right: 4px;
+                display: grid; place-items: center; min-width: 16px; height: 16px;
+                padding: 0 4px; border-radius: 8px;
+                /* Cream on the deep green, spelled out rather than taken from
+                   --txt: that token follows the colour mode, so in daylight it
+                   is dark ink and the number disappeared into the disc behind
+                   it. This pair is fixed in both modes, the same one the
+                   announcement band uses. */
+                background: var(--deep); color: #f1ebdd;
+                font-size: 9.5px; font-weight: 600; letter-spacing: 0;
             }
             .sift-veil {
                 display: block; position: fixed; inset: 0; z-index: 190;
@@ -456,8 +478,19 @@
                      same idea: a panel of things to set, over the page, done
                      with when you are done with it. Rendered on every width and
                      hidden above 760, so no JS decides what exists. --}}
-                <button type="button" class="sift-open" data-sift-open aria-expanded="false" aria-controls="gv-sift">
-                    {!! $theme->editable('shop_refine') !!}
+                {{-- A TAB ON THE EDGE, not a button in the flow. It has to be
+                     reachable from anywhere in a long list of stock, so it rides
+                     with the screen rather than sitting where the rail happens
+                     to be. Icon-only, so it takes no width from the page — the
+                     name is on the button for anything that reads it aloud. --}}
+                <button type="button" class="sift-open" data-sift-open
+                        aria-expanded="false" aria-controls="gv-sift"
+                        aria-label="{{ trim(strip_tags((string) $theme->copy('shop_refine'))) }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                         stroke-linecap="round" aria-hidden="true">
+                        <path d="M3 7h6M15 7h6M3 12h12M19 12h2M3 17h3M12 17h9"/>
+                        <circle cx="12" cy="7" r="2.2"/><circle cx="17" cy="12" r="2.2"/><circle cx="9" cy="17" r="2.2"/>
+                    </svg>
                     @if ($activeFilterCount ?? 0)<span class="n">{{ $activeFilterCount }}</span>@endif
                 </button>
                 <div class="sift-veil" data-sift-veil hidden></div>
@@ -624,8 +657,11 @@
         var veil = document.querySelector('[data-sift-veil]');
         if (! form || ! open || ! veil) return;
 
-        if (form.parentElement !== document.body) document.body.appendChild(form);
-        if (veil.parentElement !== document.body) document.body.appendChild(veil);
+        // The trigger is fixed as well now, so it needs the same escape from
+        // the rail's reveal transform as the panel and the veil do.
+        [form, veil, open].forEach(function (el) {
+            if (el.parentElement !== document.body) document.body.appendChild(el);
+        });
 
         var lastFocus = null;
 
