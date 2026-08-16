@@ -289,6 +289,17 @@
                and the crop is unchanged; the floor only catches the fall. */
             .entry .plate, .entry.rev .plate {
                 grid-column: 1; grid-row: 1;
+                /* WIDTH FIRST, then the ratio. Without this the plate is 46px
+                   narrower than its column on iOS — and only on iOS. Given a
+                   min-height and an aspect-ratio, WebKit takes the height as
+                   the definite size and derives the WIDTH from the ratio
+                   (56vw = 246px, × 16/10 = 394 in a 440 column), where Blink
+                   stretches the grid item to the column and derives the height.
+                   Both readings are defensible; stating the inline size settles
+                   it, and the ratio then does what it was written to do.
+                   Invisible in Chrome DevTools at any width — it needs a real
+                   WebKit to show up. */
+                width: 100%;
                 min-height: min(56vw, 260px); aspect-ratio: 16 / 10;
                 /* NO PLANED CORNER ON A FULL-BLEED PHOTOGRAPH.
                    The notch is a 26px diagonal bitten out of the top-left and
