@@ -155,6 +155,18 @@ class SyncSankeviPages extends Command
         'velocity_band' => false,
     ];
 
+    /*
+     | MOTIFS ARE NOT SECTIONS. ThemeCustomizer::on() reads sections.{id} first
+     | and motifs.{id}.enabled second, and CustomizeTheme::save() rebuilds the
+     | sections array from the manifest's SECTIONS alone — so a motif written
+     | into sections is silently dropped the first time the merchant saves the
+     | form. It has to go where the manifest declares it.
+     */
+    private const MOTIFS = [
+        // The „№ 01" plate numbers on product cards and cart lines.
+        'sheet_marks' => false,
+    ];
+
     private const THEME_COPY = [
         /* The rotating tape carries the full legal name; everything else — the
            header wordmark, the copyright line, order emails — keeps the short
@@ -239,7 +251,8 @@ class SyncSankeviPages extends Command
         $this->line('  about:   '.count($about['milestones']).' production steps, '.count($about['stats']).' numbers');
         $this->line('  gallery: '.count($about['images']).' images'.($copied ? " ({$copied} copied onto the public disk)" : ''));
         $this->line('  tape:    '.$announcement['text']);
-        $this->line('  theme:   '.count(self::THEME_COPY).' copy overrides, '.count(self::SECTIONS).' sections off');
+        $this->line('  theme:   '.count(self::THEME_COPY).' copy overrides, '
+            .count(self::SECTIONS).' sections off, '.count(self::MOTIFS).' motifs off');
 
         return self::SUCCESS;
     }
@@ -509,6 +522,13 @@ class SyncSankeviPages extends Command
         // content is never looked at.
         $sections = (array) data_get($settings, 'themes.sankevi.sections', []);
         data_set($settings, 'themes.sankevi.sections', array_merge($sections, self::SECTIONS));
+
+        // Merged per motif rather than wholesale: a motif carries its own text
+        // alongside `enabled`, and replacing the node would drop a prefix the
+        // merchant had typed.
+        foreach (self::MOTIFS as $id => $enabled) {
+            data_set($settings, "themes.sankevi.motifs.{$id}.enabled", $enabled);
+        }
 
         $images = (array) data_get($settings, 'themes.sankevi.images', []);
         data_set($settings, 'themes.sankevi.images', array_merge($images, [
