@@ -263,6 +263,22 @@ class ImportTenant extends Command
                     $row['tenant_id'] = $tenantId;
                 }
 
+                /*
+                 | THE PREVIEW LOCK DOES NOT TRAVEL.
+                 |
+                 | It gates a PUBLIC site behind a password, and the credentials
+                 | that open it live in the server's .env — which is not in the
+                 | bundle and should never be. Copying the flag without them
+                 | locks the developer out of the very shop they just pulled
+                 | down: every page 401s and nothing in the bundle can undo it.
+                 |
+                 | A local mirror has nothing to hide from, so it arrives
+                 | unlocked. Turning it back on is one toggle in the admin.
+                 */
+                if ($table === 'stores' && array_key_exists('preview_lock', $row)) {
+                    $row['preview_lock'] = false;
+                }
+
                 foreach ($fks[$table] ?? [] as $column => $target) {
                     if (! array_key_exists($column, $row) || $row[$column] === null) {
                         continue;

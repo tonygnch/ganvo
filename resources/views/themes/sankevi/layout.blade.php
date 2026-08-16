@@ -293,7 +293,18 @@
 
         /* placeholder ground for any missing photograph */
         .ph { position: relative; overflow: hidden; background: linear-gradient(150deg, var(--surface2), var(--surface) 55%, #191510); }
-        .ph img, .pcard .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        /* TAKEN OUT OF FLOW so object-fit has a box to fit.
+           These frames are `display: grid; place-items: center`, which sizes
+           the row to the image's own scaled height — 374px for a 1086×1448
+           photo in a 281px column, 590px for an 865×1819 one — and `height:
+           100%` then resolves against THAT row rather than the 4/5 frame. The
+           picture ended up taller than its frame, flush to the top, with
+           overflow:hidden taking the bottom off: every card showed the full top
+           edge of its photograph, which on this set is the lip of the backdrop
+           on three of them and an overexposed roof on the fourth.
+           Absolute against the (already relative) frame gives height:100% a
+           real length, so cover crops from the middle out, as intended. */
+        .ph img, .pcard .pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 
         /* board glyph — the imageless-product artwork: one board seen END-ON,
            sapwood edge in moss, a chamfer taken off the top corner. Deliberately
