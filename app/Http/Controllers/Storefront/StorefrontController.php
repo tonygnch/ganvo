@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Storefront;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Collection;
+use App\Models\Product;
 use App\Themes\ThemeRegistry;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -189,11 +190,15 @@ class StorefrontController extends Controller
         }
 
         if ($filters['category']) {
+            $picked = Category::where('tenant_id', $tenant->id)
+                ->where('slug', $filters['category'])
+                ->first();
+
             // EXISTS subquery on the pivot — avoids a join that'd
             // duplicate rows when a product is in multiple categories.
-            $query->whereHas('categories', function ($q) use ($filters, $tenant) {
-                $q->where('slug', $filters['category'])
-                    ->where('tenant_id', $tenant->id);
+            $ids = $picked ? $this->categoryTreeIds($picked) : [];
+            $query->whereHas('categories', function ($q) use ($ids) {
+                $q->whereIn('categories.id', $ids);
             });
         }
 
@@ -317,12 +322,22 @@ class StorefrontController extends Controller
         // category and we don't want the dropdown to override it.
         $filters = $this->extractFilters($request);
 
-        // Products directly attached to this category. We don't auto-
-        // include descendants — operators can have a "Mens" parent with
-        // T-shirts/Pants/Shoes children, and the parent page should be
-        // empty unless they explicitly tag products to it. Avoids
-        // surprise inclusions.
-        $query = $category->products()->where('is_active', true);
+        /*
+         | This category AND everything filed beneath it.
+         |
+         | It used to be the direct attachments only, so that a "Mens" parent
+         | could not silently absorb its T-shirts and Shoes. The yard reads it
+         | the other way: a section that hides what is filed inside it looks
+         | broken, not disciplined — "Плотове от масив" showed one board and
+         | kept the live-edge table tops to itself.
+         |
+         | Same rule as the shop's own category filter, so a section holds the
+         | same products wherever a shopper picks it.
+         */
+        $query = Product::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->whereHas('categories', fn ($q) => $q->whereIn('categories.id', $this->categoryTreeIds($category)));
 
         if ($filters['q']) {
             $term = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $filters['q']).'%';
@@ -357,6 +372,40 @@ class StorefrontController extends Controller
     private function themeFor($store): string
     {
         return ThemeRegistry::exists($store->theme) ? $store->theme : 'default';
+    }
+
+    /**
+     * A category and everything filed beneath it, however deep.
+     *
+     * PICKING A SECTION MEANS ITS SUBSECTIONS TOO. This used to be the other
+     * way round — a parent listed only what was tagged directly to it, on the
+     * reasoning that a "Mens" parent should not silently absorb T-shirts and
+     * Shoes. In a yard it reads as a fault instead: "Плотове от масив" showed
+     * one board and hid the live-edge table tops filed inside it, and a shopper
+     * who picked the section they wanted saw less than the section holds.
+     *
+     * Walks level by level rather than assuming two, because the column allows
+     * any depth, and guards against a parent_id cycle by never revisiting an id
+     * — a loop here would hang the request.
+     *
+     * @return list<int>
+     */
+    private function categoryTreeIds(Category $category): array
+    {
+        $ids = [$category->id];
+        $frontier = [$category->id];
+
+        while ($frontier !== []) {
+            $frontier = Category::where('tenant_id', $category->tenant_id)
+                ->whereIn('parent_id', $frontier)
+                ->whereNotIn('id', $ids)
+                ->pluck('id')
+                ->all();
+
+            $ids = array_merge($ids, $frontier);
+        }
+
+        return $ids;
     }
 
     /**
