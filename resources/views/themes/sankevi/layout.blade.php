@@ -16,38 +16,48 @@
             /*
              | THE WHOLE OF THE OPENING SCREEN'S LIFE, DECIDED IN THE HEAD.
              |
-             | Both halves have to be here. The skip class, because a class
-             | added after first paint is added too late and the screen flashes
-             | on every page of a visit. And the dismissal, because a script at
-             | the foot of the body does not run until the stylesheets above it
-             | have loaded — on a throttled line that was ten seconds, so a cap
-             | registered down there could not cap anything. Measured on Slow
-             | 3G: 11s on screen with the timer at the foot, and the page behind
-             | it had been readable for most of that.
+             | Here rather than at the foot of the body because a script down
+             | there does not run until the stylesheets above it have loaded —
+             | on a throttled line that was ten seconds, so a timer registered
+             | there could not hold to anything it promised. Measured on Slow
+             | 3G: 11s on screen, with the page behind it readable for most of
+             | it. In the head, the clock starts when the document does.
             */
             (function () {
-                var d = document.documentElement;
-                try { if (sessionStorage.getItem('gvBooted')) d.classList.add('gv-booted'); } catch (e) {}
+                var d = document.documentElement, t0 = Date.now();
+                var MIN = 1500;   // never briefer than this — it is meant to be seen
+                var MAX = 2500;   // never longer, whatever the images are doing
 
                 function done() {
                     if (d.classList.contains('gv-boot-done')) return;
                     d.classList.add('gv-boot-done');
-                    try { sessionStorage.setItem('gvBooted', '1'); } catch (e) {}
                     // Out of the layer once it has faded, so nothing can sit
                     // over the page and swallow a tap.
                     var el = document.getElementById('gvBoot');
                     if (el) { setTimeout(function () { el.remove(); }, 600); }
                 }
 
-                // 2.5s from HERE wins over load, which waits for every
-                // photograph on a page that is mostly photographs. A visitor on
-                // a slow line is the one who can least afford to be shown a
-                // mark instead of the shop; the images arrive behind the page,
-                // the way images always have.
-                setTimeout(done, 2500);
-                addEventListener('load', done);
+                /*
+                 | A FLOOR AND A CEILING, AND THE PAGE IN BETWEEN.
+                 |
+                 | The floor is why it is here at all: a page that is ready in
+                 | 300ms would otherwise show the mark for a blink, which reads
+                 | as a flicker rather than an opening. So a fast load still
+                 | waits out MIN.
+                 |
+                 | The ceiling is for the visitor on a slow line, who can least
+                 | afford to be shown a mark instead of the shop — load waits
+                 | for every photograph on a page that is mostly photographs,
+                 | and unchecked that measured eleven seconds. Past MAX the
+                 | screen leaves and the images arrive behind the page, the way
+                 | images always have.
+                */
+                addEventListener('load', function () {
+                    setTimeout(done, Math.max(0, MIN - (Date.now() - t0)));
+                });
+                setTimeout(done, MAX);
                 // pageshow fires from the bfcache where load does not — without
-                // it, pressing Back lands on a screen that never lifts.
+                // it, pressing Back could land on a screen that never lifts.
                 addEventListener('pageshow', function (e) { if (e.persisted) done(); });
             })();
         </script>
@@ -565,7 +575,6 @@
             transition: opacity .5s ease, visibility .5s;
         }
         html.gv-boot-done .boot { opacity: 0; visibility: hidden; }
-        html.gv-booted .boot { display: none; }   /* seen already this visit */
         .boot-mk { position: relative; width: 74px; height: 74px; }
         .boot-mk i {
             position: absolute; inset: 0; display: block;

@@ -116,10 +116,10 @@ return [
             'label' => 'Brand seal (nav mark, hero plate, footer watermark)',
             'default' => true,
         ],
-        // Shown once per visit, on the first page a visitor opens — not on
-        // every click, which is what turns a loader into a toll gate.
+        // On every page, held at least 1.5s so it is seen rather than glimpsed,
+        // and never past 2.5s so a slow line is not made to wait on it.
         'boot_screen' => [
-            'label' => 'Opening screen — the mark fills while the first page loads',
+            'label' => 'Opening screen — the mark fills while a page loads',
             'default' => true,
         ],
         'bark_texture' => [
