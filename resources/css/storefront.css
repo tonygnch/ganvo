@@ -312,4 +312,21 @@ html.gv-drawer-open { overflow: hidden; }
 
 @media (max-width: 760px) {
     .gv-sticky-atc.gv-on { display: flex; }
+
+    /*
+     | RESERVE THE BAR'S OWN HEIGHT AT THE END OF THE PAGE.
+     |
+     | The bar is fixed to the viewport, so it sits ON the page rather than in
+     | it — and the one thing it covers, once a shopper reaches the bottom of a
+     | scroll, is the last of the footer. The copyright line ran underneath it.
+     |
+     | A transparent bottom border rather than padding: the footer's own
+     | background paints under it, so the reserved strip reads as more footer
+     | instead of a gap left below one, and no theme has to publish what its
+     | padding already is in order to be added to.
+     |
+     | --gv-atc-h is measured and published by the bar itself, so it is 0 on
+     | every page that does not carry one and this rule costs them nothing.
+     */
+    body > footer { border-bottom: var(--gv-atc-h, 0px) solid transparent; }
 }

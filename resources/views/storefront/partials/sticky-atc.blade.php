@@ -66,6 +66,44 @@
          | it is with data-gv-atc-anchor; a form's own submit button is found
          | without one, so nothing had to change to keep working.
          */
+        /*
+         | TELL THE PAGE HOW TALL THIS IS.
+         |
+         | Fixed to the viewport means the bar sits ON the page, not in it, and
+         | what it covers at the end of a scroll is the last of the footer — the
+         | copyright line was reading from underneath it. The stylesheet turns
+         | --gv-atc-h into a strip of reserved footer; publishing it is this
+         | script's job because the height is not knowable in CSS: the variant
+         | line appears once a size is chosen, and the safe-area inset is the
+         | phone's to decide.
+         |
+         | Measured through a hidden .gv-on rather than waiting for the bar to
+         | be shown, so the room is already there when the shopper arrives at
+         | the bottom instead of the footer growing under them mid-scroll.
+         */
+        var measuring = false;
+        function publishHeight() {
+            if (measuring) return;
+            measuring = true;
+            var shown = bar.classList.contains('gv-on');
+            if (! shown) { bar.style.visibility = 'hidden'; bar.classList.add('gv-on'); }
+            var h = bar.offsetHeight;
+            if (! shown) { bar.classList.remove('gv-on'); bar.style.visibility = ''; }
+            measuring = false;
+            // 0 above the breakpoint, where .gv-on does not display at all.
+            document.documentElement.style.setProperty('--gv-atc-h', h + 'px');
+        }
+
+        publishHeight();
+        addEventListener('resize', publishHeight);
+        addEventListener('orientationchange', publishHeight);
+
+        var label = bar.querySelector('[data-vp-label]');
+        if (label) {
+            // The chosen size adds a line, and a line changes the height.
+            new MutationObserver(publishHeight).observe(label, { childList: true, characterData: true, subtree: true });
+        }
+
         var anchor = (form && form.querySelector('button[type="submit"]'))
             || document.querySelector('[data-gv-atc-anchor]')
             || form;
