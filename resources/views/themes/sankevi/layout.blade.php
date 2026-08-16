@@ -162,6 +162,35 @@
         .wrap { max-width: 1280px; margin: 0 auto; padding: 0 40px; }
         :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
         input:focus, select:focus, textarea:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent); }
+
+        /*
+         | NOTHING A FINGER CAN TYPE INTO GOES BELOW 16px.
+         |
+         | Safari on iOS zooms the page when a field it focuses is set smaller
+         | than 16px, and then leaves it zoomed — the shopper taps a search box
+         | and the shop jumps at them. The fields here were set 13.3 to 15px by
+         | their own pages, so every form on the site did it.
+         |
+         | The other fix is user-scalable=no in the viewport tag, which stops
+         | the zoom by taking pinch-zoom away from everyone permanently. That is
+         | not a trade this site is making for a one-pixel type size.
+         |
+         | !important, and deliberately. Page styles load after this one and set
+         | their fields at whatever specificity suits them — `.sift select` and
+         | `.field textarea` are both (0,1,1), and the next page to grow a form
+         | could reach further. A guard that has to hold for every form on the
+         | site, including ones not written yet, is the case the keyword is for;
+         | winning today's specificity race would only mean losing a later one
+         | silently, on a phone, where nobody is looking.
+         |
+         | Boxes and radios are excluded: their font-size is their size, they
+         | are not typed into, and they do not trigger the zoom.
+         */
+        @media (max-width: 860px) {
+            input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+            select,
+            textarea { font-size: 16px !important; }
+        }
         .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
         /* ===== THE PLANED CORNER — the signature. Two opposite corners are
