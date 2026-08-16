@@ -50,6 +50,18 @@
         || $filters['in_stock']
         || $activeSort !== 'newest';
 
+    /* How many filters are actually on, for the badge on the drawer's button.
+       A count, not a dot: "3" tells a shopper the list they are looking at has
+       been narrowed three ways, which is the thing they forget after scrolling.
+       The category is not counted — it is already shown as a selected chip. */
+    $activeFilterCount = collect([
+        filled($filters['q'] ?? null),
+        ($filters['sort'] ?? 'newest') !== 'newest',
+        filled($minPriceInput ?? null),
+        filled($maxPriceInput ?? null),
+        (bool) ($filters['in_stock'] ?? false),
+    ])->filter()->count();
+
     /*
      | Section chips swap ONE key and keep everything else the shopper has
      | already narrowed to — same querystring contract as the form, so the
@@ -306,12 +318,61 @@
             .entry .no, .entry.rev .no { top: 18px; left: 18px; right: auto; }
             .cover h1 { max-width: none; }
         }
+        /* The trigger and the close only exist on a phone; above 760 the rail
+           is a row of controls and needs neither. */
+        .sift-open, .sift-close, .sift-veil { display: none; }
+
         @media (max-width: 760px) {
-            .sift { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-            .sift .f-search { grid-column: 1 / -1; }
-            .sift .f-sort { grid-column: 1 / -1; }
-            .sift .f-check { grid-column: 1 / -1; }
-            .sift .go { grid-column: 1 / -1; justify-content: space-between; }
+            .sift-open {
+                display: inline-flex; align-items: center; gap: 9px; margin-top: 18px;
+                padding: 12px 20px; background: var(--accent); color: var(--on-accent);
+                border: none; font: inherit; font-size: 11px; font-weight: 600;
+                letter-spacing: .2em; text-transform: uppercase; cursor: pointer;
+            }
+            .sift-open .n {
+                display: inline-grid; place-items: center; min-width: 18px; height: 18px;
+                padding: 0 5px; border-radius: 9px; background: var(--on-accent);
+                color: var(--accent); font-size: 10px; letter-spacing: 0;
+            }
+            .sift-veil {
+                display: block; position: fixed; inset: 0; z-index: 190;
+                background: rgba(10, 10, 10, .45);
+            }
+            .sift-veil[hidden] { display: none; }
+
+            /* THE SAME PANEL THE BASKET USES — off the right edge, slid in over
+               the page, with the page behind it dimmed. Stacked inline these
+               controls ran to most of a phone screen, so the shop opened on its
+               own filters instead of on any stock. */
+            .sift {
+                position: fixed; top: 0; right: 0; bottom: 0; z-index: 200;
+                width: min(380px, 90vw);
+                /* align-items: stretch, explicitly. The desktop rule is a grid
+                   with `align-items: end` — sensible there, where the fields sit
+                   on one baseline — but in a column flexbox the cross axis is
+                   horizontal, so `end` shrank every field to its text and pinned
+                   it to the right edge of the panel. */
+                display: flex; flex-direction: column; align-items: stretch; gap: 0;
+                margin: 0; padding: 58px 22px 26px;
+                background: var(--surface); border-left: 1px solid var(--line2);
+                box-shadow: -24px 0 60px -30px rgba(0, 0, 0, .55);
+                overflow-y: auto; overscroll-behavior: contain;
+                transform: translateX(102%); visibility: hidden;
+                transition: transform .42s cubic-bezier(.19, .7, .16, 1), visibility .42s;
+            }
+            .sift.is-open { transform: none; visibility: visible; }
+            @media (prefers-reduced-motion: reduce) { .sift { transition: none; } }
+
+            .sift .f { margin-bottom: 18px; }
+            .sift .go { margin-top: auto; padding-top: 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+            .sift .go .btn { flex: 1; text-align: center; }
+            .sift-close {
+                display: block; position: absolute; top: 14px; right: 16px;
+                background: none; border: none; color: var(--txt);
+                font-size: 26px; line-height: 1; padding: 4px 8px; cursor: pointer;
+            }
+            /* The grid placements these fields used to need are gone with the
+               grid: in the drawer they are one column, in order. */
             .rail .tally { margin-left: 0; width: 100%; white-space: normal; }
         }
         @media (max-width: 430px) {
@@ -387,7 +448,21 @@
                 {{-- The order form. Every key the controller reads is here, and
                      `category` rides along hidden so searching never silently
                      drops the section the shopper is standing in. --}}
-                <form class="sift" method="get" action="/shop" role="search">
+                {{-- MOBILE: the filters move into a drawer, opened from here.
+                     Stacked inline they ran to most of a phone screen — search,
+                     sort, two prices, a checkbox and a button — so the shop
+                     opened on its own controls rather than on any stock. This
+                     is the same slide-in the basket uses, because it is the
+                     same idea: a panel of things to set, over the page, done
+                     with when you are done with it. Rendered on every width and
+                     hidden above 760, so no JS decides what exists. --}}
+                <button type="button" class="sift-open" data-sift-open aria-expanded="false" aria-controls="gv-sift">
+                    {!! $theme->editable('shop_refine') !!}
+                    @if ($activeFilterCount ?? 0)<span class="n">{{ $activeFilterCount }}</span>@endif
+                </button>
+                <div class="sift-veil" data-sift-veil hidden></div>
+                <form class="sift" id="gv-sift" method="get" action="/shop" role="search">
+                    <button type="button" class="sift-close" data-sift-close aria-label="{{ __('site.storefront.product.close') }}">&times;</button>
                     @if ($activeCategory)
                         <input type="hidden" name="category" value="{{ $activeCategory }}">
                     @endif
@@ -533,6 +608,69 @@
     </main>
 
     @push('scripts')
+<script>
+    /*
+     | FILTER DRAWER (phones only — above 760 the form is a row in the rail and
+     | this never runs anything visible).
+     |
+     | Hoisted to the body for the same reason the sticky add-to-cart is: the
+     | panel is position:fixed, and the rail it is written inside animates in,
+     | which leaves a transform on an ancestor and turns "fixed to the viewport"
+     | into "fixed to that ancestor". The panel would open halfway down the page.
+     */
+    (function () {
+        var form = document.getElementById('gv-sift');
+        var open = document.querySelector('[data-sift-open]');
+        var veil = document.querySelector('[data-sift-veil]');
+        if (! form || ! open || ! veil) return;
+
+        if (form.parentElement !== document.body) document.body.appendChild(form);
+        if (veil.parentElement !== document.body) document.body.appendChild(veil);
+
+        var lastFocus = null;
+
+        function show(on) {
+            form.classList.toggle('is-open', on);
+            veil.hidden = ! on;
+            open.setAttribute('aria-expanded', on ? 'true' : 'false');
+            // The page must not scroll behind an open panel; the drawer has its
+            // own overflow and overscroll-behavior to keep the gesture inside.
+            document.documentElement.style.overflow = on ? 'hidden' : '';
+
+            if (on) {
+                lastFocus = document.activeElement;
+                /* The first FIELD, not the first focusable — that is the close
+                   button, and someone who just opened a filter panel wants the
+                   search box, not the way out of it. */
+                var first = form.querySelector('input:not([type=hidden]), select');
+                if (first) setTimeout(function () { first.focus({ preventScroll: true }); }, 120);
+            } else {
+                /* Back to the button that opened it. Falling back to the
+                   trigger rather than trusting what was focused before: a tap
+                   does not always leave focus on the button it pressed, and
+                   returning focus to <body> loses a keyboard user's place. */
+                var back = (lastFocus && lastFocus !== document.body) ? lastFocus : open;
+                back.focus({ preventScroll: true });
+            }
+        }
+
+        open.addEventListener('click', function () { show(true); });
+        veil.addEventListener('click', function () { show(false); });
+        form.querySelector('[data-sift-close]').addEventListener('click', function () { show(false); });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && form.classList.contains('is-open')) show(false);
+        });
+
+        // Leaving the phone layout with the panel open would strand a fixed
+        // element over a desktop rail that already shows the same controls.
+        window.matchMedia('(max-width: 760px)').addEventListener('change', function (e) {
+            if (! e.matches) show(false);
+        });
+    })();
+</script>
+@endpush
+
+@push('scripts')
         <script>
             // Sorting is a one-touch decision, so the select submits itself.
             // The Refine button stays for keyboard and no-JS shoppers — this
