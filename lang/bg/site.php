@@ -566,7 +566,7 @@ return [
             'quick_view' => 'Бърз преглед',
             'wear_it_with' => 'Съчетай с',
             'tax_included' => 'с включен данък',
-            'in_stock_full' => 'В наличност и готов за изпращане',
+            'in_stock_full' => 'В наличност',
             'in_stock_low' => 'Само :count бр. в наличност',
             'how_much' => 'Колко ви трябва (:unit)',
             'covers' => '≈ :qty бр. — покрива :measure',
