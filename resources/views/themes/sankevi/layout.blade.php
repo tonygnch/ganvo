@@ -552,7 +552,20 @@
               color: var(--muted); margin-left: .35em; white-space: nowrap; }
 
         /* ===== footer — the yard at closing time ===== */
-        footer.site { position: relative; overflow: hidden; margin-top: 110px; padding: 74px 0 34px; background: var(--deep); border-top: 1px solid var(--line); }
+        /*
+         | THE SEAM ABOVE THE FOOTER IS BARE PAGE, AND BARE PAGE IS GRAINED.
+         |
+         | The bark texture is a fixed overlay under the content layer, so it
+         | shows anywhere nothing paints over it — and the footer's top margin
+         | is exactly that: empty space. Under the full-bleed catalogue on a
+         | phone the result is a hard edge, solid plates and then striations
+         | starting immediately beneath the last price.
+         |
+         | So the margin gets painted. --seam drives both the space and the
+         | band filling it, which is the point of the variable: they cannot
+         | drift apart into a strip of grain nobody meant to leave.
+         */
+        footer.site { --seam: 110px; position: relative; overflow: hidden; margin-top: var(--seam); box-shadow: 0 calc(var(--seam) * -1) 0 var(--bg); padding: 74px 0 34px; background: var(--deep); border-top: 1px solid var(--line); }
 
         /* DARK SLABS IN A PALE PAGE. The footer and the mobile drawer are both
            painted with --deep, which stays dark in Daylight ON PURPOSE so they
@@ -678,7 +691,7 @@
                query, so the 3- and 4-column layouts above are untouched. */
             .shelf > *:last-child:nth-child(odd) { grid-column: 1 / -1; }
             .sec-head { margin: 66px 0 26px; }
-            footer.site { margin-top: 76px; padding-top: 56px; }
+            footer.site { --seam: 76px; padding-top: 56px; }
             .fgrid .logo { font-size: 26px; letter-spacing: .12em; gap: 12px; }
             .fgrid .ftag { font-size: 15px; margin-top: 16px; }
             .fcert img { height: 78px; }
