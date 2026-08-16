@@ -126,6 +126,11 @@
         .rail .chips .pill { transition: color .25s ease, border-color .25s ease, background-color .25s ease; }
         .rail .chips .pill:hover { border-color: var(--accent); color: var(--accent-ink); }
         .rail .chips .pill.on, .rail .chips .pill.on:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+        /* A subsection reads as belonging to the chip before it: the same pill,
+           spoken more quietly, with a rule leading back to its parent. */
+        .rail .chips .pill.sub { position: relative; margin-left: 13px; border-style: dashed; color: var(--faint); }
+        .rail .chips .pill.sub::before { content: ""; position: absolute; left: -13px; top: 50%; width: 13px; height: 1px; background: var(--line2); }
+        .rail .chips .pill.sub.on { color: var(--on-accent); border-style: solid; }
         .rail .tally { margin-left: auto; display: flex; align-items: baseline; gap: 12px; font-size: 10.5px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
         .rail .tally .q { color: var(--accent-ink); text-transform: none; letter-spacing: .04em; font-size: 12px; max-width: 22ch; overflow: hidden; text-overflow: ellipsis; }
 
@@ -466,9 +471,20 @@
                     @if ($categories->isNotEmpty())
                         <div class="chips">
                             <a href="{{ $chipUrl(null) }}" class="pill {{ $activeCategory ? '' : 'on' }}">{{ __('site.storefront.sankevi.shop_all') }}</a>
+                            {{-- Each section, then anything filed under it. A
+                                 subcategory had no chip at all before, which
+                                 left it reachable only by typing its URL. It
+                                 follows its parent rather than sorting among
+                                 the sections, because its own sort_order is
+                                 counted against its siblings, not against
+                                 them. --}}
                             @foreach ($categories as $cat)
                                 <a href="{{ $chipUrl($cat->slug) }}" class="pill {{ $activeCategory === $cat->slug ? 'on' : '' }}"
                                    @if ($activeCategory === $cat->slug) aria-current="true" @endif>{{ $cat->name }}</a>
+                                @foreach ($cat->children as $sub)
+                                    <a href="{{ $chipUrl($sub->slug) }}" class="pill sub {{ $activeCategory === $sub->slug ? 'on' : '' }}"
+                                       @if ($activeCategory === $sub->slug) aria-current="true" @endif>{{ $sub->name }}</a>
+                                @endforeach
                             @endforeach
                         </div>
                     @endif

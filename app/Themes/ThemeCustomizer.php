@@ -164,6 +164,44 @@ class ThemeCustomizer
         return $default ? asset($default) : null;
     }
 
+    /**
+     * The same image slot in its DAYLIGHT colourway, when we ship one.
+     *
+     * A theme's own mark is drawn for the dark ground it normally sits on, so
+     * on the pale mode it needs its counterpart or it goes invisible against
+     * the card it is printed on. The pairs are ours by filename; anything a
+     * merchant uploaded comes back untouched, because we cannot recolour
+     * someone else's artwork and showing it twice beats showing nothing.
+     *
+     * Lives here rather than in the templates because it was in the templates:
+     * the layout learned about the .png pair and the two auth pages did not,
+     * so the login card kept printing a cream mark on cream.
+     */
+    public function imageDaylight(string $slot): ?string
+    {
+        $url = $this->image($slot);
+
+        if ($url === null) {
+            return null;
+        }
+
+        foreach (self::DAYLIGHT_PAIRS as $night => $day) {
+            if (str_contains($url, $night)) {
+                return str_replace($night, $day, $url);
+            }
+        }
+
+        return $url;
+    }
+
+    /** Night-ground filename => its pale-ground counterpart. */
+    private const DAYLIGHT_PAIRS = [
+        'mark-cream.png' => 'mark-forest.png',
+        'mark-cream.svg' => 'mark.svg',
+        'lockup-cream.png' => 'lockup-forest.png',
+        'fsc-cream.png' => 'fsc-forest.png',
+    ];
+
     /** A motif's text label (e.g. what the roast pips or BATCH stamp say). */
     public function label(string $motifId): string
     {

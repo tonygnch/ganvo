@@ -359,12 +359,23 @@ class StorefrontController extends Controller
         return ThemeRegistry::exists($store->theme) ? $store->theme : 'default';
     }
 
+    /**
+     * The category spine: roots in the merchant's order, each carrying its own
+     * children.
+     *
+     * The children are eager-loaded rather than flattened in because a theme
+     * that draws this as a top-level nav wants the roots alone, and one that
+     * draws a browsable index wants the whole tree. Loading them costs a single
+     * extra query and lets each theme decide; leaving them out meant a
+     * subcategory simply had no way to be reached from the shop.
+     */
     private function rootCategoriesFor($tenant)
     {
         return Category::query()
             ->where('tenant_id', $tenant->id)
             ->where('is_active', true)
             ->whereNull('parent_id')
+            ->with(['children' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')->orderBy('name')])
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();

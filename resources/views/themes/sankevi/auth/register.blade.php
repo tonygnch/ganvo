@@ -73,16 +73,8 @@
             <section class="auth">
                 <div class="cardwrap reveal">
                     @if ($theme->on('brand_seal') && ($seal = $theme->image('seal_image')))
-                        @php
-                            // Same two-colourway pairing the layout uses for the nav
-                            // mark: the shipped seal is cream, which disappears on the
-                            // pale Daylight card. A merchant's own upload is shown in
-                            // both modes — we cannot recolour someone else's artwork.
-                            $sealDay = str_contains($seal, 'mark-cream.svg')
-                                ? str_replace('mark-cream.svg', 'mark.svg', $seal)
-                                : $seal;
-                        @endphp
-                        <span class="seal" aria-hidden="true" style="--seal: url('{{ $seal }}'); --seal-day: url('{{ $sealDay }}');"></span>
+                        {{-- Pale-ground colourway from the customizer — see login. --}}
+                        <span class="seal" aria-hidden="true" style="--seal: url('{{ $seal }}'); --seal-day: url('{{ $theme->imageDaylight('seal_image') }}');"></span>
                     @endif
                 <div class="card cut cut-lg">
 

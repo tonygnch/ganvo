@@ -776,17 +776,10 @@
         // modes — we cannot recolour someone else's artwork, and silently
         // showing nothing would be worse than showing it twice.
         $csSeal = $theme->on('brand_seal') ? $theme->image('seal_image') : null;
-        // Our own shipped mark has a light and a dark colourway, so pair them.
-        // Anything a merchant uploaded is used in both modes untouched — we
-        // cannot recolour someone else's artwork, and showing nothing would be
-        // worse than showing it twice.
-        $csSealDaylight = $csSeal;
-        foreach ([['mark-cream.png', 'mark-forest.png'], ['mark-cream.svg', 'mark.svg']] as [$night, $day]) {
-            if ($csSeal && str_contains($csSeal, $night)) {
-                $csSealDaylight = str_replace($night, $day, $csSeal);
-                break;
-            }
-        }
+        // The pale-ground colourway. The pairing moved to the customizer so the
+        // auth cards share it — they had their own half of this and printed a
+        // cream mark on a cream card in Daylight.
+        $csSealDaylight = $csSeal ? $theme->imageDaylight('seal_image') : null;
 
         // The certification lockup. Both halves must be present to render:
         // the mark without its licence code is an unverifiable badge, and the
