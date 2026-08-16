@@ -25,8 +25,8 @@
             */
             (function () {
                 var d = document.documentElement, t0 = Date.now();
-                var MIN = 1500;   // never briefer than this — it is meant to be seen
-                var MAX = 2500;   // never longer, whatever the images are doing
+                var MIN = 1500;      // held at least this long, so it is seen
+                var STUCK = 20000;   // see below — a hung asset must not trap anyone
 
                 function done() {
                     if (d.classList.contains('gv-boot-done')) return;
@@ -38,24 +38,95 @@
                 }
 
                 /*
-                 | A FLOOR AND A CEILING, AND THE PAGE IN BETWEEN.
+                 | THE FILL IS THE PAGE ARRIVING, NOT A TIMER RUNNING.
                  |
-                 | The floor is why it is here at all: a page that is ready in
-                 | 300ms would otherwise show the mark for a blink, which reads
-                 | as a flicker rather than an opening. So a fast load still
-                 | waits out MIN.
+                 | The mark rises with the share of the page's assets that have
+                 | actually finished, and the screen does not leave until they
+                 | all have. A loop would have been a lie — it fills at the same
+                 | rate on fibre and on a phone in the yard with one bar.
                  |
-                 | The ceiling is for the visitor on a slow line, who can least
-                 | afford to be shown a mark instead of the shop — load waits
-                 | for every photograph on a page that is mostly photographs,
-                 | and unchecked that measured eleven seconds. Past MAX the
-                 | screen leaves and the images arrive behind the page, the way
-                 | images always have.
+                 | LAZY IMAGES ARE NOT COUNTED, and must not be: they are not
+                 | fetched until they are scrolled to, so a page counting them
+                 | would stop at half and stay there forever. load takes the
+                 | same view, which is what keeps the bar and the dismissal
+                 | telling the same story.
                 */
+                /*
+                 | Written on the ROOT, not on the mark, and written now.
+                 |
+                 | The mark does not exist yet at this point and will not until
+                 | the body is parsed — on a slow line that was seventeen
+                 | seconds of an empty outline, which reads as broken rather
+                 | than as loading. --lvl inherits, so setting it here means the
+                 | mark is already part-full the instant it is painted.
+                */
+                var level = 0;
+                function paint(x) {
+                    level = Math.max(level, Math.min(1, x));   // never runs backwards
+                    d.style.setProperty('--lvl', level);
+                }
+                paint(0.07);   // the document is on its way; show that much
+
+                /*
+                 | BEFORE THE DOM EXISTS THERE IS STILL NEWS.
+                 |
+                 | The count below cannot start until there are <img> elements
+                 | to count, and on a slow line the DOM was ten seconds away —
+                 | ten seconds of a mark sitting at seven percent, which reads
+                 | as stuck rather than as loading. Every stylesheet, font and
+                 | image that lands is reported here as it completes, long
+                 | before any of them are countable.
+                 |
+                 | Asymptotic on purpose: the total is genuinely unknown at this
+                 | point, so each arrival closes part of the remaining distance
+                 | and the line approaches 60% without ever claiming to be
+                 | there. The count takes over the moment it can, and paint()
+                 | only ever moves forward, so the handover cannot jolt.
+                */
+                try {
+                    new PerformanceObserver(function (list) {
+                        var n = list.getEntries().length;
+                        for (var i = 0; i < n; i++) { paint(level + (0.6 - level) * 0.14); }
+                    }).observe({ type: 'resource', buffered: true });
+                } catch (e) {}
+
+                function track() {
+                    var imgs = [].filter.call(document.images, function (i) { return i.loading !== 'lazy'; });
+                    // The document itself is the first thing to arrive, and on a
+                    // page with no eager images it is the only one — without it
+                    // the mark would sit empty until load fired all at once.
+                    var total = imgs.length + 1, ready = 1;
+                    paint(ready / total);
+                    imgs.forEach(function (img) {
+                        if (img.complete) { ready++; paint(ready / total); return; }
+                        function bump() { ready++; paint(ready / total); }
+                        img.addEventListener('load', bump, { once: true });
+                        // A broken image has finished arriving too. Counting only
+                        // successes would leave the mark short of full on any
+                        // page with one 404 in it.
+                        img.addEventListener('error', bump, { once: true });
+                    });
+                }
+
+                if (document.readyState === 'loading') { addEventListener('DOMContentLoaded', track); }
+                else { track(); }
+
                 addEventListener('load', function () {
+                    paint(1);
                     setTimeout(done, Math.max(0, MIN - (Date.now() - t0)));
                 });
-                setTimeout(done, MAX);
+
+                /*
+                 | THE ONE THING THE ASSETS ARE NOT ALLOWED TO DECIDE.
+                 |
+                 | Waiting on the page is the point, but load can fail to fire
+                 | at all — one request left hanging by a proxy or a third party
+                 | that never answers, and there is no load event, ever. Without
+                 | this the visitor is left looking at a mark on a dark screen
+                 | with no way forward. Twenty seconds is far past any real page
+                 | and still short of abandonment.
+                */
+                setTimeout(done, STUCK);
                 // pageshow fires from the bfcache where load does not — without
                 // it, pressing Back could land on a screen that never lifts.
                 addEventListener('pageshow', function (e) { if (e.persisted) done(); });
@@ -582,10 +653,14 @@
             mask: var(--seal) center / contain no-repeat;
         }
         .boot-mk .g { background: color-mix(in srgb, var(--txt) 18%, transparent); }
-        .boot-mk .f { background: var(--accent); animation: gvBootFill 1.6s cubic-bezier(.62, .04, .36, 1) infinite; }
-        @keyframes gvBootFill {
-            0%        { clip-path: inset(100% 0 0 0); }
-            62%, 100% { clip-path: inset(0 0 0 0); }
+        /* --lvl is the share of the page's assets that have arrived, written by
+           the head script. The transition is what makes it a rising level
+           rather than a series of jumps — each image that lands moves the line
+           up, and the eye reads the movement as loading because it is. */
+        .boot-mk .f {
+            background: var(--accent);
+            clip-path: inset(calc(100% - var(--lvl, 0) * 100%) 0 0 0);
+            transition: clip-path .4s cubic-bezier(.32, .72, .3, 1);
         }
         .boot-nm {
             font-family: var(--display); font-weight: 500; font-size: 15px;
@@ -598,9 +673,9 @@
            the ground and left a mark filling out of nothing. */
         html[data-mode="light"] .boot { --txt: #f1ebdd; }
 
-        /* Nothing to watch and nothing to wait for: the mark simply stands. */
+        /* The level still tells the truth; it just stops sliding to get there. */
         @media (prefers-reduced-motion: reduce) {
-            .boot-mk .f { animation: none; clip-path: inset(0 0 0 0); }
+            .boot-mk .f { transition: none; }
             .boot { transition: none; }
         }
 
