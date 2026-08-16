@@ -562,6 +562,23 @@
             .rail .subrail-list a.on { box-shadow: inset 3px 0 0 var(--accent); }
             .rail .subrail-list a:focus-visible { outline-offset: -2px; }
         }
+        /* "ВСИЧКИ ПРОДУКТИ" TAKES THE TOP LINE TO ITSELF.
+           It is not one of the sections, it is the way back out of all of
+           them, so it leads the plate on its own row instead of sharing one
+           with Ламперия. Two columns wide on a phone, which is the whole line
+           there — and it takes the odd count with it: six sections divide into
+           two columns exactly, so the last one stops being a lone cell
+           stretched across a row of its own.
+
+           Scoped to the two-column range, where "the width of two sections" and
+           "the whole line" are the same thing. Wider than that the plate has
+           four columns or one line and "all" already leads it; giving it a full
+           row there would be a 940px bar carrying two words, which is the
+           banner the column basis below exists to prevent. */
+        @media (max-width: 760px) {
+            .rail .plate a.all { flex: 1 1 100%; }
+        }
+
         /* BETWEEN THE ONE-LINE AND THE TWO-COLUMN CASE the cells are still sized
            by their words, and when only one wraps it has a whole row to grow
            into: at 1024 "ДЮШЕМЕ" became a 942px banner — flush, and absurd. A
@@ -676,7 +693,7 @@
                          the container's own ground showing through the gaps — no
                          borders, nothing to line up by hand. --}}
                     <nav class="plate" aria-label="{{ __('site.storefront.controls.category') }}">
-                        <a href="{{ $chipUrl(null) }}" class="{{ $activeCategory ? '' : 'on' }}"
+                        <a href="{{ $chipUrl(null) }}" class="all {{ $activeCategory ? '' : 'on' }}"
                            @if (! $activeCategory) aria-current="page" @endif>{{ __('site.storefront.sankevi.shop_all') }}</a>
                         @foreach ($categories as $cat)
                             @php
