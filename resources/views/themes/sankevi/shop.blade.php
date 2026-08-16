@@ -661,11 +661,36 @@
         var veil = document.querySelector('[data-sift-veil]');
         if (! form || ! open || ! veil) return;
 
-        // The trigger is fixed as well now, so it needs the same escape from
-        // the rail's reveal transform as the panel and the veil do.
-        [form, veil, open].forEach(function (el) {
-            if (el.parentElement !== document.body) document.body.appendChild(el);
-        });
+        var phone = window.matchMedia('(max-width: 760px)');
+
+        /*
+         | HOISTED ONLY WHILE IT IS A DRAWER.
+         |
+         | The panel and the tab are position:fixed on a phone, and the rail
+         | they are written inside animates in — a transform on an ancestor
+         | turns "fixed to the viewport" into "fixed to that ancestor", so they
+         | have to hang off the body to escape it.
+         |
+         | ABOVE 760 THEY MUST GO BACK. The form is not a drawer there, it is a
+         | row of controls in the rail, and leaving it on the body moved it to
+         | the foot of the page: the filters vanished from where they belong and
+         | the category chips closed up against the first product, because the
+         | row that had been sitting between them was gone. Remember where it
+         | came from and put it back.
+         */
+        var home = form.parentElement, after = form.nextSibling;
+
+        function place() {
+            if (phone.matches) {
+                [form, veil, open].forEach(function (el) {
+                    if (el.parentElement !== document.body) document.body.appendChild(el);
+                });
+            } else if (form.parentElement !== home) {
+                home.insertBefore(form, after);
+            }
+        }
+
+        place();
 
         var lastFocus = null;
 
@@ -703,8 +728,9 @@
 
         // Leaving the phone layout with the panel open would strand a fixed
         // element over a desktop rail that already shows the same controls.
-        window.matchMedia('(max-width: 760px)').addEventListener('change', function (e) {
+        phone.addEventListener('change', function (e) {
             if (! e.matches) show(false);
+            place();
         });
     })();
 </script>
