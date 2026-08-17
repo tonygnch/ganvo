@@ -24,7 +24,8 @@
              | it. In the head, the clock starts when the document does.
             */
             (function () {
-                var d = document.documentElement;
+                var d = document.documentElement, t0 = Date.now();
+                var MIN = 500;       // long enough to be an opening, not a flicker
                 var STUCK = 20000;   // see below — a hung asset must not trap anyone
 
                 function done() {
@@ -110,11 +111,17 @@
                 if (document.readyState === 'loading') { addEventListener('DOMContentLoaded', track); }
                 else { track(); }
 
-                // The assets decide, and nothing holds it open past them: a page
-                // that is ready in 300ms is dismissed in 300ms.
+                /*
+                 | The assets decide when it CAN go; half a second decides that
+                 | it was there at all. A page served from cache is ready before
+                 | the mark has finished painting, and dismissing on the spot
+                 | reads as a flash of something gone wrong rather than as an
+                 | opening. Half a second is the whole of the concession — past
+                 | that the screen is waiting on the page, not on a clock.
+                */
                 addEventListener('load', function () {
                     paint(1);
-                    done();
+                    setTimeout(done, Math.max(0, MIN - (Date.now() - t0)));
                 });
 
                 /*
