@@ -24,8 +24,7 @@
              | it. In the head, the clock starts when the document does.
             */
             (function () {
-                var d = document.documentElement, t0 = Date.now();
-                var MIN = 1500;      // held at least this long, so it is seen
+                var d = document.documentElement;
                 var STUCK = 20000;   // see below — a hung asset must not trap anyone
 
                 function done() {
@@ -111,9 +110,11 @@
                 if (document.readyState === 'loading') { addEventListener('DOMContentLoaded', track); }
                 else { track(); }
 
+                // The assets decide, and nothing holds it open past them: a page
+                // that is ready in 300ms is dismissed in 300ms.
                 addEventListener('load', function () {
                     paint(1);
-                    setTimeout(done, Math.max(0, MIN - (Date.now() - t0)));
+                    done();
                 });
 
                 /*
