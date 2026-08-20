@@ -51,10 +51,23 @@
         .about { padding-bottom: 40px; }
 
         .ab-story { display: grid; grid-template-columns: 1.02fr .98fr; gap: 0; align-items: start; margin-top: 64px; }
+        /* THE PHOTOGRAPH REACHES INTO THIS COLUMN, SO THE COLUMN GIVES IT ROOM.
+           The figure is pulled -10% left on purpose — the overlap is the layout.
+           What was not intended is prose running underneath it: the text column
+           ended 59px past where the picture starts, and the lead paragraph used
+           every pixel of it. Reserving the intrusion here fixes the whole class
+           rather than the one paragraph that happened to be long enough to show
+           it — nothing in this column can reach the picture now, whatever size
+           a future line is set in. */
+        .ab-story .tx { padding-right: calc(10% + 26px); }
         .ab-story.single { grid-template-columns: 1fr; max-width: 68ch; }
         .ab-story .tx p { color: var(--muted); font-size: 16.5px; line-height: 1.8; margin-bottom: 20px; max-width: 46ch; white-space: pre-line; }
+        /* 46ch is a measure for the body size. The lead below is set in the
+           display face at up to 27px, and ch scales with the font — so it
+           inherited a 642px measure where the body gets 455px, which is what
+           put it under the photograph. Its measure is stated in its own terms. */
         /* the first paragraph carries the weight — set in the serif, larger */
-        .ab-story .tx p:first-child { font-family: var(--display); font-weight: 400; font-size: clamp(21px, 2.2vw, 27px); line-height: 1.45; color: var(--txt); }
+        .ab-story .tx p:first-child { font-family: var(--display); font-weight: 400; font-size: clamp(21px, 2.2vw, 27px); line-height: 1.45; color: var(--txt); max-width: 30ch; }
         .ab-story figure { position: relative; margin-left: -10%; margin-top: 34px; aspect-ratio: 4 / 5; overflow: hidden; background: var(--surface2); }
         .ab-story.single figure { display: none; }
         .ab-story figure img { width: 100%; height: 100%; object-fit: cover; }
@@ -106,6 +119,9 @@
             .heritage { grid-template-columns: 1fr; margin-top: 74px; }
             .heritage .tx { margin-left: 0; margin-top: -44px; width: 93%; }
             .ab-story { grid-template-columns: 1fr; }
+            /* Stacked, the picture is below rather than beside — nothing to
+               reserve, and the reserve would only narrow a phone's measure. */
+            .ab-story .tx { padding-right: 0; }
             .ab-story figure { margin-left: 0; margin-top: 34px; aspect-ratio: 4 / 3; }
             .tl li { grid-template-columns: 1fr; gap: 10px; padding: 24px 0; }
             .ab-sec { margin-top: 74px; }
