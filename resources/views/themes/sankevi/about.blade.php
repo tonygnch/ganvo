@@ -50,25 +50,36 @@
            viewport, so every line ran flush into both edges. */
         .about { padding-bottom: 40px; }
 
-        .ab-story { display: grid; grid-template-columns: 1.02fr .98fr; gap: 0; align-items: start; margin-top: 64px; }
-        /* THE PHOTOGRAPH REACHES INTO THIS COLUMN, SO THE COLUMN GIVES IT ROOM.
-           The figure is pulled -10% left on purpose — the overlap is the layout.
-           What was not intended is prose running underneath it: the text column
-           ended 59px past where the picture starts, and the lead paragraph used
-           every pixel of it. Reserving the intrusion here fixes the whole class
-           rather than the one paragraph that happened to be long enough to show
-           it — nothing in this column can reach the picture now, whatever size
-           a future line is set in. */
-        .ab-story .tx { padding-right: calc(10% + 26px); }
+        /* ===== THE STORY BAND — a photograph the prose runs around.
+           It was two grid columns, which meant the text stopped dead at the
+           column edge and left the whole right-hand side empty from wherever
+           the picture ended down to the last paragraph. A float instead: the
+           lines shorten to make room while the picture is beside them, and
+           close the full width the moment it is past.
+
+           This also retires the reservation the grid needed. A float is not
+           something text can run underneath — line boxes shorten around it by
+           definition — so the overlap that fix existed to prevent can no
+           longer happen at all. ===== */
+        .ab-story { margin-top: 64px; }
+        .ab-story::after { content: ""; display: block; clear: both; }
         .ab-story.single { grid-template-columns: 1fr; max-width: 68ch; }
-        .ab-story .tx p { color: var(--muted); font-size: 16.5px; line-height: 1.8; margin-bottom: 20px; max-width: 46ch; white-space: pre-line; }
+        /* NO MEASURE CAP, deliberately, and it is a trade. Capping the body
+           would leave exactly the empty right-hand side this float exists to
+           close — so the lines that clear the photograph run the full band:
+           about 55 characters beside the picture and 115 below it at 1440.
+           115 is past a comfortable measure; it buys the closed block the
+           owner asked for, and it is three lines of the twenty-three. A cap
+           here is the one line to change if it ever reads worse than the gap
+           it replaced. */
+        .ab-story .tx p { color: var(--muted); font-size: 16.5px; line-height: 1.8; margin-bottom: 20px; white-space: pre-line; }
         /* 46ch is a measure for the body size. The lead below is set in the
            display face at up to 27px, and ch scales with the font — so it
            inherited a 642px measure where the body gets 455px, which is what
            put it under the photograph. Its measure is stated in its own terms. */
         /* the first paragraph carries the weight — set in the serif, larger */
-        .ab-story .tx p:first-child { font-family: var(--display); font-weight: 400; font-size: clamp(21px, 2.2vw, 27px); line-height: 1.45; color: var(--txt); max-width: 30ch; }
-        .ab-story figure { position: relative; margin-left: -10%; margin-top: 34px; aspect-ratio: 4 / 5; overflow: hidden; background: var(--surface2); }
+        .ab-story .tx p:first-child { font-family: var(--display); font-weight: 400; font-size: clamp(21px, 2.2vw, 27px); line-height: 1.45; color: var(--txt); max-width: 34ch; }
+        .ab-story figure { float: right; width: 48%; margin: 6px 0 32px 46px; position: relative; aspect-ratio: 4 / 5; overflow: hidden; background: var(--surface2); }
         .ab-story.single figure { display: none; }
         .ab-story figure img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -119,10 +130,8 @@
             .heritage { grid-template-columns: 1fr; margin-top: 74px; }
             .heritage .tx { margin-left: 0; margin-top: -44px; width: 93%; }
             .ab-story { grid-template-columns: 1fr; }
-            /* Stacked, the picture is below rather than beside — nothing to
-               reserve, and the reserve would only narrow a phone's measure. */
-            .ab-story .tx { padding-right: 0; }
-            .ab-story figure { margin-left: 0; margin-top: 34px; aspect-ratio: 4 / 3; }
+
+            .ab-story figure { float: none; width: 100%; margin: 34px 0 0; aspect-ratio: 4 / 3; }
             .tl li { grid-template-columns: 1fr; gap: 10px; padding: 24px 0; }
             .ab-sec { margin-top: 74px; }
         }
@@ -148,11 +157,10 @@
 
             @if ($paragraphs)
                 <section class="ab-story {{ $leadImage ? '' : 'single' }} reveal">
-                    <div class="tx">
-                        @foreach ($paragraphs as $paragraph)
-                            <p>{{ $paragraph }}</p>
-                        @endforeach
-                    </div>
+                    {{-- BEFORE the prose, and it has to be: the photograph is
+                         floated so the text can close under it once it ends, and
+                         a float only moves the content that FOLLOWS it. Read in
+                         order this is still picture-then-story. --}}
                     @if ($leadImage)
                         <figure class="cut cut-lg">
                             <img src="{{ \Illuminate\Support\Facades\Storage::url($leadImage) }}"
@@ -160,6 +168,11 @@
                                  loading="lazy">
                         </figure>
                     @endif
+                    <div class="tx">
+                        @foreach ($paragraphs as $paragraph)
+                            <p>{{ $paragraph }}</p>
+                        @endforeach
+                    </div>
                 </section>
             @endif
 
