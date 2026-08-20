@@ -87,6 +87,33 @@ return [
             'label' => 'Product page — category row',
             'default' => true,
         ],
+        /* THE ABOUT PAGE, BLOCK BY BLOCK.
+           Declared as switches rather than removed from the template, because
+           every one of these is driven by the merchant's OWN content — the
+           milestones they typed, the figures they counted, the photographs they
+           uploaded. Deleting the section would have meant deleting the content
+           to hide it, and a merchant who changes their mind would have nothing
+           to switch back on. Off here hides the block and keeps the words. */
+        'about_head' => [
+            'label' => 'About page — the title block (eyebrow, heading, intro)',
+            'default' => true,
+        ],
+        'about_milestones' => [
+            'label' => 'About page — the milestones timeline',
+            'default' => true,
+        ],
+        'about_stats' => [
+            'label' => 'About page — the figures band',
+            'default' => true,
+        ],
+        'about_gallery_head' => [
+            'label' => 'About page — heading above the photographs',
+            'default' => true,
+        ],
+        'about_cta' => [
+            'label' => 'About page — the "get in touch" button at the foot',
+            'default' => true,
+        ],
         'shop_masthead' => [
             'label' => 'Shop masthead (photographic cover over the stock book)',
             'default' => true,

@@ -131,6 +131,7 @@
 
     <main>
         <div class="wrap about">
+            @if ($theme->on('about_head'))
             <div class="page-head reveal">
                 @if ($theme->on('gutter_index'))
                     <span class="gx" aria-hidden="true" style="top: 60px;">{!! $theme->editable('story_eyebrow') !!}</span>
@@ -143,6 +144,7 @@
                 <h1>{{ $heading }}</h1>
                 <p>{{ $intro }}</p>
             </div>
+            @endif
 
             @if ($paragraphs)
                 <section class="ab-story {{ $leadImage ? '' : 'single' }} reveal">
@@ -175,7 +177,7 @@
                 </section>
             @endif
 
-            @if ($about['milestones'])
+            @if ($about['milestones'] && $theme->on('about_milestones'))
                 <section class="ab-sec reveal">
                     <h2>{{ __('site.storefront.about.milestones_h') }}</h2>
                     <ol class="tl">
@@ -192,7 +194,7 @@
                 </section>
             @endif
 
-            @if ($about['stats'])
+            @if ($about['stats'] && $theme->on('about_stats'))
                 <section class="ab-sec reveal">
                     <h2>{{ __('site.storefront.about.stats_h') }}</h2>
                     <div class="stats">
@@ -208,7 +210,7 @@
 
             @if ($gallery)
                 <section class="ab-sec reveal">
-                    <h2>{{ __('site.storefront.about.gallery_h') }}</h2>
+                    @if ($theme->on('about_gallery_head'))<h2>{{ __('site.storefront.about.gallery_h') }}</h2>@endif
                     <div class="gal">
                         @foreach ($gallery as $i => $image)
                             <figure class="cut cut-lg">
@@ -221,7 +223,7 @@
                 </section>
             @endif
 
-            @if ($contactOn)
+            @if ($contactOn && $theme->on('about_cta'))
                 <div class="ab-cta reveal">
                     <a class="btn" href="/contact">{{ __('site.storefront.about.cta') }}</a>
                 </div>
