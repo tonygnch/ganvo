@@ -570,14 +570,14 @@
            two columns exactly, so the last one stops being a lone cell
            stretched across a row of its own.
 
-           Scoped to the two-column range, where "the width of two sections" and
-           "the whole line" are the same thing. Wider than that the plate has
-           four columns or one line and "all" already leads it; giving it a full
-           row there would be a 940px bar carrying two words, which is the
-           banner the column basis below exists to prevent. */
-        @media (max-width: 760px) {
-            .rail .plate a.all { flex: 1 1 100%; }
-        }
+           EVERY WIDTH, not just the phone. It was held to the two-column range
+           on the argument that a full row for two words reads as a banner on a
+           desktop. Seen on a wide screen it reads as the masthead of a ruled
+           table instead, and it takes the orphan with it: with "all" out of the
+           run, the sections divide across the rows below without one of them
+           being left alone on a line and stretched to fill it — which is what
+           put ДЮШЕМЕ across the foot of the plate. */
+        .rail .plate a.all { flex: 1 1 100%; }
 
         /* BETWEEN THE ONE-LINE AND THE TWO-COLUMN CASE the cells are still sized
            by their words, and when only one wraps it has a whole row to grow
