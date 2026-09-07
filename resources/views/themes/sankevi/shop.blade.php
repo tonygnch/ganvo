@@ -107,14 +107,15 @@
      | of them. Now picking a section changes the picture to that section's,
      | and the generic cover is what the whole catalogue gets.
      |
-     | Falls back rather than blanking: a section with no photograph of its own
-     | keeps the shop's, which is a better cover than none.
+     | NO STAND-IN. A section with no photograph of its own gets no cover, and
+     | so does the whole catalogue — there is nothing to be the cover OF. The
+     | band used to fall back to a shipped end-grain shot, which put a stock
+     | photograph nobody chose above the merchant's own sections; the page
+     | already has a designed state for this and opens on its title instead.
      */
     $coverUrl = null;
-    if ($theme->on('shop_masthead')) {
-        $coverUrl = $activeCat && $activeCat->image_path
-            ? \Illuminate\Support\Facades\Storage::url($activeCat->image_path)
-            : $theme->image('shop_image');
+    if ($theme->on('shop_masthead') && $activeCat && $activeCat->image_path) {
+        $coverUrl = \Illuminate\Support\Facades\Storage::url($activeCat->image_path);
     }
     $sheetMark = $theme->on('sheet_marks') ? trim($theme->label('sheet_marks')) : null;
     $csContactOn = $store->contactPage()['enabled'];

@@ -532,12 +532,10 @@ return [
             'size' => '1200×900',
             'default' => '/images/demo/sankevi/workshop.webp',
         ],
-        'shop_image' => [
-            'label' => 'Shop masthead photograph',
-            'hint' => 'The cover of the catalogue at /shop. Very wide crop — the band is short and full-bleed. Ships with the end-grain stack.',
-            'size' => '2100×900',
-            'default' => '/images/demo/sankevi/endgrain.webp',
-        ],
+        /* No 'shop_image'. The masthead draws a section's OWN photograph and
+           nothing else, so a slot here would have been an upload field in the
+           admin that changed nothing on the page. The shop_masthead switch
+           still governs whether the band is drawn at all. */
         /* THE BROWSER TAB. Its own slot rather than reusing seal_image,
            because the two are sized and coloured for different grounds: the
            seal sits on the forest header at 26px and ships cream, while a tab
