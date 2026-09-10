@@ -554,7 +554,7 @@ return [
 
             'cfg_zoom_in' => 'Увеличи',
             'cfg_zoom_out' => 'Намали',
-            'cfg_fit' => 'Побери',
+            'cfg_fit' => 'Центрирай',
             'cfg_view_label' => 'Изглед на стелажа',
 
             'cfg_panel_h' => 'Твоята конфигурация',

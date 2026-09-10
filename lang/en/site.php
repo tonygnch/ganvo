@@ -553,7 +553,7 @@ return [
 
             'cfg_zoom_in' => 'Zoom in',
             'cfg_zoom_out' => 'Zoom out',
-            'cfg_fit' => 'Fit',
+            'cfg_fit' => 'Centre',
             'cfg_view_label' => 'Rack elevation',
 
             'cfg_panel_h' => 'Your configuration',
