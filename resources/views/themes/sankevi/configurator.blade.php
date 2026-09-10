@@ -209,9 +209,13 @@
 <main>
     <section class="cfg-head">
         <div class="wrap">
-            <span class="kicker">{{ __('site.storefront.sankevi.cfg_eyebrow') }}</span>
-            <h1>{!! __('site.storefront.sankevi.cfg_h1_html') !!}</h1>
-            <p class="lead">{{ __('site.storefront.sankevi.cfg_lead') }}</p>
+            {{-- editable(): the merchant's words when they have written any,
+                 the platform's when they have not — and it is the one place
+                 that decides escaping, so the _html slot keeps its <em> and
+                 everything else is escaped without the call site choosing. --}}
+            <span class="kicker">{!! $theme->editable('cfg_eyebrow') !!}</span>
+            <h1>{!! $theme->editable('cfg_h1_html') !!}</h1>
+            <p class="lead">{!! $theme->editable('cfg_lead') !!}</p>
         </div>
     </section>
 
@@ -313,7 +317,7 @@
                         <div class="row"><span data-cfg-vatlabel></span><span data-cfg-vat></span></div>
                         <div class="row total"><span>{{ __('site.storefront.sankevi.cfg_total') }}</span><span data-cfg-total></span></div>
                     </div>
-                    <p class="cfg-pricenote">{{ __('site.storefront.sankevi.cfg_price_note') }}</p>
+                    <p class="cfg-pricenote">{!! $theme->editable('cfg_price_note') !!}</p>
 
                     <div class="cfg-actions">
                         <button type="button" class="btn cut-sm primary-cta" data-cfg-addcart>{{ __('site.storefront.sankevi.cfg_add_to_cart') }}</button>

@@ -176,6 +176,33 @@ return [
     ],
 
     'content' => [
+        /* THE CONFIGURATOR'S OWN PROSE.
+           Everything else on that page is machinery — part names, button
+           labels, the refusals — and belongs in the lang files where both
+           languages stay in step. These four are the merchant SPEAKING, and
+           they are the sentences a client reads once and immediately wants
+           differently. Editable, so that conversation does not need a
+           developer in it. */
+        'cfg_eyebrow' => [
+            'label' => 'Configurator — eyebrow above the headline',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.cfg_eyebrow',
+        ],
+        'cfg_h1_html' => [
+            'label' => 'Configurator — headline (HTML: wrap accent words in <em>)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.cfg_h1_html',
+        ],
+        'cfg_lead' => [
+            'label' => 'Configurator — intro paragraph',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.cfg_lead',
+        ],
+        'cfg_price_note' => [
+            'label' => 'Configurator — note under the price',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.cfg_price_note',
+        ],
         'hero_h1_html' => [
             'label' => 'Hero — headline (HTML: wrap accent words in <em>)',
             'type' => 'text',
