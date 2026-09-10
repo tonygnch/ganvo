@@ -640,62 +640,93 @@
         .m-drawer.open nav a:nth-child(5) { transition-delay: .31s; } .m-drawer.open nav a:nth-child(6) { transition-delay: .37s; }
         .m-drawer nav a .ix { font-family: var(--body); font-size: 11px; font-weight: 500; letter-spacing: .2em; color: var(--accent-ink); }
         /* ===== THE CATEGORY'S FULL DESCRIPTION =====
-           One block of prose, two presentations, no duplicated markup.
+           A button and a modal, at every width.
 
-           WIDE: the closed <dialog>'s display is overridden and it lays out as
-           an ordinary text column. The browser hides a closed dialog; author
-           CSS is allowed to say otherwise, which is the whole trick.
+           It was inline prose on a desktop and a sheet on a phone: one
+           paragraph with two behaviours, and the desktop half pushed the goods
+           down the page as soon as a merchant wrote more than a line. Now the
+           text is always one tap away and never in the way.
 
-           NARROW: the override is dropped, so the dialog behaves as a dialog
-           again — invisible until showModal(), and then a real modal with the
-           focus trap, the Escape key and the backdrop supplied by the browser
-           rather than reimplemented badly. ===== */
+           The panel is a flex COLUMN — head, then scrolling prose — so the
+           title and the ✕ hold their place however far down the reading goes.
+           ===== */
         .catmore { margin: 30px 0 4px; }
-        .catmore-btn { display: none; }
-        .catmore-panel {
-            display: block; position: static; inset: auto;
-            max-width: 68ch; width: auto; max-height: none;
-            margin: 0; padding: 0; border: 0; background: transparent; color: inherit;
-            overflow: visible;
+        .catmore-btn {
+            display: inline-flex; align-items: center; gap: 10px;
+            font-family: var(--body); font-size: 11px; font-weight: 600;
+            letter-spacing: .18em; text-transform: uppercase;
+            padding: 12px 20px; cursor: pointer; min-height: 44px;
+            background: transparent; color: var(--txt);
+            border: 1px solid var(--line2);
+            clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
+            transition: border-color .18s ease, color .18s ease;
         }
-        .catmore-close { display: none; }
-        .catmore-h { display: none; }          /* the page already has this heading */
-        .catmore-text { color: var(--muted); font-size: 16px; line-height: 1.8; }
+        body.no-cut .catmore-btn { clip-path: none; }
+        .catmore-btn:hover { border-color: var(--accent); color: var(--accent-ink); }
+        .catmore-btn::after { content: "→"; }
+
+        .catmore-panel:not([open]) { display: none; }
+        .catmore-panel[open] {
+            /* A column, not a scrolling block: the head is a sibling of the
+               prose rather than something floating over it, so it holds its
+               place however far down you read. */
+            display: flex; flex-direction: column;
+            position: fixed; inset: 50% auto auto 50%;
+            transform: translate(-50%, -50%);
+            width: min(720px, calc(100vw - 48px));
+            max-height: min(78vh, 720px);
+            margin: 0; padding: 0;
+            background: var(--bg); color: var(--txt);
+            border: 1px solid var(--line2);
+            overflow: hidden;
+        }
+        .catmore-panel::backdrop { background: color-mix(in srgb, #000 66%, transparent); }
+
+        .catmore-head {
+            flex: 0 0 auto;
+            display: flex; align-items: flex-start; justify-content: space-between; gap: 18px;
+            padding: 22px 26px 16px;
+            background: var(--bg);
+            border-bottom: 1px solid transparent;
+            transition: border-color .18s ease;
+        }
+        /* The rule appears only once there is text above the fold to separate
+           the head FROM — at rest it would just be a line for its own sake. */
+        .catmore-panel.is-scrolled .catmore-head { border-bottom-color: var(--line); }
+
+        .catmore-h {
+            font-family: var(--display); font-weight: 500; text-transform: uppercase;
+            letter-spacing: .04em; font-size: 21px; line-height: 1.15;
+            margin: 0; color: var(--txt);
+        }
+        .catmore-close {
+            flex: 0 0 auto; background: none; border: 0; font-size: 20px; line-height: 1;
+            color: var(--muted); padding: 6px 8px; margin: -6px -8px 0 0; cursor: pointer;
+            min-width: 44px; min-height: 44px;
+        }
+        .catmore-close:hover { color: var(--accent-ink); }
+
+        .catmore-text:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+        .catmore-text {
+            flex: 1 1 auto; min-height: 0;
+            overflow-y: auto; overscroll-behavior: contain;
+            padding: 16px 26px 28px;
+            color: var(--muted); font-size: 16px; line-height: 1.8;
+        }
         .catmore-text br + br { content: ""; display: block; height: 10px; }
 
         @media (max-width: 760px) {
-            /* A phone cannot spare the height: a long block above the goods is
-               a page of reading before the first plank. It becomes a button. */
+            /* A phone gets the sheet it expects — up from the bottom edge,
+               full width, thumb at the ✕. */
             .catmore { margin: 18px 0 0; }
-            .catmore-btn {
-                display: inline-flex; align-items: center; gap: 10px;
-                font-family: var(--body); font-size: 11px; font-weight: 600;
-                letter-spacing: .18em; text-transform: uppercase;
-                padding: 12px 20px; cursor: pointer;
-                background: transparent; color: var(--txt);
-                border: 1px solid var(--line2);
-                clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
-            }
-            .catmore-btn::after { content: "→"; }
-            .catmore-panel:not([open]) { display: none; }
             .catmore-panel[open] {
-                display: block; position: fixed; inset: auto 0 0 0;
+                inset: auto 0 0 0; transform: none;
                 width: 100%; max-width: none; max-height: 86vh;
-                margin: 0; padding: 26px 22px calc(30px + env(safe-area-inset-bottom));
-                background: var(--bg); color: var(--txt);
-                border-top: 1px solid var(--line2);
-                overflow-y: auto; overscroll-behavior: contain;
+                border: 0; border-top: 1px solid var(--line2);
             }
-            .catmore-panel::backdrop { background: color-mix(in srgb, #000 62%, transparent); }
-            .catmore-close {
-                display: block; position: absolute; top: 14px; right: 14px;
-                background: none; border: 0; font-size: 22px; line-height: 1;
-                color: var(--txt); padding: 6px 10px; cursor: pointer;
-            }
-            .catmore-h {
-                display: block; font-family: var(--display); font-weight: 500;
-                font-size: 22px; margin: 0 40px 14px 0; color: var(--txt);
-            }
+            .catmore-head { padding: 20px 22px 14px; }
+            .catmore-h { font-size: 19px; }
+            .catmore-text { padding: 14px 22px calc(28px + env(safe-area-inset-bottom)); }
         }
 
         /* ===== THE OPENING SCREEN =====
@@ -1280,19 +1311,44 @@
     </footer>
 
     <script>
-        // The category's full description, on a phone. showModal() rather than
-        // a class toggle: it is what puts the page behind it inert and gives
-        // Escape and the focus trap for free. On a wide screen the button is
-        // display:none, so none of this can fire.
+        // The category's full description. showModal() rather than a class
+        // toggle: it is what puts the page behind it inert and gives Escape and
+        // the focus trap for free. Same behaviour at every width.
         (function () {
             var open = document.querySelector('[data-catmore]');
             var panel = document.querySelector('[data-catmore-panel]');
             if (! open || ! panel || typeof panel.showModal !== 'function') return;
-            open.addEventListener('click', function () { panel.showModal(); });
+
+            var text = panel.querySelector('[data-catmore-text]');
+
+            // The head only earns its rule once there is prose behind it.
+            function markScroll() {
+                if (! text) return;
+                panel.classList.toggle('is-scrolled', text.scrollTop > 2);
+            }
+            if (text) { text.addEventListener('scroll', markScroll, { passive: true }); }
+
+            open.addEventListener('click', function () {
+                panel.showModal();
+                // A reopened panel starts at the top, not wherever it was left.
+                if (text) { text.scrollTop = 0; }
+                panel.classList.remove('is-scrolled');
+            });
+
             var close = panel.querySelector('[data-catmore-close]');
             if (close) { close.addEventListener('click', function () { panel.close(); }); }
-            // Tapping the backdrop is the gesture everyone expects to dismiss it.
-            panel.addEventListener('click', function (e) { if (e.target === panel) { panel.close(); } });
+
+            // Clicking outside is the gesture everyone expects to dismiss it.
+            // The dialog fills the viewport as far as the event is concerned,
+            // so test the pointer against the PANEL's own box rather than
+            // trusting e.target — a click on the padding is still e.target ===
+            // panel, and would otherwise close it from inside.
+            panel.addEventListener('click', function (e) {
+                var r = panel.getBoundingClientRect();
+                var outside = e.clientX < r.left || e.clientX > r.right
+                    || e.clientY < r.top || e.clientY > r.bottom;
+                if (outside) { panel.close(); }
+            });
         })();
 
         // Ticker — set duration from the merchant's px/sec rate so perceived
