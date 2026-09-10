@@ -56,6 +56,8 @@ return [
         ],
         'field' => [
             'parent' => 'Parent category',
+            'short_description' => 'Short description',
+            'long_description' => 'Full description',
             'image' => 'Category image',
             'is_active' => 'Visible in storefront',
             'show_in_menu' => 'Show in header navigation',
@@ -64,6 +66,8 @@ return [
         ],
         'help' => [
             'slug' => 'URL part: /categories/{slug}. Lowercase letters, numbers, dashes.',
+            'short_description' => 'The line under the page heading. Kept short so it fits there — up to 400 characters.',
+            'long_description' => 'The full text for this category. No length limit. On a phone it opens from a button.',
             'parent' => 'Leave empty for a top-level category.',
             'image' => 'Optional. Shown on the category card + page header.',
             'is_active' => 'When off, the category is hidden from the storefront but products inside it still appear if assigned to other visible categories or queried directly.',

@@ -655,6 +655,15 @@
             </div>
         </section>
 
+        @if ($activeCat)
+            <div class="wrap">
+                @include('themes.sankevi.partials.category-long', [
+                    'catLong' => $activeCat->long_description,
+                    'catName' => $activeCat->name,
+                ])
+            </div>
+        @endif
+
         <div class="wrap">
             <div class="rail">
                 @php

@@ -88,6 +88,10 @@
                 <div class="crumb"><a href="/">{{ __('site.storefront.product.breadcrumb_shop') }}</a> / {{ $category->name }}</div>
                 <h1>{{ $category->name }}</h1>
                 @if ($category->description)<p>{{ $category->description }}</p>@endif
+                @include('themes.sankevi.partials.category-long', [
+                    'catLong' => $category->long_description,
+                    'catName' => $category->name,
+                ])
             </div>
 
             <div class="spec-pills" aria-hidden="true">

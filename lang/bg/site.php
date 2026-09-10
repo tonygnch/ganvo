@@ -612,6 +612,7 @@ return [
             'sort_price_desc' => 'Цена · низходящо',
             'sort_name_asc' => 'Име · А → Я',
             'category' => 'Категория',
+            'category_more' => 'Още за категорията',
             'category_all' => 'Всички категории',
             'price' => 'Цена',
             'price_min' => 'Мин. цена',

@@ -611,6 +611,7 @@ return [
             'sort_price_desc' => 'Price · high to low',
             'sort_name_asc' => 'Name · A → Z',
             'category' => 'Category',
+            'category_more' => 'More about this category',
             'category_all' => 'All categories',
             'price' => 'Price',
             'price_min' => 'Min price',

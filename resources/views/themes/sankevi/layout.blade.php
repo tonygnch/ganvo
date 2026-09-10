@@ -639,6 +639,65 @@
         .m-drawer.open nav a:nth-child(3) { transition-delay: .19s; } .m-drawer.open nav a:nth-child(4) { transition-delay: .25s; }
         .m-drawer.open nav a:nth-child(5) { transition-delay: .31s; } .m-drawer.open nav a:nth-child(6) { transition-delay: .37s; }
         .m-drawer nav a .ix { font-family: var(--body); font-size: 11px; font-weight: 500; letter-spacing: .2em; color: var(--accent-ink); }
+        /* ===== THE CATEGORY'S FULL DESCRIPTION =====
+           One block of prose, two presentations, no duplicated markup.
+
+           WIDE: the closed <dialog>'s display is overridden and it lays out as
+           an ordinary text column. The browser hides a closed dialog; author
+           CSS is allowed to say otherwise, which is the whole trick.
+
+           NARROW: the override is dropped, so the dialog behaves as a dialog
+           again — invisible until showModal(), and then a real modal with the
+           focus trap, the Escape key and the backdrop supplied by the browser
+           rather than reimplemented badly. ===== */
+        .catmore { margin: 30px 0 4px; }
+        .catmore-btn { display: none; }
+        .catmore-panel {
+            display: block; position: static; inset: auto;
+            max-width: 68ch; width: auto; max-height: none;
+            margin: 0; padding: 0; border: 0; background: transparent; color: inherit;
+            overflow: visible;
+        }
+        .catmore-close { display: none; }
+        .catmore-h { display: none; }          /* the page already has this heading */
+        .catmore-text { color: var(--muted); font-size: 16px; line-height: 1.8; }
+        .catmore-text br + br { content: ""; display: block; height: 10px; }
+
+        @media (max-width: 760px) {
+            /* A phone cannot spare the height: a long block above the goods is
+               a page of reading before the first plank. It becomes a button. */
+            .catmore { margin: 18px 0 0; }
+            .catmore-btn {
+                display: inline-flex; align-items: center; gap: 10px;
+                font-family: var(--body); font-size: 11px; font-weight: 600;
+                letter-spacing: .18em; text-transform: uppercase;
+                padding: 12px 20px; cursor: pointer;
+                background: transparent; color: var(--txt);
+                border: 1px solid var(--line2);
+                clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
+            }
+            .catmore-btn::after { content: "→"; }
+            .catmore-panel:not([open]) { display: none; }
+            .catmore-panel[open] {
+                display: block; position: fixed; inset: auto 0 0 0;
+                width: 100%; max-width: none; max-height: 86vh;
+                margin: 0; padding: 26px 22px calc(30px + env(safe-area-inset-bottom));
+                background: var(--bg); color: var(--txt);
+                border-top: 1px solid var(--line2);
+                overflow-y: auto; overscroll-behavior: contain;
+            }
+            .catmore-panel::backdrop { background: color-mix(in srgb, #000 62%, transparent); }
+            .catmore-close {
+                display: block; position: absolute; top: 14px; right: 14px;
+                background: none; border: 0; font-size: 22px; line-height: 1;
+                color: var(--txt); padding: 6px 10px; cursor: pointer;
+            }
+            .catmore-h {
+                display: block; font-family: var(--display); font-weight: 500;
+                font-size: 22px; margin: 0 40px 14px 0; color: var(--txt);
+            }
+        }
+
         /* ===== THE OPENING SCREEN =====
            The mark fills from the bottom, the way a vessel does — the one
            motion a yard would recognise. Two copies of the seal, both drawn as
@@ -1215,6 +1274,21 @@
     </footer>
 
     <script>
+        // The category's full description, on a phone. showModal() rather than
+        // a class toggle: it is what puts the page behind it inert and gives
+        // Escape and the focus trap for free. On a wide screen the button is
+        // display:none, so none of this can fire.
+        (function () {
+            var open = document.querySelector('[data-catmore]');
+            var panel = document.querySelector('[data-catmore-panel]');
+            if (! open || ! panel || typeof panel.showModal !== 'function') return;
+            open.addEventListener('click', function () { panel.showModal(); });
+            var close = panel.querySelector('[data-catmore-close]');
+            if (close) { close.addEventListener('click', function () { panel.close(); }); }
+            // Tapping the backdrop is the gesture everyone expects to dismiss it.
+            panel.addEventListener('click', function (e) { if (e.target === panel) { panel.close(); } });
+        })();
+
         // Ticker — set duration from the merchant's px/sec rate so perceived
         // speed is length-independent. The track holds two identical halves and
         // translates -50%; duration = halfWidth / pps. data-pps="0" = static.

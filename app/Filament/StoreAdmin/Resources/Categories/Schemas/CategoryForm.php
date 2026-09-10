@@ -5,8 +5,8 @@ namespace App\Filament\StoreAdmin\Resources\Categories\Schemas;
 use App\Models\Category;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -47,10 +47,29 @@ class CategoryForm
                                 modifyRuleUsing: fn ($rule) => $rule->where('tenant_id', auth()->user()?->tenant_id),
                             )
                             ->helperText(__('admin.categories.help.slug')),
+                        /*
+                         | TWO DESCRIPTIONS, AND THEY DO DIFFERENT WORK.
+                         |
+                         | The short one is the line printed under the heading
+                         | on the shop cover and the category page — it has to
+                         | fit there, so it keeps a cap, but a stated one with
+                         | the reason next to it rather than a silent trim at
+                         | the 1000th character.
+                         |
+                         | The long one has no cap at all. It was the 1000 here
+                         | that cut the merchant's text, never the column: both
+                         | are TEXT and hold about 65,000 characters.
+                         */
                         Textarea::make('description')
-                            ->label(__('admin.shared.field.description'))
+                            ->label(__('admin.categories.field.short_description'))
+                            ->helperText(__('admin.categories.help.short_description'))
                             ->rows(3)
-                            ->maxLength(1000)
+                            ->maxLength(400)
+                            ->columnSpanFull(),
+                        Textarea::make('long_description')
+                            ->label(__('admin.categories.field.long_description'))
+                            ->helperText(__('admin.categories.help.long_description'))
+                            ->rows(10)
                             ->columnSpanFull(),
                     ]),
 
@@ -69,6 +88,7 @@ class CategoryForm
                                 if ($record) {
                                     $query->where('id', '!=', $record->id);
                                 }
+
                                 return $query->pluck('name', 'id');
                             })
                             ->searchable()
