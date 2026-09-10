@@ -1059,6 +1059,7 @@
         // don't leave a footer link pointing at a route that 404s.
         $csContactOn = $store->contactPage()['enabled'];
         $csAboutOn = $store->aboutPage()['enabled'];
+        $csRackOn = $store->rackConfigurator()['enabled'];
         $csNavMenu = $store->navMenuItems();
         $customer = auth('customer')->user();
         $currentLocale = app()->getLocale();
@@ -1149,6 +1150,10 @@
                         @if ($csAboutOn)<a href="/about">{{ __('site.storefront.footer.about') }}</a>@endif
                         @if ($csContactOn)<a href="/contact">{{ __('site.storefront.footer.contact') }}</a>@endif
                     @endif
+                    {{-- Outside both branches on purpose: the configurator is a
+                         way to buy, not a page of the site, and a merchant who
+                         builds their own menu must not lose it by omission. --}}
+                    @if ($csRackOn)<a href="/configurator">{{ __('site.storefront.sankevi.cfg_nav') }}</a>@endif
                 </div>
                 <div class="right">
                     @include('storefront.partials.mode-toggle')
@@ -1208,6 +1213,7 @@
                 @if ($csAboutOn)<a href="/about"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ __('site.storefront.footer.about') }}</a>@endif
                 @if ($csContactOn)<a href="/contact"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ __('site.storefront.footer.contact') }}</a>@endif
             @endif
+            @if ($csRackOn)<a href="/configurator"><span class="ix">{{ sprintf('%02d', ++$mIx) }}</span>{{ __('site.storefront.sankevi.cfg_nav') }}</a>@endif
         </nav>
 
         {{-- THE ACCOUNT AND THE BASKET ARE NOT SECTIONS OF THE SITE.

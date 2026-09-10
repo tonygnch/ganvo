@@ -474,6 +474,7 @@ return [
             'req_delivery_note' => 'Quoted with the offer',
             'req_est_label' => 'Estimate',
             'req_est_note' => 'An indicative figure taken from our list prices. The yard confirms the final price once the cut and the delivery are agreed.',
+            'req_add' => 'Add to the request',
             'req_cta' => 'Continue to request →',
             'req_no_payment' => 'No card · no payment online',
 
@@ -510,6 +511,88 @@ return [
             'ord_est_total' => 'Estimated total',
             'ord_est_note' => 'Indicative only — our list prices, before the cut and the delivery are agreed. The offer we send is the binding figure.',
             'ord_back' => 'Back to the yard',
+
+            /*
+            |------------------------------------------------------------------
+            | Rack configurator (/configurator)
+            |------------------------------------------------------------------
+            | Part names carry into the cart and freeze onto the order, so they
+            | are written the way the yard says them, not the way a catalogue
+            | would.
+            */
+            'cfg_nav' => 'Configurator',
+            'cfg_title' => 'Shelving configurator',
+            'cfg_eyebrow' => 'Build it yourself',
+            'cfg_h1_html' => 'The rack, <em>built to your run</em>',
+            'cfg_lead' => 'Pick a height, a depth and a number of levels, then add sections. The price moves as you build, and the parts list is exactly what we load onto the lorry.',
+
+            'cfg_part_frame' => 'Frame :h×:d cm',
+            'cfg_part_shelf' => 'Shelf :w×:d cm',
+            'cfg_part_end_pin' => 'End pin Ø10',
+            'cfg_part_extension_pin' => 'Extension pin Ø10',
+            'cfg_part_cross_brace' => 'Cross-brace',
+            'cfg_sections_count' => '{1} :count section|[2,*] :count sections',
+            'cfg_levels_count' => '{1} :count level|[2,*] :count levels',
+            'cfg_rack_name' => 'Rack :h×:d cm · :sections × :levels · :metres m',
+
+            'cfg_step_height' => 'Frame height',
+            'cfg_step_depth' => 'Depth',
+            'cfg_step_levels' => 'Levels',
+            'cfg_step_width' => 'Width of the new section',
+            'cfg_add_section' => 'Add section',
+            'cfg_reset' => 'Start again',
+            'cfg_reset_confirm' => 'Start a new configuration?',
+
+            'cfg_section_n' => 'Section :n',
+            'cfg_section_size' => ':w × :d cm',
+            'cfg_edit_width' => 'Width',
+            'cfg_move_left' => 'Left',
+            'cfg_move_right' => 'Right',
+            'cfg_delete_section' => 'Remove this section',
+            'cfg_shared_note' => 'Height, depth and levels apply to the whole run.',
+
+            'cfg_zoom_in' => 'Zoom in',
+            'cfg_zoom_out' => 'Zoom out',
+            'cfg_fit' => 'Fit',
+            'cfg_view_label' => 'Rack elevation',
+
+            'cfg_panel_h' => 'Your configuration',
+            'cfg_summary_height' => 'Height',
+            'cfg_summary_depth' => 'Depth',
+            'cfg_summary_length' => 'Total length',
+            'cfg_summary_sections' => 'Sections',
+            'cfg_summary_levels' => 'Levels',
+            'cfg_summary_shelves' => 'Shelves',
+            'cfg_set_includes' => 'The set includes',
+            'cfg_see_set' => 'See what the set includes',
+            'cfg_qty' => 'pcs',
+
+            'cfg_subtotal' => 'Price excl. VAT',
+            'cfg_vat' => 'VAT :rate%',
+            'cfg_total' => 'Total',
+            'cfg_price_note' => 'An estimate at list prices. Transport is quoted separately.',
+
+            'cfg_add_to_cart' => 'Add to the request',
+            'cfg_added' => 'The rack has been added to your request',
+            'cfg_save' => 'Save this configuration',
+            'cfg_saved' => 'Configuration saved',
+            'cfg_copy_link' => 'Copy link',
+            'cfg_link_copied' => 'Link copied',
+            'cfg_code_label' => 'Configuration code',
+            'cfg_restored' => 'Restored configuration :code',
+
+            'cfg_over_limit' => 'The largest configuration we can price online is :metres m. For a bigger project, get in touch for an individual quote.',
+            'cfg_err_height' => 'That height is not available.',
+            'cfg_err_depth' => 'That depth is not available.',
+            'cfg_err_levels' => 'That number of levels is not available.',
+            'cfg_err_width' => 'That section width is not available.',
+            'cfg_err_no_sections' => 'A rack needs at least one section.',
+            'cfg_err_too_long' => 'The largest configuration we can price online is :metres m. For a bigger project, get in touch for an individual quote.',
+            'cfg_err_no_frame_price' => 'There is no frame for that height and depth at the moment.',
+            'cfg_err_no_shelf_price' => 'There is no shelf for that width and depth at the moment.',
+            'cfg_err_no_part_price' => 'A part of the set has no price. Get in touch and we will sort it out.',
+            'cfg_err_not_found' => 'That configuration could not be found.',
+            'cfg_err_generic' => 'Something went wrong. Try again.',
         ],
         // Storefront contact page — merchant details + enquiry form.
         'contact' => [

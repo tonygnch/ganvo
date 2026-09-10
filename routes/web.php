@@ -13,6 +13,7 @@ use App\Http\Controllers\Storefront\AccountController;
 use App\Http\Controllers\Storefront\Auth\CustomerAuthController;
 use App\Http\Controllers\Storefront\CartController;
 use App\Http\Controllers\Storefront\CheckoutController;
+use App\Http\Controllers\Storefront\ConfiguratorController;
 use App\Http\Controllers\Storefront\ContactController;
 use App\Http\Controllers\Storefront\CurrencyController;
 use App\Http\Controllers\Storefront\OrderController;
@@ -252,8 +253,10 @@ $storefrontRoutes = function () {
     // Cart line ids are "{productId}:{variantId|0}" — colon-delimited so
     // we can address variant-specific lines distinctly. Constrain to the
     // expected shape so stray characters can't muck about with sessions.
-    Route::patch('/cart/{lineId}', [CartController::class, 'update'])->where('lineId', '[0-9]+:[0-9]+');
-    Route::delete('/cart/{lineId}', [CartController::class, 'remove'])->where('lineId', '[0-9]+:[0-9]+');
+    // A configured rack is addressed as "rack:{code}" — same colon shape, its
+    // own namespace, still a whitelist rather than a wildcard.
+    Route::patch('/cart/{lineId}', [CartController::class, 'update'])->where('lineId', '[0-9]+:[0-9]+|rack:[A-Z0-9]{4,12}');
+    Route::delete('/cart/{lineId}', [CartController::class, 'remove'])->where('lineId', '[0-9]+:[0-9]+|rack:[A-Z0-9]{4,12}');
 
     Route::get('/checkout', [CheckoutController::class, 'show']);
     Route::post('/checkout', [CheckoutController::class, 'process']);
@@ -268,6 +271,15 @@ $storefrontRoutes = function () {
     // History / about page. Opt-in, so this 404s until the merchant fills it
     // in and switches it on in Store settings.
     Route::get('/about', [AboutController::class, 'show']);
+
+    // Rack configurator. Opt-in per store like /about, so this 404s for every
+    // tenant that has not switched it on. The optional {code} is a saved
+    // configuration's share link (S27).
+    Route::get('/configurator/{code?}', [ConfiguratorController::class, 'show'])
+        ->where('code', '[A-Za-z0-9]{4,12}');
+    Route::post('/configurator/quote', [ConfiguratorController::class, 'quote']);
+    Route::post('/configurator/save', [ConfiguratorController::class, 'save']);
+    Route::post('/configurator/cart', [ConfiguratorController::class, 'addToCart']);
 
     // Customer auth + account
     Route::get('/account/login', [CustomerAuthController::class, 'showLogin']);
