@@ -90,8 +90,9 @@
        the browser keeps vertical scrolling and pinch-zoom. `none` swallowed
        both — on a phone the drawing is a third of the page and swiping up it
        did nothing at all. */
-    .cfg-canvas svg { display: block; width: 100%; height: 420px; touch-action: pan-y; cursor: grab; }
-    .cfg-canvas svg.dragging { cursor: grabbing; }
+    .cfg-canvas svg { display: block; width: 100%; height: 420px; touch-action: pan-y; cursor: default; }
+    .cfg-canvas svg.pannable { cursor: grab; }
+    .cfg-canvas svg.pannable.dragging { cursor: grabbing; }
 
     .cfg-tools { position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; z-index: 3; }
     .cfg-tools button { font-family: var(--body); font-size: 11px; font-weight: 600;
@@ -621,12 +622,35 @@
         var vh = base.h / state.zoom;
         var maxX = base.size.w + base.padX - vw;
         var minX = -base.padX;
-        var cx = (state.panX === null) ? (base.size.w / 2) : state.panX;
-        var vx = cx - vw / 2;
-        if (maxX < minX) { vx = (base.size.w - vw) / 2; }         /* fits: centre it */
-        else { vx = Math.min(maxX, Math.max(minX, vx)); }
+        var vx;
+
+        /*
+         | THE CLAMPED POSITION IS WRITTEN BACK.
+         |
+         | vx used to be clamped for drawing while state.panX kept whatever the
+         | drag had computed, so the pan could wander arbitrarily far outside
+         | the range that means anything — most easily at 100%, where the whole
+         | run fits, the view is centred and a drag therefore looks inert while
+         | still piling up pan. Zoom in afterwards and the view was already
+         | jammed against an edge: dragging one way did nothing at all, and it
+         | took a long haul the other way before anything moved.
+         */
+        if (maxX < minX) {
+            // The whole run fits. There is nothing to pan, so centre it and
+            // forget any pan that was accumulated.
+            vx = (base.size.w - vw) / 2;
+            state.panX = null;
+        } else {
+            var cx = (state.panX === null) ? (base.size.w / 2) : state.panX;
+            vx = Math.min(maxX, Math.max(minX, cx - vw / 2));
+            state.panX = vx + vw / 2;
+        }
+
         var vy = -base.h * 0.085 / state.zoom;
-        $('[data-cfg-svg]').setAttribute('viewBox', vx + ' ' + vy + ' ' + vw + ' ' + vh);
+        var svg = $('[data-cfg-svg]');
+        svg.setAttribute('viewBox', vx + ' ' + vy + ' ' + vw + ' ' + vh);
+        // Only offer the grab cursor when there is somewhere to grab it to.
+        svg.classList.toggle('pannable', maxX >= minX);
         $('[data-cfg-scale]').textContent = Math.round(state.zoom * 100) + '%';
     }
 
@@ -895,6 +919,7 @@
     var dragging = false, dragStartX = 0, dragStartPan = 0;
 
     svgEl.addEventListener('pointerdown', function (e) {
+        if (! svgEl.classList.contains('pannable')) { return; }
         dragging = true;
         dragStartX = e.clientX;
         dragStartPan = (state.panX === null) ? contentSize().w / 2 : state.panX;
