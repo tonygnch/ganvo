@@ -123,6 +123,7 @@ return [
             'tab_admin_panel' => 'Admin panel',
         ],
         'section' => [
+            'order_flow' => 'How an order ends',
             'theme' => 'Theme',
             'branding' => 'Branding',
             'storefront_effects' => 'Storefront effects',
@@ -140,6 +141,7 @@ return [
             'admin_appearance' => 'Admin panel appearance',
         ],
         'section_help' => [
+            'order_flow' => 'Take payment on the site, or collect a request you price yourself.',
             'theme' => 'Pick a starting point for your storefront. Every theme can then be made your own — palette presets, font pairings, sections and signature details — under Customize Theme.',
             'storefront_effects' => 'Fine-tune the motion of your storefront.',
             'announcement' => 'A thin promo strip shown at the top of every page on your storefront.',
@@ -167,6 +169,7 @@ return [
             'unverify' => 'Remove verification',
         ],
         'field' => [
+            'order_flow' => 'Order flow',
             'theme' => 'Theme',
             'primary_color' => 'Primary color',
             'secondary_color' => 'Secondary color',
@@ -235,6 +238,8 @@ return [
             'admin_accent_color' => 'Admin accent color',
         ],
         'help' => [
+            'flow_payment' => 'The customer pays online by card. Needs a connected Stripe account.',
+            'flow_enquiry' => 'The customer sends a list, you price it and get back to them. No money changes hands.',
             'primary_color' => 'Used for buttons, links, and accents.',
             'secondary_color' => 'Used for header background and primary text.',
             'number_animation' => 'How prices and quantities animate when the cart updates without a page reload. Honors a visitor’s “reduce motion” setting automatically.',
@@ -273,6 +278,8 @@ return [
             'force_verify' => 'Skip the real DNS check and mark this domain verified. Only available in local dev.',
         ],
         'opt' => [
+            'flow_payment' => 'Take payment at checkout',
+            'flow_enquiry' => 'Collect an enquiry, no payment',
             'checkout_guest' => 'Guest checkout only',
             'checkout_account' => 'Account required',
             'checkout_both' => 'Guest or account (recommended)',
@@ -451,6 +458,7 @@ Leave a blank line between paragraphs.',
             'model_plural' => 'orders',
         ],
         'section' => [
+            'rack_bom' => 'Rack cutting list',
             'order' => 'Order',
             'customer' => 'Customer',
             'shipping_address' => 'Shipping address',
@@ -552,6 +560,7 @@ Leave a blank line between paragraphs.',
             'settled_help' => 'This order has been paid, so its lines, shipping and totals are a record of what the customer was actually charged — editing them here would not move any money, it would only make the order disagree with the payment. Use Refund to change what is owed. Status, contact details, address, tracking and notes stay editable.',
         ],
         'section_help' => [
+            'rack_bom' => 'The parts it is built from, frozen when the order was placed — later price changes do not touch them.',
             'items' => 'Change a quantity or a price, add a line, remove one. The total recalculates when you save.',
             'items_locked' => 'Read-only: this order is paid.',
         ],
@@ -882,6 +891,62 @@ Leave a blank line between paragraphs.',
             'order_refunded' => 'Refunded',
             'order_cancelled' => 'Cancelled',
             'payment_stub' => 'Demo (stub)',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rack configurator
+    |--------------------------------------------------------------------------
+    */
+    'configurator' => [
+        'nav' => [
+            'label' => 'Rack configurator',
+            'tab_frames' => 'Frames',
+            'tab_shelves' => 'Shelves',
+            'tab_parts' => 'Fittings',
+            'tab_settings' => 'Settings',
+        ],
+        'text' => [
+            'intro' => 'Every price here is EXCLUDING VAT, the way a supplier list is written. VAT is added on top and shown separately to the customer. A blank price means the size is not sold.',
+        ],
+        'section' => [
+            'frame_height' => 'Frame :cm cm',
+            'shelf_width' => 'Shelf :cm cm',
+            'trade' => 'Trading rules',
+            'sizes' => 'Sizes',
+        ],
+        'section_help' => [
+            'trade' => 'VAT, the longest run you will price online, and what to say when someone exceeds it.',
+            'sizes' => 'How much smaller a board is than its bay. Changing this affects new configurations; saved ones keep the sizes they were built with.',
+        ],
+        'part' => [
+            'end_pin' => 'End pin Ø10',
+            'extension_pin' => 'Extension pin Ø10',
+            'cross_brace' => 'Cross-brace',
+        ],
+        'field' => [
+            'depth_cm' => 'Depth :cm cm',
+            'sku' => 'SKU',
+            'vat_rate' => 'VAT',
+            'max_length' => 'Maximum length',
+            'over_limit_text' => 'Message when the run is too long',
+            'width_trim' => 'Width taken off',
+            'depth_trim' => 'Depth taken off',
+            'thickness' => 'Board thickness',
+        ],
+        'help' => [
+            'vat_rate' => 'Bulgaria is 20%. The prices in the tables are net of it.',
+            'max_length' => 'Past this length the configurator stops and offers an individual quote instead.',
+            'over_limit_text' => 'Leave blank to use the standard wording.',
+            'width_trim' => 'A 100 cm bay with 3 cm taken off gives a 97 cm board.',
+            'thickness' => 'Used only by the drawing.',
+        ],
+        'action' => [
+            'open' => 'Open the configurator ↗',
+        ],
+        'notify' => [
+            'saved' => 'Prices saved',
         ],
     ],
     'manifest' => [

@@ -2,14 +2,19 @@
 
 namespace App\Models;
 
+use App\Services\Money;
+use App\Support\AccentPalette;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Store extends Model
 {
     public const CHECKOUT_GUEST = 'guest';
+
     public const CHECKOUT_ACCOUNT = 'account';
+
     public const CHECKOUT_BOTH = 'both';
 
     /**
@@ -22,6 +27,7 @@ class Store extends Model
      *   it is safer than the legacy stub path, which marked orders paid.
      */
     public const FLOW_PAYMENT = 'payment';
+
     public const FLOW_ENQUIRY = 'enquiry';
 
     public const ORDER_FLOWS = [
@@ -67,6 +73,7 @@ class Store extends Model
         'collection_display',
         'signup_fields',
         'shipping_methods',
+        'rack_configurator',
         'is_live',
         'checkout_mode',
         'order_flow',
@@ -86,6 +93,7 @@ class Store extends Model
         'collection_display' => 'array',
         'signup_fields' => 'array',
         'shipping_methods' => 'array',
+        'rack_configurator' => 'array',
         'is_live' => 'boolean',
         'custom_domain_verified_at' => 'datetime',
         'allow_registration' => 'boolean',
@@ -142,9 +150,9 @@ class Store extends Model
             return null;
         }
 
-        return '<iframe src="' . e($src) . '" style="border:0" loading="lazy"'
-            . ' referrerpolicy="no-referrer-when-downgrade" allowfullscreen'
-            . ' title="' . e(__('site.storefront.contact.map_label')) . '"></iframe>';
+        return '<iframe src="'.e($src).'" style="border:0" loading="lazy"'
+            .' referrerpolicy="no-referrer-when-downgrade" allowfullscreen'
+            .' title="'.e(__('site.storefront.contact.map_label')).'"></iframe>';
     }
 
     protected $attributes = [
@@ -161,6 +169,7 @@ class Store extends Model
     {
         $base = strtoupper($this->currency ?? 'EUR');
         $extra = array_map('strtoupper', (array) ($this->display_currencies ?? []));
+
         return array_values(array_unique(array_merge([$base], $extra)));
     }
 
@@ -192,14 +201,14 @@ class Store extends Model
         if ($code === 'BGN') {
             $eurRate = $base === 'EUR' ? 1.0 : (float) ($rates['EUR'] ?? 0);
             if ($eurRate > 0) {
-                return $eurRate * \App\Services\Money::EUR_BGN_RATE;
+                return $eurRate * Money::EUR_BGN_RATE;
             }
         }
         // EUR from BGN via the fixed peg (inverse).
         if ($code === 'EUR') {
             $bgnRate = $base === 'BGN' ? 1.0 : (float) ($rates['BGN'] ?? 0);
             if ($bgnRate > 0) {
-                return $bgnRate / \App\Services\Money::EUR_BGN_RATE;
+                return $bgnRate / Money::EUR_BGN_RATE;
             }
         }
 
@@ -219,7 +228,7 @@ class Store extends Model
     public function adminLogoUrl(): ?string
     {
         return $this->admin_logo_path
-            ? \Illuminate\Support\Facades\Storage::disk('public')->url($this->admin_logo_path)
+            ? Storage::disk('public')->url($this->admin_logo_path)
             : null;
     }
 
@@ -234,8 +243,8 @@ class Store extends Model
     {
         $hex = $this->admin_accent_color;
 
-        return \App\Support\AccentPalette::isUsable($hex)
-            ? '#' . ltrim(trim((string) $hex), '#')
+        return AccentPalette::isUsable($hex)
+            ? '#'.ltrim(trim((string) $hex), '#')
             : null;
     }
 
@@ -267,9 +276,10 @@ class Store extends Model
     public function ensureVerificationToken(): string
     {
         if (! $this->custom_domain_verification_token) {
-            $this->custom_domain_verification_token = 'ganvo-verification=' . Str::random(24);
+            $this->custom_domain_verification_token = 'ganvo-verification='.Str::random(24);
             $this->save();
         }
+
         return $this->custom_domain_verification_token;
     }
 
@@ -289,11 +299,11 @@ class Store extends Model
      * Keys are the stored slug; values are the admin-facing label.
      */
     public const NUMBER_ANIMATIONS = [
-        'count'    => 'Count up (rolling)',
+        'count' => 'Count up (rolling)',
         'odometer' => 'Odometer (digit reels)',
-        'flip'     => 'Flip (vertical)',
-        'fade'     => 'Fade swap',
-        'none'     => 'None (instant)',
+        'flip' => 'Flip (vertical)',
+        'fade' => 'Fade swap',
+        'none' => 'None (instant)',
     ];
 
     /**
@@ -304,6 +314,7 @@ class Store extends Model
     public function numberAnimation(): string
     {
         $v = (string) (($this->theme_settings ?? [])['number_animation'] ?? 'count');
+
         return array_key_exists($v, self::NUMBER_ANIMATIONS) ? $v : 'count';
     }
 
@@ -317,9 +328,9 @@ class Store extends Model
      * perceived speed consistent no matter how long the announcement text is.
      */
     public const ANNOUNCEMENT_SPEEDS = [
-        'slow'   => ['label' => 'Slow',   'pxPerSec' => 30],
+        'slow' => ['label' => 'Slow',   'pxPerSec' => 30],
         'normal' => ['label' => 'Normal', 'pxPerSec' => 55],
-        'fast'   => ['label' => 'Fast',   'pxPerSec' => 90],
+        'fast' => ['label' => 'Fast',   'pxPerSec' => 90],
         'static' => ['label' => 'Static (no scroll)', 'pxPerSec' => 0],
     ];
 
@@ -471,9 +482,9 @@ class Store extends Model
             ->map(fn ($m) => [
                 // Free text, not an int: merchants write "1998", "1998–2003"
                 // or "От 1998" and every one of those is a legitimate label.
-                'year'  => trim((string) ($m['year'] ?? '')),
+                'year' => trim((string) ($m['year'] ?? '')),
                 'title' => trim((string) ($m['title'] ?? '')),
-                'text'  => trim((string) ($m['text'] ?? '')),
+                'text' => trim((string) ($m['text'] ?? '')),
             ])
             ->filter(fn ($m) => $m['year'] !== '' || $m['title'] !== '' || $m['text'] !== '')
             ->values()
@@ -502,17 +513,17 @@ class Store extends Model
         $intro = trim((string) ($a['intro'] ?? ''));
 
         return [
-            'enabled'      => (bool) ($a['enabled'] ?? false),
-            'heading'      => trim((string) ($a['heading'] ?? '')),
-            'intro'        => $intro,
-            'story'        => $story,
+            'enabled' => (bool) ($a['enabled'] ?? false),
+            'heading' => trim((string) ($a['heading'] ?? '')),
+            'intro' => $intro,
+            'story' => $story,
             'founded_year' => $year,
-            'milestones'   => $milestones,
-            'stats'        => $stats,
-            'images'       => $images,
+            'milestones' => $milestones,
+            'stats' => $stats,
+            'images' => $images,
             // Heading alone is not content — it falls back to platform copy,
             // so a page with nothing else is just our own default sentence.
-            'has_content'  => $story !== '' || $intro !== ''
+            'has_content' => $story !== '' || $intro !== ''
                 || $milestones !== [] || $stats !== [] || $images !== [],
         ];
     }
@@ -524,13 +535,14 @@ class Store extends Model
         if (! array_key_exists($speed, self::ANNOUNCEMENT_SPEEDS)) {
             $speed = 'normal';
         }
+
         return [
             'enabled' => (bool) ($a['enabled'] ?? false),
-            'text'    => trim((string) ($a['text'] ?? '')),
-            'link'    => isset($a['link']) && trim((string) $a['link']) !== ''
+            'text' => trim((string) ($a['text'] ?? '')),
+            'link' => isset($a['link']) && trim((string) $a['link']) !== ''
                 ? trim((string) $a['link'])
                 : null,
-            'speed'    => $speed,
+            'speed' => $speed,
             'speed_px' => (int) self::ANNOUNCEMENT_SPEEDS[$speed]['pxPerSec'],
         ];
     }
@@ -581,8 +593,8 @@ class Store extends Model
                             && ! empty($c['label'])
                             && ! empty($c['url']))
                         ->map(fn ($c) => [
-                            'label'      => trim((string) $c['label']),
-                            'url'        => trim((string) $c['url']),
+                            'label' => trim((string) $c['label']),
+                            'url' => trim((string) $c['url']),
                             'sort_order' => (int) ($c['sort_order'] ?? 0),
                         ])
                         ->sortBy('sort_order')
@@ -591,12 +603,13 @@ class Store extends Model
                 }
 
                 $url = trim((string) ($r['url'] ?? ''));
+
                 return [
-                    'label'       => trim((string) $r['label']),
-                    'url'         => $url !== '' ? $url : null,
-                    'sort_order'  => (int) ($r['sort_order'] ?? 0),
+                    'label' => trim((string) $r['label']),
+                    'url' => $url !== '' ? $url : null,
+                    'sort_order' => (int) ($r['sort_order'] ?? 0),
                     'auto_source' => $autoSource,
-                    'children'    => $children,
+                    'children' => $children,
                 ];
             })
             // Drop items that have neither a URL nor any children — there's
@@ -607,6 +620,7 @@ class Store extends Model
             ->sortBy('sort_order')
             ->values()
             ->all();
+
         return $items;
     }
 
@@ -648,10 +662,10 @@ class Store extends Model
                 }
                 $emitted[$c->id] = true;
                 $flat[] = [
-                    'label'      => $c->name,
-                    'url'        => '/categories/' . $c->slug,
+                    'label' => $c->name,
+                    'url' => '/categories/'.$c->slug,
                     'sort_order' => (int) $c->sort_order,
-                    'depth'      => $depth,
+                    'depth' => $depth,
                 ];
                 $walk($c->id, $depth + 1);
             }
@@ -668,10 +682,10 @@ class Store extends Model
         foreach ($all as $c) {
             if (! isset($emitted[$c->id])) {
                 $flat[] = [
-                    'label'      => $c->name,
-                    'url'        => '/categories/' . $c->slug,
+                    'label' => $c->name,
+                    'url' => '/categories/'.$c->slug,
                     'sort_order' => (int) $c->sort_order,
-                    'depth'      => 0,
+                    'depth' => 0,
                 ];
             }
         }
@@ -695,8 +709,8 @@ class Store extends Model
             ->orderBy('title')
             ->get()
             ->map(fn ($c) => [
-                'label'      => $c->title,
-                'url'        => '/collections/' . $c->slug,
+                'label' => $c->title,
+                'url' => '/collections/'.$c->slug,
                 'sort_order' => (int) $c->sort_order,
             ])
             ->all();
@@ -710,13 +724,14 @@ class Store extends Model
     public function heroBanner(): array
     {
         $h = (array) ($this->hero_banner ?? []);
+
         return [
-            'enabled'    => (bool) ($h['enabled'] ?? false),
-            'title'      => trim((string) ($h['title'] ?? '')),
-            'subtitle'   => trim((string) ($h['subtitle'] ?? '')),
+            'enabled' => (bool) ($h['enabled'] ?? false),
+            'title' => trim((string) ($h['title'] ?? '')),
+            'subtitle' => trim((string) ($h['subtitle'] ?? '')),
             'image_path' => isset($h['image_path']) && $h['image_path'] !== '' ? $h['image_path'] : null,
-            'cta_label'  => trim((string) ($h['cta_label'] ?? '')),
-            'cta_url'    => trim((string) ($h['cta_url'] ?? '')),
+            'cta_label' => trim((string) ($h['cta_label'] ?? '')),
+            'cta_url' => trim((string) ($h['cta_url'] ?? '')),
         ];
     }
 
@@ -737,8 +752,11 @@ class Store extends Model
 
     /** Bounds for the "custom" px inputs, enforced on both read and save. */
     public const COLLECTION_BAND_MIN = 120;
+
     public const COLLECTION_BAND_MAX = 360;
+
     public const COLLECTION_TITLE_MIN = 24;
+
     public const COLLECTION_TITLE_MAX = 72;
 
     /**
@@ -765,10 +783,10 @@ class Store extends Model
             : self::COLLECTION_TITLE_SIZES[$titleKey];
 
         return [
-            'band_height'    => $bandKey,
+            'band_height' => $bandKey,
             'band_height_px' => $bandPx,
-            'title_size'     => $titleKey,
-            'title_size_px'  => $titlePx,
+            'title_size' => $titleKey,
+            'title_size_px' => $titlePx,
         ];
     }
 
@@ -786,13 +804,14 @@ class Store extends Model
         $out = [];
         foreach (self::SIGNUP_FIELDS as $field) {
             $row = (array) ($stored[$field] ?? []);
-            $enabled  = (bool) ($row['enabled']  ?? false);
+            $enabled = (bool) ($row['enabled'] ?? false);
             // `required` only matters when the field is enabled; storing
             // required=true on a disabled field is meaningless, so we
             // normalize it to false to avoid confusion downstream.
             $required = $enabled && (bool) ($row['required'] ?? false);
             $out[$field] = compact('enabled', 'required');
         }
+
         return $out;
     }
 
@@ -809,6 +828,99 @@ class Store extends Model
      *
      * @return array<int, array{id: string, label: string, description: string, price_cents: int, free_threshold_cents: ?int}>
      */
+    /**
+     * Rack configurator settings, fully defaulted.
+     *
+     * Everything the configurator offers is here rather than in code, because
+     * the client's whole requirement (§19) is that a price, a size or a limit
+     * can change without a developer. A merchant who never opens the screen
+     * gets a working configurator on these defaults.
+     *
+     * `enabled` is the feature flag — this is a Sankevi feature and stays off
+     * for every other tenant, gating both the storefront route and the admin
+     * page, exactly as aboutPage()['enabled'] gates /about.
+     */
+    public function rackConfigurator(): array
+    {
+        $stored = (array) ($this->rack_configurator ?? []);
+
+        $ints = static function ($value, array $fallback): array {
+            $out = [];
+            foreach ((array) $value as $v) {
+                $v = (int) $v;
+                if ($v > 0) {
+                    $out[$v] = $v;
+                }
+            }
+            $out = array_values($out);
+            sort($out);
+
+            return $out ?: $fallback;
+        };
+
+        $heights = $ints($stored['heights'] ?? null, [150, 180, 210, 240, 300]);
+        $depths = $ints($stored['depths'] ?? null, [30, 40, 50, 60]);
+        $widths = $ints($stored['widths'] ?? null, [80, 100, 120]);
+        $levels = $ints($stored['levels'] ?? null, [4, 5, 6, 7, 8, 9, 10]);
+
+        // A shelf is smaller than its bay: it drops BETWEEN the uprights.
+        // Stored as one trim figure rather than a lookup table so a new
+        // section width needs no second edit to become orderable.
+        $widthTrim = (int) ($stored['shelf_width_trim_cm'] ?? 3);
+        $depthTrim = (int) ($stored['shelf_depth_trim_cm'] ?? 1);
+
+        $maxLength = (int) ($stored['max_length_cm'] ?? 2500);
+        $minWidth = $widths ? min($widths) : 80;
+
+        return [
+            'enabled' => (bool) ($stored['enabled'] ?? false),
+            // Basis points: 2000 = 20%, Bulgaria's rate. The client's brief
+            // says 21% because that is the Dutch source site's rate.
+            'vat_rate_bp' => max(0, min(10000, (int) ($stored['vat_rate_bp'] ?? 2000))),
+            'vat_included_in_cart' => (bool) ($stored['vat_included_in_cart'] ?? true),
+            // Never below one section, or the builder has nothing to draw.
+            'max_length_cm' => max($minWidth, min(10000, $maxLength)),
+            'heights' => $heights,
+            'depths' => $depths,
+            'widths' => $widths,
+            'levels' => $levels,
+            'shelf_width_trim_cm' => max(0, $widthTrim),
+            'shelf_depth_trim_cm' => max(0, $depthTrim),
+            'shelf_thickness_mm' => max(1, (int) ($stored['shelf_thickness_mm'] ?? 18)),
+            'default_height_cm' => $this->pick($stored['default_height_cm'] ?? null, $heights, 210),
+            'default_depth_cm' => $this->pick($stored['default_depth_cm'] ?? null, $depths, 60),
+            'default_levels' => $this->pick($stored['default_levels'] ?? null, $levels, 4),
+            'default_width_cm' => $this->pick($stored['default_width_cm'] ?? null, $widths, 100),
+            'over_limit_text' => trim((string) ($stored['over_limit_text'] ?? '')),
+        ];
+    }
+
+    /** Pick a stored default if it is still one of the offered values. */
+    private function pick($stored, array $allowed, int $fallback): int
+    {
+        $stored = (int) $stored;
+        if (in_array($stored, $allowed, true)) {
+            return $stored;
+        }
+
+        return in_array($fallback, $allowed, true) ? $fallback : (int) ($allowed[0] ?? $fallback);
+    }
+
+    /**
+     * The real shelf size for a nominal bay — 100 cm of section carries a
+     * 97 cm board. Derived, never stored, so re-trimming does not strand
+     * saved configurations.
+     */
+    public function shelfWidthFor(int $nominalWidthCm): int
+    {
+        return max(1, $nominalWidthCm - $this->rackConfigurator()['shelf_width_trim_cm']);
+    }
+
+    public function shelfDepthFor(int $nominalDepthCm): int
+    {
+        return max(1, $nominalDepthCm - $this->rackConfigurator()['shelf_depth_trim_cm']);
+    }
+
     public function shippingMethods(): array
     {
         $stored = (array) ($this->shipping_methods ?? []);
@@ -841,7 +953,7 @@ class Store extends Model
             }
             $idRaw = trim((string) ($row['id'] ?? $label));
             $out[] = [
-                'id' => Str::slug($idRaw) ?: 'method-' . $i,
+                'id' => Str::slug($idRaw) ?: 'method-'.$i,
                 'label' => $label,
                 'description' => trim((string) ($row['description'] ?? '')),
                 'price_cents' => max(0, (int) ($row['price_cents'] ?? 0)),
@@ -850,6 +962,7 @@ class Store extends Model
                     : null,
             ];
         }
+
         // Defensive: if every row was empty, fall back to defaults
         // rather than render a checkout with no shipping options.
         return $out ?: $this->forceDefaultShippingMethods();
@@ -862,6 +975,7 @@ class Store extends Model
         $this->shipping_methods = null;
         $defaults = $this->shippingMethods();
         $this->shipping_methods = $original;
+
         return $defaults;
     }
 
@@ -896,7 +1010,7 @@ class Store extends Model
 
         return $cents === null
             ? null
-            : \App\Services\Money::format($cents, strtoupper($this->currency ?: 'EUR'));
+            : Money::format($cents, strtoupper($this->currency ?: 'EUR'));
     }
 
     public function resolveShippingMethod(string $id, int $subtotalCents): ?array
@@ -910,6 +1024,7 @@ class Store extends Model
             if ($m['free_threshold_cents'] !== null && $subtotalCents >= $m['free_threshold_cents']) {
                 $cost = 0;
             }
+
             return [
                 'id' => $m['id'],
                 'label' => $m['label'],
@@ -918,6 +1033,7 @@ class Store extends Model
                 'cost_cents' => $cost,
             ];
         }
+
         return null;
     }
 }
