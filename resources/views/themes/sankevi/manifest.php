@@ -66,22 +66,34 @@ return [
         // The catalogue at /shop is a separate destination from the landing
         // page, so it gets its own switch: off leaves the stock book opening
         // on type alone, which is what a merchant with no wide shot wants.
-        /* The four rows of the product page's spec sheet. Each is a CLAIM —
-           free shipping, thirty-day returns, a one-minute checkout — printed
-           unconditionally by the platform whether or not the merchant offers
-           any of them. On by default so no existing store changes; with all
-           four off the block disappears rather than leaving an empty ruled box. */
+        /* The four rows of the product page's spec sheet, and the difference
+           between them is what sets the defaults.
+
+           Two are CLAIMS the platform makes on the merchant's behalf — thirty
+           days of no-questions returns, a checkout under a minute — and nobody
+           who owns the shop ever typed them. A yard that cuts to order does not
+           take returns on a beam it milled to someone else's drawing, and
+           "сигурно, под минута" is a promise about a till this shop does not
+           even have. Those are OFF: a merchant who really does offer thirty-day
+           returns can switch it on and mean it.
+
+           The other two are earned. The free-delivery row renders only from the
+           merchant's OWN threshold and says nothing until they set one, and the
+           category row is a fact read off the product. Both stay on.
+
+           With all four off the block disappears rather than leaving an empty
+           ruled box. */
         'spec_shipping' => [
             'label' => 'Product page — "free delivery" row (needs a free-shipping threshold)',
             'default' => true,
         ],
         'spec_returns' => [
             'label' => 'Product page — "easy returns" row',
-            'default' => true,
+            'default' => false,
         ],
         'spec_checkout' => [
             'label' => 'Product page — "fast checkout" row',
-            'default' => true,
+            'default' => false,
         ],
         'spec_category' => [
             'label' => 'Product page — category row',
