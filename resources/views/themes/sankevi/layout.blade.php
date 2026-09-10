@@ -1328,12 +1328,26 @@
             }
             if (text) { text.addEventListener('scroll', markScroll, { passive: true }); }
 
+            // The drawer and the quick-view already do this: while something is
+            // open over the page, the page underneath should not drift when the
+            // wheel strays off the panel and onto the backdrop.
+            function freezePage(on) {
+                var l = window.gv && window.gv.lenis;
+                if (! l) return;
+                if (on) { l.stop(); } else { l.start(); }
+            }
+
             open.addEventListener('click', function () {
                 panel.showModal();
                 // A reopened panel starts at the top, not wherever it was left.
                 if (text) { text.scrollTop = 0; }
                 panel.classList.remove('is-scrolled');
+                freezePage(true);
             });
+
+            // close() covers the ✕, the backdrop AND Escape, which the browser
+            // fires without going through any handler of ours.
+            panel.addEventListener('close', function () { freezePage(false); });
 
             var close = panel.querySelector('[data-catmore-close]');
             if (close) { close.addEventListener('click', function () { panel.close(); }); }

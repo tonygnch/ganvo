@@ -38,7 +38,13 @@
                  arrow keys scroll the prose the moment it opens, and
                  :focus-visible still draws the ring for whoever arrived by
                  keyboard. --}}
-            <div class="catmore-text" data-catmore-text tabindex="0" autofocus>{!! nl2br(e($gvLong)) !!}</div>
+            {{-- data-lenis-prevent: the storefront kit's smooth scroll owns the
+                 wheel for the whole document, so turning it over this panel
+                 scrolled the PAGE behind the modal and left the prose exactly
+                 where it was. The attribute is how the kit is told to leave a
+                 scroller alone; the same one is on the configurator canvas and
+                 the species wheel on the landing page. --}}
+            <div class="catmore-text" data-catmore-text data-lenis-prevent tabindex="0" autofocus>{!! nl2br(e($gvLong)) !!}</div>
         </dialog>
     </div>
 @endif
