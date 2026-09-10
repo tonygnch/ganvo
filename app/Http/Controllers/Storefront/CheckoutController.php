@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Storefront;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderRackItem;
 use App\Models\Store;
 use App\Notifications\OrderPlaced;
 use App\Services\Cart;
 use App\Services\Countries;
 use App\Services\Money;
 use App\Services\Payments\StripeConnectService;
+use App\Services\Rack\RackPresenter;
+use App\Services\Rack\RackQuote;
 use App\Themes\ThemeRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -205,10 +208,11 @@ class CheckoutController extends Controller
             }
 
             foreach ($items as $row) {
-                OrderItem::create([
+                $item = OrderItem::create([
                     'order_id' => $order->id,
                     'product_id' => $row['product']->id,
                     'product_variant_id' => $row['variant']?->id,
+                    'rack_configuration_id' => $row['rack']?->id,
                     'product_name' => $row['product']->name,
                     'variant_label' => $row['variant']?->label,
                     'unit_price_cents' => $row['unit_price_cents'],
@@ -222,6 +226,22 @@ class CheckoutController extends Controller
                         : null,
                     'subtotal_cents' => $row['subtotal_cents'],
                 ]);
+
+                /*
+                 | A configured rack arrives as ONE line carrying the money, and
+                 | its parts are frozen underneath it: the yard has to know it is
+                 | cutting 6 uprights and 20 boards, and the loading sheet has to
+                 | still say so after somebody re-prices a frame or reopens the
+                 | shared configuration link and changes it.
+                 |
+                 | The parts are NOT order_items. $order->items->sum() is what
+                 | the confirmation page and the order email add up, and forty
+                 | rows of pins would both wreck that total and turn a receipt
+                 | for a rack into a receipt for a pile of hardware.
+                 */
+                if ($row['rack'] && $row['rack_bom']) {
+                    $this->freezeRackBom($item, $row['rack_bom'], $row['quantity']);
+                }
             }
 
             if ($customer) {
@@ -284,6 +304,33 @@ class CheckoutController extends Controller
      *
      * @return array<string, mixed>
      */
+    /**
+     * Copy a rack's bill of materials onto the order line, at the sizes,
+     * names and prices that applied on the day (S38).
+     *
+     * Quantities are multiplied by the line quantity: two identical racks are
+     * twelve uprights, not six.
+     */
+    private function freezeRackBom(OrderItem $item, RackQuote $quote, int $lineQuantity): void
+    {
+        $sort = 0;
+        foreach (RackPresenter::labelledLines($quote) as $line) {
+            OrderRackItem::create([
+                'order_item_id' => $item->id,
+                'kind' => $line['kind'],
+                'label' => $line['label'],
+                'sku' => $line['sku'],
+                'height_cm' => $line['height_cm'],
+                'depth_cm' => $line['depth_cm'],
+                'width_cm' => $line['width_cm'],
+                'quantity' => $line['quantity'] * $lineQuantity,
+                'unit_price_cents' => $line['unit_price_cents'],
+                'subtotal_cents' => $line['subtotal_cents'] * $lineQuantity,
+                'sort_order' => $sort++,
+            ]);
+        }
+    }
+
     private function validatePayload(Request $request, $store): array
     {
         $methodIds = array_column($store->shippingMethods(), 'id');

@@ -23,7 +23,8 @@
          whose only button says "get in touch" is a contradiction the shopper
          can only resolve by scrolling back up to check. --}}
     @if ($product->isOrderable())
-        <button type="button" class="gv-btn" data-gv-sticky-btn>{{ __('site.storefront.product.add_to_cart') }}</button>
+        {{-- An enquiry store takes no money here, so the bar must not offer to. --}}
+        <button type="button" class="gv-btn" data-gv-sticky-btn>{{ ($store ?? null)?->isEnquiryFlow() ? __('site.storefront.sankevi.req_add') : __('site.storefront.product.add_to_cart') }}</button>
     @else
         <a class="gv-btn" href="/contact">{{ __('site.storefront.product.not_orderable_cta') }}</a>
     @endif

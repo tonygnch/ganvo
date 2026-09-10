@@ -5,7 +5,13 @@ namespace App\Services;
 use App\Models\Discount;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\RackConfiguration;
 use App\Models\Tenant;
+use App\Services\Rack\RackCalculator;
+use App\Services\Rack\RackConfig;
+use App\Services\Rack\RackException;
+use App\Services\Rack\RackPresenter;
+use App\Services\Rack\RackPriceBook;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
 
@@ -18,6 +24,9 @@ use Illuminate\Support\Facades\Session;
  */
 class Cart
 {
+    /** Line-key namespace for a configured rack — see addRack(). */
+    public const RACK_PREFIX = 'rack:';
+
     /**
      * Resolved lines for THIS request, or null before the first resolve.
      *
@@ -58,6 +67,41 @@ class Cart
 
         $items[$key] = $line;
         $this->save($items);
+    }
+
+    /**
+     * Put a configured rack in the basket.
+     *
+     * Keyed by its share code rather than a product id, in its own "rack:"
+     * namespace — so two different racks are two lines, the same rack added
+     * twice is one line of two, and nothing collides with a product key.
+     *
+     * No price is stored. items() re-derives it from the live price book on
+     * every read, exactly as a product line re-reads its product.
+     */
+    public function addRack(string $code, int $quantity = 1): void
+    {
+        $items = $this->rawItems();
+        $key = $this->rackLineKey($code);
+        $line = $items[$key] ?? ['qty' => 0, 'measure' => null];
+        $line['qty'] = (int) $line['qty'] + $quantity;
+        $items[$key] = $line;
+        $this->save($items);
+    }
+
+    public function rackLineKey(string $code): string
+    {
+        return self::RACK_PREFIX.RackConfiguration::normaliseCode($code);
+    }
+
+    public static function isRackLine(string $lineId): bool
+    {
+        return str_starts_with($lineId, self::RACK_PREFIX);
+    }
+
+    public static function rackCodeFrom(string $lineId): string
+    {
+        return substr($lineId, strlen(self::RACK_PREFIX));
     }
 
     public function setQuantity(string $lineId, int $quantity): void
@@ -122,16 +166,26 @@ class Cart
             return $this->resolved = collect();
         }
 
-        // Parse keys back into (productId, variantId) tuples.
+        // Parse keys back into (productId, variantId) tuples. Rack lines are
+        // set aside first: they carry a share code, not a product id, and
+        // running one through parseLineKey would resolve it to product 0.
         $productIds = [];
         $variantIds = [];
+        $rackCodes = [];
         foreach (array_keys($raw) as $lineId) {
+            if (self::isRackLine($lineId)) {
+                $rackCodes[] = self::rackCodeFrom($lineId);
+
+                continue;
+            }
             [$pid, $vid] = $this->parseLineKey($lineId);
             $productIds[$pid] = true;
             if ($vid !== null) {
                 $variantIds[$vid] = true;
             }
         }
+
+        $racks = $rackCodes === [] ? collect() : $this->resolveRacks($rackCodes);
 
         /*
          | Only products that are still BOTH shown and orderable. A merchant who
@@ -159,6 +213,33 @@ class Cart
         foreach ($raw as $lineId => $line) {
             $qty = (int) $line['qty'];
             $measure = $line['measure'] ?? null;
+
+            if (self::isRackLine($lineId)) {
+                $rack = $racks->get(self::rackCodeFrom($lineId));
+                // The configuration is gone, or the merchant has retired a
+                // part it needs. Same treatment as a deleted product: drop it
+                // rather than show a rack nobody can build.
+                if (! $rack) {
+                    $orphans[] = $lineId;
+
+                    continue;
+                }
+                $unit = (int) $rack['unit_price_cents'];
+                $rows->push([
+                    'line_id' => $lineId,
+                    'product' => $rack['carrier'],
+                    'variant' => null,
+                    'rack' => $rack['config'],
+                    'rack_bom' => $rack['bom'],
+                    'unit_price_cents' => $unit,
+                    'quantity' => $qty,
+                    'measure' => null,
+                    'subtotal_cents' => $unit * $qty,
+                ]);
+
+                continue;
+            }
+
             [$pid, $vid] = $this->parseLineKey($lineId);
             $product = $products->get($pid);
             if (! $product) {
@@ -184,6 +265,9 @@ class Cart
                 'line_id' => $lineId,
                 'product' => $product,
                 'variant' => $variant,
+                // Present on every row so a view can test it without isset().
+                'rack' => null,
+                'rack_bom' => null,
                 'unit_price_cents' => $unit,
                 'quantity' => $qty,
                 'measure' => $measure,
@@ -211,6 +295,86 @@ class Cart
         }
 
         return $this->resolved = $rows->values();
+    }
+
+    /**
+     * Re-price the configured racks in the basket, from the live price book.
+     *
+     * A rack line stores nothing but its code and a quantity, so this is where
+     * it becomes money — and it happens on every read, which means a merchant
+     * who corrects a frame price sees the basket follow. That is the same
+     * contract a product line already has, and the reason the browser can
+     * never bank a stale or forged figure.
+     *
+     * The row is handed back with a NON-PERSISTED Product standing in for the
+     * real thing. Every cart, drawer and checkout view in thirteen themes
+     * reads $row['product']->name; giving them something that answers keeps
+     * the rack working everywhere without thirteen edits, and views that want
+     * the parts list read $row['rack'] instead.
+     *
+     * @param  list<string>  $codes
+     * @return Collection<string, array{config:RackConfiguration,carrier:Product,bom:array,unit_price_cents:int}>
+     */
+    private function resolveRacks(array $codes): Collection
+    {
+        $store = $this->tenant->store;
+        if (! $store) {
+            return collect();
+        }
+
+        $limits = $store->rackConfigurator();
+        $configs = RackConfiguration::where('tenant_id', $this->tenant->id)
+            ->whereIn('code', $codes)
+            ->get();
+
+        if ($configs->isEmpty()) {
+            return collect();
+        }
+
+        $prices = RackPriceBook::forTenant($this->tenant->id);
+        $calculator = new RackCalculator;
+        $out = collect();
+
+        foreach ($configs as $saved) {
+            try {
+                $config = RackConfig::of(
+                    $saved->height_cm,
+                    $saved->depth_cm,
+                    $saved->levels,
+                    $saved->segmentWidths(),
+                );
+                $quote = $calculator->quote($config, $prices, $limits, $store->currency ?? 'EUR');
+            } catch (RackException $e) {
+                // A part has been retired since this rack was configured.
+                // Leaving it out makes the line an orphan, which items()
+                // then clears from the session.
+                continue;
+            }
+
+            $name = RackPresenter::rackName($config);
+
+            $carrier = new Product([
+                'name' => $name,
+                // VAT-inclusive, because the platform has no tax layer and
+                // every other price in the basket is what the customer pays.
+                'price_cents' => $quote->totalCents,
+                'is_active' => true,
+                'is_orderable' => true,
+            ]);
+            // Not fillable, and deliberately not saved — this Product exists
+            // only to answer the questions a cart view asks.
+            $carrier->slug = $saved->code;
+            $carrier->image_path = null;
+
+            $out->put($saved->code, [
+                'config' => $saved,
+                'carrier' => $carrier,
+                'bom' => $quote,
+                'unit_price_cents' => $quote->totalCents,
+            ]);
+        }
+
+        return $out;
     }
 
     /**

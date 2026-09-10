@@ -54,7 +54,11 @@ class CartController extends Controller
                 'image' => $row['product']->image_path
                     ? Storage::url($row['product']->image_path)
                     : null,
-                'url' => '/products/'.$row['product']->slug,
+                // A configured rack goes back to the builder that made it,
+                // not to a catalogue page it does not have.
+                'url' => $row['rack']
+                    ? '/configurator/'.$row['rack']->code
+                    : '/products/'.$row['product']->slug,
             ])->values()->all(),
             'subtotal' => $fmt($subtotal),
             'discount' => ($discount && $discountCents > 0) ? [

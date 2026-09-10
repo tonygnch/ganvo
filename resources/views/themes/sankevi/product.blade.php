@@ -1,5 +1,7 @@
 @php
     $title = $product->name;
+
+    $pdpEnquiry = $store->isEnquiryFlow();
 @endphp
 @extends('themes.sankevi.layout')
 
@@ -250,7 +252,18 @@
                                      usually not a price anything can be bought at. Now
                                      it is just „ДОБАВИ В КОШНИЦАТА" until a size names
                                      a real one. --}}
-                                {{ __('site.storefront.product.add_to_cart') }}<span data-vp-price-when-picked @if ($gvRange) hidden @endif> — <span data-vp-submit-price>@money($product->price_cents)</span></span>
+                                {{-- THIS YARD MAY NOT BE SELLING OVER A COUNTER.
+                                     In enquiry mode nothing is charged here: the
+                                     button collects a request and the figure beside
+                                     it is an estimate at list prices, which is why
+                                     it carries the same ≈ the basket uses. Saying
+                                     „ДОБАВИ В КОШНИЦАТА — €22.00" would promise a
+                                     transaction this store does not make. --}}
+                                @if ($pdpEnquiry)
+                                    {{ __('site.storefront.sankevi.req_add') }}<span data-vp-price-when-picked @if ($gvRange) hidden @endif> — ≈<span data-vp-submit-price>@money($product->price_cents)</span></span>
+                                @else
+                                    {{ __('site.storefront.product.add_to_cart') }}<span data-vp-price-when-picked @if ($gvRange) hidden @endif> — <span data-vp-submit-price>@money($product->price_cents)</span></span>
+                                @endif
                             </button>
                         </form>
                         @if (trim(__('site.storefront.sankevi.pdp_note')) !== '')

@@ -6,13 +6,13 @@ use App\Models\Order;
 use App\Services\Money;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Callout;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Text;
 use Filament\Schemas\Schema;
 
 /**
@@ -154,6 +154,26 @@ class OrderForm
                                             ->mutateRelationshipDataBeforeSaveUsing(fn (array $data): array => self::withSubtotal($data))
                                             ->columnSpanFull(),
                                     ]),
+                                /*
+                                 | THE CUTTING LIST FOR A CONFIGURED RACK.
+                                 |
+                                 | The order carries the rack as ONE priced line
+                                 | above, because that is what the customer
+                                 | bought and what the totals have to add up to.
+                                 | The yard needs the other half: the uprights,
+                                 | the boards and the pins it is actually made
+                                 | of. Frozen at the sizes and prices of the day
+                                 | it was ordered, so re-pricing a frame next
+                                 | month cannot rewrite what was promised —
+                                 | which is exactly why it is read-only here.
+                                 */
+                                Section::make(__('admin.orders.section.rack_bom'))
+                                    ->description(__('admin.orders.section_help.rack_bom'))
+                                    ->visible(fn (?Order $record): bool => (bool) $record?->items()->whereNotNull('rack_configuration_id')->exists())
+                                    ->schema([
+                                        Text::make(fn (?Order $record): string => self::rackBomText($record)),
+                                    ]),
+
                                 Section::make(__('admin.orders.section.totals'))
                                     ->columns(2)
                                     ->schema([
@@ -256,6 +276,41 @@ class OrderForm
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
+    /**
+     * The rack lines on an order, rendered as a packing list.
+     *
+     * Plain text rather than a repeater, because these are a record and not a
+     * form. A merchant who needs to change what is being built changes the
+     * priced line above and rebuilds the rack — editing the parts list alone
+     * would produce an order whose pieces no longer make the thing it charges
+     * for, and nothing would flag the difference.
+     */
+    public static function rackBomText(?Order $record): string
+    {
+        if (! $record) {
+            return '';
+        }
+
+        $currency = $record->currency ?: 'EUR';
+        $out = [];
+
+        foreach ($record->items()->whereNotNull('rack_configuration_id')->with('rackItems')->get() as $item) {
+            $out[] = $item->product_name;
+            foreach ($item->rackItems as $line) {
+                $out[] = sprintf(
+                    '    %d × %s%s — %s',
+                    $line->quantity,
+                    $line->label,
+                    $line->sku ? ' ('.$line->sku.')' : '',
+                    Money::format($line->subtotal_cents, $currency)
+                );
+            }
+            $out[] = '';
+        }
+
+        return trim(implode("\n", $out));
+    }
+
     public static function withSubtotal(array $data): array
     {
         $data['subtotal_cents'] = (int) round(

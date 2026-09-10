@@ -70,6 +70,18 @@
            request in the queue, and it gets the yard's own colour, not a warning. */
         .ord-badge.req { border-color: var(--accent); color: var(--accent-ink); }
 
+        /* The cutting list, folded away until asked for: a receipt should
+           read as a rack, and open into its pieces. */
+        .ord-bom { margin-top: 8px; }
+        .ord-bom summary { cursor: pointer; font-size: 12px; letter-spacing: .04em;
+            color: var(--accent-ink); list-style: none; padding: 4px 0; min-height: 32px; }
+        .ord-bom summary::-webkit-details-marker { display: none; }
+        .ord-bom summary::before { content: "+ "; opacity: .6; }
+        .ord-bom[open] summary::before { content: "− "; }
+        .ord-bom ul { list-style: none; margin: 6px 0 0; padding: 0 0 0 2px; }
+        .ord-bom li { font-size: 12px; color: var(--muted); padding: 2px 0; }
+        .ord-bom li .q { color: var(--accent); font-family: var(--display); }
+
         /* ===== what happens next — the enquiry's promise, ruled ===== */
         .ord-next { background: var(--surface); border: 1px solid var(--line); padding: 26px 26px 22px; margin-bottom: 22px; }
         .ord-next > h3 { font-family: var(--display); font-weight: 500; font-size: 21px; line-height: 1.1; padding-bottom: 14px; margin-bottom: 6px; border-bottom: 1px solid var(--line2); }
@@ -276,6 +288,19 @@
                                     <div class="cutline">{{ $item->variant_label }}</div>
                                 @endif
                                 <div class="meta">{{ __('site.order.qty_unit', ['qty' => $item->quantity, 'price' => \App\Services\Money::format($item->unit_price_cents, $order->currency)]) }}</div>
+                                @if ($item->isRack() && $item->rackItems->isNotEmpty())
+                                    {{-- A rack is one price and many pieces. The line
+                                         above is what it costs; this is what turns up on
+                                         the lorry, at the sizes it was ordered at. --}}
+                                    <details class="ord-bom">
+                                        <summary>{{ __('site.storefront.sankevi.cfg_see_set') }}</summary>
+                                        <ul>
+                                            @foreach ($item->rackItems as $part)
+                                                <li><span class="q">{{ $part->quantity }}×</span> {{ $part->label }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </details>
+                                @endif
                             </div>
                             <div class="pr">{{ \App\Services\Money::format($item->subtotal_cents, $order->currency) }}</div>
                         </div>
