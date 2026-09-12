@@ -134,24 +134,43 @@
         .cover .shot { position: absolute; inset: -7% 0; z-index: 0; }
         .cover .shot img { width: 100%; height: 100%; object-fit: cover; }
         /*
-         | THE SCRIM VEILS THE TYPE'S CORNER, NOT THE PHOTOGRAPH.
+         | THE SCRIM HAS TO CARRY THE TYPE ON WHATEVER PHOTOGRAPH ARRIVES.
          |
-         | Two gradients over one image multiply, and these two used to reach
-         | 26% and 84% at the same corner and stay heavy across the middle: the
-         | picture sat under about a two-thirds veil everywhere, which is fine
-         | for a stock yard shot nobody looks at and wrong now that the cover is
-         | the section's own photograph and the point of it is to be seen.
+         | It used to be aimed at the lower LEFT — a light horizontal wash that
+         | faded out by 64% of the width, on the reasoning that the crumb and
+         | the title stand in that corner and the open right-hand side of the
+         | merchant's photograph is the thing worth protecting.
          |
-         | Both are pulled back and pushed into the lower left, where the crumb
-         | and the title actually stand: about four fifths of a veil under the
-         | type, under a tenth across the open right-hand side. The top edge is
-         | left clear — nothing is printed there.
+         | That reasoning was tuned against a dark yard shot. Measured against
+         | the shelving photograph the merchant actually assigned — pale timber
+         | against a white wall — every line of type on this band came out at
+         | 1.00:1 in its worst pixels, at BOTH widths. Not hard to read: ink and
+         | picture at identical luminance.
+         |
+         | Two things broke it. The crumb is one long line that runs to 92% of
+         | the width, straight past where the horizontal wash had faded to
+         | nothing. And on a phone h1 loses its max-width, so title and
+         | description run the full width too — the corner the veil was aimed at
+         | stops existing.
+         |
+         | So the veil is now vertical only and covers the full width, ramping
+         | in above the crumb and holding to the floor. The top 7% stays clear,
+         | which is where nothing is printed: that strip measures 108 of 255
+         | against 120 unveiled, so the photograph still opens the band. Below
+         | it, where the type is, the picture gives way to the words.
+         |
+         | Measured on the brightest photograph in the catalogue: crumb 5.3:1,
+         | title 6.5:1, description 5.3:1 at 390px, and 6.1 / 6.6 / 5.6 at
+         | 1440px. AA wants 4.5:1, and 3.0:1 for the title.
          */
         .cover.has-shot::after {
             content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-            background:
-                linear-gradient(180deg, transparent 30%, color-mix(in srgb, var(--bg) 28%, transparent) 58%, color-mix(in srgb, var(--bg) 90%, transparent) 100%),
-                linear-gradient(90deg, color-mix(in srgb, var(--bg) 68%, transparent), color-mix(in srgb, var(--bg) 20%, transparent) 38%, transparent 64%);
+            background: linear-gradient(180deg,
+                transparent 0%,
+                color-mix(in srgb, var(--bg) 30%, transparent) 7%,
+                color-mix(in srgb, var(--bg) 70%, transparent) 17%,
+                color-mix(in srgb, var(--bg) 85%, transparent) 42%,
+                color-mix(in srgb, var(--bg) 93%, transparent) 100%);
         }
         .cover:not(.has-shot) { min-height: 0; border-bottom: 1px solid var(--line); }
         /* the band is a flex container, so the content column has to be told
