@@ -940,12 +940,15 @@
 
            A tab on the edge, the way the catalogue's own filters are reached —
            mirrored to the RIGHT so the two can never meet, and low enough to be
-           where a thumb already is. Under the drawer's z-index rather than over
+           where a thumb already is. At every width: the filters are a phone
+           control, but this is the shop's second way to buy and it should not
+           be something only the header knows about. Under the drawer's z-index rather than over
            it, so opening the menu covers it instead of floating on top. It is
            not drawn on the configurator itself; there is nowhere to go. */
         .rack-tab {
-            display: none;
+            display: inline-flex;
             position: fixed; right: 0; bottom: 96px; z-index: 80;
+            transition: transform .2s ease, background-color .2s ease;
             align-items: center; gap: 9px;
             min-height: 52px; padding: 0 16px 0 14px;
             font-family: var(--body); font-size: 11px; font-weight: 600;
@@ -958,7 +961,12 @@
         }
         body.no-cut .rack-tab { clip-path: none; }
         .rack-tab svg { width: 20px; height: 20px; flex: none; }
-        @media (max-width: 760px) { .rack-tab { display: inline-flex; } }
+        /* On a pointer it can answer the cursor; it leans out from the edge
+           rather than growing, so nothing under it shifts. */
+        @media (hover: hover) {
+            .rack-tab:hover { transform: translateX(-5px); background: var(--accent-deep, var(--accent)); }
+        }
+        @media (prefers-reduced-motion: reduce) { .rack-tab { transition: none; } }
 
         .toast { position: fixed; top: calc(var(--header-height) + 20px); right: 24px; z-index: 100; display: flex; align-items: center; gap: 12px; background: var(--surface); color: var(--txt); border: 1px solid var(--line2); border-left: 2px solid var(--accent); padding: 15px 22px; font-size: 14px; box-shadow: 0 26px 50px -26px rgba(0, 0, 0, .85); animation: toastIn .28s ease-out, toastOut .3s ease-in 3.2s forwards; }
         @keyframes toastIn { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
