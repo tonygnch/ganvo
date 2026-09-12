@@ -932,6 +932,34 @@
         .fbot a:hover { color: var(--accent-ink); }
 
         /* toast */
+        /* ===== THE WAY IN TO THE CONFIGURATOR =====
+           A link in the header is fine for someone already looking for it. The
+           rack is the one thing on this site you BUILD rather than pick off a
+           shelf, and on a phone the header collapses to a burger, so it was
+           three taps behind a menu nobody opens.
+
+           A tab on the edge, the way the catalogue's own filters are reached —
+           mirrored to the RIGHT so the two can never meet, and low enough to be
+           where a thumb already is. Under the drawer's z-index rather than over
+           it, so opening the menu covers it instead of floating on top. It is
+           not drawn on the configurator itself; there is nowhere to go. */
+        .rack-tab {
+            display: none;
+            position: fixed; right: 0; bottom: 96px; z-index: 80;
+            align-items: center; gap: 9px;
+            min-height: 52px; padding: 0 16px 0 14px;
+            font-family: var(--body); font-size: 11px; font-weight: 600;
+            letter-spacing: .18em; text-transform: uppercase;
+            text-decoration: none;
+            background: var(--accent); color: var(--on-accent);
+            /* the planed corner, on the two edges that face the page */
+            clip-path: polygon(9px 0, 100% 0, 100% 100%, 0 100%, 0 9px);
+            box-shadow: -6px 0 22px -12px rgba(0, 0, 0, .55);
+        }
+        body.no-cut .rack-tab { clip-path: none; }
+        .rack-tab svg { width: 20px; height: 20px; flex: none; }
+        @media (max-width: 760px) { .rack-tab { display: inline-flex; } }
+
         .toast { position: fixed; top: calc(var(--header-height) + 20px); right: 24px; z-index: 100; display: flex; align-items: center; gap: 12px; background: var(--surface); color: var(--txt); border: 1px solid var(--line2); border-left: 2px solid var(--accent); padding: 15px 22px; font-size: 14px; box-shadow: 0 26px 50px -26px rgba(0, 0, 0, .85); animation: toastIn .28s ease-out, toastOut .3s ease-in 3.2s forwards; }
         @keyframes toastIn { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
         @keyframes toastOut { to { opacity: 0; transform: translateY(-8px); } }
@@ -1309,6 +1337,18 @@
             </div>
         </div>
     </footer>
+
+    @if ($csRackOn && ! request()->is('configurator*'))
+        {{-- The glyph is the rack itself: two uprights and the boards between
+             them, which is the thing being offered. --}}
+        <a href="/configurator" class="rack-tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                 stroke-linecap="square" aria-hidden="true">
+                <path d="M4 3v18M20 3v18M4 8h16M4 13h16M4 18h16"/>
+            </svg>
+            {{ __('site.storefront.sankevi.cfg_nav') }}
+        </a>
+    @endif
 
     <script>
         // The category's full description. showModal() rather than a class
