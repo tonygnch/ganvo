@@ -899,6 +899,42 @@ Leave a blank line between paragraphs.',
     | Rack configurator
     |--------------------------------------------------------------------------
     */
+    'rack_configs' => [
+        'nav' => [
+            'label' => 'Saved configurations',
+            'model' => 'configuration',
+            'model_plural' => 'configurations',
+        ],
+        'field' => [
+            'code' => 'Code',
+            'size' => 'Frame',
+            'sections' => 'Bays',
+            'total' => 'Value',
+            'state' => 'State',
+            'created' => 'Created',
+        ],
+        'opt' => [
+            'ordered' => 'Requested',
+            'saved_only' => 'Saved only',
+            'any' => 'All',
+        ],
+        'filter' => [
+            'big' => 'Over 1000 €',
+        ],
+        'text' => [
+            'incl_vat' => 'incl. VAT :rate%',
+        ],
+        'action' => [
+            'open' => 'Open',
+        ],
+        'notify' => [
+            'code_copied' => 'Code copied',
+        ],
+        'empty' => [
+            'heading' => 'Nobody has saved a rack yet',
+            'description' => 'Every rack a customer saves or adds to a request appears here, and opens exactly as they left it.',
+        ],
+    ],
     'configurator' => [
         'nav' => [
             'label' => 'Rack configurator',
