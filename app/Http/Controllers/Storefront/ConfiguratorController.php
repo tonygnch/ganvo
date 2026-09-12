@@ -170,18 +170,52 @@ class ConfiguratorController extends Controller
         $config = RackConfig::fromArray((array) $request->input('config', []), $limits);
         $quote = $this->calculator()->quote($config, $prices, $limits, $store->currency ?? 'EUR');
 
-        return RackConfiguration::create([
-            'tenant_id' => $store->tenant_id,
-            'height_cm' => $config->heightCm,
-            'depth_cm' => $config->depthCm,
-            'levels' => $config->levels,
-            'segments' => $config->segments,
+        $snapshot = [
             'bom' => RackPresenter::labelledLines($quote),
             'subtotal_cents' => $quote->subtotalCents,
             'vat_cents' => $quote->vatCents,
             'total_cents' => $quote->totalCents,
             'vat_rate_bp' => $quote->vatRateBp,
             'currency' => $quote->currency,
+        ];
+
+        /*
+         | THE SAME RACK IS THE SAME RACK.
+         |
+         | This used to create a row every time, so pressing „Добави към
+         | заявката" twice produced two configurations with two codes — and
+         | because the basket keys a line on the code, the customer got two
+         | identical lines of one instead of one line of two. It also left a
+         | row behind for every press of Save.
+         |
+         | Matching on height, depth and levels in SQL and comparing the
+         | segments in PHP: the segment list is a JSON column, and asking two
+         | different database engines to agree on JSON equality is a worse bet
+         | than reading back the handful of rows that share the other three.
+         */
+        $existing = RackConfiguration::where('tenant_id', $store->tenant_id)
+            ->where('height_cm', $config->heightCm)
+            ->where('depth_cm', $config->depthCm)
+            ->where('levels', $config->levels)
+            ->latest('id')
+            ->limit(200)
+            ->get()
+            ->first(fn (RackConfiguration $c) => $c->segmentWidths() === $config->segments);
+
+        if ($existing) {
+            // Re-priced just now, so the snapshot follows the price book rather
+            // than staying at whatever it cost the first time somebody built it.
+            $existing->update($snapshot);
+
+            return $existing;
+        }
+
+        return RackConfiguration::create($snapshot + [
+            'tenant_id' => $store->tenant_id,
+            'height_cm' => $config->heightCm,
+            'depth_cm' => $config->depthCm,
+            'levels' => $config->levels,
+            'segments' => $config->segments,
         ]);
     }
 

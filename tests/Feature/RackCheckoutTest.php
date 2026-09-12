@@ -305,6 +305,50 @@ class RackCheckoutTest extends TestCase
         $this->assertTrue((new Cart($this->tenant))->isEmpty());
     }
 
+    /**
+     * Building the same rack twice is one rack, twice.
+     *
+     * Every add-to-cart used to create its own configuration row with its own
+     * code, and the basket keys a line on the code — so pressing the button
+     * twice gave the customer two identical lines of one instead of one line
+     * of two, and left a duplicate row behind each time.
+     */
+    public function test_the_same_configuration_is_reused_rather_than_duplicated(): void
+    {
+        $host = 'http://sankevi-test.'.config('ganvo.central_domain');
+        $body = [
+            '_token' => 'rack-test-token',
+            'config' => ['height' => 210, 'depth' => 60, 'levels' => 4, 'segments' => [100, 100]],
+        ];
+
+        $first = $this->withSession(['_token' => 'rack-test-token'])->postJson($host.'/configurator/cart', $body);
+        $first->assertOk();
+        $code = $first->json('code');
+
+        $second = $this->withSession(['_token' => 'rack-test-token'])->postJson($host.'/configurator/cart', $body);
+        $second->assertOk();
+
+        $this->assertSame($code, $second->json('code'), 'the same rack must come back as the same configuration');
+        $this->assertSame(1, RackConfiguration::where('tenant_id', $this->tenant->id)->count());
+    }
+
+    /** A different rack is a different configuration, not a reused one. */
+    public function test_a_different_configuration_gets_its_own_code(): void
+    {
+        $host = 'http://sankevi-test.'.config('ganvo.central_domain');
+        $post = fn (array $cfg) => $this->withSession(['_token' => 'rack-test-token'])
+            ->postJson($host.'/configurator/cart', ['_token' => 'rack-test-token', 'config' => $cfg]);
+
+        $a = $post(['height' => 210, 'depth' => 60, 'levels' => 4, 'segments' => [100, 100]]);
+        // same parts, different ORDER — a 120 at the near end is not the same rack
+        $b = $post(['height' => 210, 'depth' => 60, 'levels' => 4, 'segments' => [120, 80]]);
+        $c = $post(['height' => 210, 'depth' => 60, 'levels' => 4, 'segments' => [80, 120]]);
+
+        $this->assertNotSame($a->json('code'), $b->json('code'));
+        $this->assertNotSame($b->json('code'), $c->json('code'), 'order matters: 120+80 is not 80+120');
+        $this->assertSame(3, RackConfiguration::where('tenant_id', $this->tenant->id)->count());
+    }
+
     /** A share code is not a way into another yard's configurations. */
     public function test_a_configuration_from_another_tenant_cannot_be_added(): void
     {

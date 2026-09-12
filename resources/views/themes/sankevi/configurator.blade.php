@@ -856,15 +856,15 @@
         return false;
     }
 
-    $('[data-cfg-height]').addEventListener('change', function (e) { state.height = +e.target.value; state.code = null; render(); });
-    $('[data-cfg-depth]').addEventListener('change',  function (e) { state.depth  = +e.target.value; state.code = null; render(); });
-    $('[data-cfg-levels]').addEventListener('change', function (e) { state.levels = +e.target.value; state.code = null; render(); });
+    $('[data-cfg-height]').addEventListener('change', function (e) { state.height = +e.target.value; clearCode(); render(); });
+    $('[data-cfg-depth]').addEventListener('change',  function (e) { state.depth  = +e.target.value; clearCode(); render(); });
+    $('[data-cfg-levels]').addEventListener('change', function (e) { state.levels = +e.target.value; clearCode(); render(); });
 
     $('[data-cfg-editwidth]').addEventListener('change', function (e) {
         var next = +e.target.value, current = state.segments[state.selected];
         if (wouldExceed(next - current)) { e.target.value = current; return; }
         state.segments[state.selected] = next;
-        state.code = null;
+        clearCode();
         render();
     });
 
@@ -877,14 +877,14 @@
             if (wouldExceed(w)) { return; }
             state.segments.push(w);
             state.selected = sections() - 1;
-            state.code = null;
+            clearCode();
             render();
             return;
         }
         if (e.target.closest('[data-cfg-delete]')) {
             if (sections() === 1) { return; }
             state.segments.splice(state.selected, 1);
-            state.code = null;
+            clearCode();
             render();
             return;
         }
@@ -902,7 +902,7 @@
         state.segments[i] = state.segments[j];
         state.segments[j] = tmp;
         state.selected = j;
-        state.code = null;
+        clearCode();
         render();
     }
 
@@ -956,6 +956,28 @@
         $('[data-cfg-code]').hidden = false;
         if (url && window.history && window.history.replaceState) {
             window.history.replaceState(null, '', '/configurator/' + code);
+        }
+    }
+
+    /*
+     | A SAVED CODE DESCRIBES ONE RACK. THE MOMENT THE RACK CHANGES IT IS A LIE.
+     |
+     | state.code was being nulled on every edit, which was right, but the two
+     | places the customer actually READS the code were left alone: the „Код на
+     | конфигурацията" line, and the address bar, which showCode() rewrites to
+     | /configurator/<code>. So after saving a rack and then changing the number
+     | of levels, the panel still named the old code and the URL still pointed
+     | at the old rack — and copying that URL out of the address bar, which is
+     | the obvious thing to do, sent somebody a different rack at a different
+     | price.
+     */
+    function clearCode() {
+        if (state.code === null) { return; }
+        state.code = null;
+        var panel = $('[data-cfg-code]');
+        if (panel) { panel.hidden = true; }
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '/configurator');
         }
     }
 
