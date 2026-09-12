@@ -532,6 +532,7 @@ return [
             'cfg_part_extension_pin' => 'Extension pin Ø10',
             'cfg_part_cross_brace' => 'Cross-brace',
             'cfg_sections_count' => '{1} :count section|[2,*] :count sections',
+            'cfg_link_stale' => 'This saved configuration is no longer available — here is a standard rack to start from.',
             'cfg_levels_count' => '{1} :count level|[2,*] :count levels',
             'cfg_rack_name' => 'Rack :h×:d cm · :sections × :levels · :metres m',
 

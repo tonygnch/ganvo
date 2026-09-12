@@ -58,7 +58,23 @@ class ConfiguratorController extends Controller
         // product to configure, so it is not a page.
         abort_unless(RackPriceBook::canBuildAnything($limits), 404);
 
-        $config = $this->initialConfig($saved, $limits);
+        /*
+         | A CODE NAMES ONE RACK, OR IT NAMES NOTHING.
+         |
+         | initialConfig() falls back to the store's defaults when a saved link
+         | can no longer be built — the merchant has retired that height, say.
+         | It used to do that while $saved stayed set, so the page rendered the
+         | DEFAULT rack with the customer's code printed under it and their code
+         | still in the address bar. The link did not break; it lied.
+         |
+         | $stale carries that fallback out to the view, which drops the code,
+         | clears the address bar and says plainly that the saved rack is no
+         | longer available.
+         */
+        [$config, $stale] = $this->initialConfig($saved, $limits);
+        if ($stale) {
+            $saved = null;
+        }
 
         try {
             $quote = $this->calculator()->quote($config, $prices, $limits, $store->currency ?? 'EUR');
@@ -72,6 +88,7 @@ class ConfiguratorController extends Controller
              | that is a single toggle on the merchant's price book screen.
              */
             $saved = null;
+            $stale = true;
 
             try {
                 $config = $this->defaultConfig($limits);
@@ -93,6 +110,8 @@ class ConfiguratorController extends Controller
             'quote' => $quote,
             'bom' => RackPresenter::labelledLines($quote),
             'saved' => $saved,
+            // The visitor arrived on a code this store can no longer build.
+            'stale' => $stale,
             // The browser mirrors this arithmetic for instant feedback. It is
             // the same price book the server just used, so the two agree —
             // and every state change is re-derived server-side anyway.
@@ -180,38 +199,37 @@ class ConfiguratorController extends Controller
         ];
 
         /*
-         | THE SAME RACK IS THE SAME RACK.
+         | THE SAME RACK IS THE SAME RACK — BUT ONLY FOR THE SAME PERSON.
          |
-         | This used to create a row every time, so pressing „Добави към
-         | заявката" twice produced two configurations with two codes — and
-         | because the basket keys a line on the code, the customer got two
-         | identical lines of one instead of one line of two. It also left a
-         | row behind for every press of Save.
+         | Pressing „Добави към заявката" twice used to produce two
+         | configurations with two codes, and because the basket keys a line on
+         | the code, the customer got two identical lines of one instead of one
+         | line of two. Deduplicating fixed that and introduced something worse:
+         | the match was made across the WHOLE TENANT and then written to. Two
+         | strangers who happened to build the same rack shared one row, so
+         | anybody could re-save that shape and rewrite a record somebody else
+         | was holding a link to. A share link was editable by whoever had it.
+         |
+         | So the match is now scoped to this browser AND to an unchanged price,
+         | and there is no update() left in this method. A stored configuration
+         | is written once and never again: the only thing a save can do to an
+         | existing row is decline to make another one.
          |
          | Matching on height, depth and levels in SQL and comparing the
          | segments in PHP: the segment list is a JSON column, and asking two
          | different database engines to agree on JSON equality is a worse bet
          | than reading back the handful of rows that share the other three.
          */
-        $existing = RackConfiguration::where('tenant_id', $store->tenant_id)
-            ->where('height_cm', $config->heightCm)
-            ->where('depth_cm', $config->depthCm)
-            ->where('levels', $config->levels)
-            ->latest('id')
-            ->limit(200)
-            ->get()
-            ->first(fn (RackConfiguration $c) => $c->segmentWidths() === $config->segments);
+        $owner = RackConfiguration::ownerToken();
+        $mine = RackConfiguration::reusableFor($store->tenant_id, $owner, $config, $snapshot);
 
-        if ($existing) {
-            // Re-priced just now, so the snapshot follows the price book rather
-            // than staying at whatever it cost the first time somebody built it.
-            $existing->update($snapshot);
-
-            return $existing;
+        if ($mine) {
+            return $mine;
         }
 
         return RackConfiguration::create($snapshot + [
             'tenant_id' => $store->tenant_id,
+            'owner_token' => $owner,
             'height_cm' => $config->heightCm,
             'depth_cm' => $config->depthCm,
             'levels' => $config->levels,
@@ -248,22 +266,26 @@ class ConfiguratorController extends Controller
         return new RackCalculator;
     }
 
-    private function initialConfig(?RackConfiguration $saved, array $limits): RackConfig
+    /**
+     * @return array{0:RackConfig,1:bool} the config, and whether a saved link
+     *                                    had to be abandoned to produce it
+     */
+    private function initialConfig(?RackConfiguration $saved, array $limits): array
     {
         if (! $saved) {
-            return $this->defaultConfig($limits);
+            return [$this->defaultConfig($limits), false];
         }
 
         try {
-            return RackConfig::fromArray([
+            return [RackConfig::fromArray([
                 'height' => $saved->height_cm,
                 'depth' => $saved->depth_cm,
                 'levels' => $saved->levels,
                 'segments' => $saved->segmentWidths(),
-            ], $limits);
+            ], $limits), false];
         } catch (RackException $e) {
             // The merchant has retired a size this link depends on.
-            return $this->defaultConfig($limits);
+            return [$this->defaultConfig($limits), true];
         }
     }
 

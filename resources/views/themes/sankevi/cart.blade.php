@@ -228,7 +228,12 @@
                                     </div>
                                     <div>
                                         <span class="plate" aria-hidden="true"></span>
-                                        <div class="t"><a href="/products/{{ $product->slug }}">{{ $product->name }}</a></div>
+                                        {{-- A configured rack has no product page. Its
+                                             slug is the share code, so the old link sent
+                                             the customer to /products/{code} and a 404;
+                                             it belongs back in the configurator, on the
+                                             very rack they built. --}}
+                                        <div class="t"><a href="{{ $row['rack'] ? '/configurator/'.$row['rack']->code : '/products/'.$product->slug }}">{{ $product->name }}</a></div>
                                         {{-- The amount the shopper asked for, in
                                              their own unit. It is the whole point
                                              of the line for a product sold by

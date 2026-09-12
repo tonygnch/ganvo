@@ -43,6 +43,7 @@
             'qty' => __('site.storefront.sankevi.cfg_qty'),
             'vat' => __('site.storefront.sankevi.cfg_vat', ['rate' => ':rate']),
             'generic' => __('site.storefront.sankevi.cfg_err_generic'),
+            'stale' => __('site.storefront.sankevi.cfg_link_stale'),
         ],
         'currency' => $currency,
         // The visitor may be reading the shop in another currency; the
@@ -51,6 +52,10 @@
         'displayRate' => (float) ($displayRate ?? 1.0),
         'locale' => app()->getLocale(),
         'savedCode' => $saved?->code,
+        // The visitor followed a link to a rack this yard can no longer build.
+        // The page has to say so and get that code out of the address bar,
+        // otherwise they copy it on to somebody else from up there.
+        'stale' => (bool) ($stale ?? false),
         // This theme has no <meta name="csrf-token">; the rest of the
         // storefront rides the token in a form body. These endpoints take
         // JSON, so it travels in the header instead — same token, same guard.
@@ -1032,6 +1037,19 @@
     });
 
     /* ---------- go ---------------------------------------------------- */
+    /*
+     | A dead link must not leave its code in the address bar. The server has
+     | already refused to honour it and is showing this yard's default rack
+     | instead — so the one thing left that still claims otherwise is the URL,
+     | and that is the part people copy.
+     */
+    if (BOOT.stale) {
+        say(LABELS.stale, true);
+        if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '/configurator');
+        }
+    }
+
     if (state.code) { showCode(state.code, null); }
     render();
     requestAnimationFrame(fit);

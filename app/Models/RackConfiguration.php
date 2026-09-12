@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Services\Rack\RackConfig;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 
 /**
@@ -25,6 +27,7 @@ class RackConfiguration extends Model
 
     protected $fillable = [
         'tenant_id',
+        'owner_token',
         'code',
         'height_cm',
         'depth_cm',
@@ -73,6 +76,76 @@ class RackConfiguration extends Model
     public function getRouteKeyName(): string
     {
         return 'code';
+    }
+
+    /**
+     * Who may reuse this row on a later save.
+     *
+     * The session, hashed — see the add_owner migration. Anonymous customers
+     * are all this platform has on a storefront, and a session is as close to
+     * "the same person, still here" as it gets. If there is no session at all
+     * (console, a queued job) the answer is null, which matches nothing, so a
+     * save from there creates its own row rather than adopting somebody's.
+     */
+    public static function ownerToken(): ?string
+    {
+        $id = (string) Session::getId();
+
+        return $id === '' ? null : hash('sha256', $id);
+    }
+
+    /**
+     * The row this save should reuse instead of writing another, or null.
+     *
+     * Three conditions, all of them load-bearing. Same tenant, obviously. Same
+     * OWNER, because a configuration is one person's drawing and a stranger
+     * rebuilding the same shape must never be handed it. And the same price,
+     * because reusing a row whose quote has moved would mean either editing
+     * what somebody was already shown or handing back a code that no longer
+     * describes their money.
+     *
+     * Height, depth and levels are matched in SQL; the segment list is
+     * compared in PHP, because it is a JSON column and asking two different
+     * database engines to agree on JSON equality is a worse bet than reading
+     * back the handful of rows that share the other three.
+     */
+    public static function reusableFor(int $tenantId, ?string $owner, RackConfig $config, array $snapshot): ?self
+    {
+        if ($owner === null) {
+            return null;
+        }
+
+        return static::query()
+            ->where('tenant_id', $tenantId)
+            ->where('owner_token', $owner)
+            ->where('height_cm', $config->heightCm)
+            ->where('depth_cm', $config->depthCm)
+            ->where('levels', $config->levels)
+            ->latest('id')
+            ->limit(50)
+            ->get()
+            ->first(fn (self $c) => $c->segmentWidths() === $config->segments
+                && $c->matchesSnapshot($snapshot));
+    }
+
+    /**
+     * Is this row already exactly what we just priced?
+     *
+     * Only the money is compared. The bill of materials and the totals are both
+     * derived from the geometry and the price book, so two rows of the same
+     * rack that cost the same are the same row — and if the merchant has moved
+     * a price since, this returns false and the caller writes a NEW row rather
+     * than editing what somebody was already shown.
+     */
+    public function matchesSnapshot(array $snapshot): bool
+    {
+        foreach (['subtotal_cents', 'vat_cents', 'total_cents', 'vat_rate_bp'] as $column) {
+            if ((int) $this->{$column} !== (int) ($snapshot[$column] ?? -1)) {
+                return false;
+            }
+        }
+
+        return (string) $this->currency === (string) ($snapshot['currency'] ?? '');
     }
 
     public function segmentWidths(): array

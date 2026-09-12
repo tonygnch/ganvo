@@ -533,6 +533,7 @@ return [
             'cfg_part_extension_pin' => 'Удължаващ пин Ø10',
             'cfg_part_cross_brace' => 'Кръстодържач',
             'cfg_sections_count' => '{1} :count секция|[2,*] :count секции',
+            'cfg_link_stale' => 'Тази запазена конфигурация вече не се предлага — показваме ти стандартен стелаж, от който да тръгнеш.',
             'cfg_levels_count' => '{1} :count ниво|[2,*] :count нива',
             'cfg_rack_name' => 'Стелаж :h×:d cm · :sections × :levels · :metres m',
 

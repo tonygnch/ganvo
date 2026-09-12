@@ -52,9 +52,21 @@ class OrderItem extends Model
         return $this->hasMany(OrderRackItem::class)->orderBy('sort_order');
     }
 
+    /**
+     * Does this line have a frozen parts list to show?
+     *
+     * NOT `rack_configuration_id !== null`. That column is nullOnDelete, so a
+     * merchant tidying up the saved-configurations screen used to blank the
+     * cutting list on every order built from that drawing — the order_rack_items
+     * rows survived the delete exactly as designed, and then nothing could
+     * reach them, because every render gated on the link rather than on the
+     * parts. The authoritative record is the frozen rows; ask them.
+     */
     public function isRack(): bool
     {
-        return $this->rack_configuration_id !== null;
+        return $this->relationLoaded('rackItems')
+            ? $this->rackItems->isNotEmpty()
+            : $this->rackItems()->exists();
     }
 
     /**

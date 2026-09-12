@@ -306,14 +306,23 @@ class RackCheckoutTest extends TestCase
     }
 
     /**
-     * Building the same rack twice is one rack, twice.
+     * Building the same rack twice is one rack, twice — for one customer.
      *
      * Every add-to-cart used to create its own configuration row with its own
-     * code, and the basket keys a line on the code — so pressing the button
+     * code, and the basket keys a line on the code, so pressing the button
      * twice gave the customer two identical lines of one instead of one line
-     * of two, and left a duplicate row behind each time.
+     * of two. Deduplicating fixed that by matching across the WHOLE tenant and
+     * then writing to the row it found, which made every saved configuration a
+     * shared, publicly writable record — see RackShareLinkTest.
+     *
+     * The reuse is now scoped to the person who saved it, so what this test can
+     * still assert over HTTP is the half that survives a fresh session: two
+     * different browsers building the same rack get a row each, and neither
+     * touches the other. The same-browser half needs one session across two
+     * requests, which the test harness cannot give — it is asserted directly
+     * against RackConfiguration::reusableFor() in RackShareLinkTest.
      */
-    public function test_the_same_configuration_is_reused_rather_than_duplicated(): void
+    public function test_two_customers_building_the_same_rack_get_a_configuration_each(): void
     {
         $host = 'http://sankevi-test.'.config('ganvo.central_domain');
         $body = [
@@ -324,12 +333,18 @@ class RackCheckoutTest extends TestCase
         $first = $this->withSession(['_token' => 'rack-test-token'])->postJson($host.'/configurator/cart', $body);
         $first->assertOk();
         $code = $first->json('code');
+        $before = RackConfiguration::where('code', $code)->firstOrFail()->getAttributes();
 
         $second = $this->withSession(['_token' => 'rack-test-token'])->postJson($host.'/configurator/cart', $body);
         $second->assertOk();
 
-        $this->assertSame($code, $second->json('code'), 'the same rack must come back as the same configuration');
-        $this->assertSame(1, RackConfiguration::where('tenant_id', $this->tenant->id)->count());
+        $this->assertNotSame($code, $second->json('code'), 'a second customer must not be handed the first one\'s code');
+        $this->assertSame(
+            $before,
+            RackConfiguration::where('code', $code)->firstOrFail()->getAttributes(),
+            'the first customer\'s configuration must be untouched'
+        );
+        $this->assertSame(2, RackConfiguration::where('tenant_id', $this->tenant->id)->count());
     }
 
     /** A different rack is a different configuration, not a reused one. */

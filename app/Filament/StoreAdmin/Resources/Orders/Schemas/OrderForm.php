@@ -169,7 +169,7 @@ class OrderForm
                                  */
                                 Section::make(__('admin.orders.section.rack_bom'))
                                     ->description(__('admin.orders.section_help.rack_bom'))
-                                    ->visible(fn (?Order $record): bool => (bool) $record?->items()->whereNotNull('rack_configuration_id')->exists())
+                                    ->visible(fn (?Order $record): bool => (bool) $record?->items()->whereHas('rackItems')->exists())
                                     ->schema([
                                         Text::make(fn (?Order $record): string => self::rackBomText($record)),
                                     ]),
@@ -294,7 +294,7 @@ class OrderForm
         $currency = $record->currency ?: 'EUR';
         $out = [];
 
-        foreach ($record->items()->whereNotNull('rack_configuration_id')->with('rackItems')->get() as $item) {
+        foreach ($record->items()->whereHas('rackItems')->with('rackItems')->get() as $item) {
             $out[] = $item->product_name;
             foreach ($item->rackItems as $line) {
                 $out[] = sprintf(
