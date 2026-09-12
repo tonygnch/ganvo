@@ -155,14 +155,23 @@ class RackConfigurator extends Page implements HasForms
         foreach ($limits['heights'] as $h) {
             $cells = [];
             foreach ($limits['depths'] as $d) {
-                $cells[] = $this->priceField("frame_{$h}_{$d}", __('admin.configurator.field.depth_cm', ['cm' => $d]));
+                $cells[] = $this->priceField("frame_{$h}_{$d}", __('admin.configurator.field.depth_cm', ['cm' => $d]))
+                    ->columnSpan(2);
                 $cells[] = Toggle::make("frame_on_{$h}_{$d}")
                     ->label(__('admin.shared.field.active'))
-                    ->inline(false);
+                    ->inline(false)
+                    ->columnSpan(1);
             }
 
+            /*
+             | Three columns per depth, not two. A price and its on/off switch
+             | are not the same size of thing: splitting the width evenly left
+             | the box too narrow for "20,45" beside the currency symbol, and a
+             | merchant opening their own price book read 20,4 with the 5 cut
+             | off the end.
+             */
             $out[] = Section::make(__('admin.configurator.section.frame_height', ['cm' => $h]))
-                ->columns(count($limits['depths']) * 2)
+                ->columns(count($limits['depths']) * 3)
                 ->schema($cells)
                 ->collapsible();
         }
@@ -177,14 +186,16 @@ class RackConfigurator extends Page implements HasForms
         foreach ($this->shelfWidths($limits) as $w) {
             $cells = [];
             foreach ($this->shelfDepths($limits) as $d) {
-                $cells[] = $this->priceField("shelf_{$w}_{$d}", __('admin.configurator.field.depth_cm', ['cm' => $d]));
+                $cells[] = $this->priceField("shelf_{$w}_{$d}", __('admin.configurator.field.depth_cm', ['cm' => $d]))
+                    ->columnSpan(2);
                 $cells[] = Toggle::make("shelf_on_{$w}_{$d}")
                     ->label(__('admin.shared.field.active'))
-                    ->inline(false);
+                    ->inline(false)
+                    ->columnSpan(1);
             }
 
             $out[] = Section::make(__('admin.configurator.section.shelf_width', ['cm' => $w]))
-                ->columns(count($this->shelfDepths($limits)) * 2)
+                ->columns(count($this->shelfDepths($limits)) * 3)
                 ->schema($cells)
                 ->collapsible();
         }
