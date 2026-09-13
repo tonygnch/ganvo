@@ -97,7 +97,8 @@ class RackConfigurationResource extends Resource
             ->where('tenant_id', auth()->user()?->tenant_id)
             // "did this one ever get ordered" is a column in the table, and
             // counting it here keeps it one query rather than one per row.
-            ->withCount('orderItems');
+            ->withCount('orderItems')
+            ->with('customer');
     }
 
     public static function getPages(): array

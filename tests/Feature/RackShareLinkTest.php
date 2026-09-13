@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderRackItem;
@@ -26,7 +27,10 @@ use Tests\TestCase;
  *
  * These tests pin the three properties that fix has to hold at once: a stranger
  * can never write to your row; a price change never edits what you were already
- * shown; and one browser saving one rack twice still gets one configuration.
+ * shown; and one person saving one rack twice still gets one configuration.
+ *
+ * Saving needs a customer account now (RackConfiguratorAccountTest), so each
+ * "browser" here is also a signed-in customer of the shop.
  */
 class RackShareLinkTest extends TestCase
 {
@@ -90,10 +94,12 @@ class RackShareLinkTest extends TestCase
      * the response sets. Exempting that one cookie from encryption is what lets
      * the test read and replay it.
      *
-     * @var array<string,string>
+     * @var array<string,array{cookie:string,token:string}>
      */
-    /** @var array<string,array{cookie:string,token:string}> */
     private array $browsers = [];
+
+    /** @var array<string,Customer> */
+    private array $customers = [];
 
     /**
      * Open the configurator as a given person, so they have a session and a
@@ -118,6 +124,17 @@ class RackShareLinkTest extends TestCase
         ];
     }
 
+    /** The shop's customer account behind a given browser. */
+    private function customer(string $who): Customer
+    {
+        return $this->customers[$who] ??= Customer::create([
+            'tenant_id' => $this->tenant->id,
+            'name' => ucfirst($who),
+            'email' => $who.'@example.test',
+            'password' => str()->random(32),
+        ]);
+    }
+
     private function asBrowser(string $who, string $path, array $body)
     {
         if (! isset($this->browsers[$who])) {
@@ -127,6 +144,7 @@ class RackShareLinkTest extends TestCase
         $name = config('session.cookie');
 
         $response = $this
+            ->actingAs($this->customer($who), 'customer')
             ->withUnencryptedCookie($name, $this->browsers[$who]['cookie'])
             ->withHeader('X-CSRF-TOKEN', $this->browsers[$who]['token'])
             ->postJson($this->host.$path, $body);
@@ -193,14 +211,16 @@ class RackShareLinkTest extends TestCase
      * one rack, two presses — one configuration, so the basket shows one line
      * of two rather than two lines of one.
      *
-     * Asked of reusableFor() rather than of two HTTP requests, because the test
-     * harness mints a fresh session id on every request: over HTTP there is no
-     * such thing here as the same browser twice. A real browser keeps its
-     * session cookie, which is what makes this the same person.
+     * The person is the customer account now, so this holds over HTTP as well
+     * as it does against reusableFor() directly.
      */
     public function test_the_same_person_saving_the_same_rack_reuses_their_configuration(): void
     {
-        $this->save('customer-a', self::RACK)->assertOk();
+        $first = $this->save('customer-a', self::RACK);
+        $first->assertOk();
+        $this->save('customer-a', self::RACK)->assertOk()->assertJson(['code' => $first->json('code')]);
+        $this->assertSame(1, RackConfiguration::where('tenant_id', $this->tenant->id)->count());
+
         $row = RackConfiguration::where('tenant_id', $this->tenant->id)->firstOrFail();
 
         $config = RackConfig::of(210, 60, 4, [100, 100, 80]);
@@ -213,24 +233,24 @@ class RackShareLinkTest extends TestCase
         ];
 
         $this->assertTrue(
-            $row->is(RackConfiguration::reusableFor($this->tenant->id, $row->owner_token, $config, $snapshot)),
+            $row->is(RackConfiguration::reusableFor($this->tenant->id, $row->customer_id, $config, $snapshot)),
             'the same person building the same rack at the same price must get their own row back'
         );
 
         $this->assertNull(
-            RackConfiguration::reusableFor($this->tenant->id, hash('sha256', 'somebody-else'), $config, $snapshot),
+            RackConfiguration::reusableFor($this->tenant->id, $this->customer('somebody-else')->id, $config, $snapshot),
             'a stranger must not be handed this row'
         );
 
         $this->assertNull(
-            RackConfiguration::reusableFor($this->tenant->id, $row->owner_token, $config,
+            RackConfiguration::reusableFor($this->tenant->id, $row->customer_id, $config,
                 ['subtotal_cents' => 1, 'vat_cents' => 1, 'total_cents' => 2, 'vat_rate_bp' => 2000, 'currency' => 'EUR']),
             'a rack that now costs something else is a different record'
         );
 
         $this->assertNull(
             RackConfiguration::reusableFor($this->tenant->id, null, $config, $snapshot),
-            'no session, no reuse'
+            'nobody signed in, no reuse'
         );
     }
 

@@ -330,12 +330,19 @@ class RackCheckoutTest extends TestCase
             'config' => ['height' => 210, 'depth' => 60, 'levels' => 4, 'segments' => [100, 100]],
         ];
 
-        $first = $this->withSession(['_token' => 'rack-test-token'])->postJson($host.'/configurator/cart', $body);
+        // Adding to a request takes an account — see RackConfiguratorAccountTest.
+        $customer = fn (string $who) => \App\Models\Customer::create([
+            'tenant_id' => $this->tenant->id, 'name' => $who, 'email' => $who.'@example.test', 'password' => str()->random(32),
+        ]);
+
+        $first = $this->actingAs($customer('first'), 'customer')
+            ->withSession(['_token' => 'rack-test-token'])->postJson($host.'/configurator/cart', $body);
         $first->assertOk();
         $code = $first->json('code');
         $before = RackConfiguration::where('code', $code)->firstOrFail()->getAttributes();
 
-        $second = $this->withSession(['_token' => 'rack-test-token'])->postJson($host.'/configurator/cart', $body);
+        $second = $this->actingAs($customer('second'), 'customer')
+            ->withSession(['_token' => 'rack-test-token'])->postJson($host.'/configurator/cart', $body);
         $second->assertOk();
 
         $this->assertNotSame($code, $second->json('code'), 'a second customer must not be handed the first one\'s code');
@@ -351,7 +358,11 @@ class RackCheckoutTest extends TestCase
     public function test_a_different_configuration_gets_its_own_code(): void
     {
         $host = 'http://sankevi-test.'.config('ganvo.central_domain');
-        $post = fn (array $cfg) => $this->withSession(['_token' => 'rack-test-token'])
+        $customer = \App\Models\Customer::create([
+            'tenant_id' => $this->tenant->id, 'name' => 'One', 'email' => 'one@example.test', 'password' => str()->random(32),
+        ]);
+        $post = fn (array $cfg) => $this->actingAs($customer, 'customer')
+            ->withSession(['_token' => 'rack-test-token'])
             ->postJson($host.'/configurator/cart', ['_token' => 'rack-test-token', 'config' => $cfg]);
 
         $a = $post(['height' => 210, 'depth' => 60, 'levels' => 4, 'segments' => [100, 100]]);

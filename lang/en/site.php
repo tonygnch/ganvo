@@ -594,6 +594,25 @@ return [
             'cfg_err_no_part_price' => 'A part of the set has no price. Get in touch and we will sort it out.',
             'cfg_err_not_found' => 'That configuration could not be found.',
             'cfg_err_generic' => 'Something went wrong. Try again.',
+
+            // The quick sign-up window — keeping a rack takes an account.
+            'cfg_auth_required' => 'Sign in to save or request a rack.',
+            'cfg_auth_title' => 'Keep this rack in an account',
+            'cfg_auth_lead' => 'You can find it again from any device, and we know who to talk to about the order.',
+            'cfg_auth_tab_register' => 'New account',
+            'cfg_auth_tab_login' => 'I have an account',
+            'cfg_auth_register_btn' => 'Create account and continue',
+            'cfg_auth_login_btn' => 'Sign in and continue',
+            'cfg_auth_show_password' => 'Show password',
+            'cfg_auth_close' => 'Close',
+
+            // The 3D view of the same rack.
+            'cfg_view_3d' => '3D',
+            'cfg_view_2d' => '2D',
+            'cfg_3d_label' => '3D model of the rack',
+            'cfg_3d_hint' => 'Drag to turn · scroll or pinch to zoom',
+            'cfg_fullscreen' => 'Full screen',
+            'cfg_fullscreen_exit' => 'Exit full screen',
         ],
         // Storefront contact page — merchant details + enquiry form.
         'contact' => [
@@ -886,9 +905,15 @@ return [
         'address_postal' => 'Postal code',
         'address_country' => 'Country (ISO code)',
         'marketing_consent' => 'Send me product news and offers from :tenant. I can unsubscribe anytime.',
+        'email_taken' => 'There is already an account with this email. Sign in with your password.',
     ],
 
     'account' => [
+        'racks' => 'My configurations',
+        'racks_empty' => "You haven't saved a rack yet.",
+        'racks_start' => 'Open the configurator →',
+        'racks_saved_on' => 'Saved',
+        'racks_open' => 'Open →',
         'hi' => 'Hi, :name',
         'signed_in_as' => 'Signed in as :email',
         'sign_out' => 'Sign out',

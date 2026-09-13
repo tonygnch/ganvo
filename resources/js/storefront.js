@@ -271,7 +271,16 @@ function initModeToggle() {
 
 /* ─── boot ─────────────────────────────────────────────────────────────── */
 
-window.gv = { gsap, ScrollTrigger, lenis, motion, refresh: () => ScrollTrigger.refresh() };
+window.gv = {
+    gsap,
+    ScrollTrigger,
+    lenis,
+    motion,
+    refresh: () => ScrollTrigger.refresh(),
+    // The rack configurator's 3D view. A dynamic import, so three.js is a
+    // chunk of its own that only a visitor who presses „3D" ever downloads.
+    rack3d: () => import('./rack-3d.js'),
+};
 window.Alpine = Alpine;
 
 document.addEventListener('DOMContentLoaded', () => {

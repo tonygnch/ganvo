@@ -30,9 +30,20 @@ class AccountController extends Controller
             ->limit(20)
             ->get();
 
+        // Racks from the configurator — only on a store that has one, so every
+        // other shop's account page is not promising a section it cannot fill.
+        $racksEnabled = (bool) ($store->rackConfigurator()['enabled'] ?? false);
+        $racks = $racksEnabled
+            ? $customer->rackConfigurations()
+                ->where('tenant_id', $tenant->id)
+                ->latest()
+                ->limit(20)
+                ->get()
+            : collect();
+
         return view(
             $this->view($theme, 'account.index'),
-            compact('tenant', 'store', 'theme', 'customer', 'orders')
+            compact('tenant', 'store', 'theme', 'customer', 'orders', 'racks', 'racksEnabled')
         );
     }
 

@@ -49,4 +49,10 @@ class Customer extends Authenticatable
     {
         return $this->hasMany(Order::class);
     }
+
+    /** Racks this customer saved in the configurator. */
+    public function rackConfigurations(): HasMany
+    {
+        return $this->hasMany(RackConfiguration::class);
+    }
 }

@@ -28,6 +28,7 @@ class RackConfiguration extends Model
     protected $fillable = [
         'tenant_id',
         'owner_token',
+        'customer_id',
         'code',
         'height_cm',
         'depth_cm',
@@ -67,6 +68,15 @@ class RackConfiguration extends Model
         return $this->belongsTo(Tenant::class);
     }
 
+    /**
+     * Who drew it. withTrashed(), because a customer the merchant has removed
+     * still drew this rack — showing it as „Гост" would be a small lie.
+     */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class)->withTrashed();
+    }
+
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
@@ -79,13 +89,13 @@ class RackConfiguration extends Model
     }
 
     /**
-     * Who may reuse this row on a later save.
+     * The session, hashed — see the add_owner migration.
      *
-     * The session, hashed — see the add_owner migration. Anonymous customers
-     * are all this platform has on a storefront, and a session is as close to
-     * "the same person, still here" as it gets. If there is no session at all
-     * (console, a queued job) the answer is null, which matches nothing, so a
-     * save from there creates its own row rather than adopting somebody's.
+     * No longer who may reuse a row (that is the customer now), but still
+     * written on every save: it is the only thread that ties a rack saved as
+     * a guest, before accounts were required, to the account that browser
+     * later signs into — see claimForCustomer(). If there is no session at all
+     * (console, a queued job) the answer is null, which matches nothing.
      */
     public static function ownerToken(): ?string
     {
@@ -98,26 +108,30 @@ class RackConfiguration extends Model
      * The row this save should reuse instead of writing another, or null.
      *
      * Three conditions, all of them load-bearing. Same tenant, obviously. Same
-     * OWNER, because a configuration is one person's drawing and a stranger
+     * CUSTOMER, because a configuration is one person's drawing and a stranger
      * rebuilding the same shape must never be handed it. And the same price,
      * because reusing a row whose quote has moved would mean either editing
      * what somebody was already shown or handing back a code that no longer
      * describes their money.
+     *
+     * The customer rather than the session: signing in rotates the session id,
+     * so matching on the session would forget, at exactly the moment somebody
+     * logged in, which racks were already theirs.
      *
      * Height, depth and levels are matched in SQL; the segment list is
      * compared in PHP, because it is a JSON column and asking two different
      * database engines to agree on JSON equality is a worse bet than reading
      * back the handful of rows that share the other three.
      */
-    public static function reusableFor(int $tenantId, ?string $owner, RackConfig $config, array $snapshot): ?self
+    public static function reusableFor(int $tenantId, ?int $customerId, RackConfig $config, array $snapshot): ?self
     {
-        if ($owner === null) {
+        if ($customerId === null) {
             return null;
         }
 
         return static::query()
             ->where('tenant_id', $tenantId)
-            ->where('owner_token', $owner)
+            ->where('customer_id', $customerId)
             ->where('height_cm', $config->heightCm)
             ->where('depth_cm', $config->depthCm)
             ->where('levels', $config->levels)
@@ -126,6 +140,33 @@ class RackConfiguration extends Model
             ->get()
             ->first(fn (self $c) => $c->segmentWidths() === $config->segments
                 && $c->matchesSnapshot($snapshot));
+    }
+
+    /**
+     * Give the racks this browser saved as a guest to the account it has just
+     * signed into, and return how many.
+     *
+     * $ownerToken must be taken BEFORE the login regenerates the session —
+     * afterwards the browser has a new id and the old racks no longer hash to
+     * it. Only unowned rows move: a rack already on somebody's account is
+     * never reassigned, whoever's browser it was drawn in.
+     *
+     * toBase() so updated_at stays put. This records whose drawing it is; it
+     * does not change the drawing, and "a saved configuration is never
+     * rewritten" is about the drawing.
+     */
+    public static function claimForCustomer(Customer $customer, ?string $ownerToken): int
+    {
+        if ($ownerToken === null) {
+            return 0;
+        }
+
+        return static::query()
+            ->where('tenant_id', $customer->tenant_id)
+            ->where('owner_token', $ownerToken)
+            ->whereNull('customer_id')
+            ->toBase()
+            ->update(['customer_id' => $customer->id]);
     }
 
     /**

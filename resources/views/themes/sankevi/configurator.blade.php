@@ -60,6 +60,10 @@
         // storefront rides the token in a form body. These endpoints take
         // JSON, so it travels in the header instead — same token, same guard.
         'token' => csrf_token(),
+        // Keeping a rack takes an account. When this is false the three
+        // keeping buttons open the sign-up window before they post — and when
+        // it is stale (the session ran out) the server's 401 opens it anyway.
+        'signedIn' => (bool) ($signedIn ?? false),
     ];
 @endphp
 @extends('themes.sankevi.layout')
@@ -81,9 +85,14 @@
 
     /* --- the four choices ------------------------------------- */
     .cfg-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    /* A column, with the select pushed to the bottom: when one label wraps to
+       two lines („Ширина на новата секция" does, at tablet widths) the grid
+       row grows, and without this that one box dropped below its neighbours.
+       Now every box sits on the same line and the labels hang above them. */
+    .cfg-step { display: flex; flex-direction: column; }
     .cfg-step label { display: block; font-family: var(--body); font-size: 10px; font-weight: 600;
         letter-spacing: .22em; text-transform: uppercase; color: var(--faint); margin-bottom: 7px; }
-    .cfg-step select { width: 100%; }
+    .cfg-step select { width: 100%; margin-top: auto; }
     .cfg-note { margin: 10px 0 0; font-size: 12px; color: var(--faint); }
 
     /* --- the canvas ------------------------------------------- */
@@ -266,16 +275,61 @@
                 </div>
                 <p class="cfg-note">{{ __('site.storefront.sankevi.cfg_shared_note') }}</p>
 
-                <div class="cfg-canvas">
+                <div class="cfg-canvas" data-cfg-canvas>
                     <div class="cfg-tools">
+                        {{-- Hidden until the page has confirmed WebGL: a button
+                             that can only fail is worse than no button. --}}
+                        <button type="button" class="cfg-tool-3d" data-cfg-3d aria-pressed="false" hidden
+                                data-label3d="{{ __('site.storefront.sankevi.cfg_view_3d') }}"
+                                data-label2d="{{ __('site.storefront.sankevi.cfg_view_2d') }}">{{ __('site.storefront.sankevi.cfg_view_3d') }}</button>
+                        <button type="button" class="cfg-tool-full" data-cfg-full aria-pressed="false"
+                                aria-label="{{ __('site.storefront.sankevi.cfg_fullscreen') }}"
+                                data-label-enter="{{ __('site.storefront.sankevi.cfg_fullscreen') }}"
+                                data-label-exit="{{ __('site.storefront.sankevi.cfg_fullscreen_exit') }}">⤢</button>
                         <button type="button" data-cfg-zoomout aria-label="{{ __('site.storefront.sankevi.cfg_zoom_out') }}">−</button>
                         <button type="button" data-cfg-fit>{{ __('site.storefront.sankevi.cfg_fit') }}</button>
                         <button type="button" data-cfg-zoomin aria-label="{{ __('site.storefront.sankevi.cfg_zoom_in') }}">+</button>
                     </div>
                     <svg data-cfg-svg role="img" aria-label="{{ __('site.storefront.sankevi.cfg_view_label') }}"
                          data-lenis-prevent preserveAspectRatio="xMidYMid meet"></svg>
+                    {{-- The 3D model of the same rack. three.js draws into this
+                         the first time „3D" is pressed; see resources/js/rack-3d.js. --}}
+                    <div class="cfg-3d" data-cfg-3d-host data-lenis-prevent role="img"
+                         aria-label="{{ __('site.storefront.sankevi.cfg_3d_label') }}"></div>
                     <span class="cfg-scale" data-cfg-scale></span>
+                    <span class="cfg-hint" aria-hidden="true">{{ __('site.storefront.sankevi.cfg_3d_hint') }}</span>
                 </div>
+                <style>
+                    /* 2D and 3D share the box; the class on it decides which shows. */
+                    .cfg-canvas .cfg-3d { display: none; width: 100%; height: 420px; cursor: grab; }
+                    .cfg-canvas .cfg-3d:active { cursor: grabbing; }
+                    .cfg-canvas.is-3d .cfg-3d { display: block; }
+                    .cfg-canvas.is-3d svg { display: none; }
+                    .cfg-canvas.is-3d .cfg-scale { display: none; }
+
+                    .cfg-canvas .cfg-tool-full, .cfg-canvas .cfg-hint { display: none; }
+                    .cfg-canvas.is-3d .cfg-tool-full { display: inline-block; }
+                    .cfg-canvas.is-3d .cfg-hint { display: block; }
+                    .cfg-hint { position: absolute; left: 12px; bottom: 10px; z-index: 3; pointer-events: none;
+                        font-family: var(--body); font-size: 10px; letter-spacing: .2em;
+                        text-transform: uppercase; color: var(--faint); }
+
+                    .cfg-tools .cfg-tool-3d[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+                    .cfg-tools .cfg-tool-3d.is-loading { opacity: .6; cursor: progress; }
+                    .cfg-tools .cfg-tool-full { font-size: 14px; line-height: 1; padding: 5px 10px; }
+
+                    /* Full screen by CSS rather than the Fullscreen API, which an
+                       iPhone refuses for anything but <video>. */
+                    .cfg-canvas.is-full { position: fixed; inset: 0; z-index: 1000; margin: 0; border: 0; background: var(--bg); }
+                    .cfg-canvas.is-full .cfg-3d { height: 100vh; height: 100dvh; }
+                    html.cfg-lock, html.cfg-lock body { overflow: hidden; }
+
+                    @media (max-width: 760px) {
+                        .cfg-canvas .cfg-3d { height: 300px; }
+                        /* the tools sit bottom right on a phone; the hint would run under them */
+                        .cfg-canvas.is-3d .cfg-hint { display: none; }
+                    }
+                </style>
 
                 <div class="cfg-chips" data-cfg-chips role="group"
                      aria-label="{{ __('site.storefront.sankevi.cfg_summary_sections') }}"></div>
@@ -349,6 +403,126 @@
         <button type="button" class="btn cut-sm" data-cfg-addcart>{{ __('site.storefront.sankevi.cfg_add_to_cart') }}</button>
         <button type="button" class="cfg-bar-see" data-cfg-see>{{ __('site.storefront.sankevi.cfg_see_set') }}</button>
     </div>
+
+    {{-- ---------- the sign-up window ----------
+         Keeping a rack takes an account. A guest who presses Save, Copy link or
+         Add to request gets this instead of a trip to /account/register, so the
+         drawing they have not saved yet is still on the board when they are
+         done. Both forms post as JSON to the ordinary account endpoints, and
+         the action they pressed runs the moment they are signed in. --}}
+    @php
+        $canRegister = (bool) $store->allow_registration;
+        $csSignup = $store->signupFieldsConfig();
+        $reqMarker = fn (bool $req) => $req ? '' : ' <span class="opt">(' . __('site.auth.optional') . ')</span>';
+    @endphp
+    <dialog class="cfg-auth" data-cfg-auth aria-labelledby="cfgAuthTitle">
+        <div class="cfg-auth-card cut cut-lg" data-lenis-prevent>
+            <button type="button" class="cfg-auth-x" data-cfg-auth-close aria-label="{{ __('site.storefront.sankevi.cfg_auth_close') }}">×</button>
+
+            <h2 id="cfgAuthTitle">{{ __('site.storefront.sankevi.cfg_auth_title') }}</h2>
+            <p class="lede">{{ __('site.storefront.sankevi.cfg_auth_lead') }}</p>
+
+            @if ($canRegister)
+                <div class="cfg-auth-tabs" role="tablist">
+                    <button type="button" role="tab" data-cfg-auth-tab="register" aria-selected="true">{{ __('site.storefront.sankevi.cfg_auth_tab_register') }}</button>
+                    <button type="button" role="tab" data-cfg-auth-tab="login" aria-selected="false">{{ __('site.storefront.sankevi.cfg_auth_tab_login') }}</button>
+                </div>
+            @endif
+
+            <div class="cfg-auth-errors" data-cfg-auth-errors role="alert" hidden></div>
+
+            @if ($canRegister)
+                <form data-cfg-auth-form="register" action="/account/register">
+                    <div class="field">
+                        <label class="field-label" for="cfgAuthName">{{ __('site.auth.full_name') }}</label>
+                        <input class="field-input" type="text" name="name" id="cfgAuthName" required autocomplete="name">
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="cfgAuthEmail">{{ __('site.auth.email') }}</label>
+                        <input class="field-input" type="email" name="email" id="cfgAuthEmail" required autocomplete="email">
+                    </div>
+
+                    {{-- Whatever else this shop asks for at sign-up (Sankevi: the
+                         phone). Leaving it out would only move the refusal from
+                         the browser to the server. --}}
+                    @include('storefront.auth._signup_fields')
+
+                    <div class="field">
+                        <label class="field-label" for="cfgAuthPassword">{{ __('site.auth.password') }}</label>
+                        <input class="field-input" type="password" name="password" id="cfgAuthPassword" required minlength="8" autocomplete="new-password" data-cfg-auth-secret>
+                        <span class="field-hint">{{ __('site.auth.password_hint') }}</span>
+                    </div>
+                    <label class="cfg-auth-reveal">
+                        <input type="checkbox" data-cfg-auth-reveal> {{ __('site.storefront.sankevi.cfg_auth_show_password') }}
+                    </label>
+
+                    <button type="submit" class="btn block cut-sm">{{ __('site.storefront.sankevi.cfg_auth_register_btn') }}</button>
+                </form>
+            @endif
+
+            <form data-cfg-auth-form="login" action="/account/login" @if ($canRegister) hidden @endif>
+                <div class="field">
+                    <label class="field-label" for="cfgLoginEmail">{{ __('site.auth.email') }}</label>
+                    <input class="field-input" type="email" name="email" id="cfgLoginEmail" required autocomplete="email">
+                </div>
+                <div class="field">
+                    <label class="field-label" for="cfgLoginPassword">{{ __('site.auth.password') }}</label>
+                    <input class="field-input" type="password" name="password" id="cfgLoginPassword" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn block cut-sm">{{ __('site.storefront.sankevi.cfg_auth_login_btn') }}</button>
+            </form>
+        </div>
+    </dialog>
+    <style>
+        /* The sign-in sheet from /account/register, shrunk into a window. The
+           dialog itself is transparent; the card carries the planed corner. */
+        .cfg-auth { width: min(460px, calc(100% - 24px)); max-width: none; max-height: none;
+            margin: auto; padding: 0; border: 0; background: transparent; color: var(--txt); overflow: visible; }
+        .cfg-auth::backdrop { background: rgba(4, 14, 10, .64); backdrop-filter: blur(3px); }
+        .cfg-auth-card { position: relative; background: var(--surface); border: 1px solid var(--line);
+            padding: 34px 32px 28px; max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain; }
+        .cfg-auth-x { position: absolute; top: 10px; right: 12px; width: 44px; height: 44px;
+            background: none; border: 0; color: var(--muted); font-size: 26px; line-height: 1; cursor: pointer; }
+        .cfg-auth-x:hover { color: var(--accent); }
+        .cfg-auth h2 { font-family: var(--display); font-weight: 500; font-size: clamp(24px, 3vw, 30px);
+            line-height: 1.05; margin: 0 40px 10px 0; }
+        .cfg-auth .lede { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 0 0 20px; }
+
+        .cfg-auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 20px; }
+        .cfg-auth-tabs button { font-family: var(--body); font-size: 11px; font-weight: 600; letter-spacing: .14em;
+            text-transform: uppercase; color: var(--muted); background: transparent;
+            border: 1px solid var(--line2); padding: 12px 8px; min-height: 44px; cursor: pointer; }
+        .cfg-auth-tabs button[aria-selected="true"] { border-color: var(--accent); color: var(--accent);
+            background: color-mix(in srgb, var(--accent) 10%, transparent); }
+
+        .cfg-auth-errors { border: 1px solid #b4614a; border-left-width: 3px;
+            background: color-mix(in srgb, #b4614a 12%, var(--surface));
+            padding: 11px 14px; margin-bottom: 18px; font-size: 13px; line-height: 1.55; }
+        .cfg-auth-errors[hidden] { display: none !important; }
+
+        .cfg-auth .field { margin-bottom: 15px; }
+        .cfg-auth .field-label { display: block; font-size: 10.5px; font-weight: 500; letter-spacing: .18em;
+            text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+        .cfg-auth .field-label .opt { color: var(--faint); font-weight: 400; text-transform: none; letter-spacing: 0; }
+        /* 16px, not 15: iOS Safari zooms the whole page into any field smaller. */
+        .cfg-auth .field-input { width: 100%; background: var(--bg); border: 1px solid var(--line2);
+            padding: 13px 14px; font-family: var(--body); font-size: 16px; color: var(--txt); }
+        .cfg-auth .field-input:focus { outline: none; border-color: var(--accent); }
+        .cfg-auth .field-hint { display: block; margin-top: 6px; font-size: 11px; color: var(--faint); }
+        .cfg-auth .shipping-row { display: grid; grid-template-columns: 2fr 1fr; gap: 9px; }
+        .cfg-auth .marketing-label { display: flex; gap: .6rem; font-size: 13px; color: var(--muted); }
+
+        .cfg-auth-reveal { display: flex; align-items: center; gap: 8px; margin: -4px 0 16px;
+            font-size: 12.5px; color: var(--muted); cursor: pointer; min-height: 32px; }
+        .cfg-auth-reveal input { width: 16px; height: 16px; accent-color: var(--accent); }
+        .cfg-auth .btn.block { width: 100%; justify-content: center; min-height: 48px; margin-top: 4px; }
+        .cfg-auth .btn[disabled] { opacity: .6; cursor: progress; }
+
+        @media (max-width: 560px) {
+            .cfg-auth-card { padding: 28px 20px 22px; }
+        }
+    </style>
 </main>
 
 @push('scripts')
@@ -785,6 +959,7 @@
         if (state.selected > sections() - 1) { state.selected = sections() - 1; }
         if (state.selected < 0) { state.selected = 0; }
         renderSvg();
+        sync3d();
         renderChips();
         renderEditor();
         var q = renderPanel();
@@ -895,9 +1070,126 @@
         }
         if (e.target.closest('[data-cfg-left]'))  { move(-1); return; }
         if (e.target.closest('[data-cfg-right]')) { move(1);  return; }
-        if (e.target.closest('[data-cfg-fit]'))     { fit(); return; }
-        if (e.target.closest('[data-cfg-zoomin]'))  { zoomBy(1.35); return; }
-        if (e.target.closest('[data-cfg-zoomout]')) { zoomBy(1 / 1.35); return; }
+        if (e.target.closest('[data-cfg-fit]'))     { if (is3d && view3d) { view3d.fit(); } else { fit(); } return; }
+        if (e.target.closest('[data-cfg-zoomin]'))  { if (is3d && view3d) { view3d.zoom(1.35); } else { zoomBy(1.35); } return; }
+        if (e.target.closest('[data-cfg-zoomout]')) { if (is3d && view3d) { view3d.zoom(1 / 1.35); } else { zoomBy(1 / 1.35); } return; }
+        if (e.target.closest('[data-cfg-3d]'))      { toggle3d(); return; }
+        if (e.target.closest('[data-cfg-full]'))    { toggleFull(); return; }
+    });
+
+    /* ===================================================================
+     | THE 3D VIEW
+     |
+     | „3D" swaps the elevation for a model of the same rack, in the same box.
+     | three.js arrives only the first time somebody presses it — a chunk of
+     | its own behind window.gv.rack3d — and the model is rebuilt from
+     | model3d() on every render(). model3d() reads the drawing's constants
+     | and shelfYs(), so there is one set of numbers and two pictures of it.
+     =================================================================== */
+    var canvasBox = $('[data-cfg-canvas]');
+    var host3d    = $('[data-cfg-3d-host]');
+    var btn3d     = $('[data-cfg-3d]');
+    var btnFull   = $('[data-cfg-full]');
+    var view3d = null, is3d = false, loading3d = false;
+
+    function canWebGL() {
+        try {
+            var c = document.createElement('canvas');
+            return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl')));
+        } catch (e) {
+            return false;
+        }
+    }
+    if (canWebGL()) { btn3d.hidden = false; }
+
+    function model3d() {
+        var H = state.height;
+        var px = [POST_W / 2];
+        state.segments.forEach(function (w, i) { px.push(px[i] + w); });
+        /* frameShape()'s drill holes, measured up from the floor instead of down from the top */
+        var holes = [];
+        for (var y = 5; y < H - FOOT_H - 2; y += 5) { holes.push(H - y); }
+        return {
+            height: H,
+            depth: state.depth,
+            length: contentSize().w,
+            post: POST_W,
+            thick: THICK,
+            shelfDepth: shelfDepth(state.depth),
+            pitches: px,
+            shelfTops: shelfYs().map(function (y) { return H - y; }),
+            holes: holes,
+            braced: state.segments.map(function (w, i) { return isBraced(i); }),
+            braceTop: H - TOP_INSET,
+            braceBottom: BOT_INSET,
+            selected: state.selected
+        };
+    }
+
+    function sync3d() {
+        if (is3d && view3d) { view3d.update(model3d()); }
+    }
+
+    function show3d(on) {
+        is3d = on;
+        canvasBox.classList.toggle('is-3d', on);
+        btn3d.setAttribute('aria-pressed', on ? 'true' : 'false');
+        btn3d.textContent = on ? btn3d.dataset.label2d : btn3d.dataset.label3d;
+        if (on) {
+            sync3d();
+        } else {
+            exitFull();
+            /* the drawing was measuring a hidden box while the model was up */
+            applyViewBox();
+        }
+    }
+
+    function toggle3d() {
+        if (is3d) { show3d(false); return; }
+        if (view3d) { show3d(true); return; }
+        if (loading3d) { return; }
+
+        var load = window.gv && window.gv.rack3d;
+        if (!load) { say(LABELS.generic); return; }
+
+        loading3d = true;
+        btn3d.classList.add('is-loading');
+        /* the box has to be showing before three.js can measure it */
+        show3d(true);
+        load().then(function (mod) {
+            view3d = mod.default(host3d);
+            if (!view3d) { throw new Error('no webgl'); }
+            sync3d();
+        }).catch(function () {
+            /* a chunk that failed to arrive, or WebGL refused after all:
+               back to the drawing, and stop offering what cannot work */
+            show3d(false);
+            btn3d.hidden = true;
+            say(LABELS.generic);
+        }).then(function () {
+            loading3d = false;
+            btn3d.classList.remove('is-loading');
+        });
+    }
+
+    /* Full screen by CSS class — see the note beside .cfg-canvas.is-full. */
+    function setFull(on) {
+        canvasBox.classList.toggle('is-full', on);
+        document.documentElement.classList.toggle('cfg-lock', on);
+        btnFull.setAttribute('aria-pressed', on ? 'true' : 'false');
+        btnFull.setAttribute('aria-label', on ? btnFull.dataset.labelExit : btnFull.dataset.labelEnter);
+        btnFull.textContent = on ? '✕' : '⤢';
+        var lenis = window.gv && window.gv.lenis;
+        if (lenis) {
+            if (on) { lenis.stop(); } else { lenis.start(); }
+        }
+    }
+    function toggleFull() { setFull(!canvasBox.classList.contains('is-full')); }
+    function exitFull() {
+        if (canvasBox.classList.contains('is-full')) { setFull(false); }
+    }
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { exitFull(); }
     });
 
     function move(dir) {
@@ -986,20 +1278,142 @@
         }
     }
 
-    function saveConfig() {
+    /* ---------- keeping a rack takes an account ---------------------- */
+    /*
+     | Save, Copy link and Add to request all store a rack, and storing one
+     | needs a customer account. A guest pressing any of them gets the sign-up
+     | window instead, and the moment they are signed in the button they
+     | pressed runs — so nobody has to find it and press it again.
+     |
+     | BOOT.signedIn only decides whether to open the window BEFORE posting.
+     | The server is what decides: a 401 carrying auth_required (the session
+     | ran out while the page sat open in a tab) opens the same window and
+     | re-runs the action afterwards.
+     */
+    var authBox = document.querySelector('[data-cfg-auth]');
+    var authPending = null;
+
+    function keep(action) {
+        if (!BOOT.signedIn) { openAuth(action); return; }
+        action();
+    }
+
+    function needsAccount(data, action) {
+        if (data && data.status === 401 && data.auth_required) {
+            BOOT.signedIn = false;
+            openAuth(action);
+            return true;
+        }
+        return false;
+    }
+
+    function openAuth(action) {
+        authPending = action;
+        showAuthErrors(null);
+        if (typeof authBox.showModal === 'function') { authBox.showModal(); } else { authBox.setAttribute('open', ''); }
+        var first = authBox.querySelector('form:not([hidden]) input:not([type="checkbox"])');
+        if (first) { first.focus(); }
+    }
+
+    function closeAuth() {
+        authPending = null;
+        if (typeof authBox.close === 'function' && authBox.open) { authBox.close(); } else { authBox.removeAttribute('open'); }
+    }
+
+    function showAuthErrors(data) {
+        var box = authBox.querySelector('[data-cfg-auth-errors]');
+        box.textContent = '';
+        if (!data) { box.hidden = true; return; }
+
+        var lines = [];
+        if (data.errors) {
+            Object.keys(data.errors).forEach(function (k) { lines = lines.concat(data.errors[k]); });
+        } else {
+            /* 429 (too many tries), 404 (sign-up switched off), 419 — none of
+               their framework messages are fit to show a customer. */
+            lines.push(LABELS.generic);
+        }
+        lines.forEach(function (line) {
+            var p = document.createElement('div');
+            p.textContent = line;
+            box.appendChild(p);
+        });
+        box.hidden = false;
+    }
+
+    authBox.addEventListener('click', function (e) {
+        /* a click on the dimmed backdrop lands on the <dialog> itself */
+        if (e.target === authBox || e.target.closest('[data-cfg-auth-close]')) { closeAuth(); return; }
+
+        var tab = e.target.closest('[data-cfg-auth-tab]');
+        if (tab) {
+            var which = tab.dataset.cfgAuthTab;
+            authBox.querySelectorAll('[data-cfg-auth-tab]').forEach(function (t) {
+                t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
+            });
+            authBox.querySelectorAll('[data-cfg-auth-form]').forEach(function (f) {
+                f.hidden = f.dataset.cfgAuthForm !== which;
+            });
+            showAuthErrors(null);
+            var first = authBox.querySelector('[data-cfg-auth-form="' + which + '"] input');
+            if (first) { first.focus(); }
+        }
+    });
+    /* Esc closes the dialog natively; the pending action must go with it. */
+    authBox.addEventListener('cancel', function () { authPending = null; });
+
+    var reveal = authBox.querySelector('[data-cfg-auth-reveal]');
+    if (reveal) {
+        reveal.addEventListener('change', function () {
+            authBox.querySelector('[data-cfg-auth-secret]').type = reveal.checked ? 'text' : 'password';
+        });
+    }
+
+    authBox.querySelectorAll('[data-cfg-auth-form]').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            var btn = form.querySelector('[type="submit"]');
+            btn.disabled = true;
+
+            var body = {};
+            new FormData(form).forEach(function (value, key) { body[key] = value; });
+
+            post(form.getAttribute('action'), body).then(function (data) {
+                btn.disabled = false;
+                if (!data || !data.ok) { showAuthErrors(data || {}); return; }
+
+                /* Signing in rotated the session, and the CSRF token with it.
+                   The configurator's own calls read BOOT.token; every ordinary
+                   form on the page (the header's sign-out, say) carries the old
+                   one in a hidden field, so those are brought up to date too. */
+                BOOT.token = data.token;
+                BOOT.signedIn = true;
+                document.querySelectorAll('input[name="_token"]').forEach(function (i) { i.value = data.token; });
+
+                var run = authPending;
+                closeAuth();
+                form.reset();
+                if (run) { run(); }
+            }).catch(function () { btn.disabled = false; showAuthErrors({}); });
+        });
+    });
+
+    /* ---------- save, share, buy (continued) ------------------------- */
+    function saveConfig(again) {
         return post('/configurator/save', { config: payload() }).then(function (data) {
+            if (needsAccount(data, again)) { return null; }
             if (!data || !data.ok) { say((data && data.reason) || LABELS.generic); return null; }
             showCode(data.code, data.url);
             return data;
         });
     }
 
-    $('[data-cfg-save]').addEventListener('click', function () {
-        saveConfig().then(function (d) { if (d) { say(LABELS.saved); } });
-    });
+    function doSave() {
+        saveConfig(doSave).then(function (d) { if (d) { say(LABELS.saved); } });
+    }
 
-    $('[data-cfg-copy]').addEventListener('click', function () {
-        saveConfig().then(function (d) {
+    function doCopy() {
+        saveConfig(doCopy).then(function (d) {
             if (!d) { return; }
             var url = d.url;
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -1011,13 +1425,17 @@
                 window.prompt('', url);
             }
         });
-    });
+    }
+
+    $('[data-cfg-save]').addEventListener('click', function () { keep(doSave); });
+    $('[data-cfg-copy]').addEventListener('click', function () { keep(doCopy); });
 
     $$('[data-cfg-addcart]').forEach(function (btn) {
-        btn.addEventListener('click', function () {
+        function doAdd() {
             btn.disabled = true;
             post('/configurator/cart', { config: payload() }).then(function (data) {
                 btn.disabled = false;
+                if (needsAccount(data, doAdd)) { return; }
                 if (!data || !data.ok) { say((data && data.reason) || LABELS.generic); return; }
                 showCode(data.code, data.url);
                 /* Reconcile against what the server actually banked, rather
@@ -1033,7 +1451,9 @@
                     n.textContent = data.item_count;
                 });
             }).catch(function () { btn.disabled = false; say(LABELS.generic); });
-        });
+        }
+
+        btn.addEventListener('click', function () { keep(doAdd); });
     });
 
     /* ---------- go ---------------------------------------------------- */

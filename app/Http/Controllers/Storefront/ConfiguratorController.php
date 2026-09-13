@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Storefront;
 
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 use App\Models\RackConfiguration;
 use App\Models\Store;
 use App\Services\Cart;
@@ -15,6 +16,7 @@ use App\Services\Rack\RackQuote;
 use App\Themes\ThemeRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
@@ -25,6 +27,12 @@ use Illuminate\View\View;
  * takes a CONFIGURATION and derives the money itself from the price book (§36,
  * §37). A tampered payload can therefore only ask for a different rack, never
  * for a different price.
+ *
+ * Drawing and pricing are open to anybody. KEEPING a rack — saving it, sharing
+ * it, adding it to a request — takes a customer account, so every stored rack
+ * has a name, an email and a phone behind it that the yard can call back. The
+ * page asks a guest to sign up in place; this controller is what makes that
+ * more than a suggestion.
  *
  * Opt-in per store, like /about — an untouched store 404s rather than
  * publishing a configurator with no parts behind it.
@@ -116,6 +124,10 @@ class ConfiguratorController extends Controller
             // the same price book the server just used, so the two agree —
             // and every state change is re-derived server-side anyway.
             'priceBook' => $this->priceBookPayload($prices, $limits),
+            // Whether Save / Copy link / Add to request can go straight
+            // through, or must open the sign-up window first. Only a hint to
+            // the page: save() and addToCart() check again for themselves.
+            'signedIn' => $this->customer($store) !== null,
         ]);
     }
 
@@ -140,8 +152,12 @@ class ConfiguratorController extends Controller
     {
         [$store, $limits] = $this->gate();
 
+        if (! $customer = $this->customer($store)) {
+            return $this->signInFirst();
+        }
+
         try {
-            $saved = $this->persist($request, $store, $limits);
+            $saved = $this->persist($request, $store, $limits, $customer);
         } catch (RackException $e) {
             return response()->json(['ok' => false, 'reason' => $this->reason($e, $limits)], 422);
         }
@@ -158,8 +174,12 @@ class ConfiguratorController extends Controller
     {
         [$store, $limits] = $this->gate();
 
+        if (! $customer = $this->customer($store)) {
+            return $this->signInFirst();
+        }
+
         try {
-            $saved = $this->persist($request, $store, $limits);
+            $saved = $this->persist($request, $store, $limits, $customer);
         } catch (RackException $e) {
             return response()->json(['ok' => false, 'reason' => $this->reason($e, $limits)], 422);
         }
@@ -183,7 +203,7 @@ class ConfiguratorController extends Controller
      * Validate, re-price from the DB, and store. Both save and add-to-cart go
      * through here, so neither can bank a price the calculator did not produce.
      */
-    private function persist(Request $request, $store, array $limits): RackConfiguration
+    private function persist(Request $request, $store, array $limits, Customer $customer): RackConfiguration
     {
         $prices = RackPriceBook::forTenant($store->tenant_id);
         $config = RackConfig::fromArray((array) $request->input('config', []), $limits);
@@ -210,18 +230,12 @@ class ConfiguratorController extends Controller
          | anybody could re-save that shape and rewrite a record somebody else
          | was holding a link to. A share link was editable by whoever had it.
          |
-         | So the match is now scoped to this browser AND to an unchanged price,
+         | So the match is scoped to this customer AND to an unchanged price,
          | and there is no update() left in this method. A stored configuration
          | is written once and never again: the only thing a save can do to an
          | existing row is decline to make another one.
-         |
-         | Matching on height, depth and levels in SQL and comparing the
-         | segments in PHP: the segment list is a JSON column, and asking two
-         | different database engines to agree on JSON equality is a worse bet
-         | than reading back the handful of rows that share the other three.
          */
-        $owner = RackConfiguration::ownerToken();
-        $mine = RackConfiguration::reusableFor($store->tenant_id, $owner, $config, $snapshot);
+        $mine = RackConfiguration::reusableFor($store->tenant_id, $customer->id, $config, $snapshot);
 
         if ($mine) {
             return $mine;
@@ -229,12 +243,44 @@ class ConfiguratorController extends Controller
 
         return RackConfiguration::create($snapshot + [
             'tenant_id' => $store->tenant_id,
-            'owner_token' => $owner,
+            'customer_id' => $customer->id,
+            'owner_token' => RackConfiguration::ownerToken(),
             'height_cm' => $config->heightCm,
             'depth_cm' => $config->depthCm,
             'levels' => $config->levels,
             'segments' => $config->segments,
         ]);
+    }
+
+    /**
+     * The signed-in customer, if they belong to THIS shop.
+     *
+     * Customer accounts are per tenant, but the guard only knows "somebody is
+     * logged in". A session carried over from another storefront must count as
+     * nobody here, or one shop's customer would be saving racks into another
+     * shop's list under an account that shop has never seen.
+     */
+    private function customer(Store $store): ?Customer
+    {
+        $customer = Auth::guard('customer')->user();
+
+        return $customer instanceof Customer && (int) $customer->tenant_id === (int) $store->tenant_id
+            ? $customer
+            : null;
+    }
+
+    /**
+     * The refusal the page turns into the sign-up window. 401 rather than a
+     * redirect: these are JSON calls, and a redirect would hand fetch() the
+     * login page's HTML to choke on.
+     */
+    private function signInFirst(): JsonResponse
+    {
+        return response()->json([
+            'ok' => false,
+            'auth_required' => true,
+            'reason' => __('site.storefront.sankevi.cfg_auth_required'),
+        ], 401);
     }
 
     /**

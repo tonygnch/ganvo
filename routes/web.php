@@ -283,9 +283,11 @@ $storefrontRoutes = function () {
 
     // Customer auth + account
     Route::get('/account/login', [CustomerAuthController::class, 'showLogin']);
-    Route::post('/account/login', [CustomerAuthController::class, 'login']);
+    // Throttled: the configurator's sign-up window posts here too, which puts
+    // a password form one click from a public page.
+    Route::post('/account/login', [CustomerAuthController::class, 'login'])->middleware('throttle:10,1');
     Route::get('/account/register', [CustomerAuthController::class, 'showRegister']);
-    Route::post('/account/register', [CustomerAuthController::class, 'register']);
+    Route::post('/account/register', [CustomerAuthController::class, 'register'])->middleware('throttle:10,1');
     Route::post('/account/logout', [CustomerAuthController::class, 'logout']);
     Route::get('/account', [AccountController::class, 'show']);
     // Account settings — profile/address + password (separate forms).

@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Storefront\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\RackConfiguration;
 use App\Themes\ThemeRegistry;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +15,11 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
+/**
+ * Customer sign-in and sign-up — as full pages, and as JSON for the rack
+ * configurator's in-place window, which must not navigate away from a drawing
+ * the visitor has not saved yet. Same rules either way; only the reply differs.
+ */
 class CustomerAuthController extends Controller
 {
     public function showLogin(): View|RedirectResponse
@@ -24,7 +31,7 @@ class CustomerAuthController extends Controller
         return view($this->themedView('auth.login', 'storefront.auth.login'), $this->viewData());
     }
 
-    public function login(Request $request): RedirectResponse
+    public function login(Request $request): RedirectResponse|JsonResponse
     {
         $tenant = app('current_tenant');
 
@@ -43,8 +50,11 @@ class CustomerAuthController extends Controller
             ]);
         }
 
-        Auth::guard('customer')->login($customer, true);
-        $request->session()->regenerate();
+        $this->signIn($request, $customer);
+
+        if ($request->expectsJson()) {
+            return $this->signedIn($customer);
+        }
 
         return redirect()->intended('/account');
     }
@@ -63,7 +73,7 @@ class CustomerAuthController extends Controller
         return view($this->themedView('auth.register', 'storefront.auth.register'), $this->viewData());
     }
 
-    public function register(Request $request): RedirectResponse
+    public function register(Request $request): RedirectResponse|JsonResponse
     {
         $tenant = app('current_tenant');
         if (! $tenant->store->allow_registration) {
@@ -81,7 +91,12 @@ class CustomerAuthController extends Controller
                 Rule::unique('customers', 'email')
                     ->where(fn ($q) => $q->where('tenant_id', $tenant->id)),
             ],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            // The configurator's quick form asks for the password once, with a
+            // "show" toggle instead of a second box — typing it twice in a
+            // small window is exactly the friction that window exists to cut.
+            'password' => $request->expectsJson()
+                ? ['required', 'string', 'min:8']
+                : ['required', 'string', 'min:8', 'confirmed'],
         ];
         $opt = fn (bool $required) => $required ? ['required'] : ['nullable'];
         if ($signupConfig['phone']['enabled']) {
@@ -101,7 +116,11 @@ class CustomerAuthController extends Controller
             $rules['marketing_optin'] = ['accepted']; // required-checkbox semantics
         }
 
-        $data = $request->validate($rules);
+        $data = $request->validate($rules, [
+            // The generic "already taken" leaves somebody who simply forgot
+            // they had an account with nowhere to go.
+            'email.unique' => __('site.auth.email_taken'),
+        ]);
 
         $attrs = [
             'tenant_id' => $tenant->id,
@@ -135,8 +154,11 @@ class CustomerAuthController extends Controller
 
         $customer = Customer::create($attrs);
 
-        Auth::guard('customer')->login($customer, true);
-        $request->session()->regenerate();
+        $this->signIn($request, $customer);
+
+        if ($request->expectsJson()) {
+            return $this->signedIn($customer);
+        }
 
         return redirect('/account');
     }
@@ -147,6 +169,39 @@ class CustomerAuthController extends Controller
         $request->session()->regenerate();
 
         return redirect('/');
+    }
+
+    /**
+     * Log in, rotate the session, and bring along any racks this browser saved
+     * before it had an account.
+     *
+     * The order matters. The racks are found by a hash of the session id, and
+     * logging in replaces that id — the guard migrates the session inside
+     * login(), before regenerate() ever runs — so the hash is taken before
+     * either, while it still points at them.
+     */
+    private function signIn(Request $request, Customer $customer): void
+    {
+        $guestRacks = RackConfiguration::ownerToken();
+
+        Auth::guard('customer')->login($customer, true);
+        $request->session()->regenerate();
+
+        RackConfiguration::claimForCustomer($customer, $guestRacks);
+    }
+
+    /**
+     * The JSON reply. regenerate() also rotated the CSRF token, so the page
+     * gets the new one — without it, the very save the visitor signed up to
+     * make would bounce with a 419.
+     */
+    private function signedIn(Customer $customer): JsonResponse
+    {
+        return response()->json([
+            'ok' => true,
+            'token' => csrf_token(),
+            'name' => $customer->name,
+        ]);
     }
 
     private function viewData(): array

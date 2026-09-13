@@ -912,11 +912,13 @@ Leave a blank line between paragraphs.',
             'total' => 'Value',
             'state' => 'State',
             'created' => 'Created',
+            'customer' => 'Customer',
         ],
         'opt' => [
             'ordered' => 'Requested',
             'saved_only' => 'Saved only',
             'any' => 'All',
+            'guest' => 'Guest',
         ],
         'filter' => [
             'big' => 'Over 1000 €',

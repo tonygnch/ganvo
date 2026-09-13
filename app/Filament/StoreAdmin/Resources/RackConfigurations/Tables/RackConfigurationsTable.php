@@ -22,6 +22,24 @@ class RackConfigurationsTable
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
+                TextColumn::make('customer.name')
+                    ->label(__('admin.rack_configs.field.customer'))
+                    // Racks saved before an account was required have nobody
+                    // behind them.
+                    ->placeholder(__('admin.rack_configs.opt.guest'))
+                    ->description(fn (RackConfiguration $r) => $r->customer
+                        ? collect([$r->customer->email, $r->customer->phone])->filter()->implode(' · ')
+                        : null)
+                    // Name, email or phone — whichever the yard has on the
+                    // note from the phone call. The inner where() groups the
+                    // ORs, or they would escape the customer relation. $query
+                    // and $search by NAME — Filament injects by parameter name.
+                    ->searchable(query: fn (Builder $query, string $search) => $query->whereHas('customer', fn (Builder $c) => $c
+                        ->where(fn (Builder $w) => $w
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%")))),
+
                 TextColumn::make('code')
                     ->label(__('admin.rack_configs.field.code'))
                     ->searchable()

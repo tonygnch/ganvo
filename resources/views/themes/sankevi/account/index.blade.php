@@ -63,6 +63,9 @@
                         <div class="em">{{ $customer->email }}</div>
                     </div>
                     <a href="/account" class="on">{{ __('site.account.recent_orders') }}</a>
+                    @if ($racksEnabled ?? false)
+                        <a href="#racks">{{ __('site.account.racks') }}</a>
+                    @endif
                     <a href="/account/settings">{{ __('site.account.settings') }}</a>
                     <form method="post" action="/account/logout">
                         @csrf
@@ -103,6 +106,45 @@
                                 </div>
                             </div>
                         @endforeach
+                    @endif
+
+                    {{-- The racks they drew. Same delivery-note card as an order:
+                         the code the yard asks for on the phone, when, how much —
+                         and the way back into the configurator. --}}
+                    @if ($racksEnabled ?? false)
+                        <h2 id="racks" style="margin-top: 46px; scroll-margin-top: calc(var(--header-height) + 24px);">{{ __('site.account.racks') }}</h2>
+
+                        @if ($racks->isEmpty())
+                            <div class="acct-empty cut reveal">
+                                <p>{{ __('site.account.racks_empty') }}</p>
+                                <a href="/configurator" class="btn">{{ __('site.account.racks_start') }}</a>
+                            </div>
+                        @else
+                            @foreach ($racks as $rack)
+                                <div class="order cut reveal">
+                                    <div class="head">
+                                        <div>
+                                            <div class="k">{{ __('site.storefront.sankevi.cfg_code_label') }}</div>
+                                            <b>{{ $rack->code }}</b>
+                                        </div>
+                                        <div>
+                                            <div class="k">{{ __('site.account.racks_saved_on') }}</div>
+                                            <b style="font-size: 15px;">{{ $rack->created_at->isoFormat('LL') }}</b>
+                                        </div>
+                                        <div class="total">
+                                            <div class="k">{{ __('site.order.total') }}</div>
+                                            <b style="font-size: 15px;">{{ \App\Services\Money::format($rack->total_cents, $rack->currency ?: 'EUR') }}</b>
+                                        </div>
+                                    </div>
+                                    <div class="body">
+                                        <span style="color: var(--muted); font-size: 13.5px;">{{ \App\Services\Rack\RackPresenter::rackName(\App\Services\Rack\RackConfig::of($rack->height_cm, $rack->depth_cm, $rack->levels, $rack->segmentWidths())) }}</span>
+                                        <div class="act">
+                                            <a href="/configurator/{{ $rack->code }}">{{ __('site.account.racks_open') }}</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        @endif
                     @endif
                 </div>
             </div>
