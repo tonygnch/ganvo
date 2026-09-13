@@ -610,7 +610,6 @@ return [
             'cfg_view_3d' => '3D',
             'cfg_view_2d' => '2D',
             'cfg_3d_label' => '3D model of the rack',
-            'cfg_3d_hint' => 'Drag to turn · scroll or pinch to zoom',
             'cfg_fullscreen' => 'Full screen',
             'cfg_fullscreen_exit' => 'Exit full screen',
         ],

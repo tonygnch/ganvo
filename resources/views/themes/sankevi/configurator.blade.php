@@ -297,7 +297,6 @@
                     <div class="cfg-3d" data-cfg-3d-host data-lenis-prevent role="img"
                          aria-label="{{ __('site.storefront.sankevi.cfg_3d_label') }}"></div>
                     <span class="cfg-scale" data-cfg-scale></span>
-                    <span class="cfg-hint" aria-hidden="true">{{ __('site.storefront.sankevi.cfg_3d_hint') }}</span>
                 </div>
                 <style>
                     /* 2D and 3D share the box; the class on it decides which shows. */
@@ -307,12 +306,8 @@
                     .cfg-canvas.is-3d svg { display: none; }
                     .cfg-canvas.is-3d .cfg-scale { display: none; }
 
-                    .cfg-canvas .cfg-tool-full, .cfg-canvas .cfg-hint { display: none; }
+                    .cfg-canvas .cfg-tool-full { display: none; }
                     .cfg-canvas.is-3d .cfg-tool-full { display: inline-block; }
-                    .cfg-canvas.is-3d .cfg-hint { display: block; }
-                    .cfg-hint { position: absolute; left: 12px; bottom: 10px; z-index: 3; pointer-events: none;
-                        font-family: var(--body); font-size: 10px; letter-spacing: .2em;
-                        text-transform: uppercase; color: var(--faint); }
 
                     .cfg-tools .cfg-tool-3d[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
                     .cfg-tools .cfg-tool-3d.is-loading { opacity: .6; cursor: progress; }
@@ -326,8 +321,6 @@
 
                     @media (max-width: 760px) {
                         .cfg-canvas .cfg-3d { height: 300px; }
-                        /* the tools sit bottom right on a phone; the hint would run under them */
-                        .cfg-canvas.is-3d .cfg-hint { display: none; }
                     }
                 </style>
 
