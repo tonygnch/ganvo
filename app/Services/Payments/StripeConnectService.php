@@ -158,16 +158,29 @@ class StripeConnectService
         }
         $account = $this->stripe->accounts->retrieve($tenant->stripe_account_id);
 
-        $tenant->update([
-            'stripe_connect_charges_enabled' => (bool) $account->charges_enabled,
-            'stripe_connect_payouts_enabled' => (bool) $account->payouts_enabled,
-            'stripe_connect_details_submitted' => (bool) $account->details_submitted,
-            // disabled_reason is null when nothing's wrong. Examples:
-            // 'requirements.past_due' / 'rejected.fraud' / etc.
-            'stripe_connect_disabled_reason' => $account->requirements?->disabled_reason,
-        ]);
+        $this->mirrorAccount($tenant, $account);
 
         return $account;
+    }
+
+    /**
+     * Copy a Connect account's state onto the tenant. One place for both
+     * sources — a fresh retrieve here and the account.updated webhook — so
+     * they can never store different things.
+     */
+    public function mirrorAccount(Tenant $tenant, Account $account): void
+    {
+        $tenant->update([
+            'stripe_connect_charges_enabled' => (bool) ($account->charges_enabled ?? false),
+            'stripe_connect_payouts_enabled' => (bool) ($account->payouts_enabled ?? false),
+            'stripe_connect_details_submitted' => (bool) ($account->details_submitted ?? false),
+            // disabled_reason is null when nothing's wrong. Examples:
+            // 'requirements.past_due' / 'rejected.fraud' / etc.
+            'stripe_connect_disabled_reason' => $account->requirements?->disabled_reason ?? null,
+            // The fields behind that reason, so the Payments page can say
+            // what to fix instead of printing the code.
+            'stripe_connect_requirements' => ConnectRequirements::snapshot($account->requirements ?? null),
+        ]);
     }
 
     /**

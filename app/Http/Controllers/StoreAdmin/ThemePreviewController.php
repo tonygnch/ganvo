@@ -96,7 +96,18 @@ class ThemePreviewController extends Controller
             'tenant' => $tenant,
             'store' => $store,
             'products' => $paginated,
-            'filters' => [],
+            // The same "nothing chosen" shape StorefrontController::extractFilters()
+            // gives the home page. An empty array 500'd every theme whose home
+            // includes storefront.partials.catalog-controls, which reads these
+            // keys directly — everyone but Sankevi.
+            'filters' => [
+                'q' => null,
+                'sort' => 'category',
+                'category' => null,
+                'min_price' => null,
+                'max_price' => null,
+                'in_stock' => false,
+            ],
             'categories' => $categories,
             'featuredCollections' => collect(),
         ]);

@@ -65,6 +65,7 @@ class Tenant extends Model
         'stripe_connect_payouts_enabled',
         'stripe_connect_details_submitted',
         'stripe_connect_disabled_reason',
+        'stripe_connect_requirements',          // {due: [...], failed: [...]} — see ConnectRequirements
         'platform_fee_bps',
         'stripe_id',                            // Cashier subscription customer id
         'pm_type',
@@ -83,6 +84,7 @@ class Tenant extends Model
         'stripe_connect_charges_enabled' => 'boolean',
         'stripe_connect_payouts_enabled' => 'boolean',
         'stripe_connect_details_submitted' => 'boolean',
+        'stripe_connect_requirements' => 'array',
         'platform_fee_bps' => 'integer',
     ];
 
@@ -166,6 +168,30 @@ class Tenant extends Model
     public function store(): HasOne
     {
         return $this->hasOne(Store::class);
+    }
+
+    /**
+     * The shop's public address, for the "open my storefront" links in both
+     * admin panels.
+     *
+     * A verified custom domain wins, over https as Caddy serves it. Otherwise
+     * the platform subdomain in the scheme and port of the request being served:
+     * http://sankevi.ganvo.lvh.me:8000 in development, https://sankevi.ganvo.bg
+     * in production. These links used to hard-code ":8000", which pointed every
+     * live shop at a port that only exists on a developer's laptop.
+     */
+    public function storefrontUrl(string $path = '/'): string
+    {
+        $path = '/'.ltrim($path, '/');
+
+        if ($this->store?->hasVerifiedCustomDomain()) {
+            return 'https://'.$this->store->custom_domain.$path;
+        }
+
+        $request = request();
+        $port = in_array($request->getPort(), [80, 443], true) ? '' : ':'.$request->getPort();
+
+        return $request->getScheme().'://'.$this->slug.'.'.config('ganvo.central_domain').$port.$path;
     }
 
     public function website(): HasOne

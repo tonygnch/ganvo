@@ -9,11 +9,7 @@
         {{ $this->form }}
 
         <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 0.75rem; align-items: center;">
-            @php
-                $tenant = auth()->user()->tenant;
-                $configuratorUrl = 'http://' . $tenant->slug . '.' . config('ganvo.central_domain') . ':8000/configurator';
-            @endphp
-            <a href="{{ $configuratorUrl }}" target="_blank" rel="noopener"
+            <a href="{{ auth()->user()->tenant->storefrontUrl('/configurator') }}" target="_blank" rel="noopener"
                class="fi-btn fi-btn-color-gray fi-btn-size-md fi-color-gray"
                style="text-decoration: none;">
                 {{ __('admin.configurator.action.open') }}

@@ -333,7 +333,7 @@
         </div>
         <div class="footer-bottom">
             © {{ date('Y') }} {{ $tenant->name }} ·
-            {!! __('site.common.powered_by', ['brand' => '<a href="http://' . config('ganvo.central_domain') . ':8000" target="_blank" rel="noopener">Ganvo</a>']) !!}
+            @include('storefront.partials.powered-by')
         </div>
     </footer>
 </body>

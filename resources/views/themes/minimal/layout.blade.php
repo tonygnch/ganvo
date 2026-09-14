@@ -226,7 +226,7 @@
             </div>
             <div class="fbot">
                 <span>© {{ date('Y') }} {{ $tenant->name }}. {{ __('site.common.all_rights') }}</span>
-                <span>{!! __('site.common.powered_by', ['brand' => '<a href="http://' . config('ganvo.central_domain') . ':8000" target="_blank" rel="noopener" style="color:var(--accent)">Ganvo</a>']) !!}</span>
+                <span>@include('storefront.partials.powered-by', ['linkStyle' => 'color:var(--accent)'])</span>
             </div>
         </div>
     </footer>

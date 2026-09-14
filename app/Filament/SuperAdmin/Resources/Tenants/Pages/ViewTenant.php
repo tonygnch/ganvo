@@ -64,8 +64,8 @@ class ViewTenant extends ViewRecord
                         ->color(fn ($state) => $state ? 'success' : 'gray'),
                     TextEntry::make('storefront_url')
                         ->label('Storefront URL')
-                        ->state(fn (Tenant $r) => 'http://' . $r->slug . '.' . config('ganvo.central_domain') . ':8000')
-                        ->url(fn (Tenant $r) => 'http://' . $r->slug . '.' . config('ganvo.central_domain') . ':8000')
+                        ->state(fn (Tenant $r) => $r->storefrontUrl())
+                        ->url(fn (Tenant $r) => $r->storefrontUrl())
                         ->openUrlInNewTab()
                         ->columnSpanFull(),
                 ]),

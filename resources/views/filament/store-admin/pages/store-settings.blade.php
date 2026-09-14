@@ -3,11 +3,7 @@
         {{ $this->form }}
 
         <div style="margin-top: 2rem !important; display: flex !important; flex-direction: row !important; justify-content: flex-end !important; gap: 0.75rem !important; align-items: center !important; width: 100% !important;">
-            @php
-                $tenant = auth()->user()->tenant;
-                $previewUrl = 'http://' . $tenant->slug . '.' . config('ganvo.central_domain') . ':8000/';
-            @endphp
-            <a href="{{ $previewUrl }}" target="_blank" rel="noopener"
+            <a href="{{ auth()->user()->tenant->storefrontUrl() }}" target="_blank" rel="noopener"
                class="fi-btn fi-btn-color-gray fi-btn-size-md fi-color-gray"
                style="text-decoration: none;">
                 {{ __('admin.shared.action.preview_storefront') }}

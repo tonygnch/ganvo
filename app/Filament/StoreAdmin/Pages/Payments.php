@@ -3,6 +3,7 @@
 namespace App\Filament\StoreAdmin\Pages;
 
 use App\Models\Tenant;
+use App\Services\Payments\ConnectRequirements;
 use App\Services\Payments\PlatformFee;
 use App\Services\Payments\StripeConnectService;
 use BackedEnum;
@@ -83,6 +84,12 @@ class Payments extends Page
             // the operator can see at a glance whether the wallet
             // buttons will actually render at checkout.
             'walletStatus' => $this->walletStatus($tenant),
+            // Readable reason, what is missing, and whether "Continue setup"
+            // can clear it — for the restricted card.
+            'connectIssue' => ConnectRequirements::forTenant($tenant),
+            // Test keys only accept Stripe's test identity values; say so on the
+            // restricted card rather than let real-looking details fail again.
+            'stripeTestMode' => str_starts_with((string) config('cashier.secret'), 'sk_test_'),
         ];
     }
 

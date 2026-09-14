@@ -284,6 +284,11 @@ class CustomizeTheme extends Page implements HasForms
         $store->update(['theme_settings' => $all]);
 
         Notification::make()->success()->title(__('admin.theme.notify.saved'))->send();
+
+        // Palette, font, section toggles and images are rendered server-side, so
+        // the preview beside the form only shows them once it reloads. The page
+        // listens for this and reloads the iframe in place.
+        $this->dispatch('gv-theme-saved');
     }
 
     protected function getStore(): Store

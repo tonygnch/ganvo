@@ -1341,7 +1341,7 @@
                         @endforeach
                     </span>
                 @endif
-                <span>{!! __('site.common.powered_by', ['brand' => '<a href="http://' . config('ganvo.central_domain') . ':8000" target="_blank" rel="noopener">Ganvo</a>']) !!}</span>
+                <span>@include('storefront.partials.powered-by')</span>
             </div>
         </div>
     </footer>

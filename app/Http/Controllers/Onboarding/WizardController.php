@@ -227,14 +227,16 @@ class WizardController extends Controller
         return view('onboarding.theme', [
             'tenant'         => $tenant,
             'progressSteps' => $this->progressFor('theme'),
-            'themes'         => ThemeRegistry::all(),
+            // Public themes plus this tenant's private ones. The store's current
+            // theme is NOT added: at this step it is still the signup placeholder.
+            'themes'         => ThemeRegistry::selectable($tenant),
         ]);
     }
 
     public function saveTheme(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'theme' => ['required', 'in:' . implode(',', ThemeRegistry::ids())],
+            'theme' => ['required', 'in:' . implode(',', ThemeRegistry::selectableIds($this->tenant()))],
         ]);
         $this->tenant()->store->update($data);
         $this->advanceIfOnOrBefore('theme');
@@ -253,9 +255,13 @@ class WizardController extends Controller
      */
     public function themePreview(Request $request, string $theme): ViewContract
     {
-        abort_unless(ThemeRegistry::exists($theme), 404);
-
         $tenant = $this->tenant();
+
+        // Only a theme this merchant could pick — or the one they are already
+        // on, which the customize step previews. A client's private design is
+        // not a sample for other shops, not even in an iframe.
+        abort_unless(in_array($theme, ThemeRegistry::selectableIds($tenant, $tenant->store?->theme), true), 404);
+
         $store = clone $tenant->store; // unsaved override of theme
         $store->theme = $theme;
 

@@ -208,12 +208,24 @@
         @elseif ($status === 'restricted')
             <p>
                 {{ __('admin.payments.text.restricted') }}
+                {{ $connectIssue['can_continue'] ? __('admin.payments.text.restricted_continue') : __('admin.payments.text.restricted_dashboard') }}
             </p>
             <div class="pay-warning">
                 <div>
-                    <strong>{{ __('admin.payments.field.reason') }}:</strong> {{ $tenant->stripe_connect_disabled_reason ?: __('admin.payments.text.reason_fallback') }}
+                    <strong>{{ __('admin.payments.field.reason') }}:</strong> {{ $connectIssue['reason'] }}
+                    @if ($connectIssue['missing'] !== [])
+                        <p style="color: inherit; margin-top: .375rem;">
+                            {{ $connectIssue['failed'] ? __('admin.payments.text.restricted_failed') : __('admin.payments.text.restricted_missing') }}
+                            <strong>{{ implode(', ', $connectIssue['missing']) }}</strong>
+                        </p>
+                    @endif
                 </div>
             </div>
+            @if ($connectIssue['can_continue'] && $stripeTestMode)
+                <p style="margin-top: .75rem; font-size: .8125rem; color: var(--pay-text-soft);">
+                    {{ __('admin.payments.text.test_mode_hint') }}
+                </p>
+            @endif
         @endif
 
         @if ($tenant->hasConnect())
@@ -272,6 +284,28 @@
                 <form method="post" action="{{ route('store.payments.dashboard') }}" target="_blank">
                     @csrf
                     <button type="submit" class="pay-btn pay-btn-secondary">{{ __('admin.payments.action.dashboard') }} ↗</button>
+                </form>
+
+            @elseif ($status === 'restricted' && $connectIssue['can_continue'])
+                {{-- Stripe needs details again. The Express dashboard is for payouts;
+                     a fresh account_onboarding link is Stripe's form for outstanding
+                     requirements on this same account. --}}
+                <form method="post" action="{{ route('store.payments.connect.express') }}">
+                    @csrf
+                    <button type="submit" class="pay-btn pay-btn-primary">{{ __('admin.payments.action.continue_setup') }} →</button>
+                </form>
+                <form method="post" action="{{ route('store.payments.sync') }}">
+                    @csrf
+                    <button type="submit" class="pay-btn pay-btn-secondary">{{ __('admin.payments.action.refresh') }}</button>
+                </form>
+                <form method="post" action="{{ route('store.payments.dashboard') }}" target="_blank">
+                    @csrf
+                    <button type="submit" class="pay-btn pay-btn-secondary">{{ __('admin.payments.action.dashboard') }} ↗</button>
+                </form>
+                <form method="post" action="{{ route('store.payments.disconnect') }}"
+                      onsubmit="return confirm('{{ __('admin.payments.notify.confirm_disconnect') }}');">
+                    @csrf
+                    <button type="submit" class="pay-btn pay-btn-danger">{{ __('admin.payments.action.disconnect') }}</button>
                 </form>
 
             @elseif ($status === 'active' || $status === 'restricted')

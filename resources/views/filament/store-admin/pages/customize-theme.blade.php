@@ -18,17 +18,16 @@
         {{ __('admin.theme.text.saved_per_theme') }}
     </div>
 
-    <div class="gv-customize" x-data="gvLivePreview()">
+    {{-- gv-theme-saved: dispatched by CustomizeTheme::save(). Text is mirrored
+         into the preview as it is typed, but palette, font, section toggles and
+         images are rendered by the server, so the preview has to reload. --}}
+    <div class="gv-customize" x-data="gvLivePreview()" x-on:gv-theme-saved.window="reload()">
         <div class="gv-customize__form">
             <form wire:submit="save">
                 {{ $this->form }}
 
                 <div style="margin-top: 2rem; display: flex; justify-content: flex-end; gap: 0.75rem; align-items: center;">
-                    @php
-                        $tenant = auth()->user()->tenant;
-                        $storefrontUrl = 'http://' . $tenant->slug . '.' . config('ganvo.central_domain') . ':8000/';
-                    @endphp
-                    <a href="{{ $storefrontUrl }}" target="_blank" rel="noopener"
+                    <a href="{{ auth()->user()->tenant->storefrontUrl() }}" target="_blank" rel="noopener"
                        class="fi-btn fi-btn-color-gray fi-btn-size-md fi-color-gray"
                        style="text-decoration: none;">
                         {{ __('admin.shared.action.preview_storefront') }}
@@ -86,6 +85,9 @@
             return {
                 hint: @js(__('admin.theme.text.preview_hint')),
 
+                /** Where the preview was scrolled before a reload, restored in wire(). */
+                restoreY: 0,
+
                 /** The iframe's document, or null before it has loaded. */
                 doc() {
                     try { return this.$refs.frame?.contentDocument ?? null; } catch (e) { return null; }
@@ -106,7 +108,17 @@
                         ?? document.querySelector('[wire\\:model="data.content_' + slot + '"]');
                 },
 
-                reload() { this.$refs.frame.contentWindow.location.reload(); },
+                /**
+                 * Reload the preview and land back where the merchant was reading:
+                 * after a save they want to see the band they just changed, not
+                 * the top of the home page.
+                 */
+                reload() {
+                    const win = this.$refs.frame?.contentWindow;
+                    if (!win) return;
+                    this.restoreY = win.scrollY;
+                    win.location.reload();
+                },
 
                 /**
                  * Called on every iframe load — including the ones Livewire
@@ -116,6 +128,11 @@
                 wire() {
                     const doc = this.doc();
                     if (!doc) return;
+
+                    if (this.restoreY) {
+                        doc.defaultView.scrollTo(0, this.restoreY);
+                        this.restoreY = 0;
+                    }
 
                     const style = doc.createElement('style');
                     style.textContent = `
@@ -163,12 +180,17 @@
                         });
                     });
 
-                    // Typing in the form updates the page as you go.
+                    // Typing in the form updates the page as you go. The form
+                    // outlives the iframe, so each input is wired once and looks
+                    // up the CURRENT document when it fires — re-adding a listener
+                    // on every reload stacked one more per save.
                     document.querySelectorAll('input[id^="form.content_"], textarea[id^="form.content_"]').forEach((input) => {
+                        if (input._gvWired) return;
+                        input._gvWired = true;
                         const slot = input.id.slice('form.content_'.length);
                         if (!slot) return;
                         input.addEventListener('input', () => {
-                            const target = doc.querySelector('[data-gv-slot="' + CSS.escape(slot) + '"]');
+                            const target = this.doc()?.querySelector('[data-gv-slot="' + CSS.escape(slot) + '"]');
                             if (!target) return;
                             if (slot.endsWith('_html')) { target.innerHTML = input.value; }
                             else { target.textContent = input.value; }

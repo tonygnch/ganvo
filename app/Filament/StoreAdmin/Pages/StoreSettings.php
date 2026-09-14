@@ -232,8 +232,11 @@ class StoreSettings extends Page implements HasForms
                                     ->schema([
                                         Radio::make('theme')
                                             ->label(__('admin.settings.field.theme'))
-                                            ->options(ThemeRegistry::options())
-                                            ->descriptions(ThemeRegistry::descriptions())
+                                            ->options(fn () => ThemeRegistry::options($this->selectableThemes()))
+                                            ->descriptions(fn () => ThemeRegistry::descriptions($this->selectableThemes()))
+                                            // The list is also the rule: a hidden or another
+                                            // client's theme cannot be posted past the form.
+                                            ->in(fn () => $this->selectableThemes())
                                             ->required(),
                                     ]),
                                 Section::make(__('admin.settings.section.branding'))
@@ -1148,6 +1151,19 @@ class StoreSettings extends Page implements HasForms
     public function getViewData(): array
     {
         return ['store' => $this->getStore()];
+    }
+
+    /**
+     * Themes this shop may switch to: every public theme, its own private ones,
+     * and the theme it is on now — a shop on a hidden design keeps it.
+     *
+     * @return list<string>
+     */
+    private function selectableThemes(): array
+    {
+        $tenant = auth()->user()->tenant;
+
+        return ThemeRegistry::selectableIds($tenant, $tenant->store?->theme);
     }
 
     protected function getStore(): Store
