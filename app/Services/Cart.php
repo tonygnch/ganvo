@@ -342,6 +342,10 @@ class Cart
                     $saved->depth_cm,
                     $saved->levels,
                     $saved->segmentWidths(),
+                    $saved->type ?: RackConfig::TYPE_SINGLE,
+                    $saved->desk_depth_cm,
+                    $saved->extraBraceIndexes(),
+                    $saved->deskSectionIndexes(),
                 );
                 $quote = $calculator->quote($config, $prices, $limits, $store->currency ?? 'EUR');
             } catch (RackException $e) {

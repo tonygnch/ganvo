@@ -89,6 +89,9 @@ class RackConfigurator extends Page implements HasForms
             'shelf_depth_trim_cm' => $limits['shelf_depth_trim_cm'],
             'shelf_thickness_mm' => $limits['shelf_thickness_mm'],
             'over_limit_text' => $limits['over_limit_text'],
+            'desk_height_cm' => $limits['desk_height_cm'],
+            'tray_rim_cm' => $limits['tray_rim_cm'],
+            'tray_tilt_deg' => $limits['tray_tilt_deg'],
         ];
 
         foreach ($limits['heights'] as $h) {
@@ -104,6 +107,17 @@ class RackConfigurator extends Page implements HasForms
                 $part = $parts->get(RackPart::keyFor(RackPart::KIND_SHELF, null, $d, $w));
                 $data["shelf_{$w}_{$d}"] = $this->toDecimal($part?->price_cents);
                 $data["shelf_on_{$w}_{$d}"] = $part ? (bool) $part->is_active : true;
+            }
+        }
+
+        // The office and wine models' boards: same real sizes as the shelves.
+        foreach (RackPart::MODEL_KINDS as $kind) {
+            foreach ($this->shelfWidths($limits) as $w) {
+                foreach ($this->shelfDepths($limits) as $d) {
+                    $part = $parts->get(RackPart::keyFor($kind, null, $d, $w));
+                    $data["{$kind}_{$w}_{$d}"] = $this->toDecimal($part?->price_cents);
+                    $data["{$kind}_on_{$w}_{$d}"] = $part ? (bool) $part->is_active : true;
+                }
             }
         }
 
@@ -136,6 +150,12 @@ class RackConfigurator extends Page implements HasForms
                         Tab::make(__('admin.configurator.nav.tab_shelves'))
                             ->icon(Heroicon::OutlinedBars3BottomLeft)
                             ->schema($this->shelfGrid($limits)),
+
+                        // No desk-top tab: the office desk is a deeper shelf,
+                        // priced from the shelf table above.
+                        Tab::make(__('admin.configurator.nav.tab_wine_trays'))
+                            ->icon(Heroicon::OutlinedInboxStack)
+                            ->schema($this->boardGrid($limits, RackPart::KIND_WINE_TRAY)),
 
                         Tab::make(__('admin.configurator.nav.tab_parts'))
                             ->icon(Heroicon::OutlinedWrenchScrewdriver)
@@ -195,6 +215,43 @@ class RackConfigurator extends Page implements HasForms
             }
 
             $out[] = Section::make(__('admin.configurator.section.shelf_width', ['cm' => $w]))
+                ->columns(count($this->shelfDepths($limits)) * 3)
+                ->schema($cells)
+                ->collapsible();
+        }
+
+        return $out;
+    }
+
+    /**
+     * The office and wine models' boards — a desk top, a wine tray — at the
+     * same real sizes as the shelves, one price each.
+     *
+     * A model reaches the storefront only once EVERY size here has a price
+     * (RackPriceBook::narrow), so a half-filled table hides the model rather
+     * than offering sizes that cannot be quoted. Nothing is filled in for the
+     * merchant: these are their prices to set.
+     */
+    private function boardGrid(array $limits, string $kind): array
+    {
+        $out = [
+            Section::make(__("admin.configurator.section.{$kind}_intro"))
+                ->description(__('admin.configurator.section_help.model_boards'))
+                ->schema([]),
+        ];
+
+        foreach ($this->shelfWidths($limits) as $w) {
+            $cells = [];
+            foreach ($this->shelfDepths($limits) as $d) {
+                $cells[] = $this->priceField("{$kind}_{$w}_{$d}", __('admin.configurator.field.depth_cm', ['cm' => $d]))
+                    ->columnSpan(2);
+                $cells[] = Toggle::make("{$kind}_on_{$w}_{$d}")
+                    ->label(__('admin.shared.field.active'))
+                    ->inline(false)
+                    ->columnSpan(1);
+            }
+
+            $out[] = Section::make(__("admin.configurator.section.{$kind}_width", ['cm' => $w]))
                 ->columns(count($this->shelfDepths($limits)) * 3)
                 ->schema($cells)
                 ->collapsible();
@@ -263,6 +320,26 @@ class RackConfigurator extends Page implements HasForms
                         ->helperText(__('admin.configurator.help.thickness'))
                         ->numeric()->minValue(1)->maxValue(100)->required()->suffix('mm'),
                 ]),
+
+            // How the office and wine models are built. Starting values were
+            // read off the product photos; they are the merchant's to correct.
+            Section::make(__('admin.configurator.section.models'))
+                ->description(__('admin.configurator.section_help.models'))
+                ->columns(3)
+                ->schema([
+                    TextInput::make('desk_height_cm')
+                        ->label(__('admin.configurator.field.desk_height'))
+                        ->helperText(__('admin.configurator.help.desk_height'))
+                        ->numeric()->minValue(40)->maxValue(120)->required()->suffix('cm'),
+                    TextInput::make('tray_rim_cm')
+                        ->label(__('admin.configurator.field.tray_rim'))
+                        ->helperText(__('admin.configurator.help.tray_rim'))
+                        ->numeric()->minValue(1)->maxValue(20)->required()->suffix('cm'),
+                    TextInput::make('tray_tilt_deg')
+                        ->label(__('admin.configurator.field.tray_tilt'))
+                        ->helperText(__('admin.configurator.help.tray_tilt'))
+                        ->numeric()->minValue(0)->maxValue(45)->required()->suffix('°'),
+                ]),
         ];
     }
 
@@ -295,6 +372,10 @@ class RackConfigurator extends Page implements HasForms
         $settings['shelf_depth_trim_cm'] = (int) ($state['shelf_depth_trim_cm'] ?? 1);
         $settings['shelf_thickness_mm'] = (int) ($state['shelf_thickness_mm'] ?? 18);
         $settings['over_limit_text'] = trim((string) ($state['over_limit_text'] ?? ''));
+        $settings['desk_height_cm'] = (int) ($state['desk_height_cm'] ?? 75);
+        unset($settings['desk_overhang_cm']); // no longer a setting: the customer's plate decides
+        $settings['tray_rim_cm'] = (int) ($state['tray_rim_cm'] ?? 5);
+        $settings['tray_tilt_deg'] = (int) ($state['tray_tilt_deg'] ?? 15);
         $store->update(['rack_configurator' => $settings]);
 
         /*
@@ -339,6 +420,19 @@ class RackConfigurator extends Page implements HasForms
             }
         }
 
+        foreach (RackPart::MODEL_KINDS as $kind) {
+            $prefix = strtoupper(str_replace('_', '-', $kind));
+            foreach ($this->shelfWidths($limits) as $w) {
+                foreach ($this->shelfDepths($limits) as $d) {
+                    $this->upsert($store, $kind, [
+                        'height_cm' => null,
+                        'depth_cm' => $d,
+                        'width_cm' => $w,
+                    ], $state["{$kind}_{$w}_{$d}"] ?? null, (bool) ($state["{$kind}_on_{$w}_{$d}"] ?? true), sprintf('%s-%d-%d', $prefix, $w, $d));
+                }
+            }
+        }
+
         foreach (RackPart::FLAT_KINDS as $kind) {
             $this->upsert($store, $kind, [
                 'height_cm' => null,
@@ -361,7 +455,9 @@ class RackConfigurator extends Page implements HasForms
         }
 
         $limits = $store->rackConfigurator();
-        $rows = RackPart::forTenant($store->tenant_id)->where('kind', RackPart::KIND_SHELF)->get();
+        // Every board kind is keyed by the trimmed size — wine trays and desk
+        // tops strand exactly as shelves would.
+        $rows = RackPart::forTenant($store->tenant_id)->whereIn('kind', RackPart::BOARD_KINDS)->get();
 
         foreach ($rows as $row) {
             // Back to the bay this board came from, then forward again on the
@@ -377,7 +473,7 @@ class RackConfigurator extends Page implements HasForms
             $row->update([
                 'width_cm' => max(1, $bayW - $newW),
                 'depth_cm' => max(1, $bayD - $newD),
-                'sku' => sprintf('SHELF-%d-%d', max(1, $bayW - $newW), max(1, $bayD - $newD)),
+                'sku' => sprintf('%s-%d-%d', strtoupper(str_replace('_', '-', $row->kind)), max(1, $bayW - $newW), max(1, $bayD - $newD)),
             ]);
         }
     }

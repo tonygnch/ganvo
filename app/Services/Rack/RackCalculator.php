@@ -14,7 +14,7 @@ use App\Models\RackPart;
 final class RackCalculator
 {
     /**
-     * @param  array  $limits  Store::rackConfigurator() — for the shelf size trims
+     * @param  array  $limits  Store::rackConfigurator() — for the board size trims
      *
      * @throws RackException when the price book cannot price a needed part
      */
@@ -30,17 +30,35 @@ final class RackCalculator
         $frame = $prices->frame($config->heightCm, $config->depthCm);
         $lines[] = $this->line($frame, $config->frameCount());
 
-        // Shelves — grouped by size, because a run may mix bay widths and the
-        // yard picks 20 identical boards off the stack, not 20 separate ones.
+        // Boards — shelves, or what the model uses in their place (wine trays,
+        // an office rack's desk plate). By kind, then grouped by size, because
+        // a run may mix bay widths and the yard picks 20 identical boards off
+        // the stack, not 20 separate ones.
         $realDepth = max(1, $config->depthCm - $limits['shelf_depth_trim_cm']);
-        $byWidth = [];
-        foreach ($config->segments as $nominalWidth) {
+        $realDeskDepth = max(1, (int) ($config->deskDepthCm ?? $config->depthCm) - $limits['shelf_depth_trim_cm']);
+        // Section by section, because an office rack's desk is on the sections
+        // the customer chose and not on the others.
+        $boards = [];
+        foreach ($config->segments as $index => $nominalWidth) {
             $realWidth = max(1, $nominalWidth - $limits['shelf_width_trim_cm']);
-            $byWidth[$realWidth] = ($byWidth[$realWidth] ?? 0) + $config->levels;
+            foreach ($config->boardsForSection($index) as $kind => $count) {
+                if ($count > 0) {
+                    $boards[$kind][$realWidth] = ($boards[$kind][$realWidth] ?? 0) + $count;
+                }
+            }
         }
-        ksort($byWidth);
-        foreach ($byWidth as $realWidth => $quantity) {
-            $lines[] = $this->line($prices->shelf($realWidth, $realDepth), $quantity);
+
+        foreach ($boards as $kind => $byWidth) {
+            ksort($byWidth);
+            foreach ($byWidth as $realWidth => $quantity) {
+                // The office desk IS a shelf, only deeper: priced from the
+                // shelf table at the depth the customer chose, and listed as
+                // the desk plate it is.
+                $part = $kind === RackPart::KIND_DESK_TOP
+                    ? $prices->shelf($realWidth, $realDeskDepth)
+                    : $prices->board($kind, $realWidth, $realDepth);
+                $lines[] = $this->line($part, $quantity, $kind);
+            }
         }
 
         // Fasteners. An extension pin is double-sided — see RackConfig.
@@ -69,10 +87,11 @@ final class RackCalculator
         );
     }
 
-    private function line(RackPart $part, int $quantity): array
+    /** @param  ?string  $kind  what the line is, when a part is priced as another (a desk as a shelf) */
+    private function line(RackPart $part, int $quantity, ?string $kind = null): array
     {
         return [
-            'kind' => $part->kind,
+            'kind' => $kind ?? $part->kind,
             'sku' => $part->sku,
             'height_cm' => $part->height_cm,
             'depth_cm' => $part->depth_cm,

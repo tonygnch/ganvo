@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\Money;
+use App\Services\Rack\RackConfig;
 use App\Support\AccentPalette;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -861,7 +862,7 @@ class Store extends Model
         $heights = $ints($stored['heights'] ?? null, [150, 180, 210, 240, 300]);
         $depths = $ints($stored['depths'] ?? null, [30, 40, 50, 60]);
         $widths = $ints($stored['widths'] ?? null, [80, 100, 120]);
-        $levels = $ints($stored['levels'] ?? null, [4, 5, 6, 7, 8, 9, 10]);
+        $levels = $ints($stored['levels'] ?? null, [2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
         // A shelf is smaller than its bay: it drops BETWEEN the uprights.
         // Stored as one trim figure rather than a lookup table so a new
@@ -892,6 +893,22 @@ class Store extends Model
             'default_levels' => $this->pick($stored['default_levels'] ?? null, $levels, 4),
             'default_width_cm' => $this->pick($stored['default_width_cm'] ?? null, $widths, 100),
             'over_limit_text' => trim((string) ($stored['over_limit_text'] ?? '')),
+            // The rack models on offer. Which of them a customer actually sees
+            // is the price book's call (RackPriceBook::narrow): a model whose
+            // boards are not priced is not shown.
+            'types' => [RackConfig::TYPE_SINGLE, RackConfig::TYPE_OFFICE, RackConfig::TYPE_WINE],
+            // How the office and wine models are built, in cm. Read off Sankevi's
+            // product photographs, NOT a drawing — to be confirmed by them, and
+            // editable because no size may live in code (S19). Used by the
+            // drawing and the 3D view; the price comes from the boards. (How far
+            // an office desk reaches forward is not a setting: it is the deeper
+            // plate the customer picks.)
+            'desk_height_cm' => max(40, min(120, (int) ($stored['desk_height_cm'] ?? 75))),
+            'tray_rim_cm' => max(1, min(20, (int) ($stored['tray_rim_cm'] ?? 5))),
+            // Wine trays tilt forward so the bottles face the room: the back edge
+            // stays at the level, the front drops. Degrees; 15 is a guess — the
+            // product photos are shot square-on and do not show the angle.
+            'tray_tilt_deg' => max(0, min(45, (int) ($stored['tray_tilt_deg'] ?? 15))),
         ];
     }
 

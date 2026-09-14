@@ -50,9 +50,21 @@ final class RackPriceBook
 
     public function shelf(int $realWidthCm, int $realDepthCm): RackPart
     {
+        return $this->board(RackPart::KIND_SHELF, $realWidthCm, $realDepthCm);
+    }
+
+    /**
+     * A board by kind — shelf, wine tray or desk top — at its REAL size.
+     *
+     * The model boards refuse with their own message, so a customer who picks
+     * the wine rack at a size nobody has priced a tray for is told that, not
+     * that the yard has run out of shelves.
+     */
+    public function board(string $kind, int $realWidthCm, int $realDepthCm): RackPart
+    {
         return $this->require(
-            RackPart::keyFor(RackPart::KIND_SHELF, null, $realDepthCm, $realWidthCm),
-            'cfg_err_no_shelf_price'
+            RackPart::keyFor($kind, null, $realDepthCm, $realWidthCm),
+            $kind === RackPart::KIND_SHELF ? 'cfg_err_no_shelf_price' : 'cfg_err_no_model_price'
         );
     }
 
@@ -131,13 +143,50 @@ final class RackPriceBook
             ? $limits['default_width_cm']
             : (int) ($widths[0] ?? 0);
 
+        /*
+         | A MODEL IS OFFERED ONLY WHEN ITS BOARDS ARE PRICED.
+         |
+         | The same rule as a bay width above, for the same reason: its board
+         | must exist at every surviving width and depth, or picking the model
+         | leads somewhere that cannot be quoted. Nothing is pre-priced, so the
+         | wine and office racks appear in the picker the day the merchant fills
+         | in their boards — and not a day before, with a made-up price on them.
+         */
+        $types = array_values(array_filter(
+            $limits['types'] ?? [RackConfig::TYPE_SINGLE],
+            function (string $type) use ($widths, $depths, $widthTrim, $depthTrim) {
+                $kind = RackConfig::modelBoardKind($type);
+                if ($kind === null) {
+                    return true;
+                }
+                if ($widths === [] || $depths === []) {
+                    return false;
+                }
+                foreach ($widths as $w) {
+                    foreach ($depths as $d) {
+                        if (! $this->has(RackPart::keyFor($kind, null, $d - $depthTrim, $w - $widthTrim))) {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+        ));
+
+        $typeDefault = in_array(RackConfig::TYPE_SINGLE, $types, true)
+            ? RackConfig::TYPE_SINGLE
+            : ($types[0] ?? RackConfig::TYPE_SINGLE);
+
         return array_replace($limits, [
             'heights' => $heights,
             'depths' => $depths,
             'widths' => $widths,
+            'types' => $types,
             'default_height_cm' => $defH,
             'default_depth_cm' => $defD,
             'default_width_cm' => $widthDefault,
+            'default_type' => $typeDefault,
         ]);
     }
 

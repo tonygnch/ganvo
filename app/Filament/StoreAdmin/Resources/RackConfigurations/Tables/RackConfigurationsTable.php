@@ -5,6 +5,7 @@ namespace App\Filament\StoreAdmin\Resources\RackConfigurations\Tables;
 use App\Filament\StoreAdmin\Resources\RackConfigurations\RackConfigurationResource;
 use App\Models\RackConfiguration;
 use App\Services\Money;
+use App\Services\Rack\RackPresenter;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -47,6 +48,12 @@ class RackConfigurationsTable
                     ->copyMessage(__('admin.rack_configs.notify.code_copied'))
                     ->weight('bold')
                     ->fontFamily('mono'),
+
+                TextColumn::make('type')
+                    ->label(__('admin.rack_configs.field.model'))
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state) => RackPresenter::modelLabel($state ?: 'single'))
+                    ->color(fn (?string $state) => ($state ?: 'single') === 'single' ? 'gray' : 'success'),
 
                 TextColumn::make('height_cm')
                     ->label(__('admin.rack_configs.field.size'))

@@ -50,8 +50,10 @@ final class RackQuote
             'currency' => $this->currency,
             'total_length_cm' => $this->totalLengthCm(),
             'sections' => $this->config->sectionCount(),
+            'type' => $this->config->type,
             'frames' => $this->config->frameCount(),
             'shelves' => $this->config->shelfCount(),
+            'boards' => $this->config->boardCount(),
             'braced_sections' => $this->config->bracedSectionIndexes(),
         ];
     }

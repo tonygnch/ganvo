@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Storefront;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\RackConfiguration;
+use App\Models\RackPart;
 use App\Models\Store;
 use App\Services\Cart;
 use App\Services\Rack\RackCalculator;
@@ -245,10 +246,14 @@ class ConfiguratorController extends Controller
             'tenant_id' => $store->tenant_id,
             'customer_id' => $customer->id,
             'owner_token' => RackConfiguration::ownerToken(),
+            'type' => $config->type,
+            'desk_depth_cm' => $config->deskDepthCm,
             'height_cm' => $config->heightCm,
             'depth_cm' => $config->depthCm,
             'levels' => $config->levels,
             'segments' => $config->segments,
+            'extra_braces' => $config->extraBraces ?: null,
+            'desk_sections' => $config->deskSections ?: null,
         ]);
     }
 
@@ -324,10 +329,14 @@ class ConfiguratorController extends Controller
 
         try {
             return [RackConfig::fromArray([
+                'type' => $saved->type ?: RackConfig::TYPE_SINGLE,
+                'desk_depth' => $saved->desk_depth_cm,
                 'height' => $saved->height_cm,
                 'depth' => $saved->depth_cm,
                 'levels' => $saved->levels,
                 'segments' => $saved->segmentWidths(),
+                'extra_braces' => $saved->extraBraceIndexes(),
+                'desk_sections' => $saved->type === 'office' ? $saved->deskSectionIndexes() : null,
             ], $limits), false];
         } catch (RackException $e) {
             // The merchant has retired a size this link depends on.
@@ -342,6 +351,7 @@ class ConfiguratorController extends Controller
             $limits['default_depth_cm'],
             $limits['default_levels'],
             [$limits['default_width_cm']],
+            $limits['default_type'] ?? RackConfig::TYPE_SINGLE,
         );
     }
 
@@ -368,17 +378,24 @@ class ConfiguratorController extends Controller
             }
         }
 
-        $shelves = [];
+        /* Shelves, and the wine trays that replace them, both priced by real
+           width × depth. The office desk needs no table of its own: it is a
+           deeper shelf, priced from this one. */
+        $boards = [RackPart::KIND_SHELF => [], RackPart::KIND_WINE_TRAY => []];
         foreach ($limits['widths'] as $w) {
             foreach ($limits['depths'] as $d) {
                 $rw = max(1, $w - $limits['shelf_width_trim_cm']);
                 $rd = max(1, $d - $limits['shelf_depth_trim_cm']);
-                try {
-                    $shelves["{$rw}x{$rd}"] = $prices->shelf($rw, $rd)->price_cents;
-                } catch (RackException $e) {
+                foreach (array_keys($boards) as $kind) {
+                    try {
+                        $boards[$kind]["{$rw}x{$rd}"] = $prices->board($kind, $rw, $rd)->price_cents;
+                    } catch (RackException $e) {
+                        // not sold at this size; narrow() has already hidden what it cannot build
+                    }
                 }
             }
         }
+        $shelves = $boards[RackPart::KIND_SHELF];
 
         $flat = [];
         foreach (['end_pin', 'extension_pin', 'cross_brace'] as $kind) {
@@ -389,7 +406,12 @@ class ConfiguratorController extends Controller
             }
         }
 
-        return ['frames' => $frames, 'shelves' => $shelves, 'flat' => $flat];
+        return [
+            'frames' => $frames,
+            'shelves' => $shelves,
+            'trays' => $boards[RackPart::KIND_WINE_TRAY],
+            'flat' => $flat,
+        ];
     }
 
     private function theme($store): string

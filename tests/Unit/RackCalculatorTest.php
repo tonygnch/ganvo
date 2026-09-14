@@ -27,6 +27,7 @@ class RackCalculatorTest extends TestCase
         'shelf_depth_trim_cm' => 1,
         'max_length_cm' => 2500,
         'vat_rate_bp' => 2000,
+        'types' => ['single', 'office', 'wine'],
     ];
 
     /** The subset of Sankevi's seeded price book these tests exercise. */
@@ -382,5 +383,168 @@ class RackCalculatorTest extends TestCase
 
         $this->expectException(RackException::class);
         (new RackCalculator)->quote(RackConfig::of(210, 60, 4, [100]), $book, self::LIMITS);
+    }
+
+    /* ---- the office and wine models ------------------------------------ */
+
+    /** The same price book, plus a wine tray and a desk top at every board size. */
+    private function modelPriceBook(): RackPriceBook
+    {
+        $parts = [];
+        foreach ([150, 180, 210, 240, 300] as $h) {
+            foreach ([30, 40, 50, 60] as $d) {
+                $parts[] = new RackPart(['kind' => 'frame', 'height_cm' => $h, 'depth_cm' => $d, 'price_cents' => 2355]);
+            }
+        }
+        foreach ([77, 97, 117] as $w) {
+            foreach ([29, 39, 49, 59] as $d) {
+                $parts[] = new RackPart(['kind' => 'shelf', 'width_cm' => $w, 'depth_cm' => $d, 'price_cents' => 2370]);
+                $parts[] = new RackPart(['kind' => 'wine_tray', 'width_cm' => $w, 'depth_cm' => $d, 'price_cents' => 3100]);
+            }
+        }
+        $parts[] = new RackPart(['kind' => 'end_pin', 'price_cents' => 38]);
+        $parts[] = new RackPart(['kind' => 'extension_pin', 'price_cents' => 36]);
+        $parts[] = new RackPart(['kind' => 'cross_brace', 'price_cents' => 710]);
+
+        return RackPriceBook::fromParts($parts);
+    }
+
+    private function narrowLimits(): array
+    {
+        return self::LIMITS + ['default_height_cm' => 210, 'default_depth_cm' => 60, 'default_width_cm' => 100];
+    }
+
+    public function test_a_wine_rack_swaps_every_shelf_for_a_tray(): void
+    {
+        $quote = (new RackCalculator)->quote(RackConfig::of(210, 60, 4, [100, 100], 'wine'), $this->modelPriceBook(), self::LIMITS);
+
+        $this->assertSame(0, $this->qtyOf($quote, 'shelf'), 'a wine rack has no flat shelves');
+        $this->assertSame(8, $this->qtyOf($quote, 'wine_tray', 97), 'one tray per level per section');
+        $this->assertSame(3, $this->qtyOf($quote, 'frame'), 'the frames do not change');
+        $this->assertSame(16, $this->qtyOf($quote, 'end_pin'));
+        $this->assertSame(8, $this->qtyOf($quote, 'extension_pin'));
+        $this->assertSame(1, $this->qtyOf($quote, 'cross_brace'));
+    }
+
+    public function test_an_office_rack_gives_one_level_of_each_section_to_a_deeper_desk_shelf(): void
+    {
+        // a 40 cm deep rack with a 60 cm desk plate
+        $quote = (new RackCalculator)->quote(RackConfig::of(210, 40, 4, [100, 120], 'office', 60), $this->modelPriceBook(), self::LIMITS);
+        $lines = collect($quote->lines);
+
+        $this->assertSame(3, $this->qtyOf($quote, 'shelf', 97), 'three shelves over the 100 cm desk');
+        $this->assertSame(3, $this->qtyOf($quote, 'shelf', 117), 'three shelves over the 120 cm desk');
+        $this->assertSame(39, $lines->firstWhere('kind', 'shelf')['depth_cm'], 'the shelves are the rack\'s own depth');
+
+        $desk = $lines->where('kind', 'desk_top')->values();
+        $this->assertCount(2, $desk);
+        $this->assertSame([1, 1], $desk->pluck('quantity')->all());
+        $this->assertSame([59, 59], $desk->pluck('depth_cm')->all(), 'the desk is the deeper plate the customer chose');
+        $this->assertSame(2370, $desk[0]['unit_price_cents'], 'priced as the shelf of that size — there is no desk price table');
+
+        $this->assertSame(16, $this->qtyOf($quote, 'end_pin'), 'the desk sits on pins like any board');
+    }
+
+    public function test_an_office_desk_defaults_to_the_deepest_plate_and_is_never_shallower_than_the_rack(): void
+    {
+        $config = RackConfig::fromArray(['type' => 'office', 'height' => 210, 'depth' => 40, 'levels' => 4, 'segments' => [100]], self::LIMITS);
+        $this->assertSame(60, $config->deskDepthCm);
+
+        $this->expectException(RackException::class);
+        RackConfig::fromArray(['type' => 'office', 'height' => 210, 'depth' => 50, 'levels' => 4, 'segments' => [100], 'desk_depth' => 40], self::LIMITS);
+    }
+
+    public function test_every_model_still_supplies_four_pin_corners_per_board(): void
+    {
+        foreach (['single', 'office', 'wine'] as $type) {
+            foreach ([1, 3, 6] as $sections) {
+                $config = RackConfig::of(210, 60, 5, array_fill(0, $sections, 100), $type);
+                $corners = $config->endPinCount() + 2 * $config->extensionPinCount();
+                $this->assertSame(4 * $config->boardCount(), $corners, "$type, $sections sections");
+            }
+        }
+    }
+
+    public function test_a_model_whose_boards_are_not_priced_is_refused(): void
+    {
+        $this->expectException(RackException::class);
+        // the original price book has shelves, and no wine trays at all
+        (new RackCalculator)->quote(RackConfig::of(210, 60, 4, [100], 'wine'), $this->priceBook(), self::LIMITS);
+    }
+
+    public function test_the_wine_rack_is_offered_only_once_its_trays_are_priced_and_the_office_rack_always(): void
+    {
+        // the office desk is a shelf, so shelves are all the office rack needs
+        $this->assertSame(['single', 'office'], $this->priceBook()->narrow($this->narrowLimits())['types']);
+        $this->assertSame(['single', 'office', 'wine'], $this->modelPriceBook()->narrow($this->narrowLimits())['types']);
+    }
+
+    public function test_rejects_a_model_that_is_not_offered(): void
+    {
+        $this->expectException(RackException::class);
+        RackConfig::fromArray(
+            ['type' => 'wine', 'height' => 210, 'depth' => 60, 'levels' => 4, 'segments' => [100]],
+            ['types' => ['single']] + self::LIMITS
+        );
+    }
+
+    public function test_the_office_desk_is_only_on_the_sections_chosen(): void
+    {
+        $config = RackConfig::fromArray(
+            ['type' => 'office', 'height' => 210, 'depth' => 40, 'desk_depth' => 60, 'levels' => 4, 'segments' => [100, 100, 100], 'desk_sections' => [1]],
+            self::LIMITS
+        );
+        $quote = $this->quote($config);
+
+        $this->assertSame([1], $config->deskSections);
+        $this->assertSame(1, $this->qtyOf($quote, 'desk_top'));
+        $this->assertSame(4 + 3 + 4, $this->qtyOf($quote, 'shelf'), 'the sections without the desk have a shelf at that level');
+        // every board corner still has a pin: an end pin serves one, a double-sided extension pin two
+        $this->assertSame(4 * $config->boardCount(), $config->endPinCount() + 2 * $config->extensionPinCount(), 'the pins do not change');
+    }
+
+    public function test_an_office_rack_left_without_desk_sections_has_the_desk_everywhere_and_an_empty_choice_is_refused(): void
+    {
+        $rack = ['type' => 'office', 'height' => 210, 'depth' => 40, 'levels' => 4, 'segments' => [100, 100]];
+
+        $this->assertSame([0, 1], RackConfig::fromArray($rack, self::LIMITS)->deskSections);
+        $this->assertSame([0, 1], RackConfig::of(210, 40, 4, [100, 100], 'office', 60)->deskSections, 'an office rack saved before the choice existed');
+        $this->assertSame([], RackConfig::fromArray(['type' => 'single'] + $rack, self::LIMITS)->deskSections);
+
+        foreach ([[], [2], 'x'] as $bad) {
+            try {
+                RackConfig::fromArray($rack + ['desk_sections' => $bad], self::LIMITS);
+                $this->fail('accepted desk_sections '.json_encode($bad));
+            } catch (RackException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+    }
+
+    public function test_a_brace_added_by_hand_is_counted_and_a_standard_one_is_not_doubled(): void
+    {
+        // four sections: 1 and 3 are braced as standard (indexes 0 and 2)
+        $config = RackConfig::fromArray(
+            ['height' => 210, 'depth' => 60, 'levels' => 4, 'segments' => [100, 100, 100, 100], 'extra_braces' => [1, 2]],
+            self::LIMITS
+        );
+
+        $this->assertSame([1], $config->extraBraces, 'section 3 carries a brace anyway; that is not a second one');
+        $this->assertSame([0, 1, 2], $config->bracedSectionIndexes());
+        $this->assertSame(3, $this->qtyOf($this->quote($config), 'cross_brace'));
+    }
+
+    public function test_a_brace_on_a_section_that_does_not_exist_is_refused(): void
+    {
+        $this->expectException(RackException::class);
+        RackConfig::fromArray(
+            ['height' => 210, 'depth' => 60, 'levels' => 4, 'segments' => [100, 100], 'extra_braces' => [5]],
+            self::LIMITS
+        );
+    }
+
+    public function test_an_unknown_model_read_back_from_storage_is_the_plain_rack(): void
+    {
+        $this->assertSame('single', RackConfig::of(210, 60, 4, [100], 'garden-shed')->type);
     }
 }

@@ -319,9 +319,10 @@ export default function mountRack3d(host) {
         return mesh;
     }
 
-    function put(mesh, i, x, y, z, sx, sy, sz, rz = 0) {
+    /* rz turns a part in the elevation (a rod, a brace); rx leans it forward (a wine tray) */
+    function put(mesh, i, x, y, z, sx, sy, sz, rz = 0, rx = 0) {
         place.position.set(x * CM, y * CM, z * CM);
-        place.rotation.set(0, 0, rz);
+        place.rotation.set(rx, 0, rz);
         place.scale.set(sx * CM, sy * CM, sz * CM);
         place.updateMatrix();
         mesh.setMatrixAt(i, place.matrix);
@@ -383,21 +384,73 @@ export default function mountRack3d(host) {
         }
         group.add(holes);
 
-        // Boards, between the frames. The selected bay is tinted, as its
-        // chip is, so the eye can find it in either view.
+        /*
+         | Boards, between the frames, level by level as the model has them:
+         |   shelf      a flat board
+         |   wine_tray  the board with a rim standing along its front and sides
+         |   desk_top   a heavier board that reaches forward past the frames
+         | The selected bay is tinted, as its chip is, so the eye finds it.
+         */
+        const kinds = m.boardKinds || m.shelfTops.map(() => 'shelf');
+        const thickOf = (kind) => (kind === 'desk_top' ? m.thick * 1.5 : m.thick);
+        // an office rack's desk is on the bays chosen; the others have a shelf at that level
+        const deskIn = (bay) => !m.desks || !!m.desks[bay];
+        const kindIn = (j, bay) => (kinds[j] === 'desk_top' && !deskIn(bay) ? 'shelf' : kinds[j]);
+        const RIM_T = 2; // cm, the rim board
+        const trays = kinds.filter((k) => k === 'wine_tray').length;
+
+        /*
+         | Wine trays lean forward about their back edge: the back stays at the
+         | level, the front drops, and the rim along the front holds the bottles.
+         | tilt() places a point on a tray — `up` above its top surface and
+         | `fromBack` in from its back edge — once the tray has leant. The meshes
+         | are turned by the same angle (rx), so part and position agree.
+         */
+        const tiltRad = ((m.trayTilt || 0) * Math.PI) / 180;
+        const backZ = -m.shelfDepth / 2;
+        const tilt = (top, up, fromBack) => [
+            top + up * Math.cos(tiltRad) - fromBack * Math.sin(tiltRad),
+            backZ + up * Math.sin(tiltRad) + fromBack * Math.cos(tiltRad),
+        ];
+
         const boards = instanced(unitBox, mats.board, bays * levels);
+        const rims = instanced(unitBox, mats.board, bays * trays * 3);
+        let r = 0;
         n = 0;
         for (let i = 0; i < bays; i++) {
             const x0 = m.pitches[i] + P / 2 + 0.1;
             const x1 = m.pitches[i + 1] - P / 2 - 0.1;
-            for (const top of m.shelfTops) {
-                put(boards, n, ox + (x0 + x1) / 2, top - m.thick / 2, 0, x1 - x0, m.thick, m.shelfDepth);
+            const w = x1 - x0;
+            const cx = ox + (x0 + x1) / 2;
+
+            m.shelfTops.forEach((top, j) => {
+                const kind = kindIn(j, i);
+                const t = thickOf(kind);
+                if (kind === 'desk_top') {
+                    const reach = m.deskOverhang || 0;
+                    put(boards, n, cx, top - t / 2, reach / 2, w, t, m.shelfDepth + reach);
+                } else if (kind === 'wine_tray') {
+                    const [y, z] = tilt(top, -t / 2, m.shelfDepth / 2);
+                    put(boards, n, cx, y, z, w, t, m.shelfDepth, 0, tiltRad);
+                } else {
+                    put(boards, n, cx, top - t / 2, 0, w, t, m.shelfDepth);
+                }
                 boards.setColorAt(n, i === m.selected ? picked : PLAIN);
                 n++;
-            }
+
+                if (kind === 'wine_tray') {
+                    const rim = m.trayRim || 5;
+                    const [fy, fz] = tilt(top, rim / 2, m.shelfDepth - RIM_T / 2);
+                    const [sy, sz] = tilt(top, rim / 2, m.shelfDepth / 2);
+                    put(rims, r++, cx, fy, fz, w, rim, RIM_T, 0, tiltRad); // front
+                    put(rims, r++, cx - w / 2 + RIM_T / 2, sy, sz, RIM_T, rim, m.shelfDepth, 0, tiltRad); // left
+                    put(rims, r++, cx + w / 2 - RIM_T / 2, sy, sz, RIM_T, rim, m.shelfDepth, 0, tiltRad); // right
+                }
+            });
         }
         if (boards.instanceColor) boards.instanceColor.needsUpdate = true;
         group.add(boards);
+        if (trays) group.add(rims);
 
         // Pins under each board end. An end frame's pin reaches into one bay;
         // a shared frame's middle pin into both.
@@ -408,11 +461,15 @@ export default function mountRack3d(host) {
             const right = f < frames - 1 ? PIN_REACH : 0;
             const len = P + left + right;
             const cx = x + (right - left) / 2;
-            for (const top of m.shelfTops) {
-                const y = top - m.thick - PIN_R;
-                put(pins, n++, ox + cx, y, zFront, PIN_R, len, PIN_R, Math.PI / 2);
-                put(pins, n++, ox + cx, y, zBack, PIN_R, len, PIN_R, Math.PI / 2);
-            }
+            m.shelfTops.forEach((top, j) => {
+                // under the board as thick as it really is — the desk's, if either bay at this upright has it
+                const kind = kinds[j] === 'desk_top' && (deskIn(f - 1) || deskIn(f)) ? 'desk_top' : kindIn(j, f);
+                const y = top - thickOf(kind) - PIN_R;
+                // under a leaning wine tray, each pin sits as low as the tray is at that upright
+                const lean = kinds[j] === 'wine_tray' ? Math.sin(tiltRad) : 0;
+                put(pins, n++, ox + cx, y - lean * (zFront - backZ), zFront, PIN_R, len, PIN_R, Math.PI / 2);
+                put(pins, n++, ox + cx, y - lean * (zBack - backZ), zBack, PIN_R, len, PIN_R, Math.PI / 2);
+            });
         });
         group.add(pins);
 
@@ -436,7 +493,8 @@ export default function mountRack3d(host) {
         group.add(straps);
 
         /* ---- the selected bay and the measurements ---- */
-        const front = D / 2;
+        // an office rack's desk reaches past the frames; the floor measurements start beyond it
+        const front = D / 2 + (m.type === 'office' ? m.deskOverhang || 0 : 0);
         const xFirst = ox + m.pitches[0];
         const xLast = ox + m.pitches[frames - 1];
         const xLeft = xFirst - P / 2 - SIDE_AT;

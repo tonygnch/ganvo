@@ -11,14 +11,24 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * these are not products.
  *
  * Which dimensions a row carries depends on its kind — a frame is height ×
- * depth, a shelf is its REAL width × depth (97 × 59, not the nominal 100 × 60),
- * and the three fastener kinds have no dimensions at all.
+ * depth, a board (shelf, wine tray) is its REAL width × depth (97 × 59, not
+ * the nominal 100 × 60), and the three fastener kinds have no dimensions at all.
  */
 class RackPart extends Model
 {
     public const KIND_FRAME = 'frame';
 
     public const KIND_SHELF = 'shelf';
+
+    /** The wine rack's board: a shelf with a raised rim, in place of every shelf. */
+    public const KIND_WINE_TRAY = 'wine_tray';
+
+    /**
+     * The office rack's desk plate. NOT a row of its own: the desk is a deeper
+     * shelf, priced from the shelf table at the depth the customer chose. The
+     * kind exists so the bill of materials can say „Плот за бюро".
+     */
+    public const KIND_DESK_TOP = 'desk_top';
 
     public const KIND_END_PIN = 'end_pin';
 
@@ -33,9 +43,21 @@ class RackPart extends Model
         self::KIND_CROSS_BRACE,
     ];
 
+    /** Board rows in the price book, all keyed by real width × depth. */
+    public const BOARD_KINDS = [
+        self::KIND_SHELF,
+        self::KIND_WINE_TRAY,
+    ];
+
+    /** Board rows only one rack model uses — see RackConfig::modelBoardKind(). */
+    public const MODEL_KINDS = [
+        self::KIND_WINE_TRAY,
+    ];
+
     public const KINDS = [
         self::KIND_FRAME,
         self::KIND_SHELF,
+        self::KIND_WINE_TRAY,
         self::KIND_END_PIN,
         self::KIND_EXTENSION_PIN,
         self::KIND_CROSS_BRACE,
@@ -90,7 +112,7 @@ class RackPart extends Model
     {
         return match ($kind) {
             self::KIND_FRAME => sprintf('frame:%d:%d', $height, $depth),
-            self::KIND_SHELF => sprintf('shelf:%d:%d', $width, $depth),
+            self::KIND_SHELF, self::KIND_WINE_TRAY => sprintf('%s:%d:%d', $kind, $width, $depth),
             default => $kind,
         };
     }

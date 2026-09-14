@@ -30,10 +30,14 @@ class RackConfiguration extends Model
         'owner_token',
         'customer_id',
         'code',
+        'type',
+        'desk_depth_cm',
         'height_cm',
         'depth_cm',
         'levels',
         'segments',
+        'extra_braces',
+        'desk_sections',
         'bom',
         'subtotal_cents',
         'vat_cents',
@@ -44,6 +48,8 @@ class RackConfiguration extends Model
 
     protected $casts = [
         'segments' => 'array',
+        'extra_braces' => 'array',
+        'desk_sections' => 'array',
         'bom' => 'array',
         'height_cm' => 'integer',
         'depth_cm' => 'integer',
@@ -135,10 +141,18 @@ class RackConfiguration extends Model
             ->where('height_cm', $config->heightCm)
             ->where('depth_cm', $config->depthCm)
             ->where('levels', $config->levels)
+            // an office rack on the same frames is a different rack at a different
+            // price — and so is the same office rack with a deeper desk
+            ->where('type', $config->type)
+            ->where('desk_depth_cm', $config->deskDepthCm)
             ->latest('id')
             ->limit(50)
             ->get()
             ->first(fn (self $c) => $c->segmentWidths() === $config->segments
+                // same count of braces can be a different rack: they may be on other sections
+                && $c->extraBraceIndexes() === $config->extraBraces
+                // …and so may the desk
+                && $c->deskSectionIndexes() === $config->deskSections
                 && $c->matchesSnapshot($snapshot));
     }
 
@@ -192,6 +206,27 @@ class RackConfiguration extends Model
     public function segmentWidths(): array
     {
         return array_map('intval', (array) ($this->segments ?? []));
+    }
+
+    /** Sections braced by hand, as stored — sorted section indexes. */
+    public function extraBraceIndexes(): array
+    {
+        return array_values(array_map('intval', (array) ($this->extra_braces ?? [])));
+    }
+
+    /**
+     * The sections that carry the office desk — none for the other models, and
+     * every section for an office rack saved before the customer could choose.
+     */
+    public function deskSectionIndexes(): array
+    {
+        if ($this->type !== 'office') {
+            return [];
+        }
+
+        return $this->desk_sections === null
+            ? array_keys($this->segmentWidths())
+            : array_values(array_map('intval', (array) $this->desk_sections));
     }
 
     public function sectionCount(): int

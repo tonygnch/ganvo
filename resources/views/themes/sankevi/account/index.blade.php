@@ -137,7 +137,7 @@
                                         </div>
                                     </div>
                                     <div class="body">
-                                        <span style="color: var(--muted); font-size: 13.5px;">{{ \App\Services\Rack\RackPresenter::rackName(\App\Services\Rack\RackConfig::of($rack->height_cm, $rack->depth_cm, $rack->levels, $rack->segmentWidths())) }}</span>
+                                        <span style="color: var(--muted); font-size: 13.5px;">{{ \App\Services\Rack\RackPresenter::rackName(\App\Services\Rack\RackConfig::of($rack->height_cm, $rack->depth_cm, $rack->levels, $rack->segmentWidths(), $rack->type ?: 'single', $rack->desk_depth_cm, $rack->extraBraceIndexes(), $rack->deskSectionIndexes())) }}</span>
                                         <div class="act">
                                             <a href="/configurator/{{ $rack->code }}">{{ __('site.account.racks_open') }}</a>
                                         </div>

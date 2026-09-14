@@ -13,18 +13,19 @@ use App\Models\RackPart;
  */
 final class RackPresenter
 {
-    /** "Рамка 210×60 cm" / "Плот 97×59 cm" / "Кръстодържач" */
+    /** "Рамка 210×60 cm" / "Плот 97×59 cm" / "Табла за вино 97×59 cm" / "Кръстодържач" */
     public static function lineLabel(array $line): string
     {
+        $board = fn (string $key) => __($key, ['w' => $line['width_cm'], 'd' => $line['depth_cm']]);
+
         return match ($line['kind']) {
             RackPart::KIND_FRAME => __('site.storefront.sankevi.cfg_part_frame', [
                 'h' => $line['height_cm'],
                 'd' => $line['depth_cm'],
             ]),
-            RackPart::KIND_SHELF => __('site.storefront.sankevi.cfg_part_shelf', [
-                'w' => $line['width_cm'],
-                'd' => $line['depth_cm'],
-            ]),
+            RackPart::KIND_SHELF => $board('site.storefront.sankevi.cfg_part_shelf'),
+            RackPart::KIND_WINE_TRAY => $board('site.storefront.sankevi.cfg_part_wine_tray'),
+            RackPart::KIND_DESK_TOP => $board('site.storefront.sankevi.cfg_part_desk_top'),
             RackPart::KIND_END_PIN => __('site.storefront.sankevi.cfg_part_end_pin'),
             RackPart::KIND_EXTENSION_PIN => __('site.storefront.sankevi.cfg_part_extension_pin'),
             RackPart::KIND_CROSS_BRACE => __('site.storefront.sankevi.cfg_part_cross_brace'),
@@ -36,12 +37,19 @@ final class RackPresenter
     public static function rackName(RackConfig $config): string
     {
         return __('site.storefront.sankevi.cfg_rack_name', [
+            'model' => self::modelLabel($config->type),
             'h' => $config->heightCm,
             'd' => $config->depthCm,
             'sections' => self::sectionsLabel($config->sectionCount()),
             'levels' => self::levelsLabel($config->levels),
             'metres' => number_format($config->totalLengthCm() / 100, 2),
         ]);
+    }
+
+    /** "Стелаж" / "Офис стелаж" / "Стелаж за вино" */
+    public static function modelLabel(string $type): string
+    {
+        return __('site.storefront.sankevi.cfg_model_'.(in_array($type, RackConfig::TYPES, true) ? $type : RackConfig::TYPE_SINGLE));
     }
 
     /** "5 секции" / "1 секция" — Bulgarian needs the count agreed with the noun. */

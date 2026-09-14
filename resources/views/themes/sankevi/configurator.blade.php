@@ -23,6 +23,12 @@
             'depthTrim' => $limits['shelf_depth_trim_cm'],
             'thicknessMm' => $limits['shelf_thickness_mm'],
             'vatRateBp' => $limits['vat_rate_bp'],
+            // The models the price book can build, and how the office and wine
+            // ones are made (the merchant's settings — see Store::rackConfigurator()).
+            'types' => $limits['types'],
+            'deskHeight' => $limits['desk_height_cm'],
+            'trayRim' => $limits['tray_rim_cm'],
+            'trayTilt' => $limits['tray_tilt_deg'],
         ],
         'prices' => $priceBook,
         'config' => $config->toArray(),
@@ -32,6 +38,8 @@
             'end_pin' => __('site.storefront.sankevi.cfg_part_end_pin'),
             'extension_pin' => __('site.storefront.sankevi.cfg_part_extension_pin'),
             'cross_brace' => __('site.storefront.sankevi.cfg_part_cross_brace'),
+            'wine_tray' => __('site.storefront.sankevi.cfg_part_wine_tray', ['w' => ':w', 'd' => ':d']),
+            'desk_top' => __('site.storefront.sankevi.cfg_part_desk_top', ['w' => ':w', 'd' => ':d']),
             'section' => __('site.storefront.sankevi.cfg_section_n', ['n' => ':n']),
             // The merchant's own wording when they have written one — S21 lists
             // "texts" among the things they must be able to change themselves.
@@ -93,7 +101,22 @@
     .cfg-step label { display: block; font-family: var(--body); font-size: 10px; font-weight: 600;
         letter-spacing: .22em; text-transform: uppercase; color: var(--faint); margin-bottom: 7px; }
     .cfg-step select { width: 100%; margin-top: auto; }
+    /* the step's own display:flex would otherwise beat the hidden attribute */
+    .cfg-step[hidden] { display: none; }
+    /* an office rack adds a fourth choice: the depth of its desk */
+    .cfg-steps.has-desk { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .cfg-note { margin: 10px 0 0; font-size: 12px; color: var(--faint); }
+
+    /* --- the model: shelving, office or wine -------------------- */
+    .cfg-models { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr);
+        margin-bottom: 16px; border: 1px solid var(--line2); }
+    .cfg-models button { min-height: 48px; padding: 6px 10px; font-family: var(--display); font-weight: 500;
+        font-size: 15px; line-height: 1.1; letter-spacing: .04em; text-transform: uppercase;
+        color: var(--muted); background: transparent; border: 0; border-left: 1px solid var(--line2);
+        cursor: pointer; }
+    .cfg-models button:first-child { border-left: 0; }
+    .cfg-models button:hover:not([aria-pressed="true"]) { color: var(--accent); }
+    .cfg-models button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
 
     /* --- the canvas ------------------------------------------- */
     .cfg-canvas { position: relative; margin-top: 16px; border: 1px solid var(--line);
@@ -157,6 +180,16 @@
     .cfg-widths button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
     .cfg-widths button:disabled { opacity: .35; cursor: not-allowed; }
     .cfg-editor-actions { display: inline-flex; gap: 6px; margin-left: auto; }
+    .cfg-brace-toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px;
+        font-family: var(--body); font-size: 12px; font-weight: 600; letter-spacing: .06em; color: var(--muted);
+        background: transparent; border: 1px solid var(--line2); cursor: pointer; }
+    .cfg-brace-toggle svg { display: block; width: 14px; height: 14px; }
+    .cfg-brace-toggle:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .cfg-brace-toggle[aria-pressed="true"] { border-color: var(--accent); color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 10%, transparent); }
+    /* a standard brace: on, and not the customer's to take off */
+    .cfg-brace-toggle:disabled { cursor: default; opacity: .7; }
+    .cfg-brace-toggle[hidden] { display: none; }
     .cfg-icon-btn { width: 40px; height: 40px; display: inline-grid; place-items: center;
         color: var(--txt); background: transparent; border: 1px solid var(--line2); cursor: pointer; }
     .cfg-icon-btn svg { display: block; width: 16px; height: 16px; }
@@ -222,6 +255,7 @@
     }
     @media (max-width: 760px) {
         .cfg-steps { gap: 8px; }
+        .cfg-steps.has-desk { grid-template-columns: 1fr 1fr; }
         /* the section editor stacks: name, then widths filling the row, then actions */
         .cfg-editor-title { flex: 1 0 100%; }
         .cfg-widths { flex: 1 1 auto; }
@@ -284,7 +318,18 @@
 
             {{-- ---------- the board ---------- --}}
             <div class="cfg-board">
-                <div class="cfg-steps">
+                {{-- The model. Only once a second one can be built: the price
+                     book decides (RackPriceBook::narrow), so the office and wine
+                     racks appear the day their boards are priced. --}}
+                @if (count($limits['types']) > 1)
+                    <div class="cfg-models" role="group" aria-label="{{ __('site.storefront.sankevi.cfg_model') }}">
+                        @foreach ($limits['types'] as $type)
+                            <button type="button" data-cfg-type="{{ $type }}"
+                                    aria-pressed="{{ $type === $config->type ? 'true' : 'false' }}">{{ __('site.storefront.sankevi.cfg_model_'.$type) }}</button>
+                        @endforeach
+                    </div>
+                @endif
+                <div class="cfg-steps{{ $config->type === 'office' ? ' has-desk' : '' }}" data-cfg-steps>
                     <div class="cfg-step">
                         <label for="cfgHeight">{{ __('site.storefront.sankevi.cfg_step_height') }}</label>
                         <select id="cfgHeight" data-cfg-height>
@@ -309,6 +354,17 @@
                             @endforeach
                         </select>
                     </div>
+                    {{-- The office rack's desk: a deeper plate than its shelves.
+                         Depths shallower than the rack are switched off by the
+                         script; the server refuses them anyway. --}}
+                    <div class="cfg-step" data-cfg-desk-step @if ($config->type !== 'office') hidden @endif>
+                        <label for="cfgDeskDepth">{{ __('site.storefront.sankevi.cfg_step_desk_depth') }}</label>
+                        <select id="cfgDeskDepth" data-cfg-desk-depth>
+                            @foreach ($limits['depths'] as $d)
+                                <option value="{{ $d }}" @selected($d === $config->deskDepthCm)>{{ $d }} cm</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
                 <p class="cfg-note">{{ __('site.storefront.sankevi.cfg_shared_note') }}</p>
 
@@ -328,6 +384,22 @@
                                 <button type="button" data-cfg-width="{{ $w }}" aria-pressed="false">{{ $w }}<span class="u">cm</span></button>
                             @endforeach
                         </div>
+                        {{-- Cross-brace for this section. Every other section has one as
+                             standard, shown on and locked; the rest can have one added. --}}
+                        <button type="button" class="cfg-brace-toggle" data-cfg-brace aria-pressed="false"
+                                data-label-auto="{{ __('site.storefront.sankevi.cfg_brace_auto') }}"
+                                data-label-add="{{ __('site.storefront.sankevi.cfg_brace_add') }}">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 3l10 10M13 3 3 13"/></svg>
+                            <span>{{ __('site.storefront.sankevi.cfg_part_cross_brace') }}</span>
+                        </button>
+                        {{-- The office desk: on the sections the customer picks, at least one. --}}
+                        <button type="button" class="cfg-brace-toggle" data-cfg-desk aria-pressed="false"
+                                @if ($config->type !== 'office') hidden @endif
+                                data-label-last="{{ __('site.storefront.sankevi.cfg_desk_last') }}"
+                                data-label-add="{{ __('site.storefront.sankevi.cfg_desk_add') }}">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M1.5 6.5h13M3 6.5V13M13 6.5V13"/></svg>
+                            <span>{{ __('site.storefront.sankevi.cfg_desk') }}</span>
+                        </button>
                         <div class="cfg-editor-actions">
                             <button type="button" class="cfg-icon-btn" data-cfg-left
                                     aria-label="{{ __('site.storefront.sankevi.cfg_move_left') }}" title="{{ __('site.storefront.sankevi.cfg_move_left') }}">
@@ -638,13 +710,27 @@
      | sends this object and nothing else.
      =================================================================== */
     var state = {
+        type:     BOOT.config.type || 'single',
+        /* the office desk's plate depth; the deepest on offer until chosen */
+        deskDepth: BOOT.config.desk_depth || Math.max.apply(null, LIMITS.depths),
         height:   BOOT.config.height,
         depth:    BOOT.config.depth,
         levels:   BOOT.config.levels,
         segments: BOOT.config.segments.slice(),
+        /* a brace added by hand, per section, travelling with it when it moves */
+        extra:    BOOT.config.segments.map(function (w, i) { return (BOOT.config.extra_braces || []).indexOf(i) !== -1; }),
+        /* the office desk, per section, travelling with it too */
+        desks:    BOOT.config.segments.map(function (w, i) { return (BOOT.config.desk_sections || []).indexOf(i) !== -1; }),
         selected: 0,
         code:     BOOT.savedCode || null
     };
+
+    /* An office rack always has a desk: when it would have none, the selected section gets it. */
+    function ensureDesk() {
+        if (state.type !== 'office' || state.desks.some(Boolean)) { return; }
+        state.desks[Math.min(state.selected, state.segments.length - 1)] = true;
+    }
+    ensureDesk();
 
     /* Document-scoped on purpose: the sticky till on a phone sits OUTSIDE the
        configurator grid (it is position:fixed over the whole page), so scoping
@@ -671,8 +757,37 @@
     function shelves()     { return sections() * state.levels; }
     function endPins()     { return 4 * state.levels; }
     function extPins()     { return 2 * state.levels * (sections() - 1); }
-    function braces()      { return Math.ceil(sections() / 2); }
+    /* every other section is braced as standard (RackConfig::isAutoBraced);
+       the customer may add a brace to any of the others */
     function isBraced(i)   { return i % 2 === 0; }
+    function braced(i)     { return isBraced(i) || !!state.extra[i]; }
+    function braces() {
+        var n = 0;
+        for (var i = 0; i < sections(); i++) { if (braced(i)) { n++; } }
+        return n;
+    }
+    function extraBraceIndexes() {
+        var out = [];
+        state.extra.forEach(function (on, i) { if (on && !isBraced(i)) { out.push(i); } });
+        return out;
+    }
+
+    /* Which boards one section carries, by kind — RackConfig::boardsForSection().
+       Every model puts one board on each level, and an office rack keeps its
+       level heights along the run, so the pins above do not change. */
+    function hasDesk(i) { return state.type === 'office' && !!state.desks[i]; }
+    function deskSectionIndexes() {
+        var out = [];
+        state.desks.forEach(function (on, i) { if (on) { out.push(i); } });
+        return out;
+    }
+    function boardsForSection(i) {
+        if (state.type === 'wine') { return [['wine_tray', state.levels]]; }
+        if (hasDesk(i))            { return [['shelf', state.levels - 1], ['desk_top', 1]]; }
+        return [['shelf', state.levels]];
+    }
+    /* where each board kind's prices sit in the price table */
+    var BOARD_PRICES = { shelf: 'shelves', wine_tray: 'trays', desk_top: 'shelves' };
 
     function bom() {
         var rows = [];
@@ -684,17 +799,30 @@
             unit: PRICES.frames[fk]
         });
 
-        var rd = shelfDepth(state.depth), byWidth = {};
-        state.segments.forEach(function (w) {
+        /* Boards by kind, then by size — shelves, or what the model uses in
+           their place. RackCalculator does the same, in the same order. */
+        var rd = shelfDepth(state.depth);
+        /* section by section: the office desk is only on the sections chosen */
+        var boards = {}, kinds = [];
+        state.segments.forEach(function (w, i) {
             var rw = shelfWidth(w);
-            byWidth[rw] = (byWidth[rw] || 0) + state.levels;
+            boardsForSection(i).forEach(function (pair) {
+                if (pair[1] < 1) { return; }
+                if (!boards[pair[0]]) { boards[pair[0]] = {}; kinds.push(pair[0]); }
+                boards[pair[0]][rw] = (boards[pair[0]][rw] || 0) + pair[1];
+            });
         });
-        Object.keys(byWidth).map(Number).sort(function (a, b) { return a - b; }).forEach(function (rw) {
-            rows.push({
-                kind: 'shelf',
-                label: LABELS.shelf.replace(':w', rw).replace(':d', rd),
-                qty: byWidth[rw],
-                unit: PRICES.shelves[rw + 'x' + rd]
+        kinds.forEach(function (kind) {
+            var byWidth = boards[kind];
+            Object.keys(byWidth).map(Number).sort(function (a, b) { return a - b; }).forEach(function (rw) {
+                /* the office desk is a deeper shelf: the shelf price at the desk's depth */
+                var d = kind === 'desk_top' ? shelfDepth(state.deskDepth) : rd;
+                rows.push({
+                    kind: kind,
+                    label: LABELS[kind].replace(':w', rw).replace(':d', d),
+                    qty: byWidth[rw],
+                    unit: (PRICES[BOARD_PRICES[kind]] || {})[rw + 'x' + d]
+                });
             });
         });
 
@@ -750,14 +878,40 @@
 
     function esc(v) { return String(v).replace(/[<>&"]/g, ''); }
 
-    function shelfYs() {
-        var L = state.levels, H = state.height;
-        var lowest  = H - BOT_INSET - THICK;
+    /*
+     | Where each level's board sits, measured down from the top of the frame,
+     | and which kind of board it is.
+     |
+     | The plain and wine racks spread their levels evenly from the top to the
+     | floor. An office rack puts its desk top at the merchant's desk height and
+     | spreads the other levels, as shelves, evenly above it — the space under
+     | a desk is for knees, not boards.
+     */
+    function boardLevels() {
+        var L = state.levels, H = state.height, out = [];
+
+        if (state.type === 'office') {
+            var deskY = Math.max(TOP_INSET + THICK * 3, H - LIMITS.deskHeight);
+            var above = L - 1;
+            var gap = above > 0 ? (deskY - TOP_INSET) / above : 0;
+            for (var s = 0; s < above; s++) { out.push({ y: TOP_INSET + gap * s, kind: 'shelf' }); }
+            out.push({ y: deskY, kind: 'desk_top' });
+            return out;
+        }
+
+        var kind = state.type === 'wine' ? 'wine_tray' : 'shelf';
+        /* a leaning wine tray's front edge sits lower than its back edge; the
+           lowest tray is lifted by that much, or its front would go through the floor */
+        var lowest  = H - BOT_INSET - THICK - (kind === 'wine_tray' ? trayDrop() : 0);
         var highest = TOP_INSET;
-        if (L < 2) { return [ (H - THICK) / 2 ]; }
-        var step = (lowest - highest) / (L - 1), out = [];
-        for (var n = 0; n < L; n++) { out.push(highest + step * n); }
+        if (L < 2) { return [{ y: (H - THICK) / 2, kind: kind }]; }
+        var step = (lowest - highest) / (L - 1);
+        for (var n = 0; n < L; n++) { out.push({ y: highest + step * n, kind: kind }); }
         return out;
+    }
+
+    function shelfYs() {
+        return boardLevels().map(function (l) { return l.y; });
     }
 
     function frameShape(cx, h) {
@@ -779,12 +933,38 @@
         return out + '</g>';
     }
 
-    function shelfShape(x, y, w) {
+    function shelfShape(x, y, w, t) {
+        t = t || THICK;
         return '<g class="pc-board">' +
-               '<rect class="pc-board-shadow" x="' + (x + 0.6) + '" y="' + (y + THICK) + '" width="' + w + '" height="' + (THICK * 0.5) + '"/>' +
-               '<rect class="pc-board-body" x="' + x + '" y="' + y + '" width="' + w + '" height="' + THICK + '"/>' +
-               '<rect class="pc-board-lit" x="' + x + '" y="' + y + '" width="' + w + '" height="' + (THICK * 0.32) + '"/>' +
+               '<rect class="pc-board-shadow" x="' + (x + 0.6) + '" y="' + (y + t) + '" width="' + w + '" height="' + (t * 0.5) + '"/>' +
+               '<rect class="pc-board-body" x="' + x + '" y="' + y + '" width="' + w + '" height="' + t + '"/>' +
+               '<rect class="pc-board-lit" x="' + x + '" y="' + y + '" width="' + w + '" height="' + (t * 0.32) + '"/>' +
                '</g>';
+    }
+
+    /* The office rack's desk top: a heavier board. It also reaches forward past
+       the frames, which an elevation seen straight on cannot show — 3D does. */
+    function deskShape(x, y, w) {
+        return shelfShape(x, y, w, THICK * 1.5);
+    }
+
+    /* How far a wine tray's front edge sits below its back edge, in cm. */
+    function trayDrop() {
+        return shelfDepth(state.depth) * Math.sin((LIMITS.trayTilt || 0) * Math.PI / 180);
+    }
+
+    /* A wine tray, seen from the front. It leans forward — the back edge at the
+       level, the front lower — so its top surface shows as a band dropping from
+       one to the other, and the rim stands along the lower, front edge. */
+    function trayShape(x, y, w) {
+        var rim = LIMITS.trayRim, drop = trayDrop(), front = y + drop;
+        var out = '<g class="pc-tray">';
+        if (drop > 0.2) {
+            out += '<rect class="pc-tray-top" x="' + x + '" y="' + y + '" width="' + w + '" height="' + drop + '"/>';
+        }
+        out += '<rect class="pc-rim" x="' + x + '" y="' + (front - rim) + '" width="' + w + '" height="' + rim + '"/>' +
+               '<rect class="pc-rim-lit" x="' + x + '" y="' + (front - rim) + '" width="' + w + '" height="' + (rim * 0.25) + '"/>';
+        return out + '</g>' + shelfShape(x, front, w);
     }
 
     function braceShape(x, y, w, h) {
@@ -832,7 +1012,7 @@
         /* Braces sit on the BACK of the rack, so they go down first and
            everything else covers them (S33). Only every other bay carries one. */
         state.segments.forEach(function (w, i) {
-            if (!isBraced(i)) { return; }
+            if (!braced(i)) { return; }
             parts.push(braceShape(px[i], TOP_INSET, px[i + 1] - px[i], size.h - TOP_INSET - BOT_INSET));
         });
 
@@ -842,16 +1022,25 @@
             parts.push('<rect class="pc-sel" x="' + px[si] + '" y="0" width="' + (px[si + 1] - px[si]) + '" height="' + size.h + '"/>');
         }
 
-        /* the boards */
+        /* the boards — each level drawn as what it is */
+        var levels = boardLevels();
         state.segments.forEach(function (w, i) {
             var bx = px[i] + INSET, bw = (px[i + 1] - px[i]) - INSET * 2;
-            ys.forEach(function (y) { parts.push(shelfShape(bx, y, bw)); });
+            levels.forEach(function (l) {
+                /* a section without the desk has an ordinary shelf at desk height */
+                if (l.kind === 'desk_top' && !hasDesk(i)) { parts.push(shelfShape(bx, l.y, bw)); }
+                else if (l.kind === 'desk_top') { parts.push(deskShape(bx, l.y, bw)); }
+                else if (l.kind === 'wine_tray') { parts.push(trayShape(bx, l.y, bw)); }
+                else { parts.push(shelfShape(bx, l.y, bw)); }
+            });
         });
 
         /* the uprights, over the board ends, then the pins that carry them */
         px.forEach(function (x) { parts.push(frameShape(x, size.h)); });
+        /* a tilted wine tray rests on its lower, front pins — those are the ones the elevation shows */
+        var pinDrop = state.type === 'wine' ? trayDrop() : 0;
         px.forEach(function (x) {
-            ys.forEach(function (y) { parts.push(pinShape(x, y + THICK / 2)); });
+            ys.forEach(function (y) { parts.push(pinShape(x, y + pinDrop + THICK / 2)); });
         });
 
         /* the floor the whole thing stands on */
@@ -999,6 +1188,23 @@
         $('[data-cfg-left]').disabled   = (i === 0);
         $('[data-cfg-right]').disabled  = (i === sections() - 1);
         $('[data-cfg-delete]').disabled = (sections() === 1);
+
+        var brace = $('[data-cfg-brace]');
+        if (brace) {
+            var standard = isBraced(i);
+            brace.setAttribute('aria-pressed', braced(i) ? 'true' : 'false');
+            brace.disabled = standard;
+            brace.title = standard ? brace.dataset.labelAuto : brace.dataset.labelAdd;
+        }
+
+        var desk = $('[data-cfg-desk]');
+        if (desk) {
+            var onlyDesk = hasDesk(i) && deskSectionIndexes().length === 1;
+            desk.hidden = state.type !== 'office';
+            desk.setAttribute('aria-pressed', hasDesk(i) ? 'true' : 'false');
+            desk.disabled = onlyDesk;
+            desk.title = onlyDesk ? desk.dataset.labelLast : desk.dataset.labelAdd;
+        }
     }
 
     /**
@@ -1044,8 +1250,10 @@
     function render() {
         if (state.selected > sections() - 1) { state.selected = sections() - 1; }
         if (state.selected < 0) { state.selected = 0; }
+        clampDesk();
         renderSvg();
         sync3d();
+        renderModels();
         renderChips();
         renderEditor();
         var q = renderPanel();
@@ -1097,7 +1305,16 @@
     }
 
     function payload() {
-        return { height: state.height, depth: state.depth, levels: state.levels, segments: state.segments };
+        return {
+            type: state.type,
+            height: state.height,
+            depth: state.depth,
+            desk_depth: state.type === 'office' ? state.deskDepth : null,
+            levels: state.levels,
+            segments: state.segments,
+            extra_braces: extraBraceIndexes(),
+            desk_sections: state.type === 'office' ? deskSectionIndexes() : null
+        };
     }
 
     function post(url, body) {
@@ -1125,10 +1342,69 @@
     $('[data-cfg-height]').addEventListener('change', function (e) { state.height = +e.target.value; clearCode(); render(); });
     $('[data-cfg-depth]').addEventListener('change',  function (e) { state.depth  = +e.target.value; clearCode(); render(); });
     $('[data-cfg-levels]').addEventListener('change', function (e) { state.levels = +e.target.value; clearCode(); render(); });
+    $('[data-cfg-desk-depth]').addEventListener('change', function (e) { state.deskDepth = +e.target.value; clearCode(); render(); });
+
+    /* A desk is never shallower than the rack it belongs to: making the rack
+       deeper pulls the desk along with it. */
+    function clampDesk() {
+        if (state.deskDepth < state.depth) { state.deskDepth = state.depth; }
+    }
+
+    function renderModels() {
+        $$('[data-cfg-type]').forEach(function (b) {
+            b.setAttribute('aria-pressed', b.dataset.cfgType === state.type ? 'true' : 'false');
+        });
+
+        /* the desk-depth step exists for the office rack only */
+        var office = state.type === 'office';
+        var step = $('[data-cfg-desk-step]'), select = $('[data-cfg-desk-depth]');
+        $('[data-cfg-steps]').classList.toggle('has-desk', office);
+        if (step) { step.hidden = !office; }
+        if (select) {
+            Array.prototype.forEach.call(select.options, function (o) { o.disabled = +o.value < state.depth; });
+            select.value = String(state.deskDepth);
+        }
+    }
 
     root.addEventListener('click', function (e) {
         var pick = e.target.closest('[data-cfg-pick]');
         if (pick) { state.selected = +pick.dataset.cfgPick; render(); return; }
+
+        /* a different model is a different rack: new boards, new price, and
+           any saved code no longer describes it */
+        var model = e.target.closest('[data-cfg-type]');
+        if (model) {
+            if (model.dataset.cfgType !== state.type) {
+                state.type = model.dataset.cfgType;
+                ensureDesk();
+                clearCode();
+                render();
+            }
+            return;
+        }
+
+        var braceToggle = e.target.closest('[data-cfg-brace]');
+        if (braceToggle) {
+            var at = state.selected;
+            if (!isBraced(at)) {
+                state.extra[at] = !state.extra[at];
+                clearCode();
+                render();
+            }
+            return;
+        }
+
+        var deskToggle = e.target.closest('[data-cfg-desk]');
+        if (deskToggle) {
+            var on = state.selected;
+            /* the last desk stays: an office rack without one is not an office rack */
+            if (state.type === 'office' && !(hasDesk(on) && deskSectionIndexes().length === 1)) {
+                state.desks[on] = !state.desks[on];
+                clearCode();
+                render();
+            }
+            return;
+        }
 
         var width = e.target.closest('[data-cfg-width]');
         if (width) {
@@ -1145,6 +1421,8 @@
             var w = state.segments[state.selected];
             if (wouldExceed(w)) { return; }
             state.segments.push(w);
+            state.extra.push(false);
+            state.desks.push(false);
             state.selected = sections() - 1;
             clearCode();
             render();
@@ -1153,6 +1431,9 @@
         if (e.target.closest('[data-cfg-delete]')) {
             if (sections() === 1) { return; }
             state.segments.splice(state.selected, 1);
+            state.extra.splice(state.selected, 1);
+            state.desks.splice(state.selected, 1);
+            ensureDesk();
             clearCode();
             render();
             return;
@@ -1209,10 +1490,18 @@
             pitches: px,
             shelfTops: shelfYs().map(function (y) { return H - y; }),
             holes: holes,
-            braced: state.segments.map(function (w, i) { return isBraced(i); }),
+            braced: state.segments.map(function (w, i) { return braced(i); }),
             braceTop: H - TOP_INSET,
             braceBottom: BOT_INSET,
             selected: state.selected,
+            type: state.type,
+            boardKinds: boardLevels().map(function (l) { return l.kind; }),
+            /* which bays have the desk at the desk level; the others a shelf there */
+            desks: state.segments.map(function (w, i) { return hasDesk(i); }),
+            /* how far the desk reaches past the frames: its deeper plate, less the rack */
+            deskOverhang: state.type === 'office' ? Math.max(0, state.deskDepth - state.depth) : 0,
+            trayRim: LIMITS.trayRim,
+            trayTilt: LIMITS.trayTilt || 0,
             /* written here, in the drawing's own format, so a measurement
                reads the same in 2D and 3D */
             labels: {
@@ -1296,6 +1585,13 @@
         var tmp = state.segments[i];
         state.segments[i] = state.segments[j];
         state.segments[j] = tmp;
+        /* a brace added by hand goes with its section */
+        var flag = state.extra[i];
+        state.extra[i] = state.extra[j];
+        state.extra[j] = flag;
+        var desk = state.desks[i];
+        state.desks[i] = state.desks[j];
+        state.desks[j] = desk;
         state.selected = j;
         clearCode();
         render();
@@ -1567,6 +1863,9 @@
     [data-cfg] .pc-dimtext    { fill: var(--muted); text-anchor: middle; font-family: var(--display); }
     [data-cfg] .pc-hit        { fill: var(--accent); fill-opacity: 0; cursor: pointer; }
     [data-cfg] .pc-hit:hover  { fill-opacity: .05; }
+    [data-cfg] .pc-rim        { fill: var(--pc-wood-m); }
+    [data-cfg] .pc-rim-lit    { fill: rgba(255, 240, 212, .34); }
+    [data-cfg] .pc-tray-top   { fill: var(--pc-wood-l); opacity: .5; }
 </style>
 @endpush
 
