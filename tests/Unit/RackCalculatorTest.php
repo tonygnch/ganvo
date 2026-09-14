@@ -38,14 +38,17 @@ class RackCalculatorTest extends TestCase
             $parts[] = new RackPart($attrs);
         };
 
-        foreach ([150, 180, 210, 240, 300] as $h) {
-            foreach ([30, 40, 50, 60] as $d) {
-                $add(['kind' => 'frame', 'sku' => "FRAME-$h-$d", 'height_cm' => $h, 'depth_cm' => $d, 'price_cents' => 2355]);
+        // The plain rack and the office rack, priced alike — each type has its own rows.
+        foreach (['single', 'office'] as $type) {
+            foreach ([150, 180, 210, 240, 300] as $h) {
+                foreach ([30, 40, 50, 60] as $d) {
+                    $add(['kind' => 'frame', 'rack_type' => $type, 'sku' => "FRAME-$h-$d", 'height_cm' => $h, 'depth_cm' => $d, 'price_cents' => 2355]);
+                }
             }
-        }
-        foreach ([77, 97, 117] as $w) {
-            foreach ([29, 39, 49, 59] as $d) {
-                $add(['kind' => 'shelf', 'sku' => "SHELF-$w-$d", 'width_cm' => $w, 'depth_cm' => $d, 'price_cents' => 2370]);
+            foreach ([77, 97, 117] as $w) {
+                foreach ([29, 39, 49, 59] as $d) {
+                    $add(['kind' => 'shelf', 'rack_type' => $type, 'sku' => "SHELF-$w-$d", 'width_cm' => $w, 'depth_cm' => $d, 'price_cents' => 2370]);
+                }
             }
         }
         $add(['kind' => 'end_pin', 'sku' => 'END-PIN-10', 'price_cents' => 38]);
@@ -391,15 +394,18 @@ class RackCalculatorTest extends TestCase
     private function modelPriceBook(): RackPriceBook
     {
         $parts = [];
-        foreach ([150, 180, 210, 240, 300] as $h) {
-            foreach ([30, 40, 50, 60] as $d) {
-                $parts[] = new RackPart(['kind' => 'frame', 'height_cm' => $h, 'depth_cm' => $d, 'price_cents' => 2355]);
+        foreach (['single', 'office', 'wine'] as $type) {
+            foreach ([150, 180, 210, 240, 300] as $h) {
+                foreach ([30, 40, 50, 60] as $d) {
+                    $parts[] = new RackPart(['kind' => 'frame', 'rack_type' => $type, 'height_cm' => $h, 'depth_cm' => $d, 'price_cents' => 2355]);
+                }
             }
         }
         foreach ([77, 97, 117] as $w) {
             foreach ([29, 39, 49, 59] as $d) {
-                $parts[] = new RackPart(['kind' => 'shelf', 'width_cm' => $w, 'depth_cm' => $d, 'price_cents' => 2370]);
-                $parts[] = new RackPart(['kind' => 'wine_tray', 'width_cm' => $w, 'depth_cm' => $d, 'price_cents' => 3100]);
+                $parts[] = new RackPart(['kind' => 'shelf', 'rack_type' => 'single', 'width_cm' => $w, 'depth_cm' => $d, 'price_cents' => 2370]);
+                $parts[] = new RackPart(['kind' => 'shelf', 'rack_type' => 'office', 'width_cm' => $w, 'depth_cm' => $d, 'price_cents' => 2370]);
+                $parts[] = new RackPart(['kind' => 'wine_tray', 'rack_type' => 'wine', 'width_cm' => $w, 'depth_cm' => $d, 'price_cents' => 3100]);
             }
         }
         $parts[] = new RackPart(['kind' => 'end_pin', 'price_cents' => 38]);
@@ -472,11 +478,56 @@ class RackCalculatorTest extends TestCase
         (new RackCalculator)->quote(RackConfig::of(210, 60, 4, [100], 'wine'), $this->priceBook(), self::LIMITS);
     }
 
-    public function test_the_wine_rack_is_offered_only_once_its_trays_are_priced_and_the_office_rack_always(): void
+    public function test_each_rack_type_is_offered_only_once_its_own_tables_are_priced(): void
     {
-        // the office desk is a shelf, so shelves are all the office rack needs
+        // the plain price book has no wine frames or trays; the office desk is an office shelf
+        $this->assertSame(['single'], $this->bookWithout([])->narrow($this->narrowLimits())['types']);
         $this->assertSame(['single', 'office'], $this->priceBook()->narrow($this->narrowLimits())['types']);
         $this->assertSame(['single', 'office', 'wine'], $this->modelPriceBook()->narrow($this->narrowLimits())['types']);
+    }
+
+    public function test_each_rack_type_is_priced_and_sized_from_its_own_tables(): void
+    {
+        $parts = [];
+        foreach (['single', 'office'] as $type) {
+            foreach ([210, 240] as $h) {
+                foreach ([40, 60] as $d) {
+                    // the office rack does not come 240 cm high, and costs more
+                    if ($type === 'office' && $h === 240) {
+                        continue;
+                    }
+                    $parts[] = new RackPart(['kind' => 'frame', 'rack_type' => $type, 'height_cm' => $h, 'depth_cm' => $d, 'price_cents' => $type === 'office' ? 3000 : 2355]);
+                }
+            }
+            foreach ([97] as $w) {
+                foreach ([39, 59] as $d) {
+                    $parts[] = new RackPart(['kind' => 'shelf', 'rack_type' => $type, 'width_cm' => $w, 'depth_cm' => $d, 'price_cents' => 2370]);
+                }
+            }
+        }
+        foreach (['end_pin' => 38, 'extension_pin' => 36, 'cross_brace' => 710] as $kind => $cents) {
+            $parts[] = new RackPart(['kind' => $kind, 'price_cents' => $cents]);
+        }
+        $book = RackPriceBook::fromParts($parts);
+
+        $limits = $book->narrow(['heights' => [210, 240], 'depths' => [40, 60], 'widths' => [100]] + $this->narrowLimits());
+
+        $this->assertSame(['single', 'office'], $limits['types']);
+        $this->assertSame([210, 240], $limits['by_type']['single']['heights']);
+        $this->assertSame([210], $limits['by_type']['office']['heights'], 'a size left blank for one type is not sold for that type');
+        $this->assertSame([210, 240], $limits['heights'], 'the picker lists every size some type sells');
+
+        $this->expectException(RackException::class);
+        try {
+            $office = RackConfig::fromArray(['type' => 'office', 'height' => 210, 'depth' => 60, 'levels' => 4, 'segments' => [100]], $limits);
+            $this->assertSame(3000, (new RackCalculator)->quote($office, $book, $limits)->lines[0]['unit_price_cents'], 'the office rack\'s own frame price');
+            $single = RackConfig::fromArray(['type' => 'single', 'height' => 210, 'depth' => 60, 'levels' => 4, 'segments' => [100]], $limits);
+            $this->assertSame(2355, (new RackCalculator)->quote($single, $book, $limits)->lines[0]['unit_price_cents']);
+        } catch (RackException $e) {
+            $this->fail('a priced configuration was refused: '.$e->reasonKey);
+        }
+
+        RackConfig::fromArray(['type' => 'office', 'height' => 240, 'depth' => 60, 'levels' => 4, 'segments' => [100]], $limits);
     }
 
     public function test_rejects_a_model_that_is_not_offered(): void

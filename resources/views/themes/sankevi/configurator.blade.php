@@ -30,6 +30,8 @@
             'trayRim' => $limits['tray_rim_cm'],
             'trayTilt' => $limits['tray_tilt_deg'],
             'modelDepth' => $limits['model_depth_cm'],
+            // the sizes each type is sold in — its own price tables decide
+            'byType' => $limits['by_type'] ?? (object) [],
         ],
         'prices' => $priceBook,
         'config' => $config->toArray(),
@@ -713,7 +715,7 @@
     var state = {
         type:     BOOT.config.type || 'single',
         /* the office desk's plate depth; the deepest on offer until chosen */
-        deskDepth: BOOT.config.desk_depth || Math.max.apply(null, LIMITS.depths),
+        deskDepth: BOOT.config.desk_depth || Math.max.apply(null, sizesFor('office').depths),
         height:   BOOT.config.height,
         depth:    BOOT.config.depth,
         levels:   BOOT.config.levels,
@@ -789,8 +791,21 @@
         if (hasDesk(i))            { return [['shelf', state.levels - 1], ['desk_top', 1]]; }
         return [['shelf', state.levels]];
     }
-    /* where each board kind's prices sit in the price table */
-    var BOARD_PRICES = { shelf: 'shelves', wine_tray: 'trays', desk_top: 'shelves' };
+    /* Prices are per rack type (RackPriceBook): this type's frames, and this
+       type's boards — its shelves, or the wine rack's trays. */
+    function framePrice(h, d) { return ((PRICES.frames || {})[state.type] || {})[h + 'x' + d]; }
+    function boardPrice(rw, rd) { return ((PRICES.boards || {})[state.type] || {})[rw + 'x' + rd]; }
+
+    /* The sizes a rack type is sold in — the ones its own price tables cover. */
+    function sizesFor(type) {
+        return (LIMITS.byType || {})[type] || {
+            heights: LIMITS.heights, depths: LIMITS.depths, widths: LIMITS.widths,
+            default_height_cm: LIMITS.heights[0], default_depth_cm: LIMITS.depths[0], default_width_cm: LIMITS.widths[0]
+        };
+    }
+    function nearest(list, v) {
+        return list.reduce(function (a, b) { return Math.abs(b - v) < Math.abs(a - v) ? b : a; });
+    }
 
     function bom() {
         var rows = [];
@@ -799,7 +814,7 @@
             kind: 'frame',
             label: LABELS.frame.replace(':h', state.height).replace(':d', state.depth),
             qty: frames(),
-            unit: PRICES.frames[fk]
+            unit: framePrice(state.height, state.depth)
         });
 
         /* Boards by kind, then by size — shelves, or what the model uses in
@@ -824,7 +839,7 @@
                     kind: kind,
                     label: LABELS[kind].replace(':w', rw).replace(':d', d),
                     qty: byWidth[rw],
-                    unit: (PRICES[BOARD_PRICES[kind]] || {})[rw + 'x' + d]
+                    unit: boardPrice(rw, d)
                 });
             });
         });
@@ -875,6 +890,10 @@
        line and its ends rest ON the uprights, which is how the real rack works:
        the board sits on pins driven into the posts, it does not span a gap. */
     var POST_W  = 5;
+    /* the posts are drilled every 5 cm, and a pin is Ø10 mm (rack-3d.js draws the same) */
+    var HOLE_PITCH = 5, PIN_R = 0.5;
+    /* the steel splint under each board end, which the pins go through (rack-3d.js draws it from this) */
+    var SPLINT_H = 3, SPLINT_W = 2.5, SPLINT_T = 0.4;
     var INSET   = LIMITS.widthTrim / 2;          /* 1.5 cm each side */
     var THICK   = LIMITS.thicknessMm / 10;       /* 18 mm */
     var TOP_INSET = 6, BOT_INSET = 9, FOOT_H = 3.5;
@@ -899,7 +918,7 @@
             var gap = above > 0 ? (deskY - TOP_INSET) / above : 0;
             for (var s = 0; s < above; s++) { out.push({ y: TOP_INSET + gap * s, kind: 'shelf' }); }
             out.push({ y: deskY, kind: 'desk_top' });
-            return out;
+            return out.map(onHoles);
         }
 
         var kind = state.type === 'wine' ? 'wine_tray' : 'shelf';
@@ -907,10 +926,41 @@
            lowest tray is lifted by that much, or its front would go through the floor */
         var lowest  = H - BOT_INSET - THICK - (kind === 'wine_tray' ? trayDrop() : 0);
         var highest = TOP_INSET;
-        if (L < 2) { return [{ y: (H - THICK) / 2, kind: kind }]; }
+        if (L < 2) { return [onHoles({ y: (H - THICK) / 2, kind: kind })]; }
         var step = (lowest - highest) / (L - 1);
         for (var n = 0; n < L; n++) { out.push({ y: highest + step * n, kind: kind }); }
-        return out;
+        return out.map(onHoles);
+    }
+
+    /*
+     | A BOARD RESTS ON PINS, AND A PIN SITS IN A DRILLED HOLE.
+     |
+     | The levels above are spread evenly, which put the pins wherever the
+     | spacing fell — between the holes, in the 3D view plainly so. So every
+     | level moves to the hole nearest where it was spread (never more than
+     | half a pitch): its pins go in that hole and the board sits on top of
+     | them, in the drawing and the 3D model alike.
+     */
+    function pinBelow(kind) {
+        /* from a board's top edge down to the centre of the pin that carries it: through
+           the board, then half way down the splint under it — for a leaning tray the
+           back pin, which sits a little lower than the back edge */
+        var t = kind === 'desk_top' ? THICK * 1.5 : THICK;
+        if (kind !== 'wine_tray') { return t + SPLINT_H / 2; }
+        /* A leaning tray is built from its pins, exactly as rack-3d.js builds it: the
+           splint's centre line runs straight through the back pin and the front pin,
+           and the tray lies on the splint, centred between the posts. So its back
+           top edge stands this far above the back pin. */
+        var a = trayTiltDeg() * Math.PI / 180;
+        return (SPLINT_H / 2 + t) * Math.cos(a) + shelfDepth(state.depth) / 2 * Math.sin(a) - trayPinDrop() / 2;
+    }
+    function onHoles(level) {
+        /* the last hole frameShape() drills, and room below it for a tray's lower front pins */
+        var lastHole = Math.floor((state.height - FOOT_H - 2 - 0.001) / HOLE_PITCH) * HOLE_PITCH;
+        var room = level.kind === 'wine_tray' ? trayPinDrop() : 0;
+        var hole = Math.round((level.y + pinBelow(level.kind)) / HOLE_PITCH) * HOLE_PITCH;
+        hole = Math.max(HOLE_PITCH, Math.min(lastHole - room, hole));
+        return { y: hole - pinBelow(level.kind), kind: level.kind };
     }
 
     function shelfYs() {
@@ -927,7 +977,7 @@
         out += '<rect class="pc-post-shade" x="' + (x + POST_W * 0.74) + '" y="0" width="' + (POST_W * 0.26) + '" height="' + h + '"/>';
         /* drilled the whole way down: the holes are what makes the levels
            adjustable, so they belong in the drawing (S10) */
-        var pitch = 5, r = POST_W * 0.11;
+        var pitch = HOLE_PITCH, r = POST_W * 0.11;
         for (var y = 5; y < h - FOOT_H - 2; y += pitch) {
             out += '<circle class="pc-hole" cx="' + cx + '" cy="' + y + '" r="' + r + '"/>';
         }
@@ -953,7 +1003,21 @@
 
     /* How far a wine tray's front edge sits below its back edge, in cm. */
     function trayDrop() {
-        return shelfDepth(state.depth) * Math.sin((LIMITS.trayTilt || 0) * Math.PI / 180);
+        return shelfDepth(state.depth) * Math.sin(trayTiltDeg() * Math.PI / 180);
+    }
+
+    /* How far a wine tray's front pins sit below its back pins: a whole number
+       of holes, so both are in one. The merchant's angle is rounded to the
+       nearest tilt the drilled posts can actually hold. */
+    function trayPinDrop() {
+        var span = state.depth - POST_W; /* front post to back post, centre to centre */
+        var raw = span * Math.sin((LIMITS.trayTilt || 0) * Math.PI / 180);
+        return Math.max(0, Math.min(Math.floor(span / HOLE_PITCH) * HOLE_PITCH, Math.round(raw / HOLE_PITCH) * HOLE_PITCH));
+    }
+    /* the lean of the line through the back and front pins — the splint's, and so the tray's */
+    function trayTiltDeg() {
+        var span = state.depth - POST_W;
+        return span > 0 ? Math.atan2(trayPinDrop(), span) * 180 / Math.PI : 0;
     }
 
     /* A wine tray, seen from the front. It leans forward — the back edge at the
@@ -967,7 +1031,10 @@
         }
         out += '<rect class="pc-rim" x="' + x + '" y="' + (front - rim) + '" width="' + w + '" height="' + rim + '"/>' +
                '<rect class="pc-rim-lit" x="' + x + '" y="' + (front - rim) + '" width="' + w + '" height="' + (rim * 0.25) + '"/>';
-        return out + '</g>' + shelfShape(x, front, w);
+        /* the rounded bump along the bottom of the tray's front face, over the board's edge */
+        var bead = '<rect class="pc-rim" x="' + x + '" y="' + (front - 0.3) + '" width="' + w + '" height="' + (THICK + 0.6) + '" rx="' + ((THICK + 0.6) / 2) + '"/>' +
+                   '<rect class="pc-rim-lit" x="' + x + '" y="' + (front - 0.1) + '" width="' + w + '" height="' + ((THICK + 0.6) * 0.3) + '" rx="0.3"/>';
+        return out + '</g>' + shelfShape(x, front, w) + bead;
     }
 
     function braceShape(x, y, w, h) {
@@ -1031,19 +1098,32 @@
             var bx = px[i] + INSET, bw = (px[i + 1] - px[i]) - INSET * 2;
             levels.forEach(function (l) {
                 /* a section without the desk has an ordinary shelf at desk height */
-                if (l.kind === 'desk_top' && !hasDesk(i)) { parts.push(shelfShape(bx, l.y, bw)); }
+                /* …as low as the desk's underside, so it hangs on the same pins */
+                if (l.kind === 'desk_top' && !hasDesk(i)) { parts.push(shelfShape(bx, l.y + THICK * 0.5, bw)); }
                 else if (l.kind === 'desk_top') { parts.push(deskShape(bx, l.y, bw)); }
                 else if (l.kind === 'wine_tray') { parts.push(trayShape(bx, l.y, bw)); }
                 else { parts.push(shelfShape(bx, l.y, bw)); }
+
+                /* the steel angle under each end of the board, seen end-on from the front
+                   as an L: an upright leg against the post and a flat leg under the board
+                   (for a leaning tray, under its lower front edge) */
+                var under = l.y + (l.kind === 'desk_top' ? THICK * 1.5 : THICK) + (l.kind === 'wine_tray' ? trayDrop() : 0);
+                var inL = px[i] + POST_W / 2, inR = px[i + 1] - POST_W / 2;
+                parts.push('<rect class="pc-splint" x="' + inL + '" y="' + under + '" width="' + SPLINT_T + '" height="' + SPLINT_H + '"/>');
+                parts.push('<rect class="pc-splint" x="' + inL + '" y="' + under + '" width="' + SPLINT_W + '" height="' + SPLINT_T + '"/>');
+                parts.push('<rect class="pc-splint" x="' + (inR - SPLINT_T) + '" y="' + under + '" width="' + SPLINT_T + '" height="' + SPLINT_H + '"/>');
+                parts.push('<rect class="pc-splint" x="' + (inR - SPLINT_W) + '" y="' + under + '" width="' + SPLINT_W + '" height="' + SPLINT_T + '"/>');
             });
         });
 
         /* the uprights, over the board ends, then the pins that carry them */
         px.forEach(function (x) { parts.push(frameShape(x, size.h)); });
-        /* a tilted wine tray rests on its lower, front pins — those are the ones the elevation shows */
-        var pinDrop = state.type === 'wine' ? trayDrop() : 0;
+        /* each pin in its hole, under its board — for a leaning wine tray the
+           front pins, the ones the elevation shows, a whole number of holes lower */
         px.forEach(function (x) {
-            ys.forEach(function (y) { parts.push(pinShape(x, y + pinDrop + THICK / 2)); });
+            levels.forEach(function (l) {
+                parts.push(pinShape(x, l.y + pinBelow(l.kind) + (l.kind === 'wine_tray' ? trayPinDrop() : 0)));
+            });
         });
 
         /* the floor the whole thing stands on */
@@ -1185,7 +1265,9 @@
             /* A width that would take the run past the online limit is not
                offered, rather than offered and then refused. */
             var tooLong = w !== current && totalLength() - current + w > LIMITS.maxLength;
-            b.disabled = tooLong;
+            /* …and neither is a width this rack type is not sold in */
+            var unsold = sizesFor(state.type).widths.indexOf(w) === -1;
+            b.disabled = tooLong || unsold;
             b.title = tooLong ? LABELS.overLimit : '';
         });
         $('[data-cfg-left]').disabled   = (i === 0);
@@ -1351,6 +1433,24 @@
        deeper pulls the desk along with it. */
     function clampDesk() {
         if (state.deskDepth < state.depth) { state.deskDepth = state.depth; }
+        /* …and is a depth the office rack's shelves are priced at */
+        var deskDepths = sizesFor('office').depths.filter(function (d) { return d >= state.depth; });
+        if (deskDepths.length && deskDepths.indexOf(state.deskDepth) === -1) { state.deskDepth = Math.max.apply(null, deskDepths); }
+    }
+
+    /* Switching to another type keeps the rack as close as that type is sold:
+       a size it does not offer moves to the nearest one it does. */
+    function fitType() {
+        var s = sizesFor(state.type);
+        if (s.heights.indexOf(state.height) === -1) { state.height = nearest(s.heights, state.height); }
+        if (s.depths.indexOf(state.depth) === -1)   { state.depth = nearest(s.depths, state.depth); }
+        if (typeof framePrice(state.height, state.depth) !== 'number') {
+            state.height = s.default_height_cm;
+            state.depth = s.default_depth_cm;
+        }
+        state.segments = state.segments.map(function (w) { return s.widths.indexOf(w) === -1 ? nearest(s.widths, w) : w; });
+        $('[data-cfg-height]').value = String(state.height);
+        $('[data-cfg-depth]').value = String(state.depth);
     }
 
     function renderModels() {
@@ -1363,10 +1463,17 @@
         var step = $('[data-cfg-desk-step]'), select = $('[data-cfg-desk-depth]');
         $('[data-cfg-steps]').classList.toggle('has-desk', office);
         if (step) { step.hidden = !office; }
+        var sizes = sizesFor(state.type);
         if (select) {
-            Array.prototype.forEach.call(select.options, function (o) { o.disabled = +o.value < state.depth; });
+            Array.prototype.forEach.call(select.options, function (o) {
+                o.disabled = +o.value < state.depth || sizesFor('office').depths.indexOf(+o.value) === -1;
+            });
             select.value = String(state.deskDepth);
         }
+
+        /* the sizes this type is not sold in stay listed, switched off */
+        Array.prototype.forEach.call($('[data-cfg-height]').options, function (o) { o.disabled = sizes.heights.indexOf(+o.value) === -1; });
+        Array.prototype.forEach.call($('[data-cfg-depth]').options, function (o) { o.disabled = sizes.depths.indexOf(+o.value) === -1; });
     }
 
     root.addEventListener('click', function (e) {
@@ -1379,10 +1486,11 @@
         if (model) {
             if (model.dataset.cfgType !== state.type) {
                 state.type = model.dataset.cfgType;
+                fitType();
                 /* the office and wine racks open on their own depth, when it can be built at this height */
                 var modelDepth = LIMITS.modelDepth;
-                if (state.type !== 'single' && modelDepth && LIMITS.depths.indexOf(modelDepth) !== -1 &&
-                    typeof PRICES.frames[state.height + 'x' + modelDepth] === 'number') {
+                if (state.type !== 'single' && modelDepth && sizesFor(state.type).depths.indexOf(modelDepth) !== -1 &&
+                    typeof framePrice(state.height, modelDepth) === 'number') {
                     state.depth = modelDepth;
                     $('[data-cfg-depth]').value = String(modelDepth);
                 }
@@ -1489,7 +1597,7 @@
         state.segments.forEach(function (w, i) { px.push(px[i] + w); });
         /* frameShape()'s drill holes, measured up from the floor instead of down from the top */
         var holes = [];
-        for (var y = 5; y < H - FOOT_H - 2; y += 5) { holes.push(H - y); }
+        for (var y = HOLE_PITCH; y < H - FOOT_H - 2; y += HOLE_PITCH) { holes.push(H - y); }
         return {
             height: H,
             depth: state.depth,
@@ -1511,7 +1619,12 @@
             /* how far the desk reaches past the frames: its deeper plate, less the rack */
             deskOverhang: state.type === 'office' ? Math.max(0, state.deskDepth - state.depth) : 0,
             trayRim: LIMITS.trayRim,
-            trayTilt: LIMITS.trayTilt || 0,
+            /* the tilt the holes allow, so the model's pins land in them as the drawing's do */
+            trayTilt: trayTiltDeg(),
+            /* how many cm the front pins sit below the back ones — the tray is built from that */
+            trayDrop: trayPinDrop(),
+            splint: SPLINT_H,
+            splintWidth: SPLINT_W,
             /* written here, in the drawing's own format, so a measurement
                reads the same in 2D and 3D */
             labels: {
@@ -1877,6 +1990,7 @@
     [data-cfg] .pc-board-shadow { fill: rgba(0, 0, 0, .30); }
 
     [data-cfg] .pc-pin        { fill: var(--accent); opacity: .9; }
+    [data-cfg] .pc-splint     { fill: var(--pc-steel); opacity: .85; }
     [data-cfg] .pc-brace line { stroke: var(--pc-steel); stroke-width: 1.6; stroke-linecap: round; opacity: .5; }
     [data-cfg] .pc-sel        { fill: var(--accent); opacity: .09; }
     [data-cfg] .pc-floor      { stroke: var(--line2); stroke-width: .5; }

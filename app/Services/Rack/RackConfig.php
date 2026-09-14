@@ -63,8 +63,12 @@ final class RackConfig
         $depth = (int) ($input['depth'] ?? $input['depth_cm'] ?? 0);
         $levels = (int) ($input['levels'] ?? 0);
 
-        self::assertAllowed($height, $limits['heights'], 'cfg_err_height');
-        self::assertAllowed($depth, $limits['depths'], 'cfg_err_depth');
+        // Each type is sold in the sizes its own price tables cover
+        // (RackPriceBook::narrow); limits that were never narrowed apply to all.
+        $sizes = $limits['by_type'][$type] ?? $limits;
+
+        self::assertAllowed($height, $sizes['heights'], 'cfg_err_height');
+        self::assertAllowed($depth, $sizes['depths'], 'cfg_err_depth');
         self::assertAllowed($levels, $limits['levels'], 'cfg_err_levels');
 
         $deskDepth = null;
@@ -77,7 +81,7 @@ final class RackConfig
             // The desk is a plate at least as deep as the rack's own shelves,
             // chosen by the customer. Left out, it is the deepest on offer —
             // a "bigger plate" is the whole point of the model.
-            $deskDepths = self::deskDepthsFor($depth, $limits['depths']);
+            $deskDepths = self::deskDepthsFor($depth, $sizes['depths']);
             $deskDepth = (int) ($input['desk_depth'] ?? $input['desk_depth_cm'] ?? 0);
             if ($deskDepth === 0) {
                 $deskDepth = max($deskDepths);
@@ -93,7 +97,7 @@ final class RackConfig
         // Guard the loop before walking it: max length ÷ the narrowest bay is
         // the most sections that could ever be legal, and a payload claiming
         // more is not a customer, it is a fetch loop.
-        $narrowest = min($limits['widths']);
+        $narrowest = min($sizes['widths']);
         $ceiling = (int) ceil($limits['max_length_cm'] / max(1, $narrowest));
         if (count($raw) > $ceiling) {
             throw new RackException('cfg_err_too_long', [
@@ -104,7 +108,7 @@ final class RackConfig
         $segments = [];
         foreach ($raw as $width) {
             $width = (int) $width;
-            self::assertAllowed($width, $limits['widths'], 'cfg_err_width');
+            self::assertAllowed($width, $sizes['widths'], 'cfg_err_width');
             $segments[] = $width;
         }
 

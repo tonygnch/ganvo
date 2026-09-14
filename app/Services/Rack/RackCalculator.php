@@ -27,7 +27,8 @@ final class RackCalculator
         $lines = [];
 
         // Frames — one per section plus one, because uprights are shared.
-        $frame = $prices->frame($config->heightCm, $config->depthCm);
+        // Every price comes from this rack type's own tables.
+        $frame = $prices->frame($config->heightCm, $config->depthCm, $config->type);
         $lines[] = $this->line($frame, $config->frameCount());
 
         // Boards — shelves, or what the model uses in their place (wine trays,
@@ -55,8 +56,8 @@ final class RackCalculator
                 // shelf table at the depth the customer chose, and listed as
                 // the desk plate it is.
                 $part = $kind === RackPart::KIND_DESK_TOP
-                    ? $prices->shelf($realWidth, $realDeskDepth)
-                    : $prices->board($kind, $realWidth, $realDepth);
+                    ? $prices->shelf($realWidth, $realDeskDepth, $config->type)
+                    : $prices->board($kind, $realWidth, $realDepth, $config->type);
                 $lines[] = $this->line($part, $quantity, $kind);
             }
         }

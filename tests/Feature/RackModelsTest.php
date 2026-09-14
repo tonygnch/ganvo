@@ -52,14 +52,17 @@ class RackModelsTest extends TestCase
         ]);
 
         // The plain rack's price book — frames, shelves, fasteners — and no wine trays.
-        foreach ([150, 180, 210, 240, 300] as $h) {
-            foreach ([30, 40, 50, 60] as $d) {
-                RackPart::create(['tenant_id' => $this->tenant->id, 'kind' => 'frame', 'height_cm' => $h, 'depth_cm' => $d, 'price_cents' => 2355]);
+        // Prices are per rack type: the plain and office racks have their frames and shelves.
+        foreach (['single', 'office'] as $type) {
+            foreach ([150, 180, 210, 240, 300] as $h) {
+                foreach ([30, 40, 50, 60] as $d) {
+                    RackPart::create(['tenant_id' => $this->tenant->id, 'kind' => 'frame', 'rack_type' => $type, 'height_cm' => $h, 'depth_cm' => $d, 'price_cents' => 2355]);
+                }
             }
-        }
-        foreach ($this->boardSizes() as [$w, $d]) {
-            // a price that depends on the depth, so a desk priced at the wrong depth shows
-            RackPart::create(['tenant_id' => $this->tenant->id, 'kind' => 'shelf', 'width_cm' => $w, 'depth_cm' => $d, 'price_cents' => 1000 + $d * 10]);
+            foreach ($this->boardSizes() as [$w, $d]) {
+                // a price that depends on the depth, so a desk priced at the wrong depth shows
+                RackPart::create(['tenant_id' => $this->tenant->id, 'kind' => 'shelf', 'rack_type' => $type, 'width_cm' => $w, 'depth_cm' => $d, 'price_cents' => 1000 + $d * 10]);
+            }
         }
         foreach (['end_pin' => 38, 'extension_pin' => 36, 'cross_brace' => 710] as $kind => $cents) {
             RackPart::create(['tenant_id' => $this->tenant->id, 'kind' => $kind, 'price_cents' => $cents]);
@@ -84,8 +87,13 @@ class RackModelsTest extends TestCase
 
     private function priceWineTrays(): void
     {
+        foreach ([150, 180, 210, 240, 300] as $h) {
+            foreach ([30, 40, 50, 60] as $d) {
+                RackPart::create(['tenant_id' => $this->tenant->id, 'kind' => 'frame', 'rack_type' => 'wine', 'height_cm' => $h, 'depth_cm' => $d, 'price_cents' => 2355]);
+            }
+        }
         foreach ($this->boardSizes() as [$w, $d]) {
-            RackPart::create(['tenant_id' => $this->tenant->id, 'kind' => 'wine_tray', 'width_cm' => $w, 'depth_cm' => $d, 'price_cents' => 3100]);
+            RackPart::create(['tenant_id' => $this->tenant->id, 'kind' => 'wine_tray', 'rack_type' => 'wine', 'width_cm' => $w, 'depth_cm' => $d, 'price_cents' => 3100]);
         }
     }
 
@@ -194,14 +202,20 @@ class RackModelsTest extends TestCase
         $this->actingAs($owner);
 
         Livewire::test(RackConfigurator::class)
-            ->set('data.wine_tray_97_59', '31.00')
+            ->set('data.prices.wine_tray.wine.97x59', '31.00')
+            ->set('data.prices.frame.office.210x60', '30.00')
             ->set('data.model_depth_cm', 50)
+            ->set('data.heights', ['150', '180', '210', '240', '270', '300'])
             ->call('save')
             ->assertHasNoErrors();
 
-        $this->assertSame(50, Store::where('tenant_id', $this->tenant->id)->first()->rackConfigurator()['model_depth_cm']);
+        $limits = Store::where('tenant_id', $this->tenant->id)->first()->rackConfigurator();
+        $this->assertSame(50, $limits['model_depth_cm']);
+        $this->assertSame([150, 180, 210, 240, 270, 300], $limits['heights'], 'a height added on the sizes tab is offered');
 
-        $this->assertSame(3100, RackPart::where(['tenant_id' => $this->tenant->id, 'kind' => 'wine_tray', 'width_cm' => 97, 'depth_cm' => 59])->value('price_cents'));
+        $this->assertSame(3100, RackPart::where(['tenant_id' => $this->tenant->id, 'kind' => 'wine_tray', 'rack_type' => 'wine', 'width_cm' => 97, 'depth_cm' => 59])->value('price_cents'));
+        $this->assertSame(3000, RackPart::where(['tenant_id' => $this->tenant->id, 'kind' => 'frame', 'rack_type' => 'office', 'height_cm' => 210, 'depth_cm' => 60])->value('price_cents'), 'the office rack has its own frame price');
+        $this->assertSame(2355, RackPart::where(['tenant_id' => $this->tenant->id, 'kind' => 'frame', 'rack_type' => 'single', 'height_cm' => 210, 'depth_cm' => 60])->value('price_cents'), 'and the plain rack keeps its own');
         $this->assertFalse(
             RackPart::where(['tenant_id' => $this->tenant->id, 'kind' => 'wine_tray', 'width_cm' => 77, 'depth_cm' => 29])->exists(),
             'a size left blank is not sold, and no row is invented for it'

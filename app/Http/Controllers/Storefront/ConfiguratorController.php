@@ -404,35 +404,35 @@ class ConfiguratorController extends Controller
      */
     private function priceBookPayload(RackPriceBook $prices, array $limits): array
     {
+        /* Per rack type, as the merchant prices them: frames by height × depth,
+           and the type's board — shelves, or the wine rack's trays — by real
+           width × depth. The office desk needs no table of its own: it is a
+           deeper shelf, priced from the office rack's shelves. */
         $frames = [];
-        foreach ($limits['heights'] as $h) {
-            foreach ($limits['depths'] as $d) {
-                try {
-                    $frames["{$h}x{$d}"] = $prices->frame($h, $d)->price_cents;
-                } catch (RackException $e) {
-                    // Not offered; narrow() has already hidden it from the picker.
+        $boards = [];
+        foreach ($limits['by_type'] ?? [] as $type => $sizes) {
+            $frames[$type] = [];
+            $boards[$type] = [];
+            $boardKind = RackConfig::modelBoardKind($type) ?? RackPart::KIND_SHELF;
+
+            foreach ($sizes['heights'] as $h) {
+                foreach ($sizes['depths'] as $d) {
+                    if ($prices->has(RackPart::keyFor(RackPart::KIND_FRAME, $h, $d, null, $type))) {
+                        $frames[$type]["{$h}x{$d}"] = $prices->frame($h, $d, $type)->price_cents;
+                    }
                 }
             }
-        }
 
-        /* Shelves, and the wine trays that replace them, both priced by real
-           width × depth. The office desk needs no table of its own: it is a
-           deeper shelf, priced from this one. */
-        $boards = [RackPart::KIND_SHELF => [], RackPart::KIND_WINE_TRAY => []];
-        foreach ($limits['widths'] as $w) {
-            foreach ($limits['depths'] as $d) {
-                $rw = max(1, $w - $limits['shelf_width_trim_cm']);
-                $rd = max(1, $d - $limits['shelf_depth_trim_cm']);
-                foreach (array_keys($boards) as $kind) {
-                    try {
-                        $boards[$kind]["{$rw}x{$rd}"] = $prices->board($kind, $rw, $rd)->price_cents;
-                    } catch (RackException $e) {
-                        // not sold at this size; narrow() has already hidden what it cannot build
+            foreach ($sizes['widths'] as $w) {
+                foreach ($sizes['depths'] as $d) {
+                    $rw = max(1, $w - $limits['shelf_width_trim_cm']);
+                    $rd = max(1, $d - $limits['shelf_depth_trim_cm']);
+                    if ($prices->has(RackPart::keyFor($boardKind, null, $rd, $rw, $type))) {
+                        $boards[$type]["{$rw}x{$rd}"] = $prices->board($boardKind, $rw, $rd, $type)->price_cents;
                     }
                 }
             }
         }
-        $shelves = $boards[RackPart::KIND_SHELF];
 
         $flat = [];
         foreach (['end_pin', 'extension_pin', 'cross_brace'] as $kind) {
@@ -445,8 +445,7 @@ class ConfiguratorController extends Controller
 
         return [
             'frames' => $frames,
-            'shelves' => $shelves,
-            'trays' => $boards[RackPart::KIND_WINE_TRAY],
+            'boards' => $boards,
             'flat' => $flat,
         ];
     }

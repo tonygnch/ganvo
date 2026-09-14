@@ -54,7 +54,10 @@ const CM = 0.01;
    than a drawing — worth confirming with Sankevi, and harmless if slightly off. */
 const RUNG_H = 4; //         the front-to-back rails of a side frame
 const PIN_R = 0.5; //        Ø10 mm
-const PIN_REACH = 2.5; //    how far a pin stands proud of the post into a bay
+const PIN_REACH = 1.2; //    how far a pin stands proud of the post into a bay: through the splint
+const HEAD_R = 0.9; //       the pin's head, on the outside of the post
+const HEAD_T = 0.35;
+const SPLINT_T = 0.4; //     the steel splint under each board end, front to back
 const STRAP_W = 2.2; //      flat steel cross brace
 const STRAP_T = 0.3;
 const HOLE_R = 0.55;
@@ -79,6 +82,21 @@ const STAGGER = 16; //       floor room left under the bay row for the staggered
    to how the catalogue photographs the racks — high enough that the floor
    measurements are read, not glimpsed edge-on. */
 const OPENING = new Vector3(-0.42, 0.42, 1).normalize();
+
+/**
+ * Which faces of frame `f` show a pin's head, as the catalogue photographs do:
+ * -1 the face towards frame 0, +1 the face towards the last frame. The two end
+ * frames' pins go in from the outside, head on the outer face; a shared
+ * frame's pin is double-sided, both of its ends in a splint, so no head shows.
+ *
+ * @return {number[]}
+ */
+function pinHeadSides(f, frames) {
+    const sides = [];
+    if (f === 0) sides.push(-1);
+    if (f === frames - 1) sides.push(1);
+    return sides;
+}
 
 function cssVar(el, name, fallback) {
     const v = getComputedStyle(el).getPropertyValue(name).trim();
@@ -400,22 +418,40 @@ export default function mountRack3d(host) {
         const trays = kinds.filter((k) => k === 'wine_tray').length;
 
         /*
-         | Wine trays lean forward about their back edge: the back stays at the
-         | level, the front drops, and the rim along the front holds the bottles.
-         | tilt() places a point on a tray — `up` above its top surface and
-         | `fromBack` in from its back edge — once the tray has leant. The meshes
-         | are turned by the same angle (rx), so part and position agree.
+         | WINE TRAYS ARE BUILT FROM THEIR PINS.
+         |
+         | A tray leans forward: its front pins sit a whole number of holes below
+         | its back pins (m.trayDrop, chosen by the page). The steel splints'
+         | centre line runs straight through the back pin and the front pin, the
+         | tray lies on the splints, centred between the posts, and the front
+         | board with its rounded bump stands on the tray's front edge. Building
+         | it this way round is what keeps the splints on the pins — and the page
+         | uses the same arithmetic (pinBelow) to put the pins in the holes.
+         |
+         | onTray(level, s, up) is a point on a tray whose back top edge is at
+         | `level`: `s` cm along the tray from its middle (+ towards the front),
+         | `up` cm above the splints' centre line. The meshes are turned by the
+         | same angle (rx), so part and position agree.
          */
-        const tiltRad = ((m.trayTilt || 0) * Math.PI) / 180;
-        const backZ = -m.shelfDepth / 2;
-        const tilt = (top, up, fromBack) => [
-            top + up * Math.cos(tiltRad) - fromBack * Math.sin(tiltRad),
-            backZ + up * Math.sin(tiltRad) + fromBack * Math.cos(tiltRad),
-        ];
+        const splintH = m.splint || 3;
+        const trayDrop = m.trayDrop || 0;
+        const span = zFront - zBack; // back pin to front pin, horizontally
+        const tiltRad = Math.atan2(trayDrop, span);
+        const sinT = Math.sin(tiltRad);
+        const cosT = Math.cos(tiltRad);
+        const trayT = thickOf('wine_tray');
+        const trayBackPin = (level) => level - ((splintH / 2 + trayT) * cosT + (m.shelfDepth / 2) * sinT - trayDrop / 2);
+        const onTray = (level, s, up) => {
+            const midY = trayBackPin(level) - trayDrop / 2; // the splints' centre line, half way between the pins
+            return [midY - s * sinT + up * cosT, s * cosT + up * sinT];
+        };
+        const BEAD_R = 1.2; // the rounded bump along the bottom of a tray's front face
 
         const boards = instanced(unitBox, mats.board, bays * levels);
         const rims = instanced(unitBox, mats.board, bays * trays * 3);
+        const beads = instanced(unitRod, mats.board, bays * trays);
         let r = 0;
+        let b = 0;
         n = 0;
         for (let i = 0; i < bays; i++) {
             const x0 = m.pitches[i] + P / 2 + 0.1;
@@ -423,14 +459,17 @@ export default function mountRack3d(host) {
             const w = x1 - x0;
             const cx = ox + (x0 + x1) / 2;
 
-            m.shelfTops.forEach((top, j) => {
+            m.shelfTops.forEach((level, j) => {
                 const kind = kindIn(j, i);
                 const t = thickOf(kind);
+                // a plain shelf at desk height, beside a desk, sits as low as the
+                // desk's underside — so its splint is on the same pins as the desk's
+                const top = level - (kinds[j] === 'desk_top' ? thickOf('desk_top') - t : 0);
                 if (kind === 'desk_top') {
                     const reach = m.deskOverhang || 0;
                     put(boards, n, cx, top - t / 2, reach / 2, w, t, m.shelfDepth + reach);
                 } else if (kind === 'wine_tray') {
-                    const [y, z] = tilt(top, -t / 2, m.shelfDepth / 2);
+                    const [y, z] = onTray(level, 0, splintH / 2 + t / 2);
                     put(boards, n, cx, y, z, w, t, m.shelfDepth, 0, tiltRad);
                 } else {
                     put(boards, n, cx, top - t / 2, 0, w, t, m.shelfDepth);
@@ -440,38 +479,88 @@ export default function mountRack3d(host) {
 
                 if (kind === 'wine_tray') {
                     const rim = m.trayRim || 5;
-                    const [fy, fz] = tilt(top, rim / 2, m.shelfDepth - RIM_T / 2);
-                    const [sy, sz] = tilt(top, rim / 2, m.shelfDepth / 2);
+                    const onTop = splintH / 2 + t; // the tray's top surface
+                    const [fy, fz] = onTray(level, m.shelfDepth / 2 - RIM_T / 2, onTop + rim / 2);
+                    const [sy, sz] = onTray(level, 0, onTop + rim / 2);
                     put(rims, r++, cx, fy, fz, w, rim, RIM_T, 0, tiltRad); // front
                     put(rims, r++, cx - w / 2 + RIM_T / 2, sy, sz, RIM_T, rim, m.shelfDepth, 0, tiltRad); // left
                     put(rims, r++, cx + w / 2 - RIM_T / 2, sy, sz, RIM_T, rim, m.shelfDepth, 0, tiltRad); // right
+                    // the bump: a rounded lip along the bottom of the front face, standing proud of it
+                    const [by, bz] = onTray(level, m.shelfDepth / 2 + BEAD_R * 0.55, splintH / 2 + t * 0.5);
+                    put(beads, b++, cx, by, bz, BEAD_R, w, BEAD_R, Math.PI / 2);
                 }
             });
         }
         if (boards.instanceColor) boards.instanceColor.needsUpdate = true;
         group.add(boards);
-        if (trays) group.add(rims);
+        if (trays) group.add(rims, beads);
 
-        // Pins under each board end. An end frame's pin reaches into one bay;
-        // a shared frame's middle pin into both.
+        /*
+         | Under each end of every board a steel splint runs front to back, just
+         | inside the posts: that is what the pins carry, not the board itself.
+         | A pin goes through the post from the outside — its head on the post's
+         | face — and on through the splint. An end frame's pin reaches into one
+         | bay; a shared frame's pin is double-sided and reaches into both.
+         |
+         | The splint is a steel angle, an L seen end-on: an upright leg against
+         | the post, which the pin goes through, and a flat leg under the board.
+         | The pins sit mid-splint, in the drilled hole the page chose for that
+         | level (boardLevels() in the configurator view, from the same m.splint).
+         */
+        const splintW = m.splintWidth || 2.5;
+        const splints = instanced(unitBox, mats.steel, bays * levels * 4);
+        // long enough to carry both pins of a leaning tray, and still tucked under it
+        const traySplintL = Math.min(m.shelfDepth - 1, Math.hypot(span, trayDrop) + 3);
+        n = 0;
+        for (let i = 0; i < bays; i++) {
+            // [x of the upright leg, which way its flat leg runs: into the bay]
+            const ends = [
+                [m.pitches[i] + P / 2 + SPLINT_T / 2 + 0.05, 1],
+                [m.pitches[i + 1] - P / 2 - SPLINT_T / 2 - 0.05, -1],
+            ];
+            m.shelfTops.forEach((level, j) => {
+                // a desk level's splints all hang from the desk's underside
+                const t = thickOf(kinds[j]);
+                for (const [x, inward] of ends) {
+                    const flatX = x + inward * (splintW / 2 - SPLINT_T / 2);
+                    if (kinds[j] === 'wine_tray') {
+                        const [uy, uz] = onTray(level, 0, 0);
+                        const [fy, fz] = onTray(level, 0, splintH / 2 - SPLINT_T / 2);
+                        put(splints, n++, ox + x, uy, uz, SPLINT_T, splintH, traySplintL, 0, tiltRad);
+                        put(splints, n++, ox + flatX, fy, fz, splintW, SPLINT_T, traySplintL, 0, tiltRad);
+                    } else {
+                        put(splints, n++, ox + x, level - t - splintH / 2, 0, SPLINT_T, splintH, m.shelfDepth - 2);
+                        put(splints, n++, ox + flatX, level - t - SPLINT_T / 2, 0, splintW, SPLINT_T, m.shelfDepth - 2);
+                    }
+                }
+            });
+        }
+        group.add(splints);
+
         const pins = instanced(unitRod, mats.steel, frames * levels * 2);
+        const heads = instanced(unitRod, mats.steel, frames * levels * 2 * 2);
+        let h = 0;
         n = 0;
         m.pitches.forEach((x, f) => {
             const left = f > 0 ? PIN_REACH : 0;
             const right = f < frames - 1 ? PIN_REACH : 0;
             const len = P + left + right;
             const cx = x + (right - left) / 2;
-            m.shelfTops.forEach((top, j) => {
-                // under the board as thick as it really is — the desk's, if either bay at this upright has it
-                const kind = kinds[j] === 'desk_top' && (deskIn(f - 1) || deskIn(f)) ? 'desk_top' : kindIn(j, f);
-                const y = top - thickOf(kind) - PIN_R;
-                // under a leaning wine tray, each pin sits as low as the tray is at that upright
-                const lean = kinds[j] === 'wine_tray' ? Math.sin(tiltRad) : 0;
-                put(pins, n++, ox + cx, y - lean * (zFront - backZ), zFront, PIN_R, len, PIN_R, Math.PI / 2);
-                put(pins, n++, ox + cx, y - lean * (zBack - backZ), zBack, PIN_R, len, PIN_R, Math.PI / 2);
+            const sides = pinHeadSides(f, frames) || [];
+            m.shelfTops.forEach((level, j) => {
+                const tray = kinds[j] === 'wine_tray';
+                const back = tray ? trayBackPin(level) : level - thickOf(kinds[j]) - splintH / 2;
+                // a leaning tray's front pins sit trayDrop lower, a whole number of holes
+                for (const [z, py] of [[zFront, tray ? back - trayDrop : back], [zBack, back]]) {
+                    put(pins, n++, ox + cx, py, z, PIN_R, len, PIN_R, Math.PI / 2);
+                    for (const side of sides) {
+                        put(heads, h++, ox + x + side * (P / 2 + HEAD_T / 2), py, z, HEAD_R, HEAD_T, HEAD_R, Math.PI / 2);
+                    }
+                }
             });
         });
-        group.add(pins);
+        heads.count = h;
+        group.add(pins, heads);
 
         // The steel X, on the back face of every braced bay.
         const braced = m.braced.filter(Boolean).length;

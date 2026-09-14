@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Rack\RackConfig;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Which dimensions a row carries depends on its kind — a frame is height ×
  * depth, a board (shelf, wine tray) is its REAL width × depth (97 × 59, not
  * the nominal 100 × 60), and the three fastener kinds have no dimensions at all.
+ *
+ * Frames and boards belong to a rack type: the plain, office and wine racks
+ * are priced separately. Fasteners are shared and carry no type.
  */
 class RackPart extends Model
 {
@@ -25,8 +29,8 @@ class RackPart extends Model
 
     /**
      * The office rack's desk plate. NOT a row of its own: the desk is a deeper
-     * shelf, priced from the shelf table at the depth the customer chose. The
-     * kind exists so the bill of materials can say „Плот за бюро".
+     * shelf, priced from the office rack's shelf table at the depth the
+     * customer chose. The kind exists so the bill of materials can say „Плот за бюро".
      */
     public const KIND_DESK_TOP = 'desk_top';
 
@@ -36,7 +40,7 @@ class RackPart extends Model
 
     public const KIND_CROSS_BRACE = 'cross_brace';
 
-    /** The kinds that are a single row rather than a grid. */
+    /** The kinds that are a single row rather than a grid — shared by every rack type. */
     public const FLAT_KINDS = [
         self::KIND_END_PIN,
         self::KIND_EXTENSION_PIN,
@@ -54,6 +58,13 @@ class RackPart extends Model
         self::KIND_WINE_TRAY,
     ];
 
+    /** The kinds priced per rack type. */
+    public const TYPED_KINDS = [
+        self::KIND_FRAME,
+        self::KIND_SHELF,
+        self::KIND_WINE_TRAY,
+    ];
+
     public const KINDS = [
         self::KIND_FRAME,
         self::KIND_SHELF,
@@ -66,6 +77,7 @@ class RackPart extends Model
     protected $fillable = [
         'tenant_id',
         'kind',
+        'rack_type',
         'sku',
         'height_cm',
         'depth_cm',
@@ -84,6 +96,17 @@ class RackPart extends Model
         'is_active' => 'boolean',
     ];
 
+    protected static function booted(): void
+    {
+        // A frame or board always belongs to a rack type; one written without
+        // one is the type that kind naturally belongs to.
+        static::saving(function (self $part) {
+            if (in_array($part->kind, self::TYPED_KINDS, true) && blank($part->rack_type)) {
+                $part->rack_type = self::defaultTypeFor($part->kind);
+            }
+        });
+    }
+
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Tenant::class);
@@ -99,21 +122,47 @@ class RackPart extends Model
         return $query->where('is_active', true);
     }
 
+    /** The rack type a kind belongs to when none is given; null for the shared fasteners. */
+    public static function defaultTypeFor(string $kind): ?string
+    {
+        return match ($kind) {
+            self::KIND_WINE_TRAY => RackConfig::TYPE_WINE,
+            self::KIND_FRAME, self::KIND_SHELF => RackConfig::TYPE_SINGLE,
+            default => null,
+        };
+    }
+
     /**
-     * The lookup key the price book indexes on: kind plus whichever dimensions
-     * that kind actually uses. Dimensionless kinds key on the kind alone.
+     * The lookup key the price book indexes on: kind, rack type and whichever
+     * dimensions that kind actually uses. The fasteners key on the kind alone.
      */
     public function lookupKey(): string
     {
-        return self::keyFor($this->kind, $this->height_cm, $this->depth_cm, $this->width_cm);
+        return self::keyFor($this->kind, $this->height_cm, $this->depth_cm, $this->width_cm, $this->rack_type);
     }
 
-    public static function keyFor(string $kind, ?int $height = null, ?int $depth = null, ?int $width = null): string
+    public static function keyFor(string $kind, ?int $height = null, ?int $depth = null, ?int $width = null, ?string $type = null): string
     {
+        $type = $type ?: self::defaultTypeFor($kind);
+
         return match ($kind) {
-            self::KIND_FRAME => sprintf('frame:%d:%d', $height, $depth),
-            self::KIND_SHELF, self::KIND_WINE_TRAY => sprintf('%s:%d:%d', $kind, $width, $depth),
+            self::KIND_FRAME => sprintf('frame:%s:%d:%d', $type, $height, $depth),
+            self::KIND_SHELF, self::KIND_WINE_TRAY => sprintf('%s:%s:%d:%d', $kind, $type, $width, $depth),
             default => $kind,
         };
+    }
+
+    /**
+     * The catalogue number a new row is given: FRAME-210-60, SHELF-97-59,
+     * WINE-TRAY-97-59 — with the rack type in it when the row is not the
+     * kind's natural type (FRAME-OFFICE-210-60), so the three price lists can
+     * be told apart on a cutting list.
+     */
+    public static function skuFor(string $kind, ?string $type, int $a, int $b): string
+    {
+        $type = $type ?: self::defaultTypeFor($kind);
+        $typePart = $type === self::defaultTypeFor($kind) ? '' : '-'.strtoupper($type);
+
+        return sprintf('%s%s-%d-%d', strtoupper(str_replace('_', '-', $kind)), $typePart, $a, $b);
     }
 }
