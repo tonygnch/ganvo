@@ -540,7 +540,6 @@ return [
             'cfg_step_height' => 'Височина на рамката',
             'cfg_step_depth' => 'Дълбочина',
             'cfg_step_levels' => 'Брой нива',
-            'cfg_step_width' => 'Ширина на новата секция',
             'cfg_add_section' => 'Добави секция',
             'cfg_reset' => 'Започни отначало',
             'cfg_reset_confirm' => 'Да започнем ли нова конфигурация?',

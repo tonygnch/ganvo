@@ -539,7 +539,6 @@ return [
             'cfg_step_height' => 'Frame height',
             'cfg_step_depth' => 'Depth',
             'cfg_step_levels' => 'Levels',
-            'cfg_step_width' => 'Width of the new section',
             'cfg_add_section' => 'Add section',
             'cfg_reset' => 'Start again',
             'cfg_reset_confirm' => 'Start a new configuration?',

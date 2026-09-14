@@ -83,12 +83,12 @@
 
     .cfg-board { min-width: 0; }
 
-    /* --- the four choices ------------------------------------- */
-    .cfg-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    /* --- the frame: height, depth, levels ---------------------- */
+    .cfg-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     /* A column, with the select pushed to the bottom: when one label wraps to
-       two lines („Ширина на новата секция" does, at tablet widths) the grid
-       row grows, and without this that one box dropped below its neighbours.
-       Now every box sits on the same line and the labels hang above them. */
+       two lines („Височина на рамката" does, on a phone) the grid row grows,
+       and without this that one box dropped below its neighbours. Now every
+       box sits on the same line and the labels hang above them. */
     .cfg-step { display: flex; flex-direction: column; }
     .cfg-step label { display: block; font-family: var(--body); font-size: 10px; font-weight: 600;
         letter-spacing: .22em; text-transform: uppercase; color: var(--faint); margin-bottom: 7px; }
@@ -115,26 +115,54 @@
     .cfg-tools button:hover { border-color: var(--accent); color: var(--accent); }
     .cfg-tools button svg { display: block; width: 14px; height: 14px; }
 
-    /* --- section chips: the real edit affordance ---------------- */
-    .cfg-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; align-items: center; }
-    .cfg-chip { font-family: var(--body); font-size: 12px; font-weight: 600; color: var(--muted);
-        background: transparent; border: 1px solid var(--line2); padding: 8px 12px;
-        min-width: 44px; min-height: 44px; cursor: pointer; line-height: 1.15; }
-    .cfg-chip b { display: block; font-size: 10px; font-weight: 500; letter-spacing: .1em;
-        color: var(--faint); }
+    /* --- the sections: pick one, then shape it ------------------- */
+    /*
+     | Straight after the frame settings and before the drawing, so the page
+     | reads frame → sections → result. It used to sit under the canvas, which
+     | on a phone put it a full screen below the selects it belongs with.
+     | The strip scrolls sideways once a long run outgrows it, rather than
+     | wrapping into rows that push the drawing further down.
+     */
+    .cfg-bays { margin-top: 16px; border: 1px solid var(--line); background: var(--surface); }
+    .cfg-chips { position: relative; display: flex; gap: 6px; overflow-x: auto;
+        padding: 12px; scrollbar-width: thin; overscroll-behavior-x: contain; }
+    .cfg-chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; min-height: 44px;
+        padding: 0 14px; font-family: var(--display); font-weight: 500; font-size: 15px;
+        letter-spacing: .02em; color: var(--muted); background: transparent;
+        border: 1px solid var(--line2); cursor: pointer; }
+    .cfg-chip .n { align-self: flex-start; margin-top: 7px; font-family: var(--body); font-size: 10px;
+        font-weight: 600; letter-spacing: .1em; color: var(--faint); }
+    .cfg-chip .u { font-size: 11px; color: var(--faint); }
+    .cfg-chip:hover { border-color: var(--accent); }
     .cfg-chip[aria-pressed="true"] { border-color: var(--accent); color: var(--accent);
         background: color-mix(in srgb, var(--accent) 10%, transparent); }
-    .cfg-chip.braced::after { content: "✕"; margin-left: 6px; font-size: 9px; opacity: .55; }
-    .cfg-chip-add { border-style: dashed; color: var(--accent); border-color: var(--accent); }
+    .cfg-chip[aria-pressed="true"] .n, .cfg-chip[aria-pressed="true"] .u { color: inherit; }
+    .cfg-chip-add { border-style: dashed; border-color: var(--accent); color: var(--accent);
+        font-family: var(--body); font-size: 12px; font-weight: 600; letter-spacing: .06em; }
 
-    /* --- the section editor ------------------------------------ */
-    .cfg-editor { margin-top: 14px; border: 1px solid var(--line); background: var(--surface);
-        padding: 16px 18px; }
-    .cfg-editor h2 { font-family: var(--display); font-weight: 500; text-transform: uppercase;
-        letter-spacing: .08em; font-size: 15px; margin: 0 0 12px; }
-    .cfg-editor-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
-    .cfg-editor-row .cfg-step { flex: 0 1 190px; }
-    .cfg-editor .btn { min-height: 44px; }
+    .cfg-editor { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px;
+        padding: 12px; border-top: 1px solid var(--line); }
+    .cfg-editor-title { margin: 0; font-family: var(--display); font-weight: 500;
+        text-transform: uppercase; letter-spacing: .08em; font-size: 14px; }
+    /* Width as one tap, not a dropdown: there are only ever a few. */
+    .cfg-widths { display: inline-flex; border: 1px solid var(--line2); }
+    .cfg-widths button { min-width: 72px; min-height: 40px; padding: 0 12px; font-family: var(--display);
+        font-weight: 500; font-size: 14px; color: var(--muted); background: transparent;
+        border: 0; border-left: 1px solid var(--line2); cursor: pointer; }
+    .cfg-widths button:first-child { border-left: 0; }
+    .cfg-widths button .u { font-size: 10px; margin-left: 2px; }
+    /* not the selected one: its background IS the accent, and accent text on
+       it vanished the moment the pointer landed on it */
+    .cfg-widths button:hover:not(:disabled):not([aria-pressed="true"]) { color: var(--accent); }
+    .cfg-widths button[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+    .cfg-widths button:disabled { opacity: .35; cursor: not-allowed; }
+    .cfg-editor-actions { display: inline-flex; gap: 6px; margin-left: auto; }
+    .cfg-icon-btn { width: 40px; height: 40px; display: inline-grid; place-items: center;
+        color: var(--txt); background: transparent; border: 1px solid var(--line2); cursor: pointer; }
+    .cfg-icon-btn svg { display: block; width: 16px; height: 16px; }
+    .cfg-icon-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .cfg-icon-btn.danger:hover:not(:disabled) { border-color: #b4614a; color: #d08a70; }
+    .cfg-icon-btn:disabled { opacity: .35; cursor: default; }
 
     /* --- the docket -------------------------------------------- */
     .cfg-panel { position: sticky; top: calc(var(--header-height) + 14px); border: 1px solid var(--line);
@@ -189,7 +217,12 @@
         .cfg-panel { position: static; }
     }
     @media (max-width: 760px) {
-        .cfg-steps { grid-template-columns: 1fr 1fr; }
+        .cfg-steps { gap: 8px; }
+        /* the section editor stacks: name, then widths filling the row, then actions */
+        .cfg-editor-title { flex: 1 0 100%; }
+        .cfg-widths { flex: 1 1 auto; }
+        .cfg-widths button { flex: 1 1 0; min-width: 0; min-height: 44px; }
+        .cfg-icon-btn { width: 44px; height: 44px; }
         .cfg-canvas [data-cfg-svg] { height: 300px; }
         /* Over the rack on a narrow screen, and out of thumb reach. Bottom
            right instead. */
@@ -260,16 +293,41 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="cfg-step">
-                        <label for="cfgNewWidth">{{ __('site.storefront.sankevi.cfg_step_width') }}</label>
-                        <select id="cfgNewWidth" data-cfg-newwidth>
-                            @foreach ($limits['widths'] as $w)
-                                <option value="{{ $w }}" @selected($w === $limits['default_width_cm'])>{{ $w }} cm</option>
-                            @endforeach
-                        </select>
-                    </div>
                 </div>
                 <p class="cfg-note">{{ __('site.storefront.sankevi.cfg_shared_note') }}</p>
+
+                {{-- ---------- the sections ----------
+                     Pick a section in the strip (or tap it in the drawing), then
+                     set its width, move it or remove it underneath. A new section
+                     starts as a copy of the one selected — which is why there is
+                     no separate "width of the new section" select any more. --}}
+                <div class="cfg-bays">
+                    <div class="cfg-chips" data-cfg-chips role="group"
+                         aria-label="{{ __('site.storefront.sankevi.cfg_summary_sections') }}"></div>
+
+                    <div class="cfg-editor" data-cfg-editor>
+                        <h2 class="cfg-editor-title" data-cfg-editor-title></h2>
+                        <div class="cfg-widths" role="group" aria-label="{{ __('site.storefront.sankevi.cfg_edit_width') }}">
+                            @foreach ($limits['widths'] as $w)
+                                <button type="button" data-cfg-width="{{ $w }}" aria-pressed="false">{{ $w }}<span class="u">cm</span></button>
+                            @endforeach
+                        </div>
+                        <div class="cfg-editor-actions">
+                            <button type="button" class="cfg-icon-btn" data-cfg-left
+                                    aria-label="{{ __('site.storefront.sankevi.cfg_move_left') }}" title="{{ __('site.storefront.sankevi.cfg_move_left') }}">
+                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3 5 8l5 5"/></svg>
+                            </button>
+                            <button type="button" class="cfg-icon-btn" data-cfg-right
+                                    aria-label="{{ __('site.storefront.sankevi.cfg_move_right') }}" title="{{ __('site.storefront.sankevi.cfg_move_right') }}">
+                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 3 5 5-5 5"/></svg>
+                            </button>
+                            <button type="button" class="cfg-icon-btn danger" data-cfg-delete
+                                    aria-label="{{ __('site.storefront.sankevi.cfg_delete_section') }}" title="{{ __('site.storefront.sankevi.cfg_delete_section') }}">
+                                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.5h11M6 4.5V3h4v1.5M4 4.5l.7 9h6.6l.7-9M6.8 7v4.5M9.2 7v4.5"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="cfg-canvas" data-cfg-canvas>
                     <div class="cfg-tools">
@@ -361,26 +419,6 @@
                         .cfg-3d-dim.is-picked::before { margin: 0 0 4px -6px; border-left-width: 6px; border-right-width: 6px; border-bottom-width: 8px; }
                     }
                 </style>
-
-                <div class="cfg-chips" data-cfg-chips role="group"
-                     aria-label="{{ __('site.storefront.sankevi.cfg_summary_sections') }}"></div>
-
-                <div class="cfg-editor" data-cfg-editor>
-                    <h2 data-cfg-editor-title></h2>
-                    <div class="cfg-editor-row">
-                        <div class="cfg-step">
-                            <label for="cfgEditWidth">{{ __('site.storefront.sankevi.cfg_edit_width') }}</label>
-                            <select id="cfgEditWidth" data-cfg-editwidth>
-                                @foreach ($limits['widths'] as $w)
-                                    <option value="{{ $w }}">{{ $w }} cm</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <button type="button" class="btn outline cut-sm" data-cfg-left>← {{ __('site.storefront.sankevi.cfg_move_left') }}</button>
-                        <button type="button" class="btn outline cut-sm" data-cfg-right>{{ __('site.storefront.sankevi.cfg_move_right') }} →</button>
-                        <button type="button" class="btn outline cut-sm" data-cfg-delete>{{ __('site.storefront.sankevi.cfg_delete_section') }}</button>
-                    </div>
-                </div>
 
                 <div class="cfg-alert" data-cfg-alert hidden></div>
             </div>
@@ -803,6 +841,13 @@
         parts.push('<line class="pc-dim" x1="0" y1="' + (size.h + fs * 2.7) + '" x2="' + size.w + '" y2="' + (size.h + fs * 2.7) + '"/>');
         parts.push('<text class="pc-dimtext" x="' + (size.w / 2) + '" y="' + (size.h + fs * 4.2) + '" font-size="' + fs + '">' + metres(totalLength()) + '</text>');
 
+        /* Tap a bay in the drawing to select it, as its chip does. Transparent
+           targets drawn last, over everything, the bay's full height and its
+           number underneath. */
+        state.segments.forEach(function (w, i) {
+            parts.push('<rect class="pc-hit" data-cfg-pick="' + i + '" x="' + px[i] + '" y="0" width="' + (px[i + 1] - px[i]) + '" height="' + (size.h + fs * 2) + '"/>');
+        });
+
         svg.innerHTML = parts.join('');
         applyViewBox();
     }
@@ -867,10 +912,13 @@
 
     function renderChips() {
         var wrap = $('[data-cfg-chips]');
+        /* A small section number over the width. The "✕" these used to carry
+           marked a braced bay, and read as a delete button; the drawing and the
+           3D view already show where the braces are. */
         var html = state.segments.map(function (w, i) {
-            return '<button type="button" class="cfg-chip' + (isBraced(i) ? ' braced' : '') + '"' +
-                   ' aria-pressed="' + (i === state.selected) + '" data-cfg-pick="' + i + '">' +
-                   '<b>' + LABELS.section.replace(':n', i + 1) + '</b>' + w + ' cm</button>';
+            return '<button type="button" class="cfg-chip" aria-pressed="' + (i === state.selected) + '"' +
+                   ' data-cfg-pick="' + i + '" aria-label="' + esc(LABELS.section.replace(':n', i + 1)) + ' · ' + w + ' cm">' +
+                   '<span class="n">' + (i + 1) + '</span>' + w + '<span class="u">cm</span></button>';
         }).join('');
         html += '<button type="button" class="cfg-chip cfg-chip-add" data-cfg-add>+ ' +
                 @json(__('site.storefront.sankevi.cfg_add_section')) + '</button>';
@@ -895,13 +943,34 @@
             var chip = wrap.querySelector('[data-cfg-pick="' + idx + '"]') || wrap.querySelector('[data-cfg-add]');
             if (chip) { chip.focus(); }
         }
+
+        /* The strip scrolls sideways; keep the selected section in sight of it —
+           a section picked in the drawing, or just added at the end. */
+        var picked = wrap.querySelector('[aria-pressed="true"]');
+        if (picked) {
+            var left = picked.offsetLeft - 12;
+            var right = picked.offsetLeft + picked.offsetWidth + 12;
+            if (left < wrap.scrollLeft) {
+                wrap.scrollLeft = left;
+            } else if (right > wrap.scrollLeft + wrap.clientWidth) {
+                wrap.scrollLeft = right - wrap.clientWidth;
+            }
+        }
     }
 
     function renderEditor() {
-        var title = $('[data-cfg-editor-title]');
         var i = state.selected;
-        title.textContent = LABELS.section.replace(':n', i + 1) + ' · ' + state.segments[i] + ' × ' + state.depth + ' cm';
-        $('[data-cfg-editwidth]').value = state.segments[i];
+        var current = state.segments[i];
+        $('[data-cfg-editor-title]').textContent = LABELS.section.replace(':n', i + 1);
+        $$('[data-cfg-width]').forEach(function (b) {
+            var w = +b.dataset.cfgWidth;
+            b.setAttribute('aria-pressed', w === current ? 'true' : 'false');
+            /* A width that would take the run past the online limit is not
+               offered, rather than offered and then refused. */
+            var tooLong = w !== current && totalLength() - current + w > LIMITS.maxLength;
+            b.disabled = tooLong;
+            b.title = tooLong ? LABELS.overLimit : '';
+        });
         $('[data-cfg-left]').disabled   = (i === 0);
         $('[data-cfg-right]').disabled  = (i === sections() - 1);
         $('[data-cfg-delete]').disabled = (sections() === 1);
@@ -1032,20 +1101,23 @@
     $('[data-cfg-depth]').addEventListener('change',  function (e) { state.depth  = +e.target.value; clearCode(); render(); });
     $('[data-cfg-levels]').addEventListener('change', function (e) { state.levels = +e.target.value; clearCode(); render(); });
 
-    $('[data-cfg-editwidth]').addEventListener('change', function (e) {
-        var next = +e.target.value, current = state.segments[state.selected];
-        if (wouldExceed(next - current)) { e.target.value = current; return; }
-        state.segments[state.selected] = next;
-        clearCode();
-        render();
-    });
-
     root.addEventListener('click', function (e) {
         var pick = e.target.closest('[data-cfg-pick]');
         if (pick) { state.selected = +pick.dataset.cfgPick; render(); return; }
 
+        var width = e.target.closest('[data-cfg-width]');
+        if (width) {
+            var next = +width.dataset.cfgWidth, current = state.segments[state.selected];
+            if (next === current || wouldExceed(next - current)) { return; }
+            state.segments[state.selected] = next;
+            clearCode();
+            render();
+            return;
+        }
+
         if (e.target.closest('[data-cfg-add]')) {
-            var w = +$('[data-cfg-newwidth]').value;
+            /* a new section starts as a copy of the selected one */
+            var w = state.segments[state.selected];
             if (wouldExceed(w)) { return; }
             state.segments.push(w);
             state.selected = sections() - 1;
@@ -1468,6 +1540,8 @@
     [data-cfg] .pc-num.on     { fill: var(--accent); }
     [data-cfg] .pc-dim        { stroke: var(--line2); stroke-width: .3; }
     [data-cfg] .pc-dimtext    { fill: var(--muted); text-anchor: middle; font-family: var(--display); }
+    [data-cfg] .pc-hit        { fill: var(--accent); fill-opacity: 0; cursor: pointer; }
+    [data-cfg] .pc-hit:hover  { fill-opacity: .05; }
 </style>
 @endpush
 
