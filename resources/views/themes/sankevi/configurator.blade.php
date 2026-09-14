@@ -199,8 +199,9 @@
 
     .cfg-actions { margin-top: 14px; display: grid; gap: 8px; }
     .cfg-actions .btn { width: 100%; justify-content: center; min-height: 46px; }
-    .cfg-share { display: flex; gap: 8px; }
-    .cfg-share .btn { flex: 1 1 0; min-height: 42px; font-size: 11px; }
+    /* side by side in the sidebar; stacked when a narrow phone has no room */
+    .cfg-share { display: flex; flex-wrap: wrap; gap: 8px; }
+    .cfg-share .btn { flex: 1 1 140px; min-height: 42px; font-size: 11px; }
     .cfg-code { margin-top: 10px; font-size: 11px; color: var(--faint); text-align: center; }
     .cfg-code b { color: var(--accent); font-family: var(--display); letter-spacing: .12em; }
 
@@ -213,7 +214,10 @@
     .cfg-bar { display: none; }
 
     @media (max-width: 1080px) {
-        .cfg-grid { grid-template-columns: 1fr; }
+        /* minmax(0, …), not 1fr: a plain 1fr track never shrinks below its
+           widest content, and on a 360px phone the docket's buttons set that
+           width for the whole page — which came out 383px and zoomed out */
+        .cfg-grid { grid-template-columns: minmax(0, 1fr); }
         .cfg-panel { position: static; }
     }
     @media (max-width: 760px) {
@@ -234,19 +238,31 @@
         .cfg-panel { border-left: 0; border-right: 0; }
         .cfg-panel .cfg-actions .btn.primary-cta { display: none; }
 
-        .cfg-bar { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+        /* One row, not three. The till had grown to a sixth of the screen:
+           the total, over a full-width button, over a separate "see what's in
+           the set" link. Now the total sits left — tapping it does what that
+           link did — and the button right. */
+        .cfg-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px;
+            position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
             background: color-mix(in srgb, var(--surface) 96%, transparent);
             border-top: 1px solid var(--line2); backdrop-filter: blur(8px);
-            padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
-        .cfg-bar-top { display: flex; justify-content: space-between; align-items: baseline;
-            gap: 12px; margin-bottom: 8px; }
-        .cfg-bar-meta { font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
-            color: var(--faint); }
-        .cfg-bar-total { font-family: var(--display); font-weight: 500; font-size: 20px; }
-        .cfg-bar .btn { width: 100%; justify-content: center; min-height: 48px; }
-        .cfg-bar-see { display: block; width: 100%; margin-top: 8px; background: none; border: 0;
-            color: var(--muted); font-size: 12px; text-decoration: underline;
-            text-underline-offset: 3px; cursor: pointer; padding: 6px; min-height: 40px; }
+            padding: 8px 12px calc(8px + env(safe-area-inset-bottom)) 16px; }
+        .cfg-bar-sum { position: relative; display: flex; flex-direction: column; justify-content: center;
+            align-items: flex-start; gap: 3px; min-width: 0; min-height: 44px; padding: 0;
+            background: none; border: 0; color: var(--txt); text-align: left; cursor: pointer; }
+        .cfg-bar-meta { font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+            color: var(--faint); white-space: nowrap; }
+        .cfg-bar-total { display: inline-flex; align-items: center; gap: 7px; font-family: var(--display);
+            font-weight: 500; font-size: 19px; line-height: 1; white-space: nowrap; }
+        /* a small chevron: the total opens something */
+        .cfg-bar-total::after { content: ""; width: 6px; height: 6px; margin-top: 1px;
+            border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(-45deg); }
+        .cfg-bar-sum .vh { position: absolute; width: 1px; height: 1px; overflow: hidden;
+            clip: rect(0 0 0 0); white-space: nowrap; }
+        .cfg-bar .btn { justify-content: center; min-height: 44px; padding: 0 16px;
+            font-size: 11px; letter-spacing: .1em; white-space: nowrap; }
+        /* room at the end of the page, so the till never sits over the last of it */
+        .cfg-grid { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
     }
 </style>
 
@@ -463,14 +479,16 @@
         </div>
     </div>
 
-    {{-- ---------- the sticky till (phone only) ---------- --}}
+    {{-- ---------- the sticky till (phone only) ----------
+         The total doubles as the way to the parts list: tapping it scrolls
+         the docket into view, which a separate link used to do. --}}
     <div class="cfg-bar" data-cfg-bar>
-        <div class="cfg-bar-top">
+        <button type="button" class="cfg-bar-sum" data-cfg-see>
             <span class="cfg-bar-meta" data-cfg-bar-meta></span>
             <span class="cfg-bar-total" data-cfg-bar-total></span>
-        </div>
+            <span class="vh">{{ __('site.storefront.sankevi.cfg_see_set') }}</span>
+        </button>
         <button type="button" class="btn cut-sm" data-cfg-addcart>{{ __('site.storefront.sankevi.cfg_add_to_cart') }}</button>
-        <button type="button" class="cfg-bar-see" data-cfg-see>{{ __('site.storefront.sankevi.cfg_see_set') }}</button>
     </div>
 
     {{-- ---------- the sign-up window ----------

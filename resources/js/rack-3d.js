@@ -615,7 +615,8 @@ export default function mountRack3d(host) {
         controls.maxDistance = range.max;
     }
 
-    const FLIGHT_MS = 750;
+    const FLIGHT_MS = 750; // recentre: can turn half-way round the rack
+    const ZOOM_MS = 500; //   a zoom step: the same glide, a shorter trip
 
     /*
      | The flight goes AROUND the rack, not through it: the camera's offset
@@ -624,7 +625,7 @@ export default function mountRack3d(host) {
      | slides across. A straight line from a back view to the front would
      | pass through the shelves on the way.
      */
-    function startFlight(target, position, range) {
+    function startFlight(target, position, range, duration = FLIGHT_MS) {
         const from = new Spherical().setFromVector3(camera.position.clone().sub(controls.target));
         const to = new Spherical().setFromVector3(position.clone().sub(target));
 
@@ -640,7 +641,7 @@ export default function mountRack3d(host) {
         controls.minDistance = Math.min(from.radius, range.min);
         controls.maxDistance = Math.max(from.radius, range.max);
 
-        flight = { start: performance.now(), fromTarget: controls.target.clone(), toTarget: target, from, to, turn, range };
+        flight = { start: performance.now(), duration, fromTarget: controls.target.clone(), toTarget: target, from, to, turn, range };
         requestRender();
     }
 
@@ -649,7 +650,7 @@ export default function mountRack3d(host) {
     /* One step of the flight; true while there is more of it to come. */
     function fly(now) {
         const f = flight;
-        const t = Math.min(1, Math.max(0, (now - f.start) / FLIGHT_MS));
+        const t = Math.min(1, Math.max(0, (now - f.start) / f.duration));
         const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; // ease in-out
 
         along.radius = MathUtils.lerp(f.from.radius, f.to.radius, e);
@@ -703,12 +704,32 @@ export default function mountRack3d(host) {
             frame(true, true);
         },
 
+        /*
+         | − and + glide in and out the way recentre glides round. A click during
+         | a glide zooms on from where that glide was heading, not from where the
+         | camera happens to be mid-way — three quick clicks are three full
+         | steps, not three fractions of one. Instant under reduced motion.
+         */
         zoom(factor) {
-            const offset = camera.position.clone().sub(controls.target);
-            const length = MathUtils.clamp(offset.length() / factor, controls.minDistance, controls.maxDistance);
-            camera.position.copy(controls.target).addScaledVector(offset.normalize(), length);
-            controls.update();
-            requestRender();
+            const target = flight ? flight.toTarget.clone() : controls.target.clone();
+            const offset = flight ? new Vector3().setFromSpherical(flight.to) : camera.position.clone().sub(controls.target);
+            const min = flight ? flight.range.min : controls.minDistance;
+            const max = flight ? flight.range.max : controls.maxDistance;
+            const length = MathUtils.clamp(offset.length() / factor, min, max);
+            const position = target.clone().addScaledVector(offset.normalize(), length);
+            const range = { near: Math.max(0.01, length / 200), far: Math.max(camera.far, length * 20 + 10), min, max };
+
+            if (reduced) {
+                flight = null;
+                controls.target.copy(target);
+                camera.position.copy(position);
+                applyRange(range);
+                controls.update();
+                requestRender();
+                return;
+            }
+
+            startFlight(target, position, range, ZOOM_MS);
         },
 
         resize,
