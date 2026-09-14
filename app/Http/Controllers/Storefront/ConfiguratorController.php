@@ -158,7 +158,10 @@ class ConfiguratorController extends Controller
         }
 
         try {
-            $saved = $this->persist($request, $store, $limits, $customer);
+            // Save writes over the rack the page opened, when that is allowed —
+            // see persist(). Add-to-cart never does: two racks in a request stay two.
+            $editing = $request->input('editing');
+            $saved = $this->persist($request, $store, $limits, $customer, is_string($editing) ? $editing : null);
         } catch (RackException $e) {
             return response()->json(['ok' => false, 'reason' => $this->reason($e, $limits)], 422);
         }
@@ -203,8 +206,10 @@ class ConfiguratorController extends Controller
     /**
      * Validate, re-price from the DB, and store. Both save and add-to-cart go
      * through here, so neither can bank a price the calculator did not produce.
+     *
+     * @param  ?string  $editing  the code of the rack the page opened and is saving over — save only
      */
-    private function persist(Request $request, $store, array $limits, Customer $customer): RackConfiguration
+    private function persist(Request $request, $store, array $limits, Customer $customer, ?string $editing = null): RackConfiguration
     {
         $prices = RackPriceBook::forTenant($store->tenant_id);
         $config = RackConfig::fromArray((array) $request->input('config', []), $limits);
@@ -219,6 +224,46 @@ class ConfiguratorController extends Controller
             'currency' => $quote->currency,
         ];
 
+        $attributes = [
+            'type' => $config->type,
+            'desk_depth_cm' => $config->deskDepthCm,
+            'height_cm' => $config->heightCm,
+            'depth_cm' => $config->depthCm,
+            'levels' => $config->levels,
+            'segments' => $config->segments,
+            'extra_braces' => $config->extraBraces ?: null,
+            'desk_sections' => $config->deskSections ?: null,
+        ];
+
+        /*
+         | SAVING OVER A RACK YOU OPENED UPDATES IT — WHILE IT IS STILL YOURS TO CHANGE.
+         |
+         | Opening one of your racks, changing it and pressing „Запази" used to
+         | leave the old one behind and hand you a new code, so every edit added
+         | another rack to the account. Now the save writes over the one opened:
+         | same code, same link, the new shape and today's price.
+         |
+         | Only when all of these hold — otherwise it falls through to the rules
+         | below and makes a new rack, leaving the opened one exactly as it was:
+         |   - it is THIS customer's rack. A shared link opened by somebody else
+         |     is theirs to copy, never to rewrite;
+         |   - it has never been requested. Once a rack is on an order, the
+         |     merchant has to keep seeing what was asked for.
+         */
+        if ($editing !== null && $editing !== '') {
+            $opened = RackConfiguration::where('tenant_id', $store->tenant_id)
+                ->where('code', RackConfiguration::normaliseCode($editing))
+                ->where('customer_id', $customer->id)
+                ->doesntHave('orderItems')
+                ->first();
+
+            if ($opened) {
+                $opened->update($snapshot + $attributes);
+
+                return $opened;
+            }
+        }
+
         /*
          | THE SAME RACK IS THE SAME RACK — BUT ONLY FOR THE SAME PERSON.
          |
@@ -232,9 +277,9 @@ class ConfiguratorController extends Controller
          | was holding a link to. A share link was editable by whoever had it.
          |
          | So the match is scoped to this customer AND to an unchanged price,
-         | and there is no update() left in this method. A stored configuration
-         | is written once and never again: the only thing a save can do to an
-         | existing row is decline to make another one.
+         | and it never writes: the only thing it can do to an existing row is
+         | decline to make another one. The one write a save may make is the
+         | owner saving over the rack they opened, above.
          */
         $mine = RackConfiguration::reusableFor($store->tenant_id, $customer->id, $config, $snapshot);
 
@@ -242,18 +287,10 @@ class ConfiguratorController extends Controller
             return $mine;
         }
 
-        return RackConfiguration::create($snapshot + [
+        return RackConfiguration::create($snapshot + $attributes + [
             'tenant_id' => $store->tenant_id,
             'customer_id' => $customer->id,
             'owner_token' => RackConfiguration::ownerToken(),
-            'type' => $config->type,
-            'desk_depth_cm' => $config->deskDepthCm,
-            'height_cm' => $config->heightCm,
-            'depth_cm' => $config->depthCm,
-            'levels' => $config->levels,
-            'segments' => $config->segments,
-            'extra_braces' => $config->extraBraces ?: null,
-            'desk_sections' => $config->deskSections ?: null,
         ]);
     }
 

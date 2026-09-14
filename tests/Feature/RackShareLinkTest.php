@@ -254,7 +254,85 @@ class RackShareLinkTest extends TestCase
         );
     }
 
-    /** No row may ever be written twice. */
+    /* ---- saving over a rack you opened -------------------------------- */
+
+    private function saveOver(string $who, string $code, array $config)
+    {
+        return $this->asBrowser($who, '/configurator/save', ['config' => $config, 'editing' => $code]);
+    }
+
+    private function requestRack(RackConfiguration $config): void
+    {
+        $order = Order::create([
+            'tenant_id' => $this->tenant->id,
+            'order_number' => 'T-'.$config->id,
+            'status' => 'pending',
+            'currency' => 'EUR',
+            'total_cents' => $config->total_cents,
+            'customer_email' => 'buyer@example.test',
+        ]);
+        OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => null,
+            'rack_configuration_id' => $config->id,
+            'product_name' => 'Стелаж',
+            'quantity' => 1,
+            'unit_price_cents' => $config->total_cents,
+            'subtotal_cents' => $config->total_cents,
+        ]);
+    }
+
+    /** The reported bug: opening my rack, changing it and saving made another one. */
+    public function test_saving_over_my_own_rack_updates_it_in_place(): void
+    {
+        $code = $this->save('customer-a', self::RACK)->assertOk()->json('code');
+        $before = RackConfiguration::where('code', $code)->firstOrFail();
+
+        $edited = ['height' => 180, 'depth' => 40, 'levels' => 5, 'segments' => [120, 80], 'extra_braces' => [1]];
+        $this->saveOver('customer-a', $code, $edited)->assertOk()->assertJson(['code' => $code]);
+
+        $this->assertSame(1, RackConfiguration::where('tenant_id', $this->tenant->id)->count(), 'no second rack');
+        $after = $before->fresh();
+        $this->assertSame([180, 40, 5, [120, 80], [1]], [$after->height_cm, $after->depth_cm, $after->levels, $after->segmentWidths(), $after->extraBraceIndexes()]);
+        $this->assertNotSame($before->total_cents, $after->total_cents, 'and priced as it is now');
+    }
+
+    public function test_saving_over_somebody_elses_rack_makes_my_own_copy(): void
+    {
+        $code = $this->save('customer-a', self::RACK)->assertOk()->json('code');
+        $before = RackConfiguration::where('code', $code)->firstOrFail()->getAttributes();
+
+        $theirs = $this->saveOver('customer-b', $code, ['height' => 180] + self::RACK)->assertOk();
+
+        $this->assertNotSame($code, $theirs->json('code'));
+        $this->assertSame($before, RackConfiguration::where('code', $code)->firstOrFail()->getAttributes(), 'a shared link is never rewritten by whoever opened it');
+    }
+
+    public function test_a_requested_rack_is_kept_and_saving_over_it_makes_a_new_one(): void
+    {
+        $code = $this->save('customer-a', self::RACK)->assertOk()->json('code');
+        $row = RackConfiguration::where('code', $code)->firstOrFail();
+        $this->requestRack($row);
+        $before = $row->fresh()->getAttributes();
+
+        $again = $this->saveOver('customer-a', $code, ['height' => 180] + self::RACK)->assertOk();
+
+        $this->assertNotSame($code, $again->json('code'));
+        $this->assertSame($before, $row->fresh()->getAttributes(), 'the merchant still sees what was requested');
+    }
+
+    public function test_adding_to_the_request_never_writes_over_a_rack(): void
+    {
+        $code = $this->save('customer-a', self::RACK)->assertOk()->json('code');
+        $before = RackConfiguration::where('code', $code)->firstOrFail()->getAttributes();
+
+        $added = $this->asBrowser('customer-a', '/configurator/cart', ['config' => ['height' => 180] + self::RACK, 'editing' => $code])->assertOk();
+
+        $this->assertNotSame($code, $added->json('code'), 'two different racks in the request stay two racks');
+        $this->assertSame($before, RackConfiguration::where('code', $code)->firstOrFail()->getAttributes());
+    }
+
+    /** Nothing but its owner saving over it may ever write a row twice. */
     public function test_a_saved_configuration_is_never_updated(): void
     {
         $this->save('customer-a', self::RACK)->assertOk();

@@ -723,7 +723,9 @@
         /* the office desk, per section, travelling with it too */
         desks:    BOOT.config.segments.map(function (w, i) { return (BOOT.config.desk_sections || []).indexOf(i) !== -1; }),
         selected: 0,
-        code:     BOOT.savedCode || null
+        code:     BOOT.savedCode || null,
+        /* unlike code, kept through edits: which saved rack „Запази" writes over */
+        editing:  null
     };
 
     /* An office rack always has a desk: when it would have none, the selected section gets it. */
@@ -1620,6 +1622,9 @@
     /* ---------- save, share, buy ------------------------------------- */
     function showCode(code, url) {
         state.code = code;
+        /* the rack this page now stands for: saving again writes over it
+           (while it is the customer's own and not yet requested — the server decides) */
+        state.editing = code;
         $('[data-cfg-codeval]').textContent = code;
         $('[data-cfg-code]').hidden = false;
         if (url && window.history && window.history.replaceState) {
@@ -1771,7 +1776,7 @@
 
     /* ---------- save, share, buy (continued) ------------------------- */
     function saveConfig(again) {
-        return post('/configurator/save', { config: payload() }).then(function (data) {
+        return post('/configurator/save', { config: payload(), editing: state.editing }).then(function (data) {
             if (needsAccount(data, again)) { return null; }
             if (!data || !data.ok) { say((data && data.reason) || LABELS.generic); return null; }
             showCode(data.code, data.url);
