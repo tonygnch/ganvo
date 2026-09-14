@@ -386,6 +386,11 @@
                         background: color-mix(in srgb, var(--surface) 84%, transparent); }
                     .cfg-3d-dim.is-total { font-size: 13px; }
                     .cfg-3d-dim.is-picked { color: var(--accent); border-color: var(--accent); }
+                    /* a crowded row of bay widths staggers: every other one a line lower
+                       (the gap leaves room for the selected bay's arrow); and the depth
+                       lifts a line clear when it lands on a width — see declutter() */
+                    .cfg-3d-dim.is-low { margin-top: 32px; }
+                    .cfg-3d-dim.is-lifted { margin-top: -30px; }
 
                     /* The arrow for the selected bay: a caret on top of that bay's
                        width label, pointing up into the bay. (CSS2DRenderer already
@@ -432,6 +437,8 @@
                         /* the model is a third of the height here; the measurements shrink with it */
                         .cfg-3d-dim { font-size: 10.5px; padding: 2px 5px; }
                         .cfg-3d-dim.is-total { font-size: 11px; }
+                        .cfg-3d-dim.is-low { margin-top: 26px; }
+                        .cfg-3d-dim.is-lifted { margin-top: -24px; }
                         .cfg-3d-dim.is-picked::before { margin: 0 0 4px -6px; border-left-width: 6px; border-right-width: 6px; border-bottom-width: 8px; }
                     }
                 </style>

@@ -72,7 +72,8 @@ const BAYS_AT = 42; //       the bay-width row, out from the front face
 const TOP_AT = 18; //        the overall length, above the top of the uprights
 const SIDE_AT = 16; //       height and depth lines, beside the run
 const TICK = 4; //           half-length of a dimension line's end tick
-const LABEL_ROOM = 64; //    px a bay-width label needs before they collide
+const LABEL_GAP = 8; //      px between neighbouring bay-width labels
+const STAGGER = 16; //       floor room left under the bay row for the staggered widths
 
 /* Opening angle: three-quarter from the front left and a little above, close
    to how the catalogue photographs the racks — high enough that the floor
@@ -278,9 +279,12 @@ export default function mountRack3d(host) {
         ticking = true;
         const flying = flight ? fly(now) : false;
         const moving = controls.update(); // true while damping is still easing
-        declutter();
         renderer.render(scene, camera);
         labels.render(scene, camera);
+        // declutter() measures the labels as drawn, so it runs after them. If
+        // it changed any, they are placed again — and measured once more,
+        // since a label it just un-hid had no size to measure the first time.
+        for (let pass = 0; pass < 2 && declutter(); pass++) labels.render(scene, camera);
         ticking = false;
         if (moving || flying) raf = requestAnimationFrame(tick);
     }
@@ -305,6 +309,7 @@ export default function mountRack3d(host) {
 
     /* The bay-width labels and the two ends of their row, for declutter(). */
     let bayLabels = [];
+    let depthLabel = null;
     const rowStart = new Vector3();
     const rowEnd = new Vector3();
 
@@ -458,6 +463,7 @@ export default function mountRack3d(host) {
             const mid = ox + (m.pitches[i] + m.pitches[i + 1]) / 2;
             const obj = label(m.labels.bays[i], mid, FLOOR, zBays, i === sel ? 'is-picked' : '');
             obj.userData.picked = i === sel;
+            obj.userData.odd = i % 2 === 1;
             bayLabels.push(obj);
             group.add(obj);
         }
@@ -482,33 +488,86 @@ export default function mountRack3d(host) {
         line(xRight - TICK, FLOOR, D / 2, xRight + TICK, FLOOR, D / 2);
         // The label sits at the back end of its line: at the middle it met the
         // selected bay's arrow on a phone.
-        group.add(label(m.labels.depth, xRight, FLOOR, -D / 2));
+        depthLabel = label(m.labels.depth, xRight, FLOOR, -D / 2);
+        group.add(depthLabel);
 
         const dimGeometry = new BufferGeometry();
         dimGeometry.setAttribute('position', new Float32BufferAttribute(seg, 3));
         group.add(new LineSegments(dimGeometry, mats.dim));
 
         // What the camera has to fit: the rack AND its measurements.
-        bounds = { minX: xLeft - 24, maxX: xRight + 24, minZ: -D / 2 - 4, maxZ: zBays + 10, h: yTop + 12 };
+        bounds = { minX: xLeft - 24, maxX: xRight + 24, minZ: -D / 2 - 4, maxZ: zBays + STAGGER + 10, h: yTop + 12 };
         footprint = { w: xLast - xFirst + P, d: D };
 
         return group;
     }
 
     /*
-     | Bay widths on a long run, seen from far off, pile into one smudge. When
-     | the row gives each bay less room than a label needs, only the selected
-     | bay keeps its width; zoom in or turn the rack and the rest come back.
+     | Bay widths need room to be read.
+     |
+     | The first version hid every width but the selected one as soon as a
+     | bay had less than a fixed 64px on screen — which on a phone, with four
+     | ordinary bays, was always, so the widths at the bottom were simply gone.
+     | Now the room is measured against the labels as actually drawn, and a
+     | crowded row first staggers: every other width drops one line lower,
+     | which gives each label twice the room. The drop is on screen (.is-low),
+     | not further out across the floor — seen from low down, a step across
+     | the floor is a handful of pixels and the labels still collided. Only
+     | when even staggering will not fit (a long run from far off) do the
+     | others hide; the selected bay keeps its width regardless.
+     |
+     | The depth sits at the far end of the floor, and from a low angle it can
+     | land right on the last bay's width. When it does, it lifts a line clear
+     | (.is-lifted).
+     |
+     | Returns whether anything changed, so tick() can place the labels again.
      */
     const a = new Vector3();
     const b = new Vector3();
     function declutter() {
-        if (!bayLabels.length) return;
+        if (!bayLabels.length) return false;
         a.copy(rowStart).project(camera);
         b.copy(rowEnd).project(camera);
-        const px = (Math.abs(a.x - b.x) / 2) * host.clientWidth;
-        const roomy = px / bayLabels.length >= LABEL_ROOM;
-        for (const obj of bayLabels) obj.visible = roomy || obj.userData.picked;
+        const perBay = ((Math.abs(a.x - b.x) / 2) * host.clientWidth) / bayLabels.length;
+        const widest = Math.max(36, ...bayLabels.map((o) => o.element.offsetWidth));
+        const need = widest + LABEL_GAP;
+        const fits = perBay >= need;
+        const staggered = !fits && perBay * 2 >= need;
+
+        let changed = false;
+        const toggle = (el, cls, on) => {
+            if (el.classList.contains(cls) !== on) {
+                el.classList.toggle(cls, on);
+                changed = true;
+            }
+        };
+
+        for (const obj of bayLabels) {
+            const visible = fits || staggered || obj.userData.picked;
+            if (obj.visible !== visible) {
+                obj.visible = visible;
+                changed = true;
+            }
+            toggle(obj.element, 'is-low', staggered && obj.userData.odd);
+        }
+
+        if (depthLabel) {
+            const d = depthLabel.element;
+            const lifted = d.classList.contains('is-lifted');
+            d.classList.remove('is-lifted'); // measure where it would sit unlifted
+            const dr = d.getBoundingClientRect();
+            const hit = dr.width > 0 && bayLabels.some((o) => {
+                if (!o.visible) return false;
+                const r = o.element.getBoundingClientRect();
+                // the selected width's arrow hangs above its box; count it too
+                const top = o.userData.picked ? r.top - 18 : r.top;
+                return r.width > 0 && r.left < dr.right && dr.left < r.right && top < dr.bottom && dr.top < r.bottom;
+            });
+            d.classList.toggle('is-lifted', hit);
+            if (hit !== lifted) changed = true;
+        }
+
+        return changed;
     }
 
     function disposeRack() {
@@ -523,6 +582,7 @@ export default function mountRack3d(host) {
         });
         rack = null;
         bayLabels = [];
+        depthLabel = null;
     }
 
     /* The light follows the rack, so a 25 m run is lit as evenly as a single
