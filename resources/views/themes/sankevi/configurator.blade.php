@@ -100,13 +100,11 @@
         background:
             linear-gradient(180deg, color-mix(in srgb, var(--surface) 70%, transparent), var(--bg));
         overflow: hidden; }
-        /* pan-y, not none: the drag handler only ever moves the view sideways, so
-       the browser keeps vertical scrolling and pinch-zoom. `none` swallowed
-       both — on a phone the drawing is a third of the page and swiping up it
-       did nothing at all. */
-    .cfg-canvas svg { display: block; width: 100%; height: 420px; touch-action: pan-y; cursor: default; }
-    .cfg-canvas svg.pannable { cursor: grab; }
-    .cfg-canvas svg.pannable.dragging { cursor: grabbing; }
+    /* The drawing always shows the whole run: no zoom and no pan, so the page
+       scrolls over it like over any picture. Turning and zooming belong to
+       the 3D view. [data-cfg-svg], not a bare `svg` — the tool icons are svg
+       too, and would otherwise be drawn 420px tall. */
+    .cfg-canvas [data-cfg-svg] { display: block; width: 100%; height: 420px; }
 
     .cfg-tools { position: absolute; right: 10px; top: 10px; display: flex; gap: 6px; z-index: 3; }
     .cfg-tools button { font-family: var(--body); font-size: 11px; font-weight: 600;
@@ -115,9 +113,7 @@
         border: 1px solid var(--line2); padding: 7px 11px; cursor: pointer;
         backdrop-filter: blur(3px); }
     .cfg-tools button:hover { border-color: var(--accent); color: var(--accent); }
-    .cfg-scale { position: absolute; left: 12px; bottom: 10px; z-index: 3;
-        font-family: var(--body); font-size: 10px; letter-spacing: .2em;
-        text-transform: uppercase; color: var(--faint); pointer-events: none; }
+    .cfg-tools button svg { display: block; width: 14px; height: 14px; }
 
     /* --- section chips: the real edit affordance ---------------- */
     .cfg-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; align-items: center; }
@@ -194,9 +190,9 @@
     }
     @media (max-width: 760px) {
         .cfg-steps { grid-template-columns: 1fr 1fr; }
-        .cfg-canvas svg { height: 300px; }
+        .cfg-canvas [data-cfg-svg] { height: 300px; }
         /* Over the rack on a narrow screen, and out of thumb reach. Bottom
-           right instead — the scale readout keeps the other corner. */
+           right instead. */
         .cfg-tools { top: auto; bottom: 10px; }
         .cfg-head { padding: 34px 0 18px; }
 
@@ -286,25 +282,56 @@
                                 aria-label="{{ __('site.storefront.sankevi.cfg_fullscreen') }}"
                                 data-label-enter="{{ __('site.storefront.sankevi.cfg_fullscreen') }}"
                                 data-label-exit="{{ __('site.storefront.sankevi.cfg_fullscreen_exit') }}">⤢</button>
-                        <button type="button" data-cfg-zoomout aria-label="{{ __('site.storefront.sankevi.cfg_zoom_out') }}">−</button>
-                        <button type="button" data-cfg-fit>{{ __('site.storefront.sankevi.cfg_fit') }}</button>
-                        <button type="button" data-cfg-zoomin aria-label="{{ __('site.storefront.sankevi.cfg_zoom_in') }}">+</button>
+                        {{-- The camera: zoom and recentre exist in 3D only. --}}
+                        <button type="button" class="cfg-tool-cam" data-cfg-zoomout aria-label="{{ __('site.storefront.sankevi.cfg_zoom_out') }}">−</button>
+                        <button type="button" class="cfg-tool-cam" data-cfg-fit
+                                aria-label="{{ __('site.storefront.sankevi.cfg_fit') }}" title="{{ __('site.storefront.sankevi.cfg_fit') }}">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M1.5 5.5v-4h4M10.5 1.5h4v4M14.5 10.5v4h-4M5.5 14.5h-4v-4"/>
+                                <circle cx="8" cy="8" r="1.7" fill="currentColor" stroke="none"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="cfg-tool-cam" data-cfg-zoomin aria-label="{{ __('site.storefront.sankevi.cfg_zoom_in') }}">+</button>
                     </div>
                     <svg data-cfg-svg role="img" aria-label="{{ __('site.storefront.sankevi.cfg_view_label') }}"
-                         data-lenis-prevent preserveAspectRatio="xMidYMid meet"></svg>
+                         preserveAspectRatio="xMidYMid meet"></svg>
                     {{-- The 3D model of the same rack. three.js draws into this
                          the first time „3D" is pressed; see resources/js/rack-3d.js. --}}
                     <div class="cfg-3d" data-cfg-3d-host data-lenis-prevent role="img"
                          aria-label="{{ __('site.storefront.sankevi.cfg_3d_label') }}"></div>
-                    <span class="cfg-scale" data-cfg-scale></span>
                 </div>
                 <style>
                     /* 2D and 3D share the box; the class on it decides which shows. */
-                    .cfg-canvas .cfg-3d { display: none; width: 100%; height: 420px; cursor: grab; }
+                    .cfg-canvas .cfg-3d { display: none; position: relative; width: 100%; height: 420px; cursor: grab; }
+
+                    /* Measurements on the model — HTML laid over the canvas by
+                       rack-3d.js, so they are in the theme's type and colours. */
+                    .cfg-3d-dim { font-family: var(--display); font-weight: 500; font-size: 12px;
+                        letter-spacing: .06em; line-height: 1; white-space: nowrap; pointer-events: none;
+                        color: var(--txt); padding: 3px 7px; border: 1px solid var(--line2);
+                        background: color-mix(in srgb, var(--surface) 84%, transparent); }
+                    .cfg-3d-dim.is-total { font-size: 13px; }
+                    .cfg-3d-dim.is-picked { color: var(--accent); border-color: var(--accent); }
+
+                    /* The arrow for the selected bay: a caret on top of that bay's
+                       width label, pointing up into the bay. (CSS2DRenderer already
+                       positions the label absolutely, so the caret hangs off it.)
+                       A slow bob draws the eye, unless motion is reduced. */
+                    .cfg-3d-dim.is-picked::before { content: ""; position: absolute; left: 50%; bottom: 100%;
+                        width: 0; height: 0; margin: 0 0 5px -8px;
+                        border-left: 8px solid transparent; border-right: 8px solid transparent;
+                        border-bottom: 11px solid var(--accent);
+                        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35));
+                        animation: cfg-pick-bob 1.8s ease-in-out infinite; }
+                    @keyframes cfg-pick-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+                    @media (prefers-reduced-motion: reduce) { .cfg-3d-dim.is-picked::before { animation: none; } }
                     .cfg-canvas .cfg-3d:active { cursor: grabbing; }
                     .cfg-canvas.is-3d .cfg-3d { display: block; }
-                    .cfg-canvas.is-3d svg { display: none; }
-                    .cfg-canvas.is-3d .cfg-scale { display: none; }
+                    /* the drawing only — a bare `svg` here also hid the selected-bay arrow */
+                    .cfg-canvas.is-3d [data-cfg-svg] { display: none; }
+                    /* Zoom and recentre drive the 3D camera; the drawing has neither. */
+                    .cfg-canvas .cfg-tool-cam { display: none; }
+                    .cfg-canvas.is-3d .cfg-tool-cam { display: inline-block; }
 
                     .cfg-canvas .cfg-tool-full { display: none; }
                     .cfg-canvas.is-3d .cfg-tool-full { display: inline-block; }
@@ -328,6 +355,10 @@
 
                     @media (max-width: 760px) {
                         .cfg-canvas .cfg-3d { height: 300px; }
+                        /* the model is a third of the height here; the measurements shrink with it */
+                        .cfg-3d-dim { font-size: 10.5px; padding: 2px 5px; }
+                        .cfg-3d-dim.is-total { font-size: 11px; }
+                        .cfg-3d-dim.is-picked::before { margin: 0 0 4px -6px; border-left-width: 6px; border-right-width: 6px; border-bottom-width: 8px; }
                     }
                 </style>
 
@@ -549,8 +580,6 @@
         levels:   BOOT.config.levels,
         segments: BOOT.config.segments.slice(),
         selected: 0,
-        zoom:     1,
-        panX:     null,   // null = follow the fit
         code:     BOOT.savedCode || null
     };
 
@@ -778,7 +807,7 @@
         applyViewBox();
     }
 
-    /* ---------- viewBox: fit, zoom, pan ------------------------------ */
+    /* ---------- viewBox: always the whole run ------------------------ */
     function baseView() {
         var size = contentSize();
         var box = $('[data-cfg-svg]').getBoundingClientRect();
@@ -795,50 +824,13 @@
         return { w: w, h: h, size: size, padX: padX };
     }
 
+    /* The whole run, centred. baseView() is already at least as wide as the
+       run plus its padding, so there is never anything outside it to pan to. */
     function applyViewBox() {
         var base = baseView();
-        var vw = base.w / state.zoom;
-        var vh = base.h / state.zoom;
-        var maxX = base.size.w + base.padX - vw;
-        var minX = -base.padX;
-        var vx;
-
-        /*
-         | THE CLAMPED POSITION IS WRITTEN BACK.
-         |
-         | vx used to be clamped for drawing while state.panX kept whatever the
-         | drag had computed, so the pan could wander arbitrarily far outside
-         | the range that means anything — most easily at 100%, where the whole
-         | run fits, the view is centred and a drag therefore looks inert while
-         | still piling up pan. Zoom in afterwards and the view was already
-         | jammed against an edge: dragging one way did nothing at all, and it
-         | took a long haul the other way before anything moved.
-         */
-        if (maxX < minX) {
-            // The whole run fits. There is nothing to pan, so centre it and
-            // forget any pan that was accumulated.
-            vx = (base.size.w - vw) / 2;
-            state.panX = null;
-        } else {
-            var cx = (state.panX === null) ? (base.size.w / 2) : state.panX;
-            vx = Math.min(maxX, Math.max(minX, cx - vw / 2));
-            state.panX = vx + vw / 2;
-        }
-
-        var vy = -base.h * 0.085 / state.zoom;
-        var svg = $('[data-cfg-svg]');
-        svg.setAttribute('viewBox', vx + ' ' + vy + ' ' + vw + ' ' + vh);
-        // Only offer the grab cursor when there is somewhere to grab it to.
-        svg.classList.toggle('pannable', maxX >= minX);
-        $('[data-cfg-scale]').textContent = Math.round(state.zoom * 100) + '%';
-    }
-
-    function fit() { state.zoom = 1; state.panX = null; applyViewBox(); }
-    function zoomBy(f) {
-        var before = state.zoom;
-        state.zoom = Math.min(8, Math.max(1, state.zoom * f));
-        if (state.panX === null && state.zoom !== before) { state.panX = contentSize().w / 2; }
-        applyViewBox();
+        var vx = (base.size.w - base.w) / 2;
+        var vy = -base.h * 0.085;
+        $('[data-cfg-svg]').setAttribute('viewBox', vx + ' ' + vy + ' ' + base.w + ' ' + base.h);
     }
 
     /* ===================================================================
@@ -1070,9 +1062,10 @@
         }
         if (e.target.closest('[data-cfg-left]'))  { move(-1); return; }
         if (e.target.closest('[data-cfg-right]')) { move(1);  return; }
-        if (e.target.closest('[data-cfg-fit]'))     { if (is3d && view3d) { view3d.fit(); } else { fit(); } return; }
-        if (e.target.closest('[data-cfg-zoomin]'))  { if (is3d && view3d) { view3d.zoom(1.35); } else { zoomBy(1.35); } return; }
-        if (e.target.closest('[data-cfg-zoomout]')) { if (is3d && view3d) { view3d.zoom(1 / 1.35); } else { zoomBy(1 / 1.35); } return; }
+        /* the camera buttons only show in 3D (.cfg-tool-cam) */
+        if (e.target.closest('[data-cfg-fit]'))     { if (view3d) { view3d.fit(); } return; }
+        if (e.target.closest('[data-cfg-zoomin]'))  { if (view3d) { view3d.zoom(1.35); } return; }
+        if (e.target.closest('[data-cfg-zoomout]')) { if (view3d) { view3d.zoom(1 / 1.35); } return; }
         if (e.target.closest('[data-cfg-3d]'))      { toggle3d(); return; }
         if (e.target.closest('[data-cfg-full]'))    { toggleFull(); return; }
     });
@@ -1122,7 +1115,15 @@
             braced: state.segments.map(function (w, i) { return isBraced(i); }),
             braceTop: H - TOP_INSET,
             braceBottom: BOT_INSET,
-            selected: state.selected
+            selected: state.selected,
+            /* written here, in the drawing's own format, so a measurement
+               reads the same in 2D and 3D */
+            labels: {
+                height: H + ' cm',
+                depth: state.depth + ' cm',
+                total: metres(totalLength()),
+                bays: state.segments.map(function (w) { return w + ' cm'; })
+            }
         };
     }
 
@@ -1211,39 +1212,7 @@
         });
     }
 
-    /* ---------- drag + wheel to pan; the canvas owns both ------------- */
-    var svgEl = $('[data-cfg-svg]');
-    var dragging = false, dragStartX = 0, dragStartPan = 0;
-
-    svgEl.addEventListener('pointerdown', function (e) {
-        if (! svgEl.classList.contains('pannable')) { return; }
-        dragging = true;
-        dragStartX = e.clientX;
-        dragStartPan = (state.panX === null) ? contentSize().w / 2 : state.panX;
-        svgEl.classList.add('dragging');
-        svgEl.setPointerCapture(e.pointerId);
-    });
-    svgEl.addEventListener('pointermove', function (e) {
-        if (!dragging) { return; }
-        var box = svgEl.getBoundingClientRect();
-        var vw = baseView().w / state.zoom;
-        state.panX = dragStartPan - ((e.clientX - dragStartX) / box.width) * vw;
-        applyViewBox();
-    });
-    ['pointerup', 'pointercancel'].forEach(function (ev) {
-        svgEl.addEventListener(ev, function () { dragging = false; svgEl.classList.remove('dragging'); });
-    });
-    svgEl.addEventListener('wheel', function (e) {
-        /* Lenis drives the page; over the drawing the wheel belongs to us. */
-        e.preventDefault();
-        if (e.ctrlKey) { zoomBy(e.deltaY < 0 ? 1.1 : 1 / 1.1); return; }
-        var vw = baseView().w / state.zoom;
-        var box = svgEl.getBoundingClientRect();
-        var delta = (Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY);
-        state.panX = ((state.panX === null) ? contentSize().w / 2 : state.panX) + (delta / box.width) * vw;
-        applyViewBox();
-    }, { passive: false });
-
+    /* The drawing refits to its box; it has no zoom or pan of its own. */
     window.addEventListener('resize', function () { applyViewBox(); });
 
     /* ---------- save, share, buy ------------------------------------- */
@@ -1472,7 +1441,7 @@
 
     if (state.code) { showCode(state.code, null); }
     render();
-    requestAnimationFrame(fit);
+    requestAnimationFrame(applyViewBox);
 })();
 </script>
 <style>
