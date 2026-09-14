@@ -318,6 +318,13 @@
                     .cfg-canvas.is-full { position: fixed; inset: 0; z-index: 1000; margin: 0; border: 0; background: var(--bg); }
                     .cfg-canvas.is-full .cfg-3d { height: 100vh; height: 100dvh; }
                     html.cfg-lock, html.cfg-lock body { overflow: hidden; }
+                    /* The layout gives <main> z-index 1, which makes it a stacking
+                       context: the box's 1000 only counted INSIDE main, and the
+                       sticky header and the footer — both outside it — painted
+                       over the "full screen" view. When the footer rose into the
+                       viewport it looked like the rack had been sliced off along
+                       a straight line. Lift main above them while the view is open. */
+                    html.cfg-lock main { z-index: 1000; }
 
                     @media (max-width: 760px) {
                         .cfg-canvas .cfg-3d { height: 300px; }
