@@ -6,6 +6,7 @@ use App\Models\RackPart;
 use App\Models\Store;
 use App\Services\Money;
 use BackedEnum;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -92,6 +93,7 @@ class RackConfigurator extends Page implements HasForms
             'desk_height_cm' => $limits['desk_height_cm'],
             'tray_rim_cm' => $limits['tray_rim_cm'],
             'tray_tilt_deg' => $limits['tray_tilt_deg'],
+            'model_depth_cm' => $limits['model_depth_cm'],
         ];
 
         foreach ($limits['heights'] as $h) {
@@ -325,8 +327,15 @@ class RackConfigurator extends Page implements HasForms
             // read off the product photos; they are the merchant's to correct.
             Section::make(__('admin.configurator.section.models'))
                 ->description(__('admin.configurator.section_help.models'))
-                ->columns(3)
+                ->columns(2)
                 ->schema([
+                    Select::make('model_depth_cm')
+                        ->label(__('admin.configurator.field.model_depth'))
+                        ->helperText(__('admin.configurator.help.model_depth'))
+                        ->options(fn () => collect($this->getStore()->rackConfigurator()['depths'])->mapWithKeys(fn (int $d) => [$d => $d.' cm'])->all())
+                        ->required()
+                        ->native(false)
+                        ->selectablePlaceholder(false),
                     TextInput::make('desk_height_cm')
                         ->label(__('admin.configurator.field.desk_height'))
                         ->helperText(__('admin.configurator.help.desk_height'))
@@ -376,6 +385,7 @@ class RackConfigurator extends Page implements HasForms
         unset($settings['desk_overhang_cm']); // no longer a setting: the customer's plate decides
         $settings['tray_rim_cm'] = (int) ($state['tray_rim_cm'] ?? 5);
         $settings['tray_tilt_deg'] = (int) ($state['tray_tilt_deg'] ?? 15);
+        $settings['model_depth_cm'] = (int) ($state['model_depth_cm'] ?? 40);
         $store->update(['rack_configurator' => $settings]);
 
         /*

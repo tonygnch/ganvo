@@ -909,6 +909,9 @@ class Store extends Model
             // stays at the level, the front drops. Degrees; 15 is a guess — the
             // product photos are shot square-on and do not show the angle.
             'tray_tilt_deg' => max(0, min(45, (int) ($stored['tray_tilt_deg'] ?? 15))),
+            // The depth the office and wine racks open on when the customer
+            // picks one of them — shallower than the plain rack's default.
+            'model_depth_cm' => $this->pick($stored['model_depth_cm'] ?? null, $depths, 40),
         ];
     }
 

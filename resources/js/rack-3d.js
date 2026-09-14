@@ -666,6 +666,12 @@ export default function mountRack3d(host) {
         floor.material.needsUpdate = true;
     }
 
+    /* The opening view (and „Центрирай") sits a little closer than the
+       distance that fits everything: the rack reads larger, and the
+       measurements still clear the edges. Less so in a phone-sized box,
+       where the camera buttons sit along the bottom under the bay widths. */
+    const openingZoom = () => (host.clientWidth < 600 ? 0.92 : 0.85);
+
     /* The distance at which the rack and its measurements fit the box. */
     function distanceToFit() {
         const vfov = MathUtils.degToRad(camera.fov);
@@ -690,7 +696,7 @@ export default function mountRack3d(host) {
     function frame(reset, glide = false) {
         const offset = camera.position.clone().sub(controls.target);
         const keep = !reset && framed && offset.lengthSq() > 0;
-        const zoom = keep ? offset.length() / fitDistance : 1;
+        const zoom = keep ? offset.length() / fitDistance : openingZoom();
         const direction = keep ? offset.normalize() : OPENING.clone();
 
         fitDistance = distanceToFit();

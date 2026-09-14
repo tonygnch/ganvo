@@ -111,6 +111,7 @@ class RackModelsTest extends TestCase
         $page = $this->get($this->host.'/configurator');
         $this->assertSame(['single', 'office'], $this->boot($page)['limits']['types']);
         $page->assertSee('data-cfg-type="office"', false)->assertDontSee('data-cfg-type="wine"', false);
+        $this->assertSame(40, $this->boot($page)['limits']['modelDepth'], 'the office and wine racks open 40 cm deep');
 
         $this->priceWineTrays();
         $page = $this->get($this->host.'/configurator');
@@ -194,8 +195,11 @@ class RackModelsTest extends TestCase
 
         Livewire::test(RackConfigurator::class)
             ->set('data.wine_tray_97_59', '31.00')
+            ->set('data.model_depth_cm', 50)
             ->call('save')
             ->assertHasNoErrors();
+
+        $this->assertSame(50, Store::where('tenant_id', $this->tenant->id)->first()->rackConfigurator()['model_depth_cm']);
 
         $this->assertSame(3100, RackPart::where(['tenant_id' => $this->tenant->id, 'kind' => 'wine_tray', 'width_cm' => 97, 'depth_cm' => 59])->value('price_cents'));
         $this->assertFalse(

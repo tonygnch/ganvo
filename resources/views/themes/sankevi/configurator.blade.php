@@ -29,6 +29,7 @@
             'deskHeight' => $limits['desk_height_cm'],
             'trayRim' => $limits['tray_rim_cm'],
             'trayTilt' => $limits['tray_tilt_deg'],
+            'modelDepth' => $limits['model_depth_cm'],
         ],
         'prices' => $priceBook,
         'config' => $config->toArray(),
@@ -1376,6 +1377,13 @@
         if (model) {
             if (model.dataset.cfgType !== state.type) {
                 state.type = model.dataset.cfgType;
+                /* the office and wine racks open on their own depth, when it can be built at this height */
+                var modelDepth = LIMITS.modelDepth;
+                if (state.type !== 'single' && modelDepth && LIMITS.depths.indexOf(modelDepth) !== -1 &&
+                    typeof PRICES.frames[state.height + 'x' + modelDepth] === 'number') {
+                    state.depth = modelDepth;
+                    $('[data-cfg-depth]').value = String(modelDepth);
+                }
                 ensureDesk();
                 clearCode();
                 render();
@@ -1531,13 +1539,14 @@
         }
     }
 
-    function toggle3d() {
+    /* quiet: opened by the page rather than the button — a failure falls back to the drawing without a message */
+    function toggle3d(quiet) {
         if (is3d) { show3d(false); return; }
         if (view3d) { show3d(true); return; }
         if (loading3d) { return; }
 
         var load = window.gv && window.gv.rack3d;
-        if (!load) { say(LABELS.generic); return; }
+        if (!load) { if (!quiet) { say(LABELS.generic); } return; }
 
         loading3d = true;
         btn3d.classList.add('is-loading');
@@ -1552,7 +1561,7 @@
                back to the drawing, and stop offering what cannot work */
             show3d(false);
             btn3d.hidden = true;
-            say(LABELS.generic);
+            if (!quiet) { say(LABELS.generic); }
         }).then(function () {
             loading3d = false;
             btn3d.classList.remove('is-loading');
@@ -1835,6 +1844,15 @@
     if (state.code) { showCode(state.code, null); }
     render();
     requestAnimationFrame(applyViewBox);
+
+    /* 3D is the opening view wherever WebGL works. storefront.js — which
+       holds the loader — is a module and runs after this script, so wait for
+       it; the drawing stays as the fallback, and silently. */
+    if (canWebGL()) {
+        var open3d = function () { if (!is3d && window.gv && window.gv.rack3d) { toggle3d(true); } };
+        if (window.gv && window.gv.rack3d) { open3d(); }
+        else { document.addEventListener('DOMContentLoaded', open3d, { once: true }); }
+    }
 })();
 </script>
 <style>

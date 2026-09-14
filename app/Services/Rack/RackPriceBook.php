@@ -187,6 +187,8 @@ final class RackPriceBook
             'default_depth_cm' => $defD,
             'default_width_cm' => $widthDefault,
             'default_type' => $typeDefault,
+            // a depth that is no longer sold falls back to the rack's own default
+            'model_depth_cm' => in_array($limits['model_depth_cm'] ?? null, $depths, true) ? $limits['model_depth_cm'] : $defD,
         ]);
     }
 
