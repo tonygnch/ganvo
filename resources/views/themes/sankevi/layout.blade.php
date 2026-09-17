@@ -1189,10 +1189,11 @@
                         @if ($csAboutOn)<a href="/about">{{ __('site.storefront.footer.about') }}</a>@endif
                         @if ($csContactOn)<a href="/contact">{{ __('site.storefront.footer.contact') }}</a>@endif
                     @endif
-                    {{-- Outside both branches on purpose: the configurator is a
-                         way to buy, not a page of the site, and a merchant who
-                         builds their own menu must not lose it by omission. --}}
-                    @if ($csRackOn)<a href="/configurator">{{ __('site.storefront.sankevi.cfg_nav') }}</a>@endif
+                    {{-- No configurator link here. The way in is the band on the
+                         home page and the tab on the rack categories, which show
+                         the rack itself; in the header it was a word competing
+                         with the sections of the site. The phone menu keeps its
+                         entry — that drawer is the only nav a phone has. --}}
                 </div>
                 <div class="right">
                     @include('storefront.partials.mode-toggle')
