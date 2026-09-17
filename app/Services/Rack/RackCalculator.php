@@ -71,11 +71,19 @@ final class RackCalculator
 
         $lines[] = $this->line($prices->flat(RackPart::KIND_CROSS_BRACE), $config->crossBraceCount());
 
-        $subtotal = array_sum(array_column($lines, 'subtotal_cents'));
+        /*
+         | THE PRICE BOOK IS VAT-INCLUSIVE.
+         |
+         | The merchant types what the customer pays for a part, VAT and all. So
+         | the lines add up to the total, and the VAT is the share of it the rate
+         | accounts for (20/120 at 20%) — worked out once, on the total, not per
+         | line, which would drift by a cent a row against the figure shown. What
+         | is left is the price without VAT.
+         */
+        $total = array_sum(array_column($lines, 'subtotal_cents'));
         $vatRateBp = max(0, (int) ($limits['vat_rate_bp'] ?? 0));
-        // Once, on the subtotal — not per line, which would drift by a cent
-        // per row against the figure the customer was shown.
-        $vat = (int) round($subtotal * $vatRateBp / 10000);
+        $vat = (int) round($total * $vatRateBp / (10000 + $vatRateBp));
+        $subtotal = $total - $vat;
 
         return new RackQuote(
             config: $config,
@@ -83,7 +91,7 @@ final class RackCalculator
             subtotalCents: $subtotal,
             vatRateBp: $vatRateBp,
             vatCents: $vat,
-            totalCents: $subtotal + $vat,
+            totalCents: $total,
             currency: $currency,
         );
     }

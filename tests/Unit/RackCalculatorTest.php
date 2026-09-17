@@ -104,9 +104,10 @@ class RackCalculatorTest extends TestCase
     {
         $quote = $this->quote(RackConfig::of(210, 60, 4, [100, 100, 100, 100, 100]));
 
-        $this->assertSame(65420, $quote->subtotalCents, 'subtotal ex-VAT');
-        $this->assertSame(13084, $quote->vatCents, 'VAT at 20%');
-        $this->assertSame(78504, $quote->totalCents, 'total incl VAT');
+        // the price book is VAT-inclusive: the parts add up to the total, 20/120 of which is VAT
+        $this->assertSame(65420, $quote->totalCents, 'the parts, at the prices the customer pays');
+        $this->assertSame(10903, $quote->vatCents, 'the VAT in it, at 20%');
+        $this->assertSame(54517, $quote->subtotalCents, 'what is left without VAT');
     }
 
     /** A single bay: two frames, no extension pins, one brace. */
@@ -196,8 +197,8 @@ class RackCalculatorTest extends TestCase
         );
         $this->assertSame(
             array_sum(array_column($quote->lines, 'subtotal_cents')),
-            $quote->subtotalCents,
-            'subtotal must be exactly the sum of the lines'
+            $quote->totalCents,
+            'the prices include VAT, so the total is exactly the sum of the lines'
         );
     }
 

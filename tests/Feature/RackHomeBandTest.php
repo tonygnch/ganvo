@@ -63,9 +63,8 @@ class RackHomeBandTest extends TestCase
     public function test_the_home_page_leads_to_the_configurator_with_the_real_price_of_the_default_rack(): void
     {
         // The default rack: 210 × 60, one 100 cm section, four levels —
-        // 2 frames, 4 shelves, 16 end pins and a brace, plus 20% VAT.
-        $net = 2 * 2355 + 4 * 2370 + 16 * 38 + 710;
-        $total = $net + (int) round($net * 0.2);
+        // 2 frames, 4 shelves, 16 end pins and a brace, at prices that include VAT.
+        $total = 2 * 2355 + 4 * 2370 + 16 * 38 + 710;
 
         $this->get($this->host.'/')
             ->assertOk()

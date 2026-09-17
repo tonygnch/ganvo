@@ -107,9 +107,9 @@ class RackCheckoutTest extends TestCase
         $this->assertSame(1, $row['quantity']);
         $this->assertNotNull($row['rack']);
         $this->assertNull($row['product']->id, 'the carrier product is not persisted');
-        // 654.20 ex-VAT + 20% = 785.04 incl, which is what the basket charges.
-        $this->assertSame(78504, $row['unit_price_cents']);
-        $this->assertSame(78504, $cart->subtotalCents());
+        // 654.20 — the parts at their VAT-inclusive prices, which is what the basket charges.
+        $this->assertSame(65420, $row['unit_price_cents']);
+        $this->assertSame(65420, $cart->subtotalCents());
         $this->assertSame(1, $cart->itemCount());
     }
 
@@ -118,7 +118,7 @@ class RackCheckoutTest extends TestCase
         $saved = $this->saveRack();
         $cart = new Cart($this->tenant);
         $cart->addRack($saved->code);
-        $this->assertSame(78504, $cart->subtotalCents());
+        $this->assertSame(65420, $cart->subtotalCents());
 
         // The merchant puts the frame up; the basket must not keep quoting
         // yesterday's figure just because the configuration was saved then.
@@ -127,7 +127,7 @@ class RackCheckoutTest extends TestCase
             ->update(['price_cents' => 2520]);
 
         $fresh = new Cart($this->tenant);
-        $this->assertSame(79692, $fresh->subtotalCents(), '6 frames × €1.65 more, plus VAT');
+        $this->assertSame(66410, $fresh->subtotalCents(), '6 frames × €1.65 more — prices include VAT');
     }
 
     public function test_a_rack_whose_part_is_retired_leaves_the_basket(): void
@@ -156,7 +156,7 @@ class RackCheckoutTest extends TestCase
 
         $this->assertCount(1, $cart->items());
         $this->assertSame(2, $cart->itemCount());
-        $this->assertSame(157008, $cart->subtotalCents());
+        $this->assertSame(130840, $cart->subtotalCents());
     }
 
     public function test_two_different_racks_are_two_lines(): void
@@ -180,7 +180,7 @@ class RackCheckoutTest extends TestCase
             'order_number' => 'TEST-1',
             'customer_email' => 'x@example.test',
             'customer_name' => 'Test',
-            'total_cents' => 78504,
+            'total_cents' => 65420,
             'currency' => 'EUR',
             'status' => 'pending',
             'order_flow' => Store::FLOW_ENQUIRY,
@@ -231,7 +231,7 @@ class RackCheckoutTest extends TestCase
         // ONE money line on the order, so the confirmation and the mail still
         // add up: the parts hang off it and must not be summed again.
         $this->assertCount(1, $order->fresh()->items);
-        $this->assertSame(78504, (int) $order->fresh()->items->sum('subtotal_cents'));
+        $this->assertSame(65420, (int) $order->fresh()->items->sum('subtotal_cents'));
     }
 
     public function test_the_frozen_bom_survives_a_later_price_rise(): void
@@ -268,7 +268,7 @@ class RackCheckoutTest extends TestCase
         $frozen = $item->fresh()->rackItems->keyBy('kind');
         $this->assertSame(2355, $frozen['frame']->unit_price_cents, 'the order keeps the price it was placed at');
         $this->assertSame(6, $frozen['frame']->quantity, 'and the parts it was placed for');
-        $this->assertSame(78504, (int) $item->fresh()->subtotal_cents);
+        $this->assertSame(65420, (int) $item->fresh()->subtotal_cents);
     }
 
     /**
@@ -448,9 +448,9 @@ class RackCheckoutTest extends TestCase
         $this->assertNull($item->product_id);
         $this->assertSame($saved->id, $item->rack_configuration_id);
         $this->assertSame(2, $item->quantity);
-        $this->assertSame(78504, $item->unit_price_cents);
-        $this->assertSame(157008, $item->subtotal_cents);
-        $this->assertSame(157008, (int) $order->items->sum('subtotal_cents'));
+        $this->assertSame(65420, $item->unit_price_cents);
+        $this->assertSame(130840, $item->subtotal_cents);
+        $this->assertSame(130840, (int) $order->items->sum('subtotal_cents'));
 
         // Two racks means twice the parts — six uprights each, twelve in all.
         $bom = $item->rackItems->keyBy('kind');
@@ -471,12 +471,12 @@ class RackCheckoutTest extends TestCase
         $order = Order::create([
             'tenant_id' => $this->tenant->id, 'order_number' => 'TEST-3',
             'customer_email' => 'x@example.test', 'customer_name' => 'T',
-            'total_cents' => 78504, 'currency' => 'EUR', 'status' => 'pending',
+            'total_cents' => 65420, 'currency' => 'EUR', 'status' => 'pending',
         ]);
         $item = OrderItem::create([
             'order_id' => $order->id, 'rack_configuration_id' => $saved->id,
-            'product_name' => 'Rack', 'unit_price_cents' => 78504,
-            'quantity' => 1, 'subtotal_cents' => 78504,
+            'product_name' => 'Rack', 'unit_price_cents' => 65420,
+            'quantity' => 1, 'subtotal_cents' => 65420,
         ]);
         $item->rackItems()->create([
             'kind' => 'frame', 'label' => 'Frame 210×60 cm', 'sku' => 'FRAME-210-60',
@@ -488,6 +488,6 @@ class RackCheckoutTest extends TestCase
         $item->refresh();
         $this->assertNull($item->rack_configuration_id);
         $this->assertCount(1, $item->rackItems, 'the frozen parts list outlives the configuration');
-        $this->assertSame(78504, (int) $item->subtotal_cents);
+        $this->assertSame(65420, (int) $item->subtotal_cents);
     }
 }

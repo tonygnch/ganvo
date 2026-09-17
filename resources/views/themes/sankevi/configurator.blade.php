@@ -936,9 +936,11 @@
             r.subtotal = r.unit * r.qty;
         });
 
-        var sub = rows.reduce(function (a, r) { return a + r.subtotal; }, 0);
-        var vat = Math.round(sub * LIMITS.vatRateBp / 10000);
-        return { rows: rows, subtotal: sub, vat: vat, total: sub + vat, priced: priced };
+        /* the prices include VAT: the lines add up to the total, and the VAT is
+           the share of it the rate accounts for — RackCalculator does the same */
+        var total = rows.reduce(function (a, r) { return a + r.subtotal; }, 0);
+        var vat = Math.round(total * LIMITS.vatRateBp / (10000 + LIMITS.vatRateBp));
+        return { rows: rows, subtotal: total - vat, vat: vat, total: total, priced: priced };
     }
 
     /* ---------- money ------------------------------------------------ */
