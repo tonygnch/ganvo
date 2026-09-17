@@ -414,10 +414,10 @@
         .rackband .steps h3 { font-family: var(--display); font-weight: 500; font-size: clamp(17px, 1.4vw, 21px); line-height: 1.2; letter-spacing: 0; }
         .rackband .steps p { color: var(--muted); font-size: 14.5px; line-height: 1.6; }
         .rackband .go { margin-top: 30px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; }
-        .rackband .example { color: var(--muted); font-size: 13.5px; line-height: 1.5; max-width: 40ch; }
-        .rackband .example b { color: var(--txt); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
         .rackband .plate { position: relative; background: var(--surface); border: 1px solid var(--line); padding: clamp(22px, 3vw, 40px) clamp(22px, 3vw, 40px) clamp(18px, 2.4vw, 30px); }
         .rackband .plate svg { display: block; width: 100%; height: auto; }
+        /* the photograph in the same frame the drawing had, cropped rather than letterboxed */
+        .rackband .plate img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
         .rackband .plate .tag { display: block; margin-top: 14px; font-size: 10.5px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--faint); }
         .rackband .rb-post, .rackband .rb-shelf { fill: var(--surface2); stroke: var(--txt); stroke-width: 1.1; }
         .rackband .rb-shelf.is-sel { fill: var(--accent); stroke: var(--accent-deep); }
@@ -945,37 +945,17 @@
 
              Only while the configurator can actually be used — switched on for
              this shop AND able to price a rack (otherwise /configurator answers
-             404, and a band pointing at it would be a dead end). The example
-             price is a real quote: the shop's default rack at today's prices,
-             the same figure the configurator opens on. If that one rack cannot
-             be priced, the band stays and only the example goes. --}}
+             404, and a band pointing at it would be a dead end). No price is
+             quoted here: the merchant asked for the band without one, and a
+             figure on the landing page is a figure to keep true. --}}
         @php
             $rackLimits = $store->rackConfigurator();
             $rackBand = $rackLimits['enabled'] && $theme->on('rack_band');
-            $rackExample = null;
             if ($rackBand) {
+                // Nothing this shop can price means /configurator answers 404,
+                // and a band pointing at it would be a dead end.
                 $rackBook = \App\Services\Rack\RackPriceBook::forTenant($store->tenant_id);
-                $rackNarrow = $rackBook->narrow($rackLimits);
-                if (! \App\Services\Rack\RackPriceBook::canBuildAnything($rackNarrow)) {
-                    $rackBand = false;
-                } else {
-                    try {
-                        $rackCfg = \App\Services\Rack\RackConfig::of(
-                            $rackNarrow['default_height_cm'],
-                            $rackNarrow['default_depth_cm'],
-                            $rackNarrow['default_levels'],
-                            [$rackNarrow['default_width_cm']],
-                            $rackNarrow['default_type'],
-                        );
-                        $rackQuote = (new \App\Services\Rack\RackCalculator)->quote($rackCfg, $rackBook, $rackNarrow, $store->currency ?? 'EUR');
-                        $rackExample = __('site.storefront.sankevi.rack_band_example', [
-                            'rack' => e(\App\Services\Rack\RackPresenter::rackName($rackCfg)),
-                            'price' => '<b>'.e(\App\Services\Money::display($rackQuote->totalCents, $displayRate ?? 1.0, $displayCurrency ?? $store->currency)).'</b>',
-                        ]);
-                    } catch (\App\Services\Rack\RackException $e) {
-                        $rackExample = null;
-                    }
-                }
+                $rackBand = \App\Services\Rack\RackPriceBook::canBuildAnything($rackBook->narrow($rackLimits));
             }
 
             // Built first, like the capabilities, so the numbers count the steps that survive.
@@ -1019,13 +999,17 @@
 
                         <div class="go">
                             <a class="btn" href="/configurator">{!! $theme->editable('rack_band_cta') !!}</a>
-                            @if ($rackExample)
-                                <span class="example">{!! $rackExample !!}</span>
-                            @endif
                         </div>
                     </div>
 
                     <a class="plate" href="/configurator" tabindex="-1" aria-hidden="true" data-gv-reveal data-gv-delay="0.1">
+                        {{-- The merchant's photograph of a rack when they have one (theirs to
+                             change under Персонализирай темата → Images), and the line drawing
+                             below when the slot is cleared. Decorative either way: this whole
+                             plate is a second copy of the button beside it. --}}
+                        @if ($rackPhoto = $theme->image('rack_band_image'))
+                            <img src="{{ $rackPhoto }}" alt="" loading="lazy" decoding="async">
+                        @else
                         <svg viewBox="0 0 442 340" role="presentation">
                             {{-- the steel X on sections 1 and 3, behind everything --}}
                             @foreach ([0, 2] as $bay)
@@ -1055,6 +1039,7 @@
                                 <line class="rb-dim" x1="{{ $tx }}" y1="327" x2="{{ $tx }}" y2="338"/>
                             @endforeach
                         </svg>
+                        @endif
                         <span class="tag">{{ __('site.storefront.sankevi.rack_band_tag') }}</span>
                     </a>
                 </div>

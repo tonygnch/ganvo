@@ -423,7 +423,6 @@ return [
             'rack_band_3_h' => 'See the price and ask for it',
             'rack_band_3_p' => 'The price and the parts list are worked out as you go. Save the rack or add it to your request.',
             'rack_band_cta' => 'Open the configurator',
-            'rack_band_example' => 'For example :rack — :price incl. VAT',
             'rack_band_tag' => '2D drawing and 3D model',
             'cfg_category_cta' => 'Build a rack in the configurator',
 

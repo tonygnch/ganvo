@@ -2,12 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Filament\StoreAdmin\Pages\CustomizeTheme;
 use App\Models\RackPart;
 use App\Models\Store;
 use App\Models\Tenant;
-use App\Services\Money;
+use App\Models\User;
 use App\Themes\ThemeCustomizer;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
@@ -23,6 +26,8 @@ class RackHomeBandTest extends TestCase
 
     private Store $store;
 
+    private Tenant $tenant;
+
     private string $host;
 
     protected function setUp(): void
@@ -32,7 +37,7 @@ class RackHomeBandTest extends TestCase
         // each test's store gets the same id, and the theme settings are cached per store id
         ThemeCustomizer::flush();
 
-        $tenant = Tenant::create(['name' => 'Sankevi Test', 'slug' => 'sankevi-test', 'status' => Tenant::STATUS_ACTIVE]);
+        $tenant = $this->tenant = Tenant::create(['name' => 'Sankevi Test', 'slug' => 'sankevi-test', 'status' => Tenant::STATUS_ACTIVE]);
         $this->store = Store::create([
             'tenant_id' => $tenant->id,
             'theme' => 'sankevi',
@@ -60,17 +65,25 @@ class RackHomeBandTest extends TestCase
         $this->host = 'http://sankevi-test.'.config('ganvo.central_domain');
     }
 
-    public function test_the_home_page_leads_to_the_configurator_with_the_real_price_of_the_default_rack(): void
+    public function test_the_home_page_leads_to_the_configurator(): void
     {
-        // The default rack: 210 × 60, one 100 cm section, four levels —
-        // 2 frames, 4 shelves, 16 end pins and a brace, at prices that include VAT.
-        $total = 2 * 2355 + 4 * 2370 + 16 * 38 + 710;
-
         $this->get($this->host.'/')
             ->assertOk()
             ->assertSee('class="rackband"', false)
             ->assertSee(__('site.storefront.sankevi.rack_band_cta'))
-            ->assertSee(Money::display($total, 1.0, 'EUR'));
+            ->assertSee('href="/configurator"', false)
+            // the photograph the theme ships with, until the merchant uploads their own
+            ->assertSee('/images/demo/sankevi/racks.webp', false);
+    }
+
+    public function test_the_merchant_can_put_their_own_photograph_in_the_band(): void
+    {
+        $this->store->update(['theme_settings' => ['themes' => ['sankevi' => ['images' => ['rack_band_image' => 'theme-images/racks-of-ours.webp']]]]]);
+
+        $this->get($this->host.'/')
+            ->assertOk()
+            ->assertSee('theme-images/racks-of-ours.webp', false)
+            ->assertDontSee('/images/demo/sankevi/racks.webp', false);
     }
 
     public function test_there_is_no_band_while_the_configurator_is_switched_off(): void
@@ -92,5 +105,47 @@ class RackHomeBandTest extends TestCase
         $this->store->update(['theme_settings' => ['themes' => ['sankevi' => ['sections' => ['rack_band' => false]]]]]);
 
         $this->get($this->host.'/')->assertOk()->assertDontSee('class="rackband"', false);
+    }
+
+    /**
+     * And every part of it is the merchant's: the band's own switch, its
+     * words and its photograph are fields on „Персонализирай темата“, and what
+     * they save there is what the landing page shows.
+     */
+    public function test_the_band_is_editable_from_the_admin(): void
+    {
+        $owner = User::create([
+            'tenant_id' => $this->tenant->id,
+            'name' => 'Owner',
+            'email' => 'owner@sankevi-test.test',
+            'password' => bcrypt(str()->random(32)),
+        ]);
+        Filament::setCurrentPanel('store');
+        $this->actingAs($owner);
+
+        Livewire::test(CustomizeTheme::class, ['themeSlug' => 'sankevi'])
+            ->assertFormFieldExists('section_rack_band')
+            ->assertFormFieldExists('content_rack_band_h2_html')
+            ->assertFormFieldExists('content_rack_band_lead')
+            ->assertFormFieldExists('content_rack_band_1_h')
+            ->assertFormFieldExists('content_rack_band_cta')
+            ->assertFormFieldExists('image_rack_band_image')
+            ->set('data.content_rack_band_h2_html', 'Сглоби <em>рафтовете си</em>')
+            ->set('data.content_rack_band_cta', 'Към конфигуратора')
+            ->set('data.image_rack_band_image', ['theme-images/our-racks.webp'])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $saved = $this->store->fresh()->theme_settings;
+        $this->assertSame('Сглоби <em>рафтовете си</em>', data_get($saved, 'themes.sankevi.content.rack_band_h2_html'));
+        $this->assertSame('Към конфигуратора', data_get($saved, 'themes.sankevi.content.rack_band_cta'));
+        $this->assertSame('theme-images/our-racks.webp', data_get($saved, 'themes.sankevi.images.rack_band_image'));
+
+        ThemeCustomizer::flush();
+        $this->get($this->host.'/')
+            ->assertOk()
+            ->assertSee('Сглоби <em>рафтовете си</em>', false)
+            ->assertSee('Към конфигуратора')
+            ->assertSee('theme-images/our-racks.webp', false);
     }
 }

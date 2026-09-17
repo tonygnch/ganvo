@@ -599,6 +599,14 @@ return [
             'size' => '1800×1200',
             'default' => '/images/demo/sankevi/forest.webp',
         ],
+        // The landing page's configurator band. Empty falls back to the line
+        // drawing of a rack the band ships with, which needs no photograph.
+        'rack_band_image' => [
+            'label' => 'Configurator band photograph',
+            'hint' => 'The rack a visitor is about to build — a whole unit, front on, reads best. Ships with the catalogue shelving unit.',
+            'size' => '1456×1080',
+            'default' => '/images/demo/sankevi/racks.webp',
+        ],
         'story_image' => [
             'label' => 'Workshop band photograph',
             'hint' => 'Hands, tools, shavings — the making, not the product.',
