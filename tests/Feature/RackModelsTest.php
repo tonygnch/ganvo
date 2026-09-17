@@ -262,6 +262,63 @@ class RackModelsTest extends TestCase
         $this->send('/configurator/quote', $rack([]))->assertStatus(422);
     }
 
+    /* ---- which models are on offer ----------------------------------- */
+
+    public function test_the_merchant_chooses_which_models_the_configurator_offers(): void
+    {
+        $this->priceWineTrays();
+        $this->assertSame(['single', 'office', 'wine'], $this->boot($this->get($this->host.'/configurator'))['limits']['types']);
+
+        $owner = User::create([
+            'tenant_id' => $this->tenant->id,
+            'name' => 'Owner',
+            'email' => 'owner@sankevi-test.test',
+            'password' => bcrypt(str()->random(32)),
+        ]);
+        Filament::setCurrentPanel('store');
+        $this->actingAs($owner);
+
+        Livewire::test(RackConfigurator::class)
+            ->set('data.types', ['wine', 'single'])
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame(
+            ['single', 'wine'],
+            Store::where('tenant_id', $this->tenant->id)->first()->rackConfigurator()['types'],
+            'stored in the order the picker lists them, not the order they were ticked'
+        );
+
+        // …and the office rack is gone from the storefront, priced or not
+        $page = $this->get($this->host.'/configurator');
+        $this->assertSame(['single', 'wine'], $this->boot($page)['limits']['types']);
+        $page->assertDontSee('data-cfg-type="office"', false);
+
+        $this->send('/configurator/quote', ['config' => [
+            'type' => 'office', 'height' => 210, 'depth' => 60, 'levels' => 4, 'segments' => [100],
+        ]])->assertStatus(422)->assertJson(['ok' => false, 'reason' => __('site.storefront.sankevi.cfg_err_type')]);
+    }
+
+    public function test_unticking_every_model_keeps_the_ones_on_offer(): void
+    {
+        $owner = User::create([
+            'tenant_id' => $this->tenant->id,
+            'name' => 'Owner',
+            'email' => 'owner2@sankevi-test.test',
+            'password' => bcrypt(str()->random(32)),
+        ]);
+        Filament::setCurrentPanel('store');
+        $this->actingAs($owner);
+
+        Livewire::test(RackConfigurator::class)->set('data.types', [])->call('save');
+
+        $this->assertSame(
+            ['single', 'office', 'wine'],
+            Store::where('tenant_id', $this->tenant->id)->first()->rackConfigurator()['types'],
+            'a configurator with no model at all is no page'
+        );
+    }
+
     /* ---- braces added by hand ---------------------------------------- */
 
     public function test_a_brace_added_by_hand_is_saved_priced_and_reopened(): void

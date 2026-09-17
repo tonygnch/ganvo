@@ -864,6 +864,15 @@ class Store extends Model
         $widths = $ints($stored['widths'] ?? null, [80, 100, 120]);
         $levels = $ints($stored['levels'] ?? null, [2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
+        // The rack models this shop builds, in the order the picker lists them.
+        // Nothing stored means every model, which is what shops had before the
+        // choice existed; an empty choice would leave the configurator with
+        // nothing to configure, so it falls back the same way.
+        $types = array_values(array_filter(
+            RackConfig::TYPES,
+            fn (string $type) => in_array($type, (array) ($stored['types'] ?? RackConfig::TYPES), true)
+        )) ?: RackConfig::TYPES;
+
         // A shelf is smaller than its bay: it drops BETWEEN the uprights.
         // Stored as one trim figure rather than a lookup table so a new
         // section width needs no second edit to become orderable.
@@ -893,10 +902,10 @@ class Store extends Model
             'default_levels' => $this->pick($stored['default_levels'] ?? null, $levels, 4),
             'default_width_cm' => $this->pick($stored['default_width_cm'] ?? null, $widths, 100),
             'over_limit_text' => trim((string) ($stored['over_limit_text'] ?? '')),
-            // The rack models on offer. Which of them a customer actually sees
-            // is the price book's call (RackPriceBook::narrow): a model whose
-            // boards are not priced is not shown.
-            'types' => [RackConfig::TYPE_SINGLE, RackConfig::TYPE_OFFICE, RackConfig::TYPE_WINE],
+            // The rack models on offer: the merchant's own choice (Настройки →
+            // Модели), narrowed again by the price book, which hides a model
+            // whose parts are not priced (RackPriceBook::narrow).
+            'types' => $types,
             // How the office and wine models are built, in cm. Read off Sankevi's
             // product photographs, NOT a drawing — to be confirmed by them, and
             // editable because no size may live in code (S19). Used by the

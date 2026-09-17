@@ -7,7 +7,9 @@ use App\Models\RackPart;
 use App\Models\Store;
 use App\Services\Money;
 use App\Services\Rack\RackConfig;
+use App\Services\Rack\RackPresenter;
 use BackedEnum;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
 use Filament\Forms\Components\TextInput;
@@ -111,6 +113,7 @@ class RackConfigurator extends Page implements HasForms
             'tray_tilt_deg' => $limits['tray_tilt_deg'],
             'model_depth_cm' => $limits['model_depth_cm'],
             'tab_category_ids' => $limits['tab_category_ids'],
+            'types' => $limits['types'],
         ];
 
         foreach (array_keys(self::SIZE_RANGES) as $name) {
@@ -356,6 +359,18 @@ class RackConfigurator extends Page implements HasForms
                 ->description(__('admin.configurator.section_help.models'))
                 ->columns(2)
                 ->schema([
+                    // Which models the configurator offers at all. A model left
+                    // unticked is not built, whatever its tables hold; a model
+                    // ticked still needs its prices before a customer sees it.
+                    CheckboxList::make('types')
+                        ->label(__('admin.configurator.field.types'))
+                        ->helperText(__('admin.configurator.help.types'))
+                        ->options(fn () => collect(RackConfig::TYPES)
+                            ->mapWithKeys(fn (string $type) => [$type => RackPresenter::modelLabel($type)])
+                            ->all())
+                        ->required()
+                        ->columns(3)
+                        ->columnSpanFull(),
                     Select::make('model_depth_cm')
                         ->label(__('admin.configurator.field.model_depth'))
                         ->helperText(__('admin.configurator.help.model_depth'))
@@ -466,6 +481,9 @@ class RackConfigurator extends Page implements HasForms
         $settings['tray_tilt_deg'] = (int) ($state['tray_tilt_deg'] ?? 15);
         $settings['model_depth_cm'] = (int) ($state['model_depth_cm'] ?? 40);
         $settings['tab_category_ids'] = array_values(array_unique(array_map('intval', (array) ($state['tab_category_ids'] ?? []))));
+        // In registry order, whatever order the boxes were ticked in. Nothing
+        // ticked keeps what was on offer: a configurator with no model is no page.
+        $settings['types'] = array_values(array_intersect(RackConfig::TYPES, (array) ($state['types'] ?? []))) ?: $before['types'];
         $store->update(['rack_configurator' => $settings]);
 
         /*
