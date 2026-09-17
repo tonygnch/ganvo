@@ -650,7 +650,7 @@
            The panel is a flex COLUMN — head, then scrolling prose — so the
            title and the ✕ hold their place however far down the reading goes.
            ===== */
-        .catmore { margin: 30px 0 4px; }
+        .catmore { margin: 30px 0 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
         .catmore-btn {
             display: inline-flex; align-items: center; gap: 10px;
             font-family: var(--body); font-size: 11px; font-weight: 600;
@@ -932,41 +932,13 @@
         .fbot a:hover { color: var(--accent-ink); }
 
         /* toast */
-        /* ===== THE WAY IN TO THE CONFIGURATOR =====
-           A link in the header is fine for someone already looking for it. The
-           rack is the one thing on this site you BUILD rather than pick off a
-           shelf, and on a phone the header collapses to a burger, so it was
-           three taps behind a menu nobody opens.
-
-           A tab on the edge, the way the catalogue's own filters are reached —
-           mirrored to the RIGHT so the two can never meet, and low enough to be
-           where a thumb already is. At every width: the filters are a phone
-           control, but this is the shop's second way to buy and it should not
-           be something only the header knows about. Under the drawer's z-index rather than over
-           it, so opening the menu covers it instead of floating on top. It is
-           not drawn on the configurator itself; there is nowhere to go. */
-        .rack-tab {
-            display: inline-flex;
-            position: fixed; right: 0; bottom: 96px; z-index: 80;
-            transition: transform .2s ease, background-color .2s ease;
-            align-items: center; gap: 9px;
-            min-height: 52px; padding: 0 16px 0 14px;
-            font-family: var(--body); font-size: 11px; font-weight: 600;
-            letter-spacing: .18em; text-transform: uppercase;
-            text-decoration: none;
-            background: var(--accent); color: var(--on-accent);
-            /* the planed corner, on the two edges that face the page */
-            clip-path: polygon(9px 0, 100% 0, 100% 100%, 0 100%, 0 9px);
-            box-shadow: -6px 0 22px -12px rgba(0, 0, 0, .55);
-        }
-        body.no-cut .rack-tab { clip-path: none; }
-        .rack-tab svg { width: 20px; height: 20px; flex: none; }
-        /* On a pointer it can answer the cursor; it leans out from the edge
-           rather than growing, so nothing under it shifts. */
-        @media (hover: hover) {
-            .rack-tab:hover { transform: translateX(-5px); background: var(--accent-deep, var(--accent)); }
-        }
-        @media (prefers-reduced-motion: reduce) { .rack-tab { transition: none; } }
+        /* The way into the configurator: a filled button beside „Още за
+           категорията“, on the category pages the merchant picked
+           (Store::offersRackConfiguratorIn). It used to be a tab fixed to the
+           edge of every page; the merchant wanted it only where racks are sold. */
+        .catmore-cfg { background: var(--accent); border-color: var(--accent); color: var(--on-accent); text-decoration: none; }
+        .catmore-cfg:hover { background: var(--accent-deep, var(--accent)); border-color: var(--accent-deep, var(--accent)); color: var(--on-accent); }
+        .catmore-cfg svg { width: 18px; height: 18px; flex: none; }
 
         .toast { position: fixed; top: calc(var(--header-height) + 20px); right: 24px; z-index: 100; display: flex; align-items: center; gap: 12px; background: var(--surface); color: var(--txt); border: 1px solid var(--line2); border-left: 2px solid var(--accent); padding: 15px 22px; font-size: 14px; box-shadow: 0 26px 50px -26px rgba(0, 0, 0, .85); animation: toastIn .28s ease-out, toastOut .3s ease-in 3.2s forwards; }
         @keyframes toastIn { from { transform: translateY(-8px); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -1293,7 +1265,7 @@
             @if ($store->showsAccountUi())
                 <a class="btn outline" href="{{ $customer ? '/account' : '/account/login' }}">{{ $customer ? __('site.common.my_account') : __('site.common.sign_in') }}</a>
             @endif
-            <a class="btn" href="/cart">{{ __('site.common.cart') }} <span class="n">{{ $cartCount }}</span></a>
+            <a class="btn" href="/cart">{{ __('site.common.cart') }} <span class="n" data-cart-count>{{ $cartCount }}</span></a>
         </div>
         @if (trim(__('site.storefront.sankevi.hero_kicker')) !== '')
             <div class="mfoot">{{ __('site.storefront.sankevi.hero_kicker') }}</div>
@@ -1346,17 +1318,6 @@
         </div>
     </footer>
 
-    @if ($csRackOn && ! request()->is('configurator*'))
-        {{-- The glyph is the rack itself: two uprights and the boards between
-             them, which is the thing being offered. --}}
-        <a href="/configurator" class="rack-tab">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-                 stroke-linecap="square" aria-hidden="true">
-                <path d="M4 3v18M20 3v18M4 8h16M4 13h16M4 18h16"/>
-            </svg>
-            {{ __('site.storefront.sankevi.cfg_nav') }}
-        </a>
-    @endif
 
     <script>
         // The category's full description. showModal() rather than a class

@@ -14,6 +14,7 @@ use App\Services\Rack\RackPresenter;
 use App\Services\Rack\RackPriceBook;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Session-backed shopping cart. Storage shape is an array of lines
@@ -87,6 +88,67 @@ class Cart
         $line['qty'] = (int) $line['qty'] + $quantity;
         $items[$key] = $line;
         $this->save($items);
+    }
+
+    /**
+     * The cart as the storefront's script shows it — the header count, the
+     * slide-out drawer — after anything that changed it: a product added, a
+     * line edited, a rack added from the configurator. Money is pre-formatted
+     * server-side using the request's display currency + FX rate so the client
+     * never has to reimplement currency formatting.
+     *
+     * @return array<string, mixed>
+     */
+    public function clientState(?string $flash = null): array
+    {
+        $rate = $this->displayRate();
+        $currency = $this->displayCurrency();
+        $fmt = fn (int $cents) => Money::display($cents, $rate, $currency);
+
+        $items = $this->items();
+        $subtotal = $this->subtotalCents();
+        // Cart-page shipping is the store default (no address yet); the
+        // discount engine needs it to evaluate free-shipping style rules.
+        $shipping = $this->defaultShippingCents();
+        $discount = $this->appliedDiscount($shipping);
+        $discountCents = $this->discountAmountCents($shipping);
+        $grand = max(0, $subtotal - $discountCents);
+
+        return [
+            'ok' => true,
+            'empty' => $items->isEmpty(),
+            'item_count' => $this->itemCount(),
+            'lines' => $items->map(fn ($row) => [
+                'line_id' => $row['line_id'],
+                'quantity' => $row['quantity'],
+                'subtotal' => $fmt($row['subtotal_cents']),
+                // Extended fields for the slide-out cart drawer; the cart
+                // page's own JS patches by line_id and ignores these.
+                'name' => $row['product']->name,
+                // a rack has no variant; its code is what identifies it
+                'variant' => $row['rack']
+                    ? __('site.storefront.sankevi.cfg_code_line', ['code' => $row['rack']->code])
+                    : ($row['variant']->label ?? null),
+                'unit' => $fmt($row['unit_price_cents']),
+                // …and no photo: its own drawing stands in
+                'image' => $row['rack']
+                    ? $row['rack']->thumbnailUrl()
+                    : ($row['product']->image_path ? Storage::url($row['product']->image_path) : null),
+                // A configured rack goes back to the builder that made it,
+                // not to a catalogue page it does not have.
+                'url' => $row['rack']
+                    ? '/configurator/'.$row['rack']->code
+                    : '/products/'.$row['product']->slug,
+            ])->values()->all(),
+            'subtotal' => $fmt($subtotal),
+            'discount' => ($discount && $discountCents > 0) ? [
+                'name' => $discount->name,
+                'amount' => '−'.$fmt($discountCents),
+            ] : null,
+            'applied_code' => $this->appliedCode(),
+            'total' => $fmt($grand),
+            'flash' => $flash,
+        ];
     }
 
     public function rackLineKey(string $code): string

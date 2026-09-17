@@ -208,6 +208,32 @@ class RackConfiguration extends Model
         return array_map('intval', (array) ($this->segments ?? []));
     }
 
+    /** The rack this row describes, as the calculator and the picture read it. */
+    public function toConfig(): RackConfig
+    {
+        return RackConfig::of(
+            $this->height_cm,
+            $this->depth_cm,
+            $this->levels,
+            $this->segmentWidths(),
+            $this->type ?: RackConfig::TYPE_SINGLE,
+            $this->desk_depth_cm,
+            $this->extraBraceIndexes(),
+            $this->deskSectionIndexes(),
+        );
+    }
+
+    /**
+     * Where its picture is — see ConfiguratorController::thumbnail(). The rack
+     * changes as it is edited (the configurator saves every change), so the
+     * address carries when it last did: a changed rack is a new address, and
+     * the old picture can be cached as long as a browser likes.
+     */
+    public function thumbnailUrl(): string
+    {
+        return '/configurator/'.$this->code.'/thumb.svg?v='.($this->updated_at?->timestamp ?? 0);
+    }
+
     /** Sections braced by hand, as stored — sorted section indexes. */
     public function extraBraceIndexes(): array
     {

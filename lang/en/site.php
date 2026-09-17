@@ -412,6 +412,21 @@ return [
             'offer_6_h' => 'Delivery to site',
             'offer_6_p' => 'Our own trucks across southern Bulgaria, unloading on a schedule agreed with the site.',
 
+            // The landing page's way into the rack configurator.
+            'rack_band_eyebrow' => 'Configurator',
+            'rack_band_h2_html' => 'Build <em>your own rack</em>',
+            'rack_band_lead' => 'Modular wooden racks you design yourself — in 2D and 3D, with a price you see straight away.',
+            'rack_band_1_h' => 'Pick a model and a size',
+            'rack_band_1_p' => 'A rack, an office rack or a wine rack — at the height, depth and number of levels you need.',
+            'rack_band_2_h' => 'Arrange the sections',
+            'rack_band_2_p' => 'Add sections of different widths, and put a cross-brace or a desk where you want them.',
+            'rack_band_3_h' => 'See the price and ask for it',
+            'rack_band_3_p' => 'The price and the parts list are worked out as you go. Save the rack or add it to your request.',
+            'rack_band_cta' => 'Open the configurator',
+            'rack_band_example' => 'For example :rack — :price incl. VAT',
+            'rack_band_tag' => '2D drawing and 3D model',
+            'cfg_category_cta' => 'Build a rack in the configurator',
+
             // ——— WHY US. Reasons, not a biography: the family history lives
             // at /about and is pointed at from here with a single link.
             // ——— THE FACTS IN THE "WHY US" BAND.
@@ -587,7 +602,20 @@ return [
             'cfg_saved' => 'Configuration saved',
             'cfg_copy_link' => 'Copy link',
             'cfg_link_copied' => 'Link copied',
+            'cfg_share_title' => 'Share this configuration',
+            'cfg_share_lead' => 'Whoever opens the link sees exactly this rack — its sizes and its price.',
+            'cfg_share_link' => 'Link',
+            'cfg_share_copy' => 'Copy',
+            'cfg_share_manual' => 'The link is selected — copy it with Ctrl+C (⌘+C).',
             'cfg_code_label' => 'Configuration code',
+            'cfg_code_line' => 'Configuration code: :code',
+            'cfg_save_as_new' => 'Save as new',
+            'cfg_saved_as_new' => 'Saved as a new configuration — with a new code.',
+            'cfg_state_saving' => 'Saving…',
+            'cfg_state_saved' => 'Saved',
+            'cfg_state_failed' => 'Not saved',
+            'cfg_state_unsaved' => 'Changes not saved',
+            'cfg_state_signin' => 'Sign in to keep them',
             'cfg_restored' => 'Restored configuration :code',
 
             'cfg_over_limit' => 'The largest configuration we can price online is :metres m. For a bigger project, get in touch for an individual quote.',

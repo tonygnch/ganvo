@@ -218,7 +218,10 @@
                                 @endphp
                                 <div class="line" data-cart-line="{{ $lineId }}">
                                     <div class="img cut cut-sm">
-                                        @if ($product->image_path)
+                                        @if ($row['rack'])
+                                            {{-- a rack has no photo: its own drawing stands in --}}
+                                            <img src="{{ $row['rack']->thumbnailUrl() }}" alt="{{ $product->name }}" loading="lazy">
+                                        @elseif ($product->image_path)
                                             <img src="{{ \Illuminate\Support\Facades\Storage::url($product->image_path) }}" alt="{{ $product->name }}@if ($variant) — {{ $variant->label }}@endif">
                                         @else
                                             {{-- the board glyph, scaled, so an imageless line still
@@ -238,6 +241,9 @@
                                              their own unit. It is the whole point
                                              of the line for a product sold by
                                              area, and the yard quotes from it. --}}
+                                        @if ($row['rack'])
+                                            <div class="m">{{ __('site.storefront.sankevi.cfg_code_line', ['code' => $row['rack']->code]) }}</div>
+                                        @endif
                                         @if (($row['measure'] ?? null))
                                             <div class="asked">{{ rtrim(rtrim(number_format($row['measure'], 2, '.', ''), '0'), '.') }} {{ $product->priceUnitShort() }}</div>
                                         @endif

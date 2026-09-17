@@ -6,69 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\Cart;
-use App\Services\Money;
 use App\Themes\ThemeRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class CartController extends Controller
 {
-    /**
-     * Build the recomputed cart state for an async (fetch) response. Money
-     * is pre-formatted server-side using the request's display currency +
-     * FX rate so the client never has to reimplement currency formatting.
-     *
-     * @return array<string, mixed>
-     */
+    /** The recomputed cart state for an async (fetch) response — see Cart::clientState(). */
     private function cartState(Cart $cart, ?string $flash = null): array
     {
-        $rate = $cart->displayRate();
-        $currency = $cart->displayCurrency();
-        $fmt = fn (int $cents) => Money::display($cents, $rate, $currency);
-
-        $items = $cart->items();
-        $subtotal = $cart->subtotalCents();
-        // Cart-page shipping is the store default (no address yet); the
-        // discount engine needs it to evaluate free-shipping style rules.
-        $shipping = $cart->defaultShippingCents();
-        $discount = $cart->appliedDiscount($shipping);
-        $discountCents = $cart->discountAmountCents($shipping);
-        $grand = max(0, $subtotal - $discountCents);
-
-        return [
-            'ok' => true,
-            'empty' => $items->isEmpty(),
-            'item_count' => $cart->itemCount(),
-            'lines' => $items->map(fn ($row) => [
-                'line_id' => $row['line_id'],
-                'quantity' => $row['quantity'],
-                'subtotal' => $fmt($row['subtotal_cents']),
-                // Extended fields for the slide-out cart drawer; the cart
-                // page's own JS patches by line_id and ignores these.
-                'name' => $row['product']->name,
-                'variant' => $row['variant']->label ?? null,
-                'unit' => $fmt($row['unit_price_cents']),
-                'image' => $row['product']->image_path
-                    ? Storage::url($row['product']->image_path)
-                    : null,
-                // A configured rack goes back to the builder that made it,
-                // not to a catalogue page it does not have.
-                'url' => $row['rack']
-                    ? '/configurator/'.$row['rack']->code
-                    : '/products/'.$row['product']->slug,
-            ])->values()->all(),
-            'subtotal' => $fmt($subtotal),
-            'discount' => ($discount && $discountCents > 0) ? [
-                'name' => $discount->name,
-                'amount' => '−'.$fmt($discountCents),
-            ] : null,
-            'applied_code' => $cart->appliedCode(),
-            'total' => $fmt($grand),
-            'flash' => $flash,
-        ];
+        return $cart->clientState($flash);
     }
 
     public function show(): View

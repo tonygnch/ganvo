@@ -332,6 +332,93 @@ class RackShareLinkTest extends TestCase
         $this->assertSame($before, RackConfiguration::where('code', $code)->firstOrFail()->getAttributes());
     }
 
+    /** The header count and the drawer update from the answer, without a reload. */
+    public function test_adding_a_rack_answers_with_the_updated_cart(): void
+    {
+        $added = $this->asBrowser('customer-a', '/configurator/cart', ['config' => self::RACK])->assertOk();
+        $code = $added->json('code');
+
+        $added->assertJson(['cart' => ['ok' => true, 'item_count' => 1]]);
+        // the drawer's "added" line, as for a product, naming the rack
+        $this->assertStringContainsString('210×60', (string) $added->json('cart.flash'));
+        $this->assertSame('rack:'.$code, $added->json('cart.lines.0.line_id'));
+        $this->assertSame('/configurator/'.$code, $added->json('cart.lines.0.url'));
+
+        $this->asBrowser('customer-a', '/configurator/cart', ['config' => self::RACK])
+            ->assertOk()
+            ->assertJson(['cart' => ['item_count' => 2]]);
+    }
+
+    /** A rack in the cart shows its own drawing and its code. */
+    public function test_a_rack_in_the_cart_has_a_picture_and_its_code(): void
+    {
+        $added = $this->asBrowser('customer-a', '/configurator/cart', ['config' => self::RACK + ['type' => 'single']])->assertOk();
+        $code = $added->json('code');
+        $row = RackConfiguration::where('code', $code)->firstOrFail();
+
+        $this->assertSame($row->thumbnailUrl(), $added->json('cart.lines.0.image'));
+        $this->assertStringContainsString($code, (string) $added->json('cart.lines.0.variant'));
+
+        $picture = $this->get($this->host.'/configurator/'.$code.'/thumb.svg');
+        $picture->assertOk()->assertHeader('Content-Type', 'image/svg+xml');
+        $svg = $picture->getContent();
+        $this->assertStringStartsWith('<svg ', $svg);
+        $this->assertSame(4, substr_count($svg, 'fill="#b3844c"'), 'three bays stand on four uprights');
+        $this->assertSame(2 * 2, substr_count($svg, '<line '), 'the standard braces on bays 1 and 3');
+
+        $this->get($this->host.'/configurator/NOSUCH99/thumb.svg')->assertNotFound();
+
+        $cart = $this->withUnencryptedCookie(config('session.cookie'), $this->browsers['customer-a']['cookie'])->get($this->host.'/cart');
+        $cart->assertOk()
+            ->assertSee($row->thumbnailUrl(), false)
+            ->assertSee(__('site.storefront.sankevi.cfg_code_line', ['code' => $code]));
+    }
+
+    /**
+     * The configurator saves every change. A rack in the request is updated
+     * like any other — making a new rack on each change left the request
+     * holding a rack the customer had since changed.
+     */
+    public function test_a_rack_in_the_request_is_updated_by_the_next_change(): void
+    {
+        $code = $this->asBrowser('customer-a', '/configurator/cart', ['config' => self::RACK])
+            ->assertOk()
+            ->assertJson(['editable' => true])
+            ->json('code');
+
+        $this->saveOver('customer-a', $code, ['height' => 180] + self::RACK)->assertOk()->assertJson(['code' => $code, 'editable' => true]);
+        $this->saveOver('customer-a', $code, ['height' => 150] + self::RACK)->assertOk()->assertJson(['code' => $code]);
+
+        $this->assertSame(1, RackConfiguration::where('tenant_id', $this->tenant->id)->count(), 'no copies');
+        $this->assertSame(150, RackConfiguration::where('code', $code)->value('height_cm'));
+    }
+
+    /** A rack that comes back from a save is the page's rack from then on. */
+    public function test_a_matching_rack_handed_back_is_updated_by_the_next_change(): void
+    {
+        $code = $this->save('customer-a', self::RACK)->assertOk()->json('code');
+        $this->save('customer-a', self::RACK)->assertOk()->assertJson(['code' => $code, 'editable' => true]);
+        $this->saveOver('customer-a', $code, ['levels' => 5] + self::RACK)->assertOk()->assertJson(['code' => $code]);
+        $this->assertSame(1, RackConfiguration::where('tenant_id', $this->tenant->id)->count());
+    }
+
+    /** „Запази като нов" makes a new rack, and leaves the one it came from alone. */
+    public function test_save_as_new_makes_a_rack_of_its_own(): void
+    {
+        $code = $this->save('customer-a', self::RACK)->assertOk()->json('code');
+        $before = RackConfiguration::where('code', $code)->firstOrFail()->getAttributes();
+
+        $copy = $this->asBrowser('customer-a', '/configurator/save', ['config' => self::RACK, 'editing' => $code, 'as_new' => true])
+            ->assertOk()
+            ->assertJson(['editable' => true]);
+
+        $this->assertNotSame($code, $copy->json('code'), 'even the very same rack is a new one when asked');
+        $this->assertSame($before, RackConfiguration::where('code', $code)->firstOrFail()->getAttributes());
+
+        $this->saveOver('customer-a', $copy->json('code'), ['levels' => 6] + self::RACK)->assertOk()->assertJson(['code' => $copy->json('code')]);
+        $this->assertSame(4, RackConfiguration::where('code', $code)->value('levels'), 'changing the copy leaves the original');
+    }
+
     /** Nothing but its owner saving over it may ever write a row twice. */
     public function test_a_saved_configuration_is_never_updated(): void
     {

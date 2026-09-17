@@ -50,7 +50,15 @@
                 ? $limits['over_limit_text']
                 : __('site.storefront.sankevi.cfg_over_limit', ['metres' => number_format($limits['max_length_cm'] / 100, 2)]),
             'copied' => __('site.storefront.sankevi.cfg_link_copied'),
+            'copyManual' => __('site.storefront.sankevi.cfg_share_manual'),
+            'savedAsNew' => __('site.storefront.sankevi.cfg_saved_as_new'),
             'saved' => __('site.storefront.sankevi.cfg_saved'),
+            'state' => [
+                'saving' => __('site.storefront.sankevi.cfg_state_saving'),
+                'saved' => __('site.storefront.sankevi.cfg_state_saved'),
+                'failed' => __('site.storefront.sankevi.cfg_state_failed'),
+                'unsaved' => __('site.storefront.sankevi.cfg_state_unsaved'),
+            ],
             'qty' => __('site.storefront.sankevi.cfg_qty'),
             'vat' => __('site.storefront.sankevi.cfg_vat', ['rate' => ':rate']),
             'generic' => __('site.storefront.sankevi.cfg_err_generic'),
@@ -238,8 +246,33 @@
     /* side by side in the sidebar; stacked when a narrow phone has no room */
     .cfg-share { display: flex; flex-wrap: wrap; gap: 8px; }
     .cfg-share .btn { flex: 1 1 140px; min-height: 42px; font-size: 11px; }
-    .cfg-code { margin-top: 10px; font-size: 11px; color: var(--faint); text-align: center; }
-    .cfg-code b { color: var(--accent); font-family: var(--display); letter-spacing: .12em; }
+    /* the code bar: the rack's code, first thing on the board */
+    .cfg-codebar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-bottom: 14px;
+        padding: 10px 14px; border: 1px solid var(--accent); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+    .cfg-codebar[hidden] { display: none; }
+    .cfg-codebar-l { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+    .cfg-codebar-v { font-family: var(--display); font-size: 22px; font-weight: 600; letter-spacing: .14em; color: var(--accent); }
+    .cfg-codebar-copy { display: inline-grid; place-items: center; width: 34px; height: 34px; padding: 0;
+        background: transparent; border: 1px solid var(--line2); color: var(--muted); cursor: pointer; }
+    .cfg-codebar-copy svg { width: 15px; height: 15px; }
+    .cfg-codebar-new { order: 2; min-height: 34px; padding: 0 10px; font-family: var(--body); font-size: 11px; font-weight: 600;
+        letter-spacing: .08em; background: transparent; border: 1px solid var(--line2); color: var(--muted); cursor: pointer; }
+    .cfg-codebar-new:hover { border-color: var(--accent); color: var(--accent); }
+    .cfg-codebar-copy:hover { border-color: var(--accent); color: var(--accent); }
+    .cfg-codebar-code { display: inline-flex; align-items: center; gap: 10px; }
+    .cfg-codebar-status { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; margin-left: auto; }
+    .cfg-codebar-state { font-size: 12px; color: var(--muted); }
+    /* a phone: the label, then the code and its copy button, then how the save went */
+    @media (max-width: 560px) {
+        .cfg-codebar-l { flex-basis: 100%; }
+        .cfg-codebar-status { flex-basis: 100%; justify-content: space-between; margin-left: 0; }
+    }
+    .cfg-codebar-state[data-state="saved"] { color: var(--accent); }
+    .cfg-codebar-state[data-state="saved"]::before { content: "✓ "; }
+    .cfg-codebar-state[data-state="failed"], .cfg-codebar-state[data-state="unsaved"] { color: #e0a458; }
+    .cfg-codebar-signin { min-height: 34px; padding: 0 12px; font-size: 12px; font-weight: 600; cursor: pointer;
+        background: var(--accent); color: var(--on-accent); border: 0; }
+    .cfg-codebar-signin[hidden] { display: none; }
 
     .cfg-alert { margin-top: 12px; border: 1px solid var(--accent); padding: 11px 13px;
         font-size: 12px; line-height: 1.55; color: var(--txt);
@@ -321,6 +354,25 @@
 
             {{-- ---------- the board ---------- --}}
             <div class="cfg-board">
+                {{-- The rack's code, once it has one — kept on screen while it is
+                     edited, with whether the latest change is saved yet. Every
+                     change to a saved rack is saved on its own (see autosave()). --}}
+                <div class="cfg-codebar" data-cfg-code hidden>
+                    <span class="cfg-codebar-l">{{ __('site.storefront.sankevi.cfg_code_label') }}</span>
+                    <span class="cfg-codebar-code">
+                        <b class="cfg-codebar-v" data-cfg-codeval></b>
+                        <button type="button" class="cfg-codebar-new" data-cfg-code-new>{{ __('site.storefront.sankevi.cfg_save_as_new') }}</button>
+                        <button type="button" class="cfg-codebar-copy" data-cfg-code-copy
+                                aria-label="{{ __('site.storefront.sankevi.cfg_copy_link') }}" title="{{ __('site.storefront.sankevi.cfg_copy_link') }}">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5.5" y="5.5" width="8" height="8"/><path d="M10.5 5.5v-3h-8v8h3"/></svg>
+                        </button>
+                    </span>
+                    <span class="cfg-codebar-status">
+                        <span class="cfg-codebar-state" data-cfg-save-state data-state="saved" aria-live="polite"></span>
+                        <button type="button" class="cfg-codebar-signin" data-cfg-code-signin hidden>{{ __('site.storefront.sankevi.cfg_state_signin') }}</button>
+                    </span>
+                </div>
+
                 {{-- The model. Only once a second one can be built: the price
                      book decides (RackPriceBook::narrow), so the office and wine
                      racks appear the day their boards are priced. --}}
@@ -553,9 +605,6 @@
                             <button type="button" class="btn outline cut-sm" data-cfg-copy>{{ __('site.storefront.sankevi.cfg_copy_link') }}</button>
                         </div>
                     </div>
-                    <p class="cfg-code" data-cfg-code hidden>
-                        {{ __('site.storefront.sankevi.cfg_code_label') }} <b data-cfg-codeval></b>
-                    </p>
                 </div>
             </aside>
         </div>
@@ -643,6 +692,37 @@
             </form>
         </div>
     </dialog>
+
+    {{-- Sharing a rack: the link, copied for the customer where the browser
+         allows it, and in a field to copy by hand where it does not. The
+         sign-up window's card, so the two look like one family — and not the
+         browser's own prompt box, which is what this used to be. --}}
+    <dialog class="cfg-auth cfg-share-dlg" data-cfg-share aria-labelledby="cfgShareTitle">
+        <div class="cfg-auth-card cut cut-lg">
+            <button type="button" class="cfg-auth-x" data-cfg-share-close aria-label="{{ __('site.storefront.sankevi.cfg_auth_close') }}">×</button>
+            <h2 id="cfgShareTitle">{{ __('site.storefront.sankevi.cfg_share_title') }}</h2>
+            <p class="lede">{{ __('site.storefront.sankevi.cfg_share_lead') }}</p>
+            <div class="field">
+                <label class="field-label" for="cfgShareLink">{{ __('site.storefront.sankevi.cfg_share_link') }}</label>
+                <div class="cfg-share-row">
+                    <input class="field-input" type="text" id="cfgShareLink" readonly autofocus data-cfg-share-link>
+                    <button type="button" class="btn cut-sm" data-cfg-share-copy>{{ __('site.storefront.sankevi.cfg_share_copy') }}</button>
+                </div>
+            </div>
+            <p class="cfg-share-state" data-cfg-share-state aria-live="polite"></p>
+        </div>
+    </dialog>
+    <style>
+        .cfg-share-row { display: flex; gap: 8px; }
+        .cfg-share-row .field-input { flex: 1 1 auto; min-width: 0; }
+        .cfg-share-row .btn { flex: 0 0 auto; min-height: 48px; padding: 0 18px; }
+        .cfg-share-state { min-height: 1.5em; margin: 2px 0 0; font-size: 13px; color: var(--accent); }
+        .cfg-share-state[data-state="copied"]::before { content: "✓ "; }
+        .cfg-share-state[data-state="manual"] { color: var(--muted); }
+        @media (max-width: 420px) {
+            .cfg-share-row { flex-direction: column; }
+        }
+    </style>
     <style>
         /* The sign-in sheet from /account/register, shrunk into a window. The
            dialog itself is transparent; the card carries the planed corner. */
@@ -1424,10 +1504,10 @@
         return false;
     }
 
-    $('[data-cfg-height]').addEventListener('change', function (e) { state.height = +e.target.value; clearCode(); render(); });
-    $('[data-cfg-depth]').addEventListener('change',  function (e) { state.depth  = +e.target.value; clearCode(); render(); });
-    $('[data-cfg-levels]').addEventListener('change', function (e) { state.levels = +e.target.value; clearCode(); render(); });
-    $('[data-cfg-desk-depth]').addEventListener('change', function (e) { state.deskDepth = +e.target.value; clearCode(); render(); });
+    $('[data-cfg-height]').addEventListener('change', function (e) { state.height = +e.target.value; rackChanged(); render(); });
+    $('[data-cfg-depth]').addEventListener('change',  function (e) { state.depth  = +e.target.value; rackChanged(); render(); });
+    $('[data-cfg-levels]').addEventListener('change', function (e) { state.levels = +e.target.value; rackChanged(); render(); });
+    $('[data-cfg-desk-depth]').addEventListener('change', function (e) { state.deskDepth = +e.target.value; rackChanged(); render(); });
 
     /* A desk is never shallower than the rack it belongs to: making the rack
        deeper pulls the desk along with it. */
@@ -1495,7 +1575,7 @@
                     $('[data-cfg-depth]').value = String(modelDepth);
                 }
                 ensureDesk();
-                clearCode();
+                rackChanged();
                 render();
             }
             return;
@@ -1506,7 +1586,7 @@
             var at = state.selected;
             if (!isBraced(at)) {
                 state.extra[at] = !state.extra[at];
-                clearCode();
+                rackChanged();
                 render();
             }
             return;
@@ -1518,7 +1598,7 @@
             /* the last desk stays: an office rack without one is not an office rack */
             if (state.type === 'office' && !(hasDesk(on) && deskSectionIndexes().length === 1)) {
                 state.desks[on] = !state.desks[on];
-                clearCode();
+                rackChanged();
                 render();
             }
             return;
@@ -1529,7 +1609,7 @@
             var next = +width.dataset.cfgWidth, current = state.segments[state.selected];
             if (next === current || wouldExceed(next - current)) { return; }
             state.segments[state.selected] = next;
-            clearCode();
+            rackChanged();
             render();
             return;
         }
@@ -1542,7 +1622,7 @@
             state.extra.push(false);
             state.desks.push(false);
             state.selected = sections() - 1;
-            clearCode();
+            rackChanged();
             render();
             return;
         }
@@ -1552,7 +1632,7 @@
             state.extra.splice(state.selected, 1);
             state.desks.splice(state.selected, 1);
             ensureDesk();
-            clearCode();
+            rackChanged();
             render();
             return;
         }
@@ -1717,7 +1797,7 @@
         state.desks[i] = state.desks[j];
         state.desks[j] = desk;
         state.selected = j;
-        clearCode();
+        rackChanged();
         render();
     }
 
@@ -1733,13 +1813,16 @@
     window.addEventListener('resize', function () { applyViewBox(); });
 
     /* ---------- save, share, buy ------------------------------------- */
-    function showCode(code, url) {
+    function showCode(code, url, editable) {
         state.code = code;
-        /* the rack this page now stands for: saving again writes over it
-           (while it is the customer's own and not yet requested — the server decides) */
-        state.editing = code;
+        /* the rack this page now stands for, and whether saving again may write
+           over it. Not when the server says no: a rack it handed back because the
+           customer already had one just like it, or the one just put in the
+           request. (Over an opened rack the server still decides for itself.) */
+        state.editing = editable === false ? null : code;
         $('[data-cfg-codeval]').textContent = code;
         $('[data-cfg-code]').hidden = false;
+        if (!dirty) { saveState('saved'); }
         if (url && window.history && window.history.replaceState) {
             window.history.replaceState(null, '', '/configurator/' + code);
         }
@@ -1757,15 +1840,70 @@
      | the obvious thing to do, sent somebody a different rack at a different
      | price.
      */
-    function clearCode() {
+    /*
+     | …SO A SAVED RACK IS KEPT SAVED.
+     |
+     | The code used to disappear on the first change, and the customer had to
+     | press „Запази" again to get one back. Now the code stays on screen and
+     | every change to a saved rack is saved on its own, a moment after the
+     | customer stops: over the same rack when it is theirs to change, as a new
+     | rack of their own when it is not (someone else's link, a rack already in
+     | the request) — the server decides, and the bar shows the code it answered.
+     |
+     | A rack that was never saved is not saved on its own: the first save is
+     | the customer's choice, or everybody trying the configurator out would
+     | leave a rack behind. A guest cannot save at all, so for a guest the code
+     | stays with a note that the changes are not kept, and the address bar goes
+     | back to /configurator — the old link no longer describes this rack.
+     */
+    var AUTOSAVE_MS = 900;
+    var autosaveTimer = null;
+    var dirty = false;
+
+    function rackChanged() {
         if (state.code === null) { return; }
-        state.code = null;
-        var panel = $('[data-cfg-code]');
-        if (panel) { panel.hidden = true; }
-        if (window.history && window.history.replaceState) {
-            window.history.replaceState(null, '', '/configurator');
+        dirty = true;
+        clearTimeout(autosaveTimer);
+        if (!BOOT.signedIn) {
+            saveState('unsaved');
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', '/configurator');
+            }
+            return;
         }
+        saveState('saving');
+        autosaveTimer = setTimeout(autosave, AUTOSAVE_MS);
     }
+
+    function autosave() {
+        clearTimeout(autosaveTimer);
+        if (saving) { autosaveTimer = setTimeout(autosave, 300); return; }
+        dirty = false;
+        saveConfig(null, true).then(function (d) {
+            /* changed again while this was on its way: that change has its own save coming */
+            if (dirty) { return; }
+            saveState(d ? 'saved' : 'failed');
+        });
+    }
+
+    function saveState(kind) {
+        var el = $('[data-cfg-save-state]');
+        if (!el) { return; }
+        el.dataset.state = kind;
+        el.textContent = LABELS.state[kind] || '';
+        var signin = $('[data-cfg-code-signin]');
+        if (signin) { signin.hidden = kind !== 'unsaved'; }
+    }
+
+    /* Leaving with a change not saved yet: send it on the way out. */
+    window.addEventListener('pagehide', function () {
+        if (!dirty || !BOOT.signedIn || !autosaveTimer || !navigator.sendBeacon) { return; }
+        clearTimeout(autosaveTimer);
+        dirty = false;
+        navigator.sendBeacon('/configurator/save', new Blob([JSON.stringify({
+            _token: BOOT.token, config: payload(), editing: state.editing
+        })], { type: 'application/json' }));
+    });
 
     /* ---------- keeping a rack takes an account ---------------------- */
     /*
@@ -1877,6 +2015,8 @@
                    one in a hidden field, so those are brought up to date too. */
                 BOOT.token = data.token;
                 BOOT.signedIn = true;
+                /* the cart drawer's +/− were drawn with the old token too */
+                window.gvCsrfToken = data.token;
                 document.querySelectorAll('input[name="_token"]').forEach(function (i) { i.value = data.token; });
 
                 var run = authPending;
@@ -1888,36 +2028,126 @@
     });
 
     /* ---------- save, share, buy (continued) ------------------------- */
-    function saveConfig(again) {
-        return post('/configurator/save', { config: payload(), editing: state.editing }).then(function (data) {
+    /* One save at a time: a second click while the first is on its way would
+       make the same new rack twice. */
+    var saving = false;
+    /* quiet: an automatic save — the code bar reports it, not a message, and a
+       signed-out session is shown there rather than by opening the sign-up window */
+    function saveConfig(again, quiet, asNew) {
+        if (saving) { return Promise.resolve(null); }
+        saving = true;
+        var body = asNew
+            ? { config: payload(), editing: null, as_new: true }
+            : { config: payload(), editing: state.editing };
+        return post('/configurator/save', body).then(function (data) {
+            saving = false;
+            if (quiet && data && data.status === 401) { BOOT.signedIn = false; dirty = true; saveState('unsaved'); return null; }
             if (needsAccount(data, again)) { return null; }
-            if (!data || !data.ok) { say((data && data.reason) || LABELS.generic); return null; }
-            showCode(data.code, data.url);
+            if (!data || !data.ok) {
+                /* a rack that cannot be kept says why (too long, say); a quiet save only when there is a reason */
+                if (!quiet || (data && data.reason)) { say((data && data.reason) || LABELS.generic); }
+                return null;
+            }
+            showCode(data.code, data.url, data.editable);
             return data;
+        }, function () {
+            /* no answer, or one the page cannot read — a session that has timed
+               out answers with a page, not JSON. Say so rather than nothing. */
+            saving = false;
+            if (!quiet) { say(LABELS.generic); }
+            return null;
         });
     }
 
     function doSave() {
-        saveConfig(doSave).then(function (d) { if (d) { say(LABELS.saved); } });
+        /* pressed by hand: save now, not in a moment */
+        clearTimeout(autosaveTimer);
+        dirty = false;
+        saveConfig(doSave).then(function (d) {
+            if (d) { say(LABELS.saved); } else if (state.code) { saveState('failed'); }
+        });
     }
 
+    /* ---------- sharing ------------------------------------------------ */
+    /*
+     | The Clipboard API only exists on a secure page (https), so on http — and
+     | when the browser refuses — the older copy command is tried, and when that
+     | fails too the link is left selected in the window, to be copied by hand.
+     | That window is the theme's own: it used to be window.prompt().
+     */
+    var shareBox = document.querySelector('[data-cfg-share]');
+    var shareLink = shareBox.querySelector('[data-cfg-share-link]');
+    var shareState = shareBox.querySelector('[data-cfg-share-state]');
+
+    function copyWithCommand(text) {
+        var area = document.createElement('textarea');
+        area.value = text;
+        area.setAttribute('readonly', '');
+        area.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+        document.body.appendChild(area);
+        area.select();
+        var ok = false;
+        try { ok = document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(area);
+        return ok;
+    }
+
+    function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            return navigator.clipboard.writeText(text).then(
+                function () { return true; },
+                function () { return copyWithCommand(text); }
+            );
+        }
+        return Promise.resolve(copyWithCommand(text));
+    }
+
+    function shareCopied(ok) {
+        shareState.dataset.state = ok ? 'copied' : 'manual';
+        shareState.textContent = ok ? LABELS.copied : LABELS.copyManual;
+        if (!ok) { shareLink.focus(); shareLink.select(); }
+    }
+
+    function openShare(url) {
+        shareLink.value = url;
+        shareState.textContent = '';
+        shareState.dataset.state = '';
+        if (typeof shareBox.showModal === 'function') { shareBox.showModal(); } else { shareBox.setAttribute('open', ''); }
+        copyText(url).then(shareCopied);
+    }
+
+    function closeShare() {
+        if (typeof shareBox.close === 'function' && shareBox.open) { shareBox.close(); } else { shareBox.removeAttribute('open'); }
+    }
+
+    shareBox.addEventListener('click', function (e) {
+        /* a click on the dimmed backdrop lands on the <dialog> itself */
+        if (e.target === shareBox || e.target.closest('[data-cfg-share-close]')) { closeShare(); return; }
+        if (e.target.closest('[data-cfg-share-copy]')) { copyText(shareLink.value).then(shareCopied); }
+    });
+    shareLink.addEventListener('focus', function () { shareLink.select(); });
+
     function doCopy() {
+        clearTimeout(autosaveTimer);
+        dirty = false;
         saveConfig(doCopy).then(function (d) {
-            if (!d) { return; }
-            var url = d.url;
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(url).then(
-                    function () { say(LABELS.copied); },
-                    function () { window.prompt('', url); }
-                );
-            } else {
-                window.prompt('', url);
-            }
+            if (d) { openShare(d.url); }
         });
     }
 
     $('[data-cfg-save]').addEventListener('click', function () { keep(doSave); });
     $('[data-cfg-copy]').addEventListener('click', function () { keep(doCopy); });
+    $('[data-cfg-code-copy]').addEventListener('click', function () { keep(doCopy); });
+
+    /* „Запази като нов": this rack, as a rack of its own with its own code —
+       the way to keep the one on screen and go on from it to another. */
+    function doSaveAsNew() {
+        clearTimeout(autosaveTimer);
+        dirty = false;
+        saveConfig(doSaveAsNew, false, true).then(function (d) { if (d) { say(LABELS.savedAsNew); } });
+    }
+    $('[data-cfg-code-new]').addEventListener('click', function () { keep(doSaveAsNew); });
+    $('[data-cfg-code-signin]').addEventListener('click', function () { keep(doSave); });
 
     $$('[data-cfg-addcart]').forEach(function (btn) {
         function doAdd() {
@@ -1926,19 +2156,25 @@
                 btn.disabled = false;
                 if (needsAccount(data, doAdd)) { return; }
                 if (!data || !data.ok) { say((data && data.reason) || LABELS.generic); return; }
-                showCode(data.code, data.url);
+                showCode(data.code, data.url, data.editable);
                 /* Reconcile against what the server actually banked, rather
                    than trusting the figure this page has been showing. */
                 $('[data-cfg-total]').textContent = money(data.total_cents);
                 var bar = $('[data-cfg-bar-total]');
                 if (bar) { bar.textContent = money(data.total_cents); }
-                say(data.message);
-                if (window.Alpine && Alpine.store && Alpine.store('gvCart')) {
-                    try { Alpine.store('gvCart').refresh(); } catch (err) {}
+                /* As a product does: the cart drawer slides in from the right with
+                   the rack in it, the header count follows — the same cart state,
+                   through the same store. Without the store, say it and fix the count. */
+                var gvCart = window.Alpine && Alpine.store && Alpine.store('gvCart');
+                if (gvCart && data.cart) {
+                    gvCart.apply(data.cart);
+                    gvCart.openDrawer();
+                } else {
+                    say(data.message);
+                    document.querySelectorAll('.bag .n, [data-cart-count]').forEach(function (n) {
+                        n.textContent = data.item_count;
+                    });
                 }
-                document.querySelectorAll('[data-cart-count]').forEach(function (n) {
-                    n.textContent = data.item_count;
-                });
             }).catch(function () { btn.disabled = false; say(LABELS.generic); });
         }
 

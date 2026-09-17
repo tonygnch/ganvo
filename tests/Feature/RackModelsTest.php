@@ -144,11 +144,28 @@ class RackModelsTest extends TestCase
         $this->assertSame(1390, $lines->firstWhere('kind', 'shelf')['unit_price_cents'], 'the rack\'s own shelves stay 97×39');
     }
 
-    public function test_a_wine_rack_nobody_has_priced_is_refused_with_its_own_reason(): void
+    public function test_a_wine_rack_nobody_has_priced_is_refused_as_not_offered(): void
     {
         $this->send('/configurator/quote', ['config' => ['type' => 'wine', 'height' => 210, 'depth' => 60, 'levels' => 4, 'segments' => [100]]])
             ->assertStatus(422)
-            ->assertJson(['ok' => false, 'reason' => __('site.storefront.sankevi.cfg_err_no_model_price')]);
+            ->assertJson(['ok' => false, 'reason' => __('site.storefront.sankevi.cfg_err_type')]);
+    }
+
+    public function test_a_size_a_rack_type_is_not_sold_in_is_refused_when_kept(): void
+    {
+        RackPart::where(['tenant_id' => $this->tenant->id, 'kind' => 'frame', 'rack_type' => 'office', 'height_cm' => 300])->delete();
+        $customer = Customer::create(['tenant_id' => $this->tenant->id, 'name' => 'Петър', 'email' => 'petar@example.test', 'password' => str()->random(32)]);
+        $this->actingAs($customer, 'customer');
+
+        $rack = ['type' => 'office', 'height' => 300, 'depth' => 40, 'levels' => 4, 'segments' => [100]];
+
+        foreach (['/configurator/quote', '/configurator/save', '/configurator/cart'] as $path) {
+            $this->send($path, ['config' => $rack])
+                ->assertStatus(422)
+                ->assertJson(['ok' => false, 'reason' => __('site.storefront.sankevi.cfg_err_height')]);
+        }
+        $this->send('/configurator/save', ['config' => ['type' => 'single'] + $rack])->assertOk();
+        $this->assertSame(1, RackConfiguration::where('tenant_id', $this->tenant->id)->count(), 'only the plain rack, which is sold 300 cm high');
     }
 
     /* ---- the model is part of the rack ------------------------------ */

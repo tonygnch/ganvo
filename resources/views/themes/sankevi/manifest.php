@@ -50,6 +50,13 @@ return [
             'label' => 'Reasons to choose us (+ the counted facts)',
             'default' => true,
         ],
+        // The way into the rack configurator from the landing page. It only
+        // ever shows while the configurator itself is switched on and can
+        // price a rack, so this switch is for a merchant who wants it off anyway.
+        'rack_band' => [
+            'label' => 'Rack configurator band (build your own rack)',
+            'default' => true,
+        ],
         // The scrolling tape between the capabilities grid and what follows:
         // two rows of the brand line sliding opposite ways as you scroll. It is
         // pure texture — the screen reader gets one sentence instead of the same
@@ -202,6 +209,33 @@ return [
             'label' => 'Configurator — note under the price',
             'type' => 'textarea',
             'default_lang' => 'site.storefront.sankevi.cfg_price_note',
+        ],
+        // The landing page's band that leads to the configurator.
+        'rack_band_eyebrow' => [
+            'label' => 'Configurator band — eyebrow',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.rack_band_eyebrow',
+        ],
+        'rack_band_h2_html' => [
+            'label' => 'Configurator band — headline (HTML: wrap accent words in <em>)',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.rack_band_h2_html',
+        ],
+        'rack_band_lead' => [
+            'label' => 'Configurator band — paragraph under the headline',
+            'type' => 'textarea',
+            'default_lang' => 'site.storefront.sankevi.rack_band_lead',
+        ],
+        'rack_band_1_h' => ['label' => 'Configurator band — step 1 heading (empty hides the step)', 'type' => 'text', 'default_lang' => 'site.storefront.sankevi.rack_band_1_h'],
+        'rack_band_1_p' => ['label' => 'Configurator band — step 1 text', 'type' => 'textarea', 'default_lang' => 'site.storefront.sankevi.rack_band_1_p'],
+        'rack_band_2_h' => ['label' => 'Configurator band — step 2 heading (empty hides the step)', 'type' => 'text', 'default_lang' => 'site.storefront.sankevi.rack_band_2_h'],
+        'rack_band_2_p' => ['label' => 'Configurator band — step 2 text', 'type' => 'textarea', 'default_lang' => 'site.storefront.sankevi.rack_band_2_p'],
+        'rack_band_3_h' => ['label' => 'Configurator band — step 3 heading (empty hides the step)', 'type' => 'text', 'default_lang' => 'site.storefront.sankevi.rack_band_3_h'],
+        'rack_band_3_p' => ['label' => 'Configurator band — step 3 text', 'type' => 'textarea', 'default_lang' => 'site.storefront.sankevi.rack_band_3_p'],
+        'rack_band_cta' => [
+            'label' => 'Configurator band — button',
+            'type' => 'text',
+            'default_lang' => 'site.storefront.sankevi.rack_band_cta',
         ],
         'hero_h1_html' => [
             'label' => 'Hero — headline (HTML: wrap accent words in <em>)',

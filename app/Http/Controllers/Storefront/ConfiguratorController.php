@@ -14,9 +14,11 @@ use App\Services\Rack\RackException;
 use App\Services\Rack\RackPresenter;
 use App\Services\Rack\RackPriceBook;
 use App\Services\Rack\RackQuote;
+use App\Services\Rack\RackThumbnail;
 use App\Themes\ThemeRegistry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -132,15 +134,37 @@ class ConfiguratorController extends Controller
         ]);
     }
 
+    /**
+     * A saved rack as a small picture, for the cart and the cart drawer, which
+     * have no product photo to show for it. Public like the share link it
+     * belongs to: the code is the key.
+     */
+    public function thumbnail(Request $request): Response
+    {
+        [$store, $limits] = $this->gate();
+
+        $saved = RackConfiguration::where('tenant_id', $store->tenant_id)
+            ->where('code', RackConfiguration::normaliseCode((string) $request->route('code')))
+            ->first();
+        abort_unless($saved, 404);
+
+        return response(RackThumbnail::svg($saved->toConfig(), $limits), 200, [
+            'Content-Type' => 'image/svg+xml',
+            // the address changes with the rack (thumbnailUrl()), so this one never will
+            'Cache-Control' => 'public, max-age=604800',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
     /** Re-price a configuration. The only thing the browser may ask about money. */
     public function quote(Request $request): JsonResponse
     {
         [$store, $limits] = $this->gate();
 
         try {
-            $prices = RackPriceBook::forTenant($store->tenant_id);
-            $config = RackConfig::fromArray((array) $request->input('config', []), $limits);
-            $quote = $this->calculator()->quote($config, $prices, $limits, $store->currency ?? 'EUR');
+            [$prices, $priced] = $this->priced($store, $limits);
+            $config = RackConfig::fromArray((array) $request->input('config', []), $priced);
+            $quote = $this->calculator()->quote($config, $prices, $priced, $store->currency ?? 'EUR');
         } catch (RackException $e) {
             return response()->json(['ok' => false, 'reason' => $this->reason($e, $limits)], 422);
         }
@@ -158,10 +182,11 @@ class ConfiguratorController extends Controller
         }
 
         try {
-            // Save writes over the rack the page opened, when that is allowed —
-            // see persist(). Add-to-cart never does: two racks in a request stay two.
+            // Save writes over the rack the page stands for, when that is allowed —
+            // see persist() — unless the customer asked for a new one („Запази като нов").
             $editing = $request->input('editing');
-            $saved = $this->persist($request, $store, $limits, $customer, is_string($editing) ? $editing : null);
+            $asNew = $request->boolean('as_new');
+            [$saved, $editable] = $this->persist($request, $store, $limits, $customer, $asNew || ! is_string($editing) ? null : $editing, $asNew);
         } catch (RackException $e) {
             return response()->json(['ok' => false, 'reason' => $this->reason($e, $limits)], 422);
         }
@@ -170,6 +195,8 @@ class ConfiguratorController extends Controller
             'ok' => true,
             'code' => $saved->code,
             'url' => url('/configurator/'.$saved->code),
+            // Whether the page may save its next change over this rack.
+            'editable' => $editable,
         ]);
     }
 
@@ -183,7 +210,7 @@ class ConfiguratorController extends Controller
         }
 
         try {
-            $saved = $this->persist($request, $store, $limits, $customer);
+            [$saved] = $this->persist($request, $store, $limits, $customer);
         } catch (RackException $e) {
             return response()->json(['ok' => false, 'reason' => $this->reason($e, $limits)], 422);
         }
@@ -198,7 +225,15 @@ class ConfiguratorController extends Controller
             // The figure the server actually banked, so the page can reconcile
             // its optimistic total instead of quietly disagreeing with the cart.
             'total_cents' => (int) $saved->total_cents,
+            // the rack now in the request is the one on the page: its next change
+            // updates it, and the request shows the change
+            'editable' => true,
             'item_count' => $cart->itemCount(),
+            // the whole cart, as a product add answers it — with the same "added"
+            // line — so the page can slide the cart drawer open, as a product does
+            'cart' => $cart->clientState(__('site.storefront.added_to_cart', [
+                'name' => RackPresenter::rackName($saved->toConfig()),
+            ])),
             'message' => __('site.storefront.sankevi.cfg_added'),
         ]);
     }
@@ -208,12 +243,13 @@ class ConfiguratorController extends Controller
      * through here, so neither can bank a price the calculator did not produce.
      *
      * @param  ?string  $editing  the code of the rack the page opened and is saving over — save only
+     * @return array{0: RackConfiguration, 1: bool} the rack, and whether it is one the page may save over
      */
-    private function persist(Request $request, $store, array $limits, Customer $customer, ?string $editing = null): RackConfiguration
+    private function persist(Request $request, $store, array $limits, Customer $customer, ?string $editing = null, bool $asNew = false): array
     {
-        $prices = RackPriceBook::forTenant($store->tenant_id);
-        $config = RackConfig::fromArray((array) $request->input('config', []), $limits);
-        $quote = $this->calculator()->quote($config, $prices, $limits, $store->currency ?? 'EUR');
+        [$prices, $priced] = $this->priced($store, $limits);
+        $config = RackConfig::fromArray((array) $request->input('config', []), $priced);
+        $quote = $this->calculator()->quote($config, $prices, $priced, $store->currency ?? 'EUR');
 
         $snapshot = [
             'bom' => RackPresenter::labelledLines($quote),
@@ -249,6 +285,12 @@ class ConfiguratorController extends Controller
          |     is theirs to copy, never to rewrite;
          |   - it has never been requested. Once a rack is on an order, the
          |     merchant has to keep seeing what was asked for.
+         |
+         | A rack still in the request (the cart) is updated like any other: the
+         | configurator saves every change, and a change that made a new rack
+         | each time would leave the request holding a rack the customer has
+         | since changed, and the account full of copies. The request shows the
+         | rack as it is now — its price is re-read on every page anyway.
          */
         if ($editing !== null && $editing !== '') {
             $opened = RackConfiguration::where('tenant_id', $store->tenant_id)
@@ -260,7 +302,7 @@ class ConfiguratorController extends Controller
             if ($opened) {
                 $opened->update($snapshot + $attributes);
 
-                return $opened;
+                return [$opened, true];
             }
         }
 
@@ -281,17 +323,37 @@ class ConfiguratorController extends Controller
          | decline to make another one. The one write a save may make is the
          | owner saving over the rack they opened, above.
          */
-        $mine = RackConfiguration::reusableFor($store->tenant_id, $customer->id, $config, $snapshot);
+        // „Запази като нов" asks for exactly that: a new rack, even if one like it exists.
+        $mine = $asNew ? null : RackConfiguration::reusableFor($store->tenant_id, $customer->id, $config, $snapshot);
 
         if ($mine) {
-            return $mine;
+            // A rack of theirs that is exactly this one. It is the rack the page
+            // now shows, so the next change updates it rather than making another.
+            return [$mine, true];
         }
 
-        return RackConfiguration::create($snapshot + $attributes + [
+        return [RackConfiguration::create($snapshot + $attributes + [
             'tenant_id' => $store->tenant_id,
             'customer_id' => $customer->id,
             'owner_token' => RackConfiguration::ownerToken(),
-        ]);
+        ]), true];
+    }
+
+    /**
+     * The price book, and the limits narrowed to what it can price.
+     *
+     * Every rack a customer prices or keeps is checked against the sizes ITS
+     * type is sold in — the same narrowing the page itself is drawn from — so a
+     * size the merchant left blank for that type is refused as the size it
+     * is, instead of slipping through to a missing price.
+     *
+     * @return array{0: RackPriceBook, 1: array}
+     */
+    private function priced($store, array $limits): array
+    {
+        $prices = RackPriceBook::forTenant($store->tenant_id);
+
+        return [$prices, $prices->narrow($limits)];
     }
 
     /**

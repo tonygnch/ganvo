@@ -2,6 +2,7 @@
 
 namespace App\Filament\StoreAdmin\Pages;
 
+use App\Models\Category;
 use App\Models\RackPart;
 use App\Models\Store;
 use App\Services\Money;
@@ -109,6 +110,7 @@ class RackConfigurator extends Page implements HasForms
             'tray_rim_cm' => $limits['tray_rim_cm'],
             'tray_tilt_deg' => $limits['tray_tilt_deg'],
             'model_depth_cm' => $limits['model_depth_cm'],
+            'tab_category_ids' => $limits['tab_category_ids'],
         ];
 
         foreach (array_keys(self::SIZE_RANGES) as $name) {
@@ -331,6 +333,23 @@ class RackConfigurator extends Page implements HasForms
                         ->columnSpanFull(),
                 ]),
 
+            // Which category pages carry the button into the configurator.
+            Section::make(__('admin.configurator.section.tab'))
+                ->description(__('admin.configurator.section_help.tab'))
+                ->schema([
+                    Select::make('tab_category_ids')
+                        ->label(__('admin.configurator.field.tab_categories'))
+                        ->multiple()
+                        ->searchable()
+                        ->options(fn () => Category::query()
+                            ->where('tenant_id', $this->getStore()->tenant_id)
+                            ->with('parent')
+                            ->orderBy('sort_order')
+                            ->get()
+                            ->mapWithKeys(fn ($c) => [$c->id => ($c->parent ? $c->parent->name.' › ' : '').$c->name])
+                            ->all()),
+                ]),
+
             // How the office and wine models are built. Starting values were
             // read off the product photos; they are the merchant's to correct.
             Section::make(__('admin.configurator.section.models'))
@@ -446,6 +465,7 @@ class RackConfigurator extends Page implements HasForms
         $settings['tray_rim_cm'] = (int) ($state['tray_rim_cm'] ?? 5);
         $settings['tray_tilt_deg'] = (int) ($state['tray_tilt_deg'] ?? 15);
         $settings['model_depth_cm'] = (int) ($state['model_depth_cm'] ?? 40);
+        $settings['tab_category_ids'] = array_values(array_unique(array_map('intval', (array) ($state['tab_category_ids'] ?? []))));
         $store->update(['rack_configurator' => $settings]);
 
         /*

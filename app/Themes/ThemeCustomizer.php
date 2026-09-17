@@ -54,6 +54,16 @@ class ThemeCustomizer
         private readonly array $settings,
     ) {}
 
+    /**
+     * Forget the cached instances. The cache is meant to live for one request,
+     * but it is static — so a process serving more than one (a test run) must
+     * clear it, or a store's settings are read as they were the first time.
+     */
+    public static function flush(): void
+    {
+        self::$instances = [];
+    }
+
     public static function for(?Store $store, string $slug): self
     {
         $key = ($store?->id ?? 0).':'.$slug;

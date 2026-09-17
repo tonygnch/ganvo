@@ -15,12 +15,16 @@
  | they stay put however far down the prose you are — which is what a long
  | description needs and what a sticky rule would only approximate.
  |
- | Expects $catLong (the text) and $catName.
+ | Expects $catLong (the text) and $catName, and $catRack: whether this
+ | category offers the rack configurator — then a button into it stands
+ | beside this one (Store::offersRackConfiguratorIn).
 --}}
 @php($gvLong = trim((string) ($catLong ?? '')))
-@if ($gvLong !== '')
-    @php($gvLongId = 'catmore-h-' . \Illuminate\Support\Str::random(6))
+@php($gvRack = (bool) ($catRack ?? false))
+@if ($gvLong !== '' || $gvRack)
     <div class="catmore">
+        @if ($gvLong !== '')
+        @php($gvLongId = 'catmore-h-' . \Illuminate\Support\Str::random(6))
         <button type="button" class="catmore-btn" data-catmore>
             {{ __('site.storefront.controls.category_more') }}
         </button>
@@ -46,5 +50,17 @@
                  the species wheel on the landing page. --}}
             <div class="catmore-text" data-catmore-text data-lenis-prevent tabindex="0" autofocus>{!! nl2br(e($gvLong)) !!}</div>
         </dialog>
+        @endif
+
+        @if ($gvRack)
+            {{-- The glyph is the rack itself: two uprights and the boards between them. --}}
+            <a class="catmore-btn catmore-cfg" href="/configurator">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                     stroke-linecap="square" aria-hidden="true">
+                    <path d="M4 3v18M20 3v18M4 8h16M4 13h16M4 18h16"/>
+                </svg>
+                {{ __('site.storefront.sankevi.cfg_category_cta') }}
+            </a>
+        @endif
     </div>
 @endif

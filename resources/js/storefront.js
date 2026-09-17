@@ -179,8 +179,10 @@ Alpine.store('gvCart', {
         this.subtotal = state.subtotal || '';
         this.total = state.total || '';
         this.flash = state.flash || '';
-        // Keep every theme's header badge in sync (.bag .n is the shared hook).
-        document.querySelectorAll('.bag .n').forEach((el) => { el.textContent = state.item_count; });
+        // Keep every cart count on the page in sync: the header badge (.bag .n,
+        // every theme's hook) and any other count a theme marks data-cart-count
+        // — Sankevi's phone menu has one.
+        document.querySelectorAll('.bag .n, [data-cart-count]').forEach((el) => { el.textContent = state.item_count; });
     },
 
     async add(form) {
@@ -220,6 +222,10 @@ Alpine.store('gvCart', {
         try {
             const fd = new FormData();
             Object.entries(body).forEach(([k, v]) => fd.set(k, v));
+            // The drawer's buttons carry the token the page was drawn with. A page
+            // that signs the visitor in without a reload (the rack configurator)
+            // rotates it, and publishes the new one here.
+            if (window.gvCsrfToken && fd.has('_token')) fd.set('_token', window.gvCsrfToken);
             const res = await fetch(url, {
                 method: 'POST',
                 headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },

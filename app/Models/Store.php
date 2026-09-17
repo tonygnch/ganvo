@@ -912,7 +912,31 @@ class Store extends Model
             // The depth the office and wine racks open on when the customer
             // picks one of them — shallower than the plain rack's default.
             'model_depth_cm' => $this->pick($stored['model_depth_cm'] ?? null, $depths, 40),
+            // The category pages (and their subcategories) that carry the side
+            // tab into the configurator. None chosen, no tab.
+            'tab_category_ids' => $ints($stored['tab_category_ids'] ?? null, []),
         ];
+    }
+
+    /**
+     * Whether a category's page offers the rack configurator: the configurator
+     * is on, and the category — or a category above it — is one the merchant
+     * picked (Конфигуратор на стелажи → Настройки).
+     */
+    public function offersRackConfiguratorIn(?Category $category): bool
+    {
+        $limits = $this->rackConfigurator();
+        if (! $category || ! $limits['enabled'] || $limits['tab_category_ids'] === []) {
+            return false;
+        }
+
+        for ($c = $category, $hops = 0; $c && $hops < 6; $c = $c->parent, $hops++) {
+            if (in_array((int) $c->id, $limits['tab_category_ids'], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** Pick a stored default if it is still one of the offered values. */

@@ -23,6 +23,7 @@
          |
          |   1  HERO           the yard, once, at full height
          |   2  OPTION WHEEL   the families, straight under the fold (id="shop")
+         |   2½ RACKS          the rack configurator — only while the shop offers it
          |   3  OFFER          what this yard can actually DO for you
          |   4  MARQUEE        scroll-velocity bands — the name, moving
          |   5  WHY            the reasons to order it here, and the facts
@@ -398,6 +399,35 @@
         .offer .cell h3 { font-family: var(--display); font-weight: 500; font-size: clamp(19px, 1.7vw, 25px); line-height: 1.16; letter-spacing: 0; }
         .offer .cell p { margin-top: 13px; color: var(--muted); font-size: 14.5px; line-height: 1.62; }
 
+        /* ---- act 2½: the rack configurator ----
+           Type and steps on the left, a drawing of a rack on the right, in the
+           configurator's own elevation style — the middle section washed, as the
+           selected one is there. */
+        .rackband { position: relative; padding: clamp(96px, 16vh, 180px) 0 0; }
+        .rackband .in { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: clamp(40px, 6vw, 96px); align-items: center; }
+        .rackband h2 { font-family: var(--display); font-weight: 500; font-size: clamp(27px, 3.6vw, 50px); line-height: 1.01; letter-spacing: 0; margin-top: 14px; }
+        .rackband h2 em { font-style: normal; font-weight: 600; color: var(--accent-ink); }
+        .rackband .lead { margin-top: 22px; max-width: 52ch; color: var(--muted); font-size: 16px; }
+        .rackband .steps { list-style: none; margin: clamp(30px, 5vh, 44px) 0 0; padding: 0; display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+        .rackband .steps li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 5px 18px; padding: 18px 22px; background: var(--bg); }
+        .rackband .steps .n { grid-row: span 2; padding-top: 5px; font-size: 10.5px; font-weight: 500; letter-spacing: .24em; color: var(--faint); font-variant-numeric: tabular-nums; }
+        .rackband .steps h3 { font-family: var(--display); font-weight: 500; font-size: clamp(17px, 1.4vw, 21px); line-height: 1.2; letter-spacing: 0; }
+        .rackband .steps p { color: var(--muted); font-size: 14.5px; line-height: 1.6; }
+        .rackband .go { margin-top: 30px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; }
+        .rackband .example { color: var(--muted); font-size: 13.5px; line-height: 1.5; max-width: 40ch; }
+        .rackband .example b { color: var(--txt); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .rackband .plate { position: relative; background: var(--surface); border: 1px solid var(--line); padding: clamp(22px, 3vw, 40px) clamp(22px, 3vw, 40px) clamp(18px, 2.4vw, 30px); }
+        .rackband .plate svg { display: block; width: 100%; height: auto; }
+        .rackband .plate .tag { display: block; margin-top: 14px; font-size: 10.5px; font-weight: 500; letter-spacing: .22em; text-transform: uppercase; color: var(--faint); }
+        .rackband .rb-post, .rackband .rb-shelf { fill: var(--surface2); stroke: var(--txt); stroke-width: 1.1; }
+        .rackband .rb-shelf.is-sel { fill: var(--accent); stroke: var(--accent-deep); }
+        .rackband .rb-sel { fill: color-mix(in srgb, var(--accent) 10%, transparent); }
+        .rackband .rb-hole { fill: var(--txt); opacity: .5; }
+        .rackband .rb-pin { fill: var(--accent-ink); }
+        .rackband .rb-brace { stroke: var(--faint); stroke-width: 1.4; }
+        .rackband .rb-floor { stroke: var(--line2); stroke-width: 1; }
+        .rackband .rb-dim { stroke: var(--muted); stroke-width: 1; }
+
         /* The rule's RESTING state is full width — that is what a browser
            without view() timelines shows, and what the print/no-JS reading
            of the page is. The scroll-driven version therefore needs its own
@@ -673,6 +703,9 @@
 
         @media (max-width: 1100px) {
             .offer .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            /* the drawing goes above the steps rather than squeezing beside them */
+            .rackband .in { grid-template-columns: minmax(0, 1fr); gap: 40px; }
+            .rackband .plate { order: -1; max-width: 560px; }
             /* the aside stops being a column that holds still and becomes a
                header — sticky positioning on a full-width block just pins the
                heading over the reasons it introduces */
@@ -757,6 +790,8 @@
             .offer .grid { grid-template-columns: minmax(0, 1fr); }
             .offer .cell { padding: 24px 22px; }
             .offer .cell .rule { margin: 15px 0 16px; }
+            .rackband .steps li { padding: 16px 18px; gap: 4px 14px; }
+            .rackband .go .btn { width: 100%; justify-content: center; }
             .why .facts { grid-template-columns: 1fr 1fr; }
         }
     </style>
@@ -902,6 +937,129 @@
                 </div>
             </div>
         </section>
+
+        {{-- ============ ACT 2½ — THE RACK CONFIGURATOR ============
+             The way into /configurator from the landing page: what it does in
+             three steps, a drawing of a rack in the configurator's own style,
+             and one button.
+
+             Only while the configurator can actually be used — switched on for
+             this shop AND able to price a rack (otherwise /configurator answers
+             404, and a band pointing at it would be a dead end). The example
+             price is a real quote: the shop's default rack at today's prices,
+             the same figure the configurator opens on. If that one rack cannot
+             be priced, the band stays and only the example goes. --}}
+        @php
+            $rackLimits = $store->rackConfigurator();
+            $rackBand = $rackLimits['enabled'] && $theme->on('rack_band');
+            $rackExample = null;
+            if ($rackBand) {
+                $rackBook = \App\Services\Rack\RackPriceBook::forTenant($store->tenant_id);
+                $rackNarrow = $rackBook->narrow($rackLimits);
+                if (! \App\Services\Rack\RackPriceBook::canBuildAnything($rackNarrow)) {
+                    $rackBand = false;
+                } else {
+                    try {
+                        $rackCfg = \App\Services\Rack\RackConfig::of(
+                            $rackNarrow['default_height_cm'],
+                            $rackNarrow['default_depth_cm'],
+                            $rackNarrow['default_levels'],
+                            [$rackNarrow['default_width_cm']],
+                            $rackNarrow['default_type'],
+                        );
+                        $rackQuote = (new \App\Services\Rack\RackCalculator)->quote($rackCfg, $rackBook, $rackNarrow, $store->currency ?? 'EUR');
+                        $rackExample = __('site.storefront.sankevi.rack_band_example', [
+                            'rack' => e(\App\Services\Rack\RackPresenter::rackName($rackCfg)),
+                            'price' => '<b>'.e(\App\Services\Money::display($rackQuote->totalCents, $displayRate ?? 1.0, $displayCurrency ?? $store->currency)).'</b>',
+                        ]);
+                    } catch (\App\Services\Rack\RackException $e) {
+                        $rackExample = null;
+                    }
+                }
+            }
+
+            // Built first, like the capabilities, so the numbers count the steps that survive.
+            $rackSteps = [];
+            foreach (range(1, 3) as $n) {
+                $h = trim($theme->copy('rack_band_' . $n . '_h'));
+                if ($h === '') {
+                    continue;
+                }
+                $rackSteps[] = ['h' => $h, 'p' => trim($theme->copy('rack_band_' . $n . '_p')),
+                    'hSlot' => 'rack_band_' . $n . '_h', 'pSlot' => 'rack_band_' . $n . '_p'];
+            }
+
+            // The drawing: three sections on four uprights drilled every 10 units,
+            // four levels whose boards sit on pins in those holes, and the steel X
+            // on every other section — the same construction the configurator draws.
+            $rbPosts = [36, 156, 276, 396];
+            $rbLevels = [58, 138, 218, 298]; // the hole each level's pins are in
+        @endphp
+        @if ($rackBand)
+            <section class="rackband" id="configurator">
+                <div class="wrap in">
+                    <div class="text" data-gv-reveal>
+                        @if ($theme->on('gutter_index'))
+                            <span class="gx" aria-hidden="true">{!! $theme->editable('rack_band_eyebrow') !!}</span>
+                        @endif
+                        <h2>{!! $theme->editable('rack_band_h2_html') !!}</h2>
+                        <p class="lead">{!! $theme->editable('rack_band_lead') !!}</p>
+
+                        @if ($rackSteps)
+                            <ol class="steps">
+                                @foreach ($rackSteps as $i => $step)
+                                    <li>
+                                        <span class="n" aria-hidden="true">{{ sprintf('%02d', $i + 1) }}</span>
+                                        <h3{!! $theme->slotAttr($step['hSlot']) !!}>{{ $step['h'] }}</h3>
+                                        @if ($step['p'] !== '')<p{!! $theme->slotAttr($step['pSlot']) !!}>{{ $step['p'] }}</p>@endif
+                                    </li>
+                                @endforeach
+                            </ol>
+                        @endif
+
+                        <div class="go">
+                            <a class="btn" href="/configurator">{!! $theme->editable('rack_band_cta') !!}</a>
+                            @if ($rackExample)
+                                <span class="example">{!! $rackExample !!}</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <a class="plate" href="/configurator" tabindex="-1" aria-hidden="true" data-gv-reveal data-gv-delay="0.1">
+                        <svg viewBox="0 0 442 340" role="presentation">
+                            {{-- the steel X on sections 1 and 3, behind everything --}}
+                            @foreach ([0, 2] as $bay)
+                                <line class="rb-brace" x1="{{ $rbPosts[$bay] + 10 }}" y1="30" x2="{{ $rbPosts[$bay + 1] }}" y2="306"/>
+                                <line class="rb-brace" x1="{{ $rbPosts[$bay + 1] }}" y1="30" x2="{{ $rbPosts[$bay] + 10 }}" y2="306"/>
+                            @endforeach
+                            {{-- the middle section, washed as the selected one is in the configurator --}}
+                            <rect class="rb-sel" x="{{ $rbPosts[1] + 10 }}" y="20" width="110" height="298"/>
+                            @foreach ($rbLevels as $hole)
+                                @foreach ([0, 1, 2] as $bay)
+                                    <rect class="rb-shelf{{ $bay === 1 ? ' is-sel' : '' }}" x="{{ $rbPosts[$bay] + 11 }}" y="{{ $hole - 8 }}" width="108" height="7"/>
+                                @endforeach
+                            @endforeach
+                            @foreach ($rbPosts as $x)
+                                <rect class="rb-post" x="{{ $x }}" y="20" width="10" height="298"/>
+                                @for ($hy = 28; $hy < 312; $hy += 10)
+                                    <circle class="rb-hole" cx="{{ $x + 5 }}" cy="{{ $hy }}" r="1.4"/>
+                                @endfor
+                                @foreach ($rbLevels as $hole)
+                                    <rect class="rb-pin" x="{{ $x - 2 }}" y="{{ $hole - 1.2 }}" width="14" height="2.4" rx="1"/>
+                                @endforeach
+                            @endforeach
+                            <line class="rb-floor" x1="14" y1="318.5" x2="428" y2="318.5"/>
+                            {{-- the section widths along the floor, as the drawing measures them --}}
+                            <line class="rb-dim" x1="36" y1="332.5" x2="406" y2="332.5"/>
+                            @foreach ([36, 161, 281, 406] as $tx)
+                                <line class="rb-dim" x1="{{ $tx }}" y1="327" x2="{{ $tx }}" y2="338"/>
+                            @endforeach
+                        </svg>
+                        <span class="tag">{{ __('site.storefront.sankevi.rack_band_tag') }}</span>
+                    </a>
+                </div>
+            </section>
+        @endif
 
         {{-- ============ ACT 3 — OFFER ============
              The capabilities. This is the half of the old story act that

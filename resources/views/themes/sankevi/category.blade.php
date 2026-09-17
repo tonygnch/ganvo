@@ -91,6 +91,7 @@
                 @include('themes.sankevi.partials.category-long', [
                     'catLong' => $category->long_description,
                     'catName' => $category->name,
+                    'catRack' => $store->offersRackConfiguratorIn($category),
                 ])
             </div>
 

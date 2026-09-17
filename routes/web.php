@@ -277,6 +277,9 @@ $storefrontRoutes = function () {
     // configuration's share link (S27).
     Route::get('/configurator/{code?}', [ConfiguratorController::class, 'show'])
         ->where('code', '[A-Za-z0-9]{4,12}');
+    // A saved rack's picture, for the cart and the cart drawer.
+    Route::get('/configurator/{code}/thumb.svg', [ConfiguratorController::class, 'thumbnail'])
+        ->where('code', '[A-Za-z0-9]{4,12}');
     Route::post('/configurator/quote', [ConfiguratorController::class, 'quote']);
     Route::post('/configurator/save', [ConfiguratorController::class, 'save']);
     Route::post('/configurator/cart', [ConfiguratorController::class, 'addToCart']);
